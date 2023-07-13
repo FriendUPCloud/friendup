@@ -402,6 +402,28 @@ char *GetExtension( char* name )
 	return extension;
 }
 
+/**
+ * Function returns file extension
+ *
+ * @param name pointer to file path
+ * @return pointer where extension start
+ */
+char *GetExtensionPtr( char* name )
+{
+	int cmode = 0, cz = 0;
+	int len = strlen( name ) - 1;
+	for( cz = len; cz > 0 && cmode < 16; cz--, cmode++ )
+	{
+		if( name[ cz ] == '.' )
+		{
+			return &name[ cz+1 ];
+			break;
+		}
+	}
+
+	return NULL;
+}
+
 #ifndef LOCFILE_USE_MMAP
 #error "LOCFILE_USE_MMAP must be defined to 0 or 1"
 #endif

@@ -87,18 +87,22 @@ window.Shell = function( appObject )
 	this.state = { entry: -1 }; // Engine state
 	this.mindMode = false; // Use A.I.
 	this.pipe = false; // Target pipe!
+	this.terminate = false;
+	this.stop = false;
 
-	this.mind = FriendMind.makeSession( appObject );
+    if( appObject )
+    	this.mind = FriendMind.makeSession( appObject );
+    else this.mind = null;
 
 	let aa = 0;
 
 	// This is used by object that are living in the Workspace domain
-	if( appObject.sessionId )
+	if( appObject && appObject.sessionId )
 	{
 		this.sessionId = appObject.sessionId;
 	}
 	// Application domain
-	else
+	else if( appObject )
 	{
 		this.applicationId = appObject.applicationId;
 		this.authId = appObject.authId;
@@ -227,6 +231,7 @@ window.Shell = function( appObject )
 			{
 				// Use standard doors
 				let door = ( new Door() ).get( path );
+				door.cancelId = shell.cancelId;
 				door.getIcons( false, function( data )
 				{
 					let info = false;
@@ -348,8 +353,18 @@ window.Shell = function( appObject )
 	// Parse a whole script
 	this.parseScript = function( script, callback )
 	{
-		script = script.split( "\n" );
-		this.queueCommand( script, 0, [], callback );
+	    if( script.indexOf( "\n" ) > 0 )
+	    {
+		    script = script.split( "\n" );
+		    this.queueCommand( script, 0, [], callback );
+	    }
+	    else
+	    {
+	        this.execute( script, function( result, data )
+		    {
+			    callback( true, result );
+		    } );
+	    }
 	};
 
 	// queue and culminate output!
@@ -358,7 +373,6 @@ window.Shell = function( appObject )
 		let t = this;
 		this.execute( array[index++], function( result, data )
 		{
-			//console.log( 'this.queueCommand = function( array, index, buffer, callback ) ', { array: array, index: index, buffer: buffer } );
 			if( result )
 			{
 				buffer += typeof( result ) == 'object' ? result.response : result;
@@ -2691,7 +2705,7 @@ window.Shell = function( appObject )
 				// 'all' on the end
 				if( !recursive ) recursive = args[ args.length - 1 ].toLowerCase() == 'all' ? true : false;
 
-				FriendDOS.copyFiles( src, dst, { recursive: recursive, move: false, nooverwrite: nooverwrite }, function( result, done )
+				FriendDOS.copyFiles( src, dst, { cancelId: shell.cancelId, recursive: recursive, move: false, nooverwrite: nooverwrite, shell: shell }, function( result, done )
 				{
 					if( !done ) done = false;
 					callback( false, { response: result, done: done } );
@@ -2749,7 +2763,7 @@ window.Shell = function( appObject )
 				}
 
 				// Finally delete
-				FriendDOS.deleteFiles( src, { recursive: recursive, notrash: notrash }, function( result )
+				FriendDOS.deleteFiles( src, { cancelId: shell.cancelId, recursive: recursive, notrash: notrash }, function( result )
 				{
 					callback( false, { response: result, done: true } );
 				} );
@@ -3090,7 +3104,7 @@ window.Shell = function( appObject )
 						return callback( false, { response: 'Could not parse file information.' } );
 					}
 				}
-			} );
+			}, shell.cancelId ? shell.cancelId : false );
 		},		
 		'kill': function( args, callback )
 		{
@@ -3400,7 +3414,7 @@ window.Shell = function( appObject )
 								PadList( rows[a].Visible ? 'yes' : 'hidden', 10, 'right', '&nbsp;' ) + '</div>';
 							diskcount++;
 						}
-						callback( true, { response: disks + '<br>' + 'Found ' + diskcount + ' disk(s) in mountlist.' } );
+						callback( true, { response: disks + '<br>' + 'Found ' + diskcount + ' disk(s) in mountlist.', data: rows } );
 					}
 					else
 					{
@@ -3880,7 +3894,7 @@ window.Shell = function( appObject )
 				if( !recursive ) 
 					recursive = args[ args.length - 1 ].toLowerCase() == 'all' ? true : false;
 
-				FriendDOS.copyFiles( src, dst, { recursive: recursive, move: true }, function( result, done )
+				FriendDOS.copyFiles( src, dst, { recursive: recursive, move: true, shell: shell }, function( result, done )
 				{
 					if( !done ) 
 						done = false;
@@ -4009,43 +4023,58 @@ window.FriendDOS =
 	{
 		let fdos = this;
 		
+		if( flags.shell && flags.shell.stop == true ) return;
+		
 		// Do we want to move the files?
 		let move = flags && flags.move ? true : false;
 
 		// Setup copyobject!
 		if( !copyObject ) 
 		{
-			copyObject = {
-				copyCounter: 0, // Done copying files
-				copyTotal: 0,   // Files copying in progress
-				copyDepth: 0,    // Swipe depth
-				processes: 0, // Other processes
-				completed: 0, // Completed processes
-				callback: callback,
-				deleteMovePaths: [],
-				test: function()
-				{
-					if( this.copyCounter == this.copyTotal && this.copyDepth === 0 && this.processes == this.completed )
+			if( flags.shell && flags.shell.copyObject )
+				copyObject = flags.shell.copyObject;
+			else
+			{
+				copyObject = {
+					copyCounter: 0, // Done copying files
+					copyTotal: 0,   // Files copying in progress
+					copyDepth: 0,    // Swipe depth
+					processes: 0, // Other processes
+					completed: 0, // Completed processes
+					callback: callback,
+					deleteMovePaths: [],
+					test: function()
 					{
-						if( !this.callback ) return;
-						if( move )
+						//console.log( 'Copying files: ' + this.copyCounter + ' / ' + this.copyTotal + ' at depth ' + this.copyDepth );
+						if( flags.shell && flags.shell.onmessage )
 						{
-							for( let a = this.deleteMovePaths.length - 1; a >= 0; a-- )
+							//console.log( 'Copytotal: ' + this.copyTotal + ' Copycounter: ' + this.copyCounter + ' | Processes: ' + copyObject.processes + ' | Completed: ' + copyObject.completed );
+							flags.shell.onmessage( { 'type': 'progress', progress: { total: this.processes + this.copyTotal, count: this.completed + this.copyCounter } } );
+						}
+						
+						if( this.copyCounter == this.copyTotal && this.copyDepth === 0 && this.processes == this.completed )
+						{
+							if( !this.callback ) return;
+							if( move )
 							{
-								let dmp = this.deleteMovePaths[ a ];
-								dmp.door.dosAction( 'delete', { path: dmp.path, notrash: flags.notrash } );
+								for( let a = this.deleteMovePaths.length - 1; a >= 0; a-- )
+								{
+									let dmp = this.deleteMovePaths[ a ];
+									dmp.door.dosAction( 'delete', { path: dmp.path, notrash: flags.notrash } );
+								}
+								this.callback( 'Done moving ' + this.copyTotal + ' files.', { done: true } );
 							}
-							this.callback( 'Done moving ' + this.copyTotal + ' files.', { done: true } );
+							else
+							{
+								this.callback( 'Done copying ' + this.copyTotal + ' files.', { done: true } );
+							}
+							this.callback = false;
 						}
-						else
-						{
-							this.callback( 'Done copying ' + this.copyTotal + ' files.', { done: true } );
-						}
-						this.callback = false;
 					}
-					//console.log( 'Copying files: ' + this.copyCounter + ' / ' + this.copyTotal + ' at depth ' + this.copyDepth );
-				}
-			};
+				};
+				if( flags.shell )
+					flags.shell.copyObject = copyObject;
+			}
 		}
 
 		// Verified destinations are passing
@@ -4077,6 +4106,7 @@ window.FriendDOS =
 						}
 						catch( e )
 						{
+							console.log( 'Failed on file (2) ' + dest + ' -> ' + d );
 							return callback( 'Failed to get file info on ' + dest, { done: true } );
 						}
 						if( f && f.Type == 'Directory' )
@@ -4090,7 +4120,7 @@ window.FriendDOS =
 						else flags = { verifiedDestination: true };
 					}
 					cfcbk( src, dest, flags, callback, depth );
-				} );
+				}, flags.shell && flags.shell.cancelId ? flags.shell.cancelId : false );
 			}
 		}
 
@@ -4107,6 +4137,9 @@ window.FriendDOS =
 			// Get door objects
 			let doorSrc = ( new Door() ).get( src );
 			let doorDst = ( new Door() ).get( dest );
+			
+			doorSrc.cancelId = ( flags.shell && flags.shell.cancelId ) ? flags.shell.cancelId : false;
+			doorDst.cancelId = ( flags.shell && flags.shell.cancelId ) ? flags.shell.cancelId : false;
 
 			// Don't copy to self
 			let srcPath = src;
@@ -4153,18 +4186,19 @@ window.FriendDOS =
 			doorSrc.path = pthTest;
 			
 			copyObject.processes++;
+			if( flags.shell && flags.shell.stop == true ) return;
+			
 			doorSrc.getIcons( false, function( data )
 			{
 				copyObject.completed++;
 				
 				let compareCount = 0;
 				
-				// TODO: Implement abort
 				for( let a = 0; a < data.length; a++ )
 				{
-					//console.log( '>>> Examining: ' + data[a].Path );
 					// Make a trim
 					let compare = data[a].Path;
+					
 					if(
 						data[a].Path.substr( data[a].Path.length - 1, 1 ) == '/' &&
 						src.substr( src.length - 1, 1 ) != '/'
@@ -4177,7 +4211,7 @@ window.FriendDOS =
 					let compared = false;
 					let finalSrc = src;
 					// TODO: If the filename contains actually a '*' sign, then switch order on these if's!
-					if( src.indexOf( '*' ) )
+					if( src.indexOf( '*' ) > 0 )
 					{
 						// If src fits wildcard!
 						let srcCmpPos = src.indexOf( '*' ) + 1;
@@ -4191,7 +4225,10 @@ window.FriendDOS =
 							finalSrc = compare;
 						}
 					}
-					else if( compare == src ) compared = true;
+					else if( compare == src )
+					{
+					    compared = true;
+				    }
 					
 					if( compared )
 					{
@@ -4211,6 +4248,7 @@ window.FriendDOS =
 				   			copyObject.processes++;
 							doorSrc.dosAction( 'makedir', { path: destination }, function()
 							{
+								if( flags.shell && flags.shell.stop == true ) return;
 								copyObject.completed++;
 								let d = ( new Door() ).get( p );
 								
@@ -4218,18 +4256,22 @@ window.FriendDOS =
 								copyObject.processes++;
 								d.getIcons( p, function( subs )
 								{
+									if( flags.shell && flags.shell.stop == true ) return;
 									copyObject.completed++;
 									function CopyAndCallback( dcp, dfn, move )
 									{
 										copyObject.processes++;
 										doorSrc.dosAction( 'copy', { from: dcp, to: destination + dfn }, function( result )
 										{
+											if( flags.shell && flags.shell.stop == true ) return;
 											copyObject.completed++;
 											if( move )
 											{
 												// Done moving one
+												copyObject.processes++;
 												doorSrc.dosAction( 'delete', { path: dcp, notrash: flags.notrash }, function( result )
 												{
+													copyObject.completed++;
 													console.log( 'Deleted ' + dcp + ' ->', result );
 												} );
 												callback( 'Moved ' + dcp + ' to ' + destination + dfn );
@@ -4281,6 +4323,8 @@ window.FriendDOS =
 							doorDst = new Door( dest );
 							doorDst.dosAction( 'info', { path: dest }, function( result )
 							{
+								copyObject.completed++;
+								if( flags.shell && flags.shell.stop == true ) return;
 								let lastChar = destination.substr( -1, 1 );
 								if( result.substr( 0, 5 ) != 'fail<' )
 								{
@@ -4302,17 +4346,22 @@ window.FriendDOS =
 									}
 									catch( e )
 									{
-										callback( 'Failed to ' + ( move ? 'move' : 'copy' ) + ' file...', { done: true } );
+										//callback( 'Failed to ' + ( move ? 'move' : 'copy' ) + ' file...', { done: true } );
+										//console.log( 'Failed on file ' + dest + ' -> ' + result );
 									}
 								}
+								copyObject.processes++;
 								doorSrc.dosAction( 'copy', { from: finalSrc, to: destination }, function( result )
 								{
+									if( flags.shell && flags.shell.stop == true ) return;
 									if( move )
 									{
 										callback( 'Moved ' + finalSrc + ' to ' + destination + '..' );
 										// Done moving one
+										copyObject.processes++;
 										doorSrc.dosAction( 'delete', { path: finalSrc, notrash: flags.notrash }, function( result )
 										{
+											copyObject.completed++;
 											console.log( 'Deleted ' + finalSrc + ' ->', result );
 										} );
 									}
@@ -4560,9 +4609,11 @@ window.FriendDOS =
 	},
 
 	// Callback format myFunc( bool return value, data )
-	getFileInfo: function( path, callback )
+	getFileInfo: function( path, callback, cancelId = false )
 	{
 		let l = new Library( 'system.library' );
+		if( cancelId )
+			l.cancelId = cancelId;
 		l.onExecuted = function( e, d )
 		{
 			if( callback ) callback( e == 'ok' ? true : false, d );
@@ -4627,7 +4678,7 @@ window.FriendDOS =
 	},
 	
 	// Opens a window based on filepath (used for opening files hosted external)  
-	openWindowByFilename: function( fileInfo, ext )
+	openWindowByFilename: function( fileInfo, ext, appId = false )
 	{
 		if( typeof( fileInfo ) === "string" )
 		{
@@ -4646,7 +4697,16 @@ window.FriendDOS =
 		{
 			if( !ext )
 			{
-				ext = fileInfo.Path ? fileInfo.Path.split( '.' ) : ( fileInfo.Filename ? fileInfo.Filename.split( '.' ) : fileInfo.Title.split( '.' ) );
+				ext = fileInfo.Path ? fileInfo.Path.split( '.' ) : ( fileInfo.Filename ? fileInfo.Filename.split( '.' ) : ( fileInfo.Title ? fileInfo.Title.split( '.' ) : false ) );
+				if( ext == false )
+				{
+					// Support url instead
+					if( fileInfo.Url )
+					{
+						return OpenWindowByUrl( fileInfo.Url, fileInfo );
+					}
+					return false;
+				}
 				ext = ext[ext.length-1];
 			}
 		}
@@ -4661,7 +4721,9 @@ window.FriendDOS =
 			MetaType     : ( fileInfo.MetaType     ? fileInfo.MetaType     : 'File' ),
 			Path         : ( fileInfo.Path         ? fileInfo.Path         : ''     ),
 			Type         : ( fileInfo.Type         ? fileInfo.Type         : 'File' ),
-			downloadhref : ( fileInfo.downloadhref ? fileInfo.downloadhref : ''     )
+			downloadhref : ( fileInfo.downloadhref ? fileInfo.downloadhref : ''     ),
+			flags        : ( fileInfo.flags        ? fileInfo.flags        : null   ),
+			applicationId: appId
 		};
 		
 		return OpenWindowByFileinfo( fileInfo );

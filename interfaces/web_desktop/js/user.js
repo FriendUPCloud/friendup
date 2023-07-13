@@ -212,6 +212,19 @@ Friend.User = {
 					Workspace.userLevel = json.level;
 					Workspace.fullName = json.fullname;
 					
+					// Silence non-admin user's debug
+					if( Workspace.userLevel != 'admin' )
+					{
+						console.log( '%cWelcome to %cFriend OS!', 'font-weight: bold;', 'font-weight: bold; color: #5599ff;' );
+						window.console.log = function( msg ){};
+					}
+					else
+					{
+						console.log( '%cWelcome to %cFriend OS, %cadministrator!', 'font-weight: bold;', 'font-weight: bold; color: #5599ff;', 'color: inherit; font-weight: bold' );
+						console.log( 'This console may become messy with error reporting.' );
+						console.log( '****' );
+					}
+					
 					// If we have inviteHash, verify and add relationship between the inviter and the invitee.
 					if( info.inviteHash ) json.inviteHash = info.inviteHash;
 					
@@ -320,6 +333,11 @@ Friend.User = {
     {
     	if( !cbk ) cbk = false;
     	
+    	if( GetCookie( 'remcreds' ) )
+    	{
+    	    DelCookie( 'remcreds' );
+    	}
+    	
     	// FIXME: Remove this - it is not used anymore
 		window.localStorage.removeItem( 'WorkspaceUsername' );
 		window.localStorage.removeItem( 'WorkspacePassword' );
@@ -353,32 +371,75 @@ Friend.User = {
 				}
 			}
 
-			let m = new cAjax();
-			m.open( 'get', '/system.library/user/logout/?sessionid=' + Workspace.sessionId, true );
-			m.forceHTTP = true;
-			m.send();
-			
-			if( !cbk )
+			if( typeof friendApp != 'undefined' && typeof friendApp.get_app_token == 'function' )
 			{
-				setTimeout( doLogout, 500 );
+				let ud = new cAjax();
+				//ud.open( 'get', '/system.library/mobile/deleteuma/?sessionid=' + Workspace.sessionId + '&token=' + window.Base64alt.encode( friendApp.get_app_token() ) , true );
+				ud.open( 'get', '/system.library/mobile/deleteuma/?sessionid=' + Workspace.sessionId + '&token=' + friendApp.get_app_token() , true );
+				//
+				ud.forceHTTP = true;
+				ud.onload = function( lmdata )
+                        	{
+                                	console.log('DeleteUma finished: ' + lmdata );
+					let m = new cAjax();
+                                	m.open( 'get', '/system.library/user/logout/?sessionid=' + Workspace.sessionId, true );
+                                	m.forceHTTP = true;
+                                	m.send();
+
+                                	if( !cbk )
+                                	{
+                                        	setTimeout( doLogout, 500 );
+                                	}
+                                	else
+                                	{
+                                        	if( Workspace.conn )
+                                        	{
+                                                	try
+                                                	{
+                                                	        Workspace.conn.ws.close();
+                                               		}
+                                                	catch( e )
+                                                	{
+                                                        	console.log( 'Could not close conn.' );
+                                                	}
+                                                	delete Workspace.conn;
+                                                	Workspace.conn = null;
+                                        	}
+                                        	Workspace.sessionId = '';
+                                        	cbk();
+                                	}
+                        	};
+				ud.send();
 			}
 			else
 			{
-				if( Workspace.conn )
+				let m = new cAjax();
+				m.open( 'get', '/system.library/user/logout/?sessionid=' + Workspace.sessionId, true );
+				m.forceHTTP = true;
+				m.send();
+			
+				if( !cbk )
 				{
-					try
-					{
-						Workspace.conn.ws.close();
-					}
-					catch( e )
-					{
-						console.log( 'Could not close conn.' );
-					}
-					delete Workspace.conn;
-					Workspace.conn = null;
+					setTimeout( doLogout, 500 );
 				}
-				Workspace.sessionId = '';
-				cbk();
+				else
+				{
+					if( Workspace.conn )
+					{
+						try
+						{
+							Workspace.conn.ws.close();
+						}
+						catch( e )
+						{
+							console.log( 'Could not close conn.' );
+						}
+						delete Workspace.conn;
+						Workspace.conn = null;
+					}
+					Workspace.sessionId = '';
+					cbk();
+				}
 			}
 		} );
 		// Could be there will be no connection..
@@ -611,9 +672,13 @@ Friend.User = {
 				if( Workspace.refreshDesktop )
 					Workspace.refreshDesktop( true, false );
 				// Try to reboot the websocket
-				if( !Workspace.conn && Workspace.initWebSocket )
+				if( ( !Workspace.conn || Workspace.conn == null ) && Workspace.initWebSocket )
 				{
 					Workspace.initWebSocket();
+				}
+				else if( !Workspace.initWebSocket )
+				{
+				    return setTimeout( function(){ Friend.User.SetUserConnectionState( mode, force ); }, 25 );
 				}
 				else
 				{

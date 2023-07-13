@@ -32,12 +32,15 @@ html body[mobile].Login
 	background-image: none;
 }
 
-body.Login .View
+html > body:not([mobile]).Login div #Login.View
 {
 	box-shadow: none;
 	border: 0;
 	background: transparent;
+	border-radius: 15px;
 }
+
+body .ViewTitle { display: none; }
 
 body.Login .View > .Content:before
 {

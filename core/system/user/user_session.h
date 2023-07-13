@@ -69,6 +69,7 @@ typedef struct UserSession
 	time_t					us_LastActionTime;			// last update from user
 	time_t					us_CreationTime;			// last login
 	int						us_Status;					// session status
+	int						us_ChangeState;				// if is in change state
 	
 	File					*us_OpenedFiles;			// opened files in user session
 	
@@ -89,13 +90,15 @@ typedef struct UserSession
 	time_t					us_LastPingTime;		// ping timestamp
 	void					*us_WSD;				// pointer to WebsocketData
 	FQueue					us_MsgQueue;			// message queue
+	
+	char					*us_FCID;					// FriendCore ID (ID of session where user session is handled)
 }UserSession;
 
 //
 //
 //
 
-UserSession *UserSessionNew( char *sessid, char *devid );
+UserSession *UserSessionNew( char *sessid, char *devid, char *fcid );
 
 //
 //
@@ -123,6 +126,23 @@ int UserSessionWebsocketWrite( UserSession *us, unsigned char *msgptr, int msgle
 #define IS_SESSION_ADMIN( us ) ( us->us_User != NULL && us->us_User->u_IsAdmin == TRUE )
 #endif
 
+#ifndef USERSESSION_LOCK
+#define USERSESSION_LOCK( US ) \
+while( US->us_ChangeState != FALSE ){ usleep( 2000 ); } \
+if( FRIEND_MUTEX_LOCK( &(US->us_Mutex) ) == 0 ){ \
+	US->us_InUseCounter++; \
+	FRIEND_MUTEX_UNLOCK( &(US->us_Mutex) ); \
+}
+#endif
+
+#ifndef USERSESSION_UNLOCK
+#define USERSESSION_UNLOCK( US ) \
+if( FRIEND_MUTEX_LOCK( &(US->us_Mutex) ) == 0 ){ \
+	US->us_InUseCounter--; \
+	FRIEND_MUTEX_UNLOCK( &(US->us_Mutex) ); \
+}
+#endif
+
 static FULONG UserSessionDesc[] = { 
     SQLT_TABNAME, (FULONG)"FUserSession",       
     SQLT_STRUCTSIZE, sizeof( struct UserSession ), 
@@ -133,6 +153,7 @@ static FULONG UserSessionDesc[] = {
 	SQLT_INT,			(FULONG)"LastActionTime", 	offsetof( struct UserSession, us_LastActionTime ),
 	SQLT_INT,			(FULONG)"CreationTime", 	offsetof( struct UserSession, us_CreationTime ),
 	SQLT_INT,			(FULONG)"UMA_ID",			offsetof( struct UserSession, us_MobileAppID ),
+	SQLT_STR,			(FULONG)"FCID",				offsetof( struct UserSession, us_FCID ),
 	SQLT_INIT_FUNCTION,	(FULONG)"init",				(FULONG)&UserSessionInit,
 	SQLT_NODE,			(FULONG)"node",				offsetof( struct UserSession, node ),
 	SQLT_END 

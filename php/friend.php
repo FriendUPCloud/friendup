@@ -22,7 +22,7 @@ flush();
 
 set_time_limit( 10 ); // Replace this one later in the script if you need to!
 
-define( 'FRIEND_VERSION', 'v1.2.8' );
+define( 'FRIEND_VERSION', 'v1.3.0' );
 
 // Separator aware json encode/decode
 function friend_json_encode( $object )
@@ -60,8 +60,15 @@ function FriendCall( $queryString = false, $flags = false, $post = false, $retur
 {
 	global $Config;
 	$ch = curl_init();
+	// Direct to server
 	if( !$queryString )
 		$queryString = ( $Config->SSLEnable ? 'https://' : 'http://' ) . ( $Config->FCOnLocalhost ? 'localhost' : $Config->FCHost ) . ':' . $Config->FCPort;
+	// Short hand
+	else if( substr( $queryString, 0, 16 ) == '/system.library/' )
+	{
+		$base = ( $Config->SSLEnable ? 'https://' : 'http://' ) . ( $Config->FCOnLocalhost ? 'localhost' : $Config->FCHost ) . ':' . $Config->FCPort;
+		$queryString = $base . $queryString;
+	}
 	curl_setopt( $ch, CURLOPT_URL, $queryString );
 	curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
 	curl_setopt( $ch, CURLOPT_EXPECT_100_TIMEOUT_MS, false );
@@ -203,7 +210,7 @@ function getDefaultTheme()
 			return $th;
 		}
 	}
-	return 'friendup12';
+	return 'friendup13';
 }
 
 // Find apps and search path..

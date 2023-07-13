@@ -87,7 +87,7 @@ static FULONG UserLoginDesc[] = {
 };
 
 //
-//
+// Link user to group
 //
 
 typedef struct UserGroupLink
@@ -155,7 +155,7 @@ typedef struct User
 	File						*u_WebDAVDevs;					// shared webdav resources 
 	int							u_WebDAVDevsNr;					// number of mounted webdav drives
 	
-	UserGroupLink				*u_UserGroupLinks;				// user groups
+	UserGroupLink				*u_UserGroupLinks;				// user groups which have drives
 	//UserGroup					**u_Groups;						// pointer to groups to which user is assigned (table of pointers)
 	//int							u_GroupsNr;					// number of assigned groups
 	UserApplication				*u_Applications;				// pointer to application settings
@@ -181,6 +181,7 @@ typedef struct User
 	char						*u_Timezone;					// timezone
 	int							u_InUse;						// usage counter
 	FBOOL						u_ChangeState;					// if user session list is in change state
+	FBOOL						u_MountDriveInProgress;			// if something is trying to mount device on user
 } User;
 
 //
@@ -298,7 +299,19 @@ File *UserGetDeviceByName( User *usr, const char *name );
 //
 //
 
-int UserRegenerateSessionID( User *usr, char *newsess );
+File *UserGetDeviceByPath( User *usr, char **dstpath, const char *path );
+
+//
+//
+//
+
+int UserAddToGroup( User *usr, UserGroup *ug );
+
+//
+//
+//
+
+int UserRemoveFromGroup( User *usr, FUQUAD groupid );
 
 //
 //
@@ -316,13 +329,19 @@ void UserDeleteGroupLinkAll( UserGroupLink *ugl );
 //
 //
 
-void UserRemoveFromGroups( User *u );
+//void UserRemoveFromGroups( User *u );
 
 //
 //
 //
 
-FBOOL UserIsInGroup( User *usr, FULONG gid );
+void UserRemoveFromGroupsDB( void *sb, User *u );
+
+//
+//
+//
+
+FBOOL UserIsInGroupDB( void *sb, User *usr, FULONG gid );
 
 //
 //
@@ -369,5 +388,53 @@ static FULONG UserDesc[] = {
 	SQLT_END 
 };
 
+/*
+CREATE TABLE IF NOT EXISTS `FUserToDelete` (
+	`ID` bigint(32) NOT NULL AUTO_INCREMENT,
+	`UserName` char(512) NOT NULL,
+	`UserID` bigint(32) NOT NULL,
+	PRIMARY KEY (`ID`) 
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
+*/
+
+//
+// user structure
+//
+
+typedef struct UserToDelete
+{
+	MinNode						node;
+	FULONG						utd_ID;
+	char						*utd_UserName;
+	FULONG						utd_UserID;
+}UserToDelete;
+
+//
+//
+//
+
+UserToDelete *UserToDeleteNew( );
+
+//
+//
+//
+
+void UserToDeleteDelete( UserToDelete *del );
+
+//
+//
+//
+
+static FULONG FUserToDeleteDesc[] = { 
+    SQLT_TABNAME, (FULONG)"FUser",       
+    SQLT_STRUCTSIZE, sizeof( struct User ), 
+	SQLT_IDINT,			(FULONG)"ID",				offsetof( struct UserToDelete, utd_ID ), 
+	SQLT_STR,			(FULONG)"UserName",			offsetof( struct UserToDelete, utd_UserName ),
+	SQLT_INT,			(FULONG)"UserID",			offsetof( struct UserToDelete, utd_UserID ),
+	SQLT_INIT_FUNCTION,	(FULONG)"init",				(FULONG)0,
+	SQLT_NODE,			(FULONG)"node",				offsetof( struct User, node ),
+	SQLT_END 
+};
+	
 
 #endif // __SYSTEM_USER_USER_H__

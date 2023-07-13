@@ -84,6 +84,13 @@ typedef struct WebSocket
 // FriendCoreWebsocketData structure
 //
 
+enum {
+	WSC_STATUS_INIT = 0,
+	WSC_STATUS_ACTIVE,
+	WSC_STATUS_TO_BE_REMOVED,
+	WSC_STATUS_DELETED
+};
+
 #ifndef WS_CALLS_LOG
 #define WS_CALLS_LOG
 #define WS_CALLS_MAX 10
@@ -97,29 +104,8 @@ typedef struct WSCData
 	pthread_mutex_t					wsc_Mutex;
 	int								wsc_InUseCounter;
 	int								wsc_UpdateLoggedTimeCounter;	// this field says how many calls left to call LoggedTime update on FUser table
+	int								wsc_Status;
 }WSCData;
-
-/*
-typedef struct WSCData
-{
-	void							*wsc_SystemBase;
-	struct lws				 		*wsc_Wsi;
-	int								wsc_InUseCounter;
-	void							*wsc_UserSession;
-	void 							*wsc_WebsocketsServerClient;
-	pthread_mutex_t					wsc_Mutex;
-	FQueue							wsc_MsgQueue;
-	//FBOOL							wsc_ToBeRemoved;
-	time_t							wsc_LastPingTime;
-	//int								wsc_Status;	//enabled=0, disabled=1
-	BufString						*wsc_Buffer;
-	
-#ifdef WS_CALLS_LOG
-	int								wsc_DebugPos;
-	char							wsc_DebugCalls[ WS_CALLS_MAX ][ 256 ];
-#endif
-}WSCData;
-*/
 
 //
 //

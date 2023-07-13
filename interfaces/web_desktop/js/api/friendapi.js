@@ -77,7 +77,6 @@ Friend.addToAPI = function( functionPath, argumentNames, properties, parentClass
 		parentClass.APIDefinition[ functionPath ] = definition;
 		return true;
 	}
-	console.log( 'ERROR - API function not found: ' + functionPath );
 	return 'ERROR - API function not found: ' + functionPath;
 };
 

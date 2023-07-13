@@ -18,6 +18,21 @@ var FUI_MOUSEDOWN_SCROLLV = 10;
 var FUI_WINDOW_MARGIN     =  3;
 var FUI_MOUSEDOWN_PICKOBJ = 11;
 
+/* Make sure we figure out what the browser fires --------------------------- */
+
+var friendInputMethodOverride = false;
+
+window.addEventListener( 'touchstart', function()
+{
+    if( !friendInputMethodOverride )
+        friendInputMethodOverride = 'touch';
+} );
+window.addEventListener( 'click', function()
+{
+    if( !friendInputMethodOverride )
+        friendInputMethodOverride = 'click';
+} );
+
 /* Done important flags for GUI elements ------------------------------------ */
 
 // Container of settings for virtual workspaces
@@ -48,6 +63,22 @@ function cleanVirtualWorkspaceInformation()
 			virtualWorkspaces[ a ].activeWindow = null;
 		}
 	}
+}
+
+function isTouchDevice()
+{
+    // We found an override
+	if( friendInputMethodOverride == 'touch' )
+	{
+	    return true;
+	}
+	else if( friendInputMethodOverride == 'click' )
+	{
+	    return false;
+	}
+	return ( ( 'ontouchstart' in window ) ||
+    	( navigator.maxTouchPoints > 0 ) ||
+    	( navigator.msMaxTouchPoints > 0 ) );
 }
 
 // Window information
@@ -92,7 +123,7 @@ var mousePointer =
 			let moveWin = false;
 			
 			// Get mouse coords
-			if( window.isTablet || window.isMobile )
+			if( isTouchDevice() )
 			{
 				windowMouseX = e.touches[0].pageX;
 				windowMouseY = e.touches[0].pageY;
@@ -109,7 +140,7 @@ var mousePointer =
 			
 			// Check move on window
 			let z = 0;
-			for ( var a in movableWindows )
+			for( let a in movableWindows )
 			{
 				let wn = movableWindows[a];
 				let wnZ = parseInt ( wn.style.zIndex );
@@ -163,7 +194,7 @@ var mousePointer =
 			// Check screens and view windows
 			let screens = [];
 			let screenl = ge( 'Screens' );
-			for( var a = 0; a < screenl.childNodes.length; a++ )
+			for( let a = 0; a < screenl.childNodes.length; a++ )
 			{
 				if( screenl.childNodes[a].tagName == 'DIV' && screenl.childNodes[a].classList && screenl.childNodes[a].classList.contains( 'Screen' ) )
 				{
@@ -171,11 +202,11 @@ var mousePointer =
 				}
 			}
 			let ars = [];
-			for( var a in movableWindows )
+			for( let a in movableWindows )
 				ars.push( movableWindows[a] );
 			ars = ars.concat( screens );
 		
-			for( var c in ars )
+			for( let c in ars )
 			{
 				let isListView = false;
 				let isScreen = false;
@@ -228,14 +259,14 @@ var mousePointer =
 				
 				let hoverIcon = false;
 				
-				for( var a = 0; a < w.icons.length; a++ )
+				for( let a = 0; a < w.icons.length; a++ )
 				{
 					let ic = w.icons[a].domNode;
 					let icon = w.icons[a];
 			
 					// Exclude elements dragged
 					let found = false;
-					for( var b = 0; b < this.dom.childNodes.length; b++ )
+					for( let b = 0; b < this.dom.childNodes.length; b++ )
 					{
 						if( ic == this.dom.childNodes[b] )
 							found = true;
@@ -274,7 +305,7 @@ var mousePointer =
 				}
 			}
 			// Register roll out!
-			for( var a in window.movableWindows )
+			for( let a in window.movableWindows )
 			{
 				let wd = window.movableWindows[a];
 				if( ( !mover && wd.rollOut ) || ( wd != moveWin && wd.rollOut ) )
@@ -316,7 +347,7 @@ var mousePointer =
 			
 			// Check drop on tray icon
 			let titems = ge( 'Tray' ).childNodes;
-			for( var a = 0; a < titems.length; a++ )
+			for( let a = 0; a < titems.length; a++ )
 			{
 				let tr = titems[a];
 				let l = GetElementLeft( tr ); // left
@@ -327,7 +358,7 @@ var mousePointer =
 				{
 					dropper = tr;
 					let objs = [];
-					for( var k = 0; k < this.elements.length; k++ )
+					for( let k = 0; k < this.elements.length; k++ )
 					{
 						let e = this.elements[k];
 						if ( e.fileInfo.getDropInfo ) {
@@ -356,7 +387,7 @@ var mousePointer =
 			// Check screens and view windows
 			let screens = [];
 			let screenl = ge( 'Screens' );
-			for( var a = 0; a < screenl.childNodes.length; a++ )
+			for( let a = 0; a < screenl.childNodes.length; a++ )
 			{
 				if( screenl.childNodes[a].tagName == 'DIV' && screenl.childNodes[a].classList && screenl.childNodes[a].classList.contains( 'Screen' ) )
 				{
@@ -364,7 +395,7 @@ var mousePointer =
 				}
 			}
 			let ars = [];
-			for( var a in movableWindows )
+			for( let a in movableWindows )
 			{
 				// Don't check minimized windows
 				if( movableWindows[a].parentNode.getAttribute( 'minimized' ) ) continue;
@@ -383,7 +414,7 @@ var mousePointer =
 			if( !dropper )
 			{
 				let z = 0;
-				for ( let a in ars )
+				for( let a in ars )
 				{
 					let wn = ars[a];
 					let wnZ = parseInt ( wn.style.zIndex );
@@ -424,7 +455,7 @@ var mousePointer =
 			if( !skipDropCheck )
 			{
 				// Find what we dropped on
-				for( var c in ars )
+				for( let c in ars )
 				{
 					let isListView = false;
 					let isScreen = false;
@@ -480,7 +511,7 @@ var mousePointer =
 					}
 				
 					// Drop on icon
-					for ( var a = 0; a < w.icons.length; a++ )
+					for( let a = 0; a < w.icons.length; a++ )
 					{
 						let ic = w.icons[a].domNode;
 				
@@ -517,7 +548,7 @@ var mousePointer =
 				{
 					let z = 0;
 					let dropWin = 0;
-					for( var a = 0; a < __desklets.length; a++ )
+					for( let a = 0; a < __desklets.length; a++ )
 					{
 						let wn = __desklets[a].dom;
 						let wnZ = parseInt ( wn.style.zIndex );
@@ -575,7 +606,7 @@ var mousePointer =
 				}
 				else
 				{
-					for( var k = 0; k < this.elements.length; k++ )
+					for( let k = 0; k < this.elements.length; k++ )
 					{
 						let e = this.elements[k];
 						if( e.fileInfo )
@@ -620,7 +651,7 @@ var mousePointer =
 					{
 						// Check if we can place desktop shortcuts
 						let files = [];
-						for( var a = 0; a < objs.length; a++ )
+						for( let a = 0; a < objs.length; a++ )
 						{
 							if( objs[ a ].Type == 'Executable' )
 							{
@@ -658,7 +689,7 @@ var mousePointer =
 			// Place back again
 			if( !dropped || !dropper )
 			{
-				for( var a = 0; a < this.elements.length; a++ )
+				for( let a = 0; a < this.elements.length; a++ )
 				{
 					if( this.elements[a].ondrop )
 						this.elements[a].ondrop( dropper );
@@ -677,7 +708,7 @@ var mousePointer =
 			// Remove
 			else
 			{
-				for( var a = 0; a < this.elements.length; a++ )
+				for( let a = 0; a < this.elements.length; a++ )
 				{
 					if( this.elements[a].ondrop )
 						this.elements[a].ondrop( dropper );
@@ -706,7 +737,7 @@ var mousePointer =
 	pickup: function ( ele, e )
 	{
 		// Do not allow pickup for mobile
-		if( window.isMobile || window.isTablet ) return;
+		if( isTouchDevice() ) return;
 		
 		if( !e ) e = window.event;
 		let ctrl = e && ( e.ctrlKey || e.shiftKey || e.command );
@@ -729,7 +760,7 @@ var mousePointer =
 				return false;
 			}
 			
-			for( var a = 0; a < ele.window.icons.length; a++ )
+			for( let a = 0; a < ele.window.icons.length; a++ )
 			{
 				let ic = ele.window.icons[a];
 
@@ -761,14 +792,14 @@ var mousePointer =
 			let maxx = 99999;
 			let maxy = 99999;
 			let elements = this.elements;
-			for( var a = 0; a < elements.length; a++ )
+			for( let a = 0; a < elements.length; a++ )
 			{
 				if( parseInt( elements[ a ].style.left ) < maxx )
 					maxx = parseInt( elements[ a ].style.left );
 				if( parseInt( elements[ a ].style.top ) < maxy )
 					maxy = parseInt( elements[ a ].style.top );
 			}
-			for( var a = 0; a < elements.length; a++ )
+			for( let a = 0; a < elements.length; a++ )
 			{
 				elements[ a ].style.left = parseInt( elements[ a ].style.left ) - maxx + 'px';
 				elements[ a ].style.top = parseInt( elements[ a ].style.top ) - maxy + 'px';
@@ -898,7 +929,7 @@ function addSecureDropWidget( windowobject, objects )
 	{
 		w.setContent( data, function()
 		{
-			for( var a = 0; a < objects.length; a++ )
+			for( let a = 0; a < objects.length; a++ )
 			{
 				let url = getImageUrl( objects[ a ].Path )
 				let im = new Image();
@@ -1048,7 +1079,7 @@ function GetThemeInfo( property )
 		themeInfo.loaded = true;
 		// Flush old rules
 		let sheet = false;
-		for( var a = 0; a < document.styleSheets.length; a++ )
+		for( let a = 0; a < document.styleSheets.length; a++ )
 		{
 			if( document.styleSheets[a].href && document.styleSheets[a].href.indexOf( 'theme' ) > 0 )
 			{
@@ -1058,7 +1089,7 @@ function GetThemeInfo( property )
 		}
 		if( sheet )
 		{
-			for( var a = 0; a < sheet.cssRules.length; a++ )
+			for( let a = 0; a < sheet.cssRules.length; a++ )
 			{
 				let rule = sheet.cssRules[a];
 				let key = false;
@@ -1144,7 +1175,7 @@ function CoverScreens( sticky )
 	// Disable all screen overlays
 	let screenc = ge ( 'Screens' );
 	let screens = screenc.getElementsByTagName( 'div' );
-	for( var a = 0; a < screens.length; a++ )
+	for( let a = 0; a < screens.length; a++ )
 	{
 		if( !screens[a].className ) continue;
 		if( screens[a].parentNode != screenc ) continue;
@@ -1159,7 +1190,7 @@ function CoverOtherScreens()
 	// Disable all screen overlays
 	let screenc = ge ( 'Screens' );
 	let screens = screenc.getElementsByTagName ( 'div' );
-	for( var a = 0; a < screens.length; a++ )
+	for( let a = 0; a < screens.length; a++ )
 	{
 		if( !screens[a].className ) continue;
 		if( screens[a].parentNode != screenc ) continue;
@@ -1176,7 +1207,7 @@ function ExposeScreens()
 	// Disable all screen overlays
 	let screenc = ge ( 'Screens' );
 	let screens = screenc.getElementsByTagName ( 'div' );
-	for( var a = 0; a < screens.length; a++ )
+	for( let a = 0; a < screens.length; a++ )
 	{
 		if( !screens[a].className ) continue;
 		if( screens[a].parentNode != screenc ) continue;
@@ -1190,7 +1221,7 @@ function ExposeScreens()
 // Find a movable window by title string
 function FindWindowById ( id )
 {
-	for ( var i in movableWindows )
+	for( let i in movableWindows )
 	{
 		if ( i == id )
 		{
@@ -1205,7 +1236,7 @@ function FindWindowById ( id )
 function GuiCreate ( obj )
 {
 	let str = '';
-	for ( var a = 0; a < obj.length; a++ )
+	for( let a = 0; a < obj.length; a++ )
 	{
 		switch( typeof ( obj[a] ) )
 		{
@@ -1232,7 +1263,7 @@ function GuiColumns( data )
 	let widths = data[0];
 	let content = data[1];
 	let str = '<table class="GuiColums"><tr>';
-	for ( var a = 0; a < widths.length; a++ )
+	for( let a = 0; a < widths.length; a++ )
 	{
 		if ( widths[a].indexOf ( '%' ) < 0 && widths[a].indexOf ( 'px' ) < 0 )
 			widths[a] += 'px';
@@ -1487,7 +1518,7 @@ function NewSelectBox ( divobj, height, multiple )
 	let opts = divobj.getElementsByTagName ( 'div' );
 	let sw = 1;
 	
-	for ( var a = 0; a < opts.length; a++ )
+	for( let a = 0; a < opts.length; a++ )
 	{
 		let tr = document.createElement ( 'tr' );
 		tr.className = 'sw' + sw + ( opts[a].className ? ( ' ' + opts[a].className ) : '' );
@@ -1544,7 +1575,7 @@ function _NewSelectBoxCheck ( pid, ele )
 	else pel = pid;
 	if ( !pel ) return false;
 	let els = pel.getElementsByTagName ( 'tr' );
-	for ( var a = 0; a < els.length; a++ )
+	for( let a = 0; a < els.length; a++ )
 	{
 		let inp = els[a].getElementsByTagName ( 'input' )[0];
 		if ( inp.checked )
@@ -1571,7 +1602,7 @@ function GetSelectBoxValue( pel )
 	if ( table.className.indexOf ( 'Checkboxes' ) > 0 )
 	{
 		let res = new Array ();
-		for ( var a = 0; a < inputs.length; a++ )
+		for( let a = 0; a < inputs.length; a++ )
 		{
 			if ( inputs[a].checked )
 			{
@@ -1582,9 +1613,9 @@ function GetSelectBoxValue( pel )
 	}
 	else if ( table.className.indexOf ( 'Radioboxes' ) > 0 )
 	{
-		for ( var a = 0; a < inputs.length; a++ )
+		for( let a = 0; a < inputs.length; a++ )
 		{
-			if ( inputs[a].checked )
+			if( inputs[a].checked )
 			{
 				return inputs[a].getAttribute ( 'value' );
 			}
@@ -1601,7 +1632,7 @@ function _NewSelectBoxRadio ( pid, ele )
 	else pel = pid;
 	if ( !pel ) return false;
 	let els = pel.getElementsByTagName ( 'tr' );
-	for ( var a = 0; a < els.length; a++ )
+	for( let a = 0; a < els.length; a++ )
 	{
 		let inp = els[a].getElementsByTagName ( 'input' )[0];
 		if ( inp.checked )
@@ -1624,7 +1655,7 @@ movableListener = function( e, data )
 	let ww = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
 	let wh = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
 	let x, y;
-	if( ( typeof( e.touches ) != 'undefined' && typeof( e.touches[0] ) != 'undefined' ) && ( window.isTablet || window.isMobile || isTouchDevice() ) )
+	if( ( typeof( e.touches ) != 'undefined' && typeof( e.touches[0] ) != 'undefined' ) && ( isTouchDevice() ) )
 	{
 		x = e.touches[0].pageX;
 		y = e.touches[0].pageY;
@@ -1727,7 +1758,7 @@ movableListener = function( e, data )
 								z: 0
 							};
 							
-							for( var z in movableWindows )
+							for( let z in movableWindows )
 							{
 								let mw = movableWindows[ z ];
 
@@ -2040,7 +2071,7 @@ movableListener = function( e, data )
 				if( w.windowObject && w.windowObject.widgets )
 				{
 					let wds = w.windowObject.widgets;
-					for( var z = 0; z < wds.length; z++ )
+					for( let z = 0; z < wds.length; z++ )
 					{
 						let vx = mx + ( isNaN( wds[z].tx ) ? 0 : wds[z].tx );
 						let vy = my + ( isNaN( wds[z].ty ) ? 0 : wds[z].ty );
@@ -2229,7 +2260,7 @@ movableListener = function( e, data )
 		}
 	}
 	// Mouse down on desktop (regions)
-	if( !window.isTablet && !window.isMobile && window.mouseDown == 4 && window.regionWindow )
+	if( !isTouchDevice() && window.mouseDown == 4 && window.regionWindow )
 	{
 		// Prime
 		if( window.regionWindow.directoryview )
@@ -2266,8 +2297,8 @@ function DrawRegionSelector( e )
 	}
 	
 	// Extra offset in content window
-	let mx = windowMouseX; var my = windowMouseY;
-	let diffx = 0;		   var diffy = 0; 
+	let mx = windowMouseX; let my = windowMouseY;
+	let diffx = 0;		   let diffy = 0; 
 	let ex = 0; var ey = 0;
 	let eh = 0; var ew = 0;
 	let rwc = window.regionWindow.classList;
@@ -2279,6 +2310,9 @@ function DrawRegionSelector( e )
 		// Window offset
 		ex = -window.regionWindow.parentNode.offsetLeft;
 		ey = -window.regionWindow.parentNode.offsetTop;
+		
+		// Check for other things
+		ex -= ge( 'DoorsScreen' ).offsetLeft;
 		
 		// Some implications per theme accounted for
 		if( rwc.contains( 'Content' ) )
@@ -2402,7 +2436,7 @@ function DrawRegionSelector( e )
 				}
 			}
 			
-			for ( var a = 0; a < icos.length; a++ )
+			for ( let a = 0; a < icos.length; a++ )
 			{
 				let ics = icos[a].domNode;
 				// Coords on icon
@@ -2473,7 +2507,7 @@ function MakeTableList( entries, headers )
 	if ( headers )
 	{
 		str += '<tr>';
-		for ( var a = 0; a < headers.length; a++ )
+		for( let a = 0; a < headers.length; a++ )
 		{
 			str += '<td>' + headers[a] + '</td>';
 		}
@@ -2483,10 +2517,10 @@ function MakeTableList( entries, headers )
 	if ( cols <= 0 )
 		cols = entries[0].length;
 	let sw = 1;
-	for ( var a = 0; a < entries.length; a++ )
+	for( let a = 0; a < entries.length; a++ )
 	{
 		str += '<tr class="sw' + sw + '">';
-		for ( var b = 0; b < cols; b++ )
+		for( let b = 0; b < cols; b++ )
 		{
 			str += '<td>' + entries[a][b] + '</td>';
 		}
@@ -2496,13 +2530,13 @@ function MakeTableList( entries, headers )
 	return str;
 }
 
-var workbenchMenus = new Array ();
-function SetMenuEntries ( menu, entries )
+var workbenchMenus = new Array();
+function SetMenuEntries( menu, entries )
 {
-	if ( typeof ( workbenchMenus[menu] ) == 'undefined' ) 
+	if( typeof ( workbenchMenus[menu] ) == 'undefined' ) 
 		workbenchMenus[menu] = new Array ();
 	workbenchMenus[menu].push ( entries );
-	if ( typeof ( RefreshWorkspaceMenu ) != 'undefined' )
+	if( typeof ( RefreshWorkspaceMenu ) != 'undefined' )
 		RefreshWorkspaceMenu ();
 }
 
@@ -2523,6 +2557,11 @@ movableMouseUp = function( e )
 	if( !e ) e = window.event;
 	
 	let target = e.target ? e.target : e.srcElement;
+	
+	if( target && ( target.nodeName == 'INPUT' || target.nodeName == 'TEXTAREA' ) )
+	{
+		return;
+	}
 	
 	// For mobile
 	if( isMobile )
@@ -2581,7 +2620,7 @@ movableMouseUp = function( e )
 			Workspace.toggleStartMenu( false );
 	}
 	
-	for( var a in movableWindows )
+	for( let a in movableWindows )
 	{
 		let m = movableWindows[a];
 		m.removeAttribute( 'moving' );
@@ -2616,8 +2655,14 @@ movableMouseUp = function( e )
 	{
 		if( Workspace.iconContextMenu )
 		{
-			Workspace.iconContextMenu.dom.querySelector( '.MenuItems' ).classList.add( 'Closing' );
-			Workspace.iconContextMenu.dom.querySelector( '.MenuItems' ).classList.remove( 'Open' );
+			let men = Workspace.iconContextMenu.dom.querySelector( '.MenuItems' );
+			if( men )
+			{
+				men.classList.add( 'Closing' );
+				men.classList.remove( 'Open' );
+				e.preventDefault();
+				cancelBubble( e );
+			}
 			setTimeout( function()
 			{
 				Workspace.iconContextMenu.hide();
@@ -2654,12 +2699,85 @@ var _screenTitleTimeout = null;
 var prevScreen = prevWindow = false;
 function CheckScreenTitle( screen, force )
 {	
+	// Support quickmenu
+	if( Workspace.setQuickMenu )
+	{
+		// When running with quickmenu, make sure we have an active view!
+        if( !window.currentMovable && window.canSetQuickMenu && window.canSetQuickmenu() )
+        {
+        	let highest = -1;
+        	let highestView = false;
+        	for( let a in movableWindows )
+        	{
+        		let mov = movableWindows[a];
+        		if( mov.windowObject && mov.windowObject.getFlag( 'invisible' ) ) continue;
+        		let candidateZ = parseInt( mov.style.zIndex );
+        		if( candidateZ > highest )
+        		{
+        			highest = candidateZ;
+        			highestView = mov;
+        		}
+        	}
+        	if( highestView )
+        	{
+        	    if( highestView.windowObject.getFlag( 'invisible' ) )
+        	    {
+        	        return;
+        	    }
+        		_ActivateWindow( highestView );
+        		if( window.hideDashboard ) window.hideDashboard();
+        		return;
+        	}
+        }
+        else if( currentMovable && currentMovable.classList.contains( 'Active' ) )
+        {
+            if( window.hideDashboard ) window.hideDashboard();
+        }
+        // We do have a current movable, use it
+        let wo = window.currentMovable;
+       
+        // Don't act on invisibles
+        if( wo && wo.windowObject.getFlag( 'invisible' ) )
+        {
+            return;
+        }
+        
+        if( wo && wo.quickMenu )
+        {       
+       	    Workspace.setQuickMenu( wo.quickMenu, wo );
+        }
+        else if( currentScreen && currentScreen.quickMenu )
+        {
+            Workspace.setQuickMenu( currentScreen.quickMenu, currentScreen );
+        }
+        // Just make a new one if it does not exist
+        else if( wo )
+        {
+            wo.quickMenu = {
+                uniqueName: MD5( Math.random() * 1000 + ( Math.random() * 1000 ) + '' ),
+                items: [ { name: i18n( 'i18n_back' ), message: { command: 'back' } } ]
+            };
+            Workspace.setQuickMenu( wo.quickMenu, wo );
+        }
+        else
+        {
+            if( Workspace.hideQuickMenu )
+                Workspace.hideQuickMenu();
+        }
+    }
+	
+	// Dashboard
+	if( window.Workspace && Workspace.dashboard && Workspace.dashboard !== true )
+		Workspace.dashboard.refresh( true );
+	
 	let testObject = screen ? screen : window.currentScreen;
 	if( !testObject && !force ) return;
 	
 	// Orphan node!
 	if( window.currentMovable && !( window.currentMovable.parentNode && window.currentMovable.parentNode.parentNode ) )
+	{
 		window.currentMovable = null;
+	}
 	
 	// If nothing changed, don't change
 	if( prevScreen && prevWindow && !force )
@@ -2759,9 +2877,16 @@ function CheckScreenTitle( screen, force )
 		if( obj && tit )
 		{
 			obj.setFlag( 'title', tit );
-			if( tit.indexOf( 'Friend Workspace' ) < 0 )
-				tit += ' - Friend Workspace';
-			document.title = tit;
+			if( Friend.windowBaseStringRules && Friend.windowBaseStringRules == 'replace' )
+			{
+				document.title = Friend.windowBaseString;
+			}
+			else
+			{
+				if( tit.indexOf( Friend.windowBaseString ) < 0 )
+					tit += ' - ' + Friend.windowBaseString;
+				document.title = tit;
+			}
 		}
 		
 		// Enable the global menu
@@ -2823,6 +2948,8 @@ function CheckMaximizedView()
 			document.body.classList.remove( 'ViewMaximized' );
 		}
 	}
+	if( window.pollLiveViews )
+		pollLiveViews();
 }
 
 // Get the taskbar element
@@ -2841,6 +2968,12 @@ function PollTaskbar( curr )
 	if( !document.body || !document.body.classList.contains( 'Inside' ) ) return;
 	if( ge( 'FriendScreenOverlay' ) && ge( 'FriendScreenOverlay' ).classList.contains( 'Visible' ) )
 		return;
+	
+	// Do we have dashboard?
+	if( window.Workspace && Workspace.dashboard && Workspace.dashboard !== true && Workspace.dashboard.refreshDashboard )
+	{
+	    Workspace.dashboard.refreshDashboard();
+	}
 		
 	if( globalConfig.viewList == 'docked' || globalConfig.viewList == 'dockedlist' )
 	{
@@ -2998,11 +3131,11 @@ function PollTaskbar( curr )
 			
 				// Remove tasks on the taskbar that isn't represented by a view
 				let cleaner = [];
-				for( var b = 0; b < t.tasks.length; b++ )
+				for( let b = 0; b < t.tasks.length; b++ )
 				{
 					// Look if this task is registered with a view
 					let f = false;
-					for( var a in movableWindows )
+					for( let a in movableWindows )
 					{
 						// Skip snapped windows
 						if( !movableWindows[ a ].snap && movableWindows[ a ].viewId == t.tasks[ b ].viewId )
@@ -3028,7 +3161,7 @@ function PollTaskbar( curr )
 			
 				t.tasks = cleaner; // Set cleaned task list
 			
-				for( var a in movableWindows )
+				for( let a in movableWindows )
 				{
 					let d = false;
 				
@@ -3054,7 +3187,7 @@ function PollTaskbar( curr )
 					}
 				
 					// Lets see if the view is a task we manage
-					for( var c = 0; c < t.tasks.length; c++ )
+					for( let c = 0; c < t.tasks.length; c++ )
 					{
 						if ( t.tasks[c].viewId == pn.viewId )
 						{
@@ -3187,7 +3320,7 @@ function PollTaskbar( curr )
 							if ( !e ) e = window.event;
 							let targ = e ? ( e.target ? e.target : e.srcElement ) : false;
 							if( extarg ) targ = extarg;
-							for( var n = 0; n < t.childNodes.length; n++ )
+							for( let n = 0; n < t.childNodes.length; n++ )
 							{
 								let ch = t.childNodes[ n ];
 								if( !ch.className ) continue;
@@ -3222,7 +3355,7 @@ function PollTaskbar( curr )
 									
 										if( div.attached )
 										{
-											for( var a = 0; a < div.attached.length; a++ )
+											for( let a = 0; a < div.attached.length; a++ )
 											{
 												if( !div.attached[ a ].minimized )
 												{
@@ -3267,7 +3400,7 @@ function PollTaskbar( curr )
 						if( d.applicationId )
 						{
 							let running = ge( 'Tasks' ).getElementsByTagName( 'iframe' );
-							for( var a = 0; a < running.length; a++ )
+							for( let a = 0; a < running.length; a++ )
 							{
 								let task = running[a];
 								// Find the window!
@@ -3699,6 +3832,17 @@ movableMouseDown = function ( e )
 {
 	if ( !e ) e = window.event;
 	
+	if( isTouchDevice() )
+	{
+		let active = document.activeElement;
+		let anod = '';
+		if( active ) anod = active.nodeName;
+		if( active && !( anod == 'TEXTAREA' || anod == 'INPUT' || active.getAttribute( 'contenteditable' ) ) )
+		{
+			active.blur();
+		}
+	}
+	
 	window.focus();
 	
 	// Close tray bubble
@@ -3718,7 +3862,7 @@ movableMouseDown = function ( e )
 	// Get target
 	let tar = e.srcElement ? e.srcElement : e.target;
 	
-	if( ( window.isTablet || window.isMobile ) && Workspace.contextMenuShowing )
+	if( isTouchDevice() && Workspace.contextMenuShowing )
 	{
 		Workspace.iconContextMenu.hide();
 		Workspace.contextMenuShowing = null;
@@ -3727,7 +3871,7 @@ movableMouseDown = function ( e )
 	}
 	
 	// TODO: Allow context menus!
-	if( !window.isMobile && !window.isTablet && ( rc || e.button != 0 ) )
+	if( !isTouchDevice() && ( rc || e.button != 0 ) )
 	{
 		return;
 	}
@@ -3869,7 +4013,6 @@ movableMouseDown = function ( e )
 		{
 			clearRegionIcons( { force: true } );
 		}
-		
 	}
 }
 
@@ -3886,7 +4029,7 @@ function convertIconsToMultiple()
 	if( currentMovable && currentMovable && currentMovable.content && currentMovable.content.icons )
 	{
 		let ics = currentMovable.content.icons;
-		for( var a = 0; a < ics.length; a++ )
+		for( let a = 0; a < ics.length; a++ )
 		{
 			if( ics[a].selected )
 			{
@@ -3915,23 +4058,23 @@ function clearRegionIcons( flags )
 	let multipleCheck = flags && flags.force ? 'none' : 'multiple';
 
 	// Clear all icons
-	for( var a in movableWindows )
+	for( let a in movableWindows )
 	{
 		let w = movableWindows[a];
 		if( w.content && w.content.icons )
 			w = w.content;
 		if ( w.icons )
 		{
-			for ( var a = 0; a < w.icons.length; a++ )
+			for ( let b = 0; b < w.icons.length; b++ )
 			{
-				let ic = w.icons[a].domNode;
+				let ic = w.icons[ b ].domNode;
 				if( ic && ic.className )
 				{
 					if( exception != ic && ic.selected != multipleCheck )
 					{
 						ic.classList.remove( 'Selected' );
-						w.icons[a].selected = false;
-						w.icons[a].file = false;
+						w.icons[ b ].selected = false;
+						w.icons[ b ].file = false;
 						ic.selected = false;
 					}
 					ic.classList.remove( 'Editing' );
@@ -3950,7 +4093,7 @@ function clearRegionIcons( flags )
 	// Clear desktop icons
 	if( window.Doors && Doors.screen && Doors.screen.contentDiv.icons )
 	{
-		for( var a = 0; a < Doors.screen.contentDiv.icons.length; a++ )
+		for( let a = 0; a < Doors.screen.contentDiv.icons.length; a++ )
 		{
 			let icon = Doors.screen.contentDiv.icons[a];
 			let ic = icon.domNode;
@@ -4093,54 +4236,49 @@ function ElementWindow ( ele )
 
 function InitGuibaseEvents()
 {
-	if( window.isTablet || window.isMobile || isTouchDevice() )
-	{
-		window.addEventListener( 'touchstart', movableMouseDown, false );
-		window.addEventListener( 'touchmove', movableListener, false );
-		window.addEventListener( 'touchend', movableMouseUp, false );
-	}
-	else
-	{
-		if( window.attachEvent )
-			window.attachEvent( 'onmouseup', movableMouseUp, false );
-		else window.addEventListener( 'mouseup', movableMouseUp, false );	
-		
-		if( window.attachEvent )
-			window.attachEvent ( 'onmousemove', movableListener, false );
-		else window.addEventListener( 'mousemove', movableListener, false );
-		
-		if( window.attachEvent )
-			window.attachEvent( 'onmousedown', movableMouseDown, false );
-		else window.addEventListener( 'mousedown', movableMouseDown, false );
+	window.addEventListener( 'touchstart', movableMouseDown, false );
+	window.addEventListener( 'touchmove', movableListener, false );
+	window.addEventListener( 'touchend', movableMouseUp, false );
 
-		if( window.attachEvent )
-			window.attachEvent( 'oncontextmenu', contextMenu, false );
-		else window.addEventListener( 'contextmenu', contextMenu, false );
+	if( window.attachEvent )
+		window.attachEvent( 'onmouseup', movableMouseUp, false );
+	else window.addEventListener( 'mouseup', movableMouseUp, false );	
+	
+	if( window.attachEvent )
+		window.attachEvent ( 'onmousemove', movableListener, false );
+	else window.addEventListener( 'mousemove', movableListener, false );
+	
+	if( window.attachEvent )
+		window.attachEvent( 'onmousedown', movableMouseDown, false );
+	else window.addEventListener( 'mousedown', movableMouseDown, false );
+
+	if( window.attachEvent )
+		window.attachEvent( 'oncontextmenu', contextMenu, false );
+	else window.addEventListener( 'contextmenu', contextMenu, false );
+	
+	// On blur, activate current movable (don't put it to front)
+	window.addEventListener( 'blur', function( e )
+	{
+		// Refresh the tray
+		PollTray();
 		
-		// On blur, activate current movable (don't put it to front)
-		window.addEventListener( 'blur', function( e )
+		let viewObject = null;
+		if( document.activeElement )
 		{
-			// Refresh the tray
-			PollTray();
-			
-			let viewObject = null;
-			if( document.activeElement )
+			viewObject = document.activeElement;
+		}
+		if( window.currentMovable )
+		{
+			if( window.currentMovable.content == viewObject.view )
 			{
-				viewObject = document.activeElement;
+				_WindowToFront( window.currentMovable );
 			}
-			if( window.currentMovable )
+			else
 			{
-				if( window.currentMovable.content == viewObject.view )
-				{
-					_WindowToFront( window.currentMovable );
-				}
-				else
-				{
-					_ActivateWindowOnly( window.currentMovable );
-				}
+				_ActivateWindowOnly( window.currentMovable );
 			}
-		} );
-	}
+		}
+	} );
 	
 	if( window.attachEvent )
 		window.attachEvent( 'onresize', movableListener, false );
@@ -4162,7 +4300,7 @@ function GetTitleBarG ()
 function ClearMenuItemStyling( par )
 {
 	let lis = par.getElementsByTagName( 'li' );
-	for( var a = 0; a < lis.length; a++ ) 
+	for( let a = 0; a < lis.length; a++ ) 
 	{
 		let sp = lis[a].getElementsByTagName( 'span' );
 		if( sp && sp[0] ) sp[0].className = '';
@@ -4178,15 +4316,16 @@ function FocusOnNothing()
 	
 	// Put focus somewhere else than where it is now..
 	// Blur like hell! :)
-	for( var a in movableWindows )
+	for( let a in movableWindows )
 	{
 		if( movableWindows[a].windowObject )
 		{
 			movableWindows[a].windowObject.sendMessage( { command: 'blur' } );
 		}
 	}
+	
 	let eles = document.getElementsByTagName( '*' );
-	for( var a = 0; a < eles.length; a++ )
+	for( let a = 0; a < eles.length; a++ )
 	{
 		eles[a].blur();
 	}
@@ -4202,10 +4341,11 @@ function AlertBox( title, desc, buttons, win )
 		title: title,
 		width: 380,
 		height: 200,
-		resize: false
+		resize: false,
+		dialog: true
 	} );
 	
-	for( var a in buttons )
+	for( let a in buttons )
 		buttonml += '<button class="IconSmall ' + buttons[a].className + '">' + buttons[a].text + '</button>';
 	
 	let ml = '<div class="Dialog"><div class="DialogContent">' + desc + '</div><div class="DialogButtons">' + buttonml + '</div></div>';
@@ -4215,7 +4355,7 @@ function AlertBox( title, desc, buttons, win )
 	// Collect added dom elements
 	let eles = w.content.getElementsByTagName( 'button' );
 	let dbuttons = [];
-	for( var a = 0; a < eles.length; a++ )
+	for( let a = 0; a < eles.length; a++ )
 	{
 		// TODO: Make safer!
 		if( eles[a].parentNode.className == 'DialogButtons' && eles[a].parentNode.parentNode == 'Dialog' )
@@ -4225,7 +4365,7 @@ function AlertBox( title, desc, buttons, win )
 	}
 	
 	// Set onclick actions
-	for( var c = 0; c < buttons.length; c++ )
+	for( let c = 0; c < buttons.length; c++ )
 	{
 		dbuttons[c].view = w;
 		dbuttons[c].onclick = buttons.onclick;
@@ -4290,7 +4430,7 @@ function FindImageColorProduct( img )
 		let average = { r: 0, g: 0, b: 0 };
 		let steps = 8;
 		let increments = steps << 2; // * 4
-		for( var i = 0; i < imgd.data.length; i += increments )
+		for( let i = 0; i < imgd.data.length; i += increments )
 		{
 			average.r += imgd.data[ i   ];
 			average.g += imgd.data[ i + 1 ];
@@ -4318,7 +4458,7 @@ function FindImageColorProduct( img )
 
 function CreateHelpBubble( element, text, uniqueid, rules )
 {
-	if( isMobile || isTablet ) return;
+	if( isTouchDevice() ) return;
 	if( !element ) return;
 	if( !text ) text = '';
 	
@@ -4418,7 +4558,7 @@ function CreateHelpBubble( element, text, uniqueid, rules )
 			if( text.indexOf( "\n" ) > 0 )
 			{
 				text = text.split( "\n" );
-				for( var a = 0; a < text.length; a++ )
+				for( let a = 0; a < text.length; a++ )
 				{
 					if( d.measureText( text[ a ] ).width > mw )
 						mw = d.measureText( text[ a ] ).width;
@@ -4501,7 +4641,7 @@ function CreateHelpBubble( element, text, uniqueid, rules )
 			let pcl = [ 'Left', 'Top', 'Right', 'Bottom' ];
 			if( rules && rules.positions )
 				pcl = rules.positions;
-			for( var z = 0; z < pcl.length; z++ )
+			for( let z = 0; z < pcl.length; z++ )
 				if( pcl[ a ] != positionClass )
 					v.dom.classList.remove( pcl[ a ] );
 			if( v.dom.className.length && positionClass )
@@ -4512,7 +4652,7 @@ function CreateHelpBubble( element, text, uniqueid, rules )
 			if( pcl )
 			{
 				let f = false;
-				for( var a in pcl )
+				for( let a in pcl )
 				{
 					if( positionClass == pcl[ a ] )
 					{

@@ -28,21 +28,29 @@
 //test
 //#undef __DEBUG
 
-int killUserSession( SystemBase *l, UserSession *ses, FBOOL remove )
+/**
+ * Kill user session
+ *
+ * @param ses session which will be deleted (marked 'to be deleted')
+ * @param remove if set to TRUE then session will be marked as "to deleted". Otherwise only message will be send via websockets
+ * @return error number
+ */
+int killUserSession( void *sb, UserSession *ses, FBOOL remove )
 {
 	int error = 0;
-	char tmpmsg[ 2048 ];
-	int lenmsg = sprintf( tmpmsg, "{\"type\":\"msg\",\"data\":{\"type\":\"server-notice\",\"data\":\"session killed\"}}" );
+#define KILL_SESSION_MESSAGE_LEN 1024
 	
-	int msgsndsize = WebSocketSendMessageInt( ses, tmpmsg, lenmsg );
+	char *tmpmsg = FMalloc( KILL_SESSION_MESSAGE_LEN+1 );
+	if( tmpmsg == NULL ){ return -1; }
 	
-	char *uname = NULL;
-	if( ses->us_User != NULL )
+	int lenmsg = snprintf( tmpmsg, KILL_SESSION_MESSAGE_LEN, "{\"type\":\"msg\",\"data\":{\"type\":\"server-notice\",\"data\":\"session killed\"}}" );
+	
+	if( ses == NULL || ses->us_Status == USER_SESSION_STATUS_TO_REMOVE )
 	{
-		uname = ses->us_User->u_Name;
+		DEBUG("[UMWebRequest] killSession session is NULL or will be removed shortly\n");
+		FFree( tmpmsg );
+		return 1;
 	}
-		
-	DEBUG("[UMWebRequest] user %s session %s will be removed by user %s msglength %d\n", uname, ses->us_SessionID, uname, msgsndsize );
 	
 	// set flag to WS connection "te be killed"
 	if( FRIEND_MUTEX_LOCK( &(ses->us_Mutex) ) == 0 )
@@ -51,8 +59,21 @@ int killUserSession( SystemBase *l, UserSession *ses, FBOOL remove )
 		{
 			ses->us_WebSocketStatus = WEBSOCKET_SERVER_CLIENT_TO_BE_KILLED;
 		}
+		
+		ses->us_InUseCounter++;
+		
 		FRIEND_MUTEX_UNLOCK( &(ses->us_Mutex) );
 	}
+	
+	int msgsndsize = WebSocketSendMessageInt( ses, tmpmsg, lenmsg );
+	
+	char *uname = NULL;
+	if( ses->us_User != NULL )
+	{
+		uname = ses->us_User->u_Name;
+	}
+	
+	DEBUG("[UMWebRequest] killSession user %s session %s will be removed by user %s msglength %d\n", uname, ses->us_SessionID, uname, msgsndsize );
 	
 	// wait till queue will be empty
 	while( TRUE )
@@ -69,29 +90,34 @@ int killUserSession( SystemBase *l, UserSession *ses, FBOOL remove )
 		usleep( 1000 );
 	}
 	
-	// test
-	//USMUserSessionRemove( l->sl_USM, ses );
-	//USMSessionsDeleteDB( l->sl_USM, ses->us_SessionID );
-	//WSCData *dat = (WSCData *)ses->us_WSD;
-	//dat->wsc_UserSession = NULL;
-	
 	if( remove == TRUE  )
 	{
 		ses->us_Status = USER_SESSION_STATUS_TO_REMOVE;
-		//error = USMUserSessionRemove( l->sl_USM, ses );	
 	}
+	
+	if( FRIEND_MUTEX_LOCK( &(ses->us_Mutex) ) == 0 )
+	{
+		ses->us_InUseCounter--;
+		
+		FRIEND_MUTEX_UNLOCK( &(ses->us_Mutex) );
+	}
+	
+	FFree( tmpmsg );
+	
 	return error;
 }
 
-//
-// Kill user session by user
-//
-
-inline static int killUserSessionByUser( SystemBase *l, User *u, char *deviceid )
+/**
+ * Kill user session by user and device id
+ *
+ * @param u user which sessions will be deleted
+ * @param deviceid id of device which will be deleted. If deviceid will be equal to NULL all sessions will be removed
+ * @return error number
+ */
+inline static int killUserSessionByUser( User *u, char *deviceid )
 {
 	int error = 0;
 	int nrSessions = 0;
-	int i;
 	
 	//UserSession **toBeRemoved = NULL;
 	
@@ -145,56 +171,8 @@ inline static int killUserSessionByUser( SystemBase *l, User *u, char *deviceid 
 			nrSessions++;
 		}
 	}
-	
-	/*
-	// assign UserSessions to temporary table
-	if( nrSessions > 0 )
-	{
-		toBeRemoved = FMalloc( nrSessions * sizeof(UserSession *) );
-		i = 0;
-		while( usl != NULL )
-		{
-			toBeRemoved[ i ] = (UserSession *) usl->us;
-			usl = (UserSessListEntry *)usl->node.mln_Succ;
-			i++;
-		}
-	}
-	*/
+
 	USER_UNLOCK( u );
-	
-	/*
-	// remove sessions
-	for( i=0 ; i < nrSessions; i++ )
-	{
-		UserSession *ses = toBeRemoved[ i ];
-		
-		if( FRIEND_MUTEX_LOCK( &(ses->us_Mutex) ) == 0 )
-		{
-			if( ses->us_WSD != NULL  )
-			{
-				ses->us_WebSocketStatus = WEBSOCKET_SERVER_CLIENT_TO_BE_KILLED;
-			}
-			FRIEND_MUTEX_UNLOCK( &(ses->us_Mutex) );
-		}
-		
-		// wait till queue will be empty
-		while( TRUE )
-		{
-			if( ses->us_MsgQueue.fq_First == NULL )
-			{
-				break;
-			}
-			usleep( 1000 );
-		}
-		
-		error = USMUserSessionRemove( l->sl_USM, ses );
-	}
-	
-	if( toBeRemoved != NULL )
-	{
-		FFree( toBeRemoved );
-	}
-	*/
 	
 	DEBUG("[killUserSessionByUser] end\n");
 	
@@ -216,7 +194,6 @@ inline static void NotifyExtServices( SystemBase *l, Http *request, User *usr, c
 	{
 		msize = snprintf( msg, sizeof(msg), "{\"userid\":\"%s\",\"isdisabled\":true,\"lastupdate\":%lu,\"name\":\"%s\",\"groups\":[", usr->u_UUID, usr->u_ModifyTime, usr->u_Name );
 		BufStringAddSize( bs, msg, msize );
-		//UGMGetUserGroupsDB( l->sl_UGM, usr->u_ID, bs );
 	}
 	else
 	{
@@ -400,7 +377,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		/// @cond WEB_CALL_DOCUMENTATION
 		/**
 		*
-		* <HR><H2>system.library/user/session/sendmsg</H2>Send message to another user session
+		* <HR><H2>system.library/user/session/sendmsg</H2>Send message to another user session or uniqueid
 		*
 		* @param sessionid - (required) session id of logged user
 		* @param msg - (required) message which will be send (JSON or string in quotes)
@@ -425,6 +402,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			char *msg = NULL;
 			char *appname = NULL;
 			char *authid = NULL;
+			char *uniqueid = NULL;
 		
 			FERROR( "[UMWebRequest] send message" );
 		
@@ -452,12 +430,19 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 				authid = UrlDecodeToMem( (char *)el->hme_Data );
 			}
 			
+			el = HttpGetPOSTParameter( request, "dstuniqueid" );
+			if( el != NULL )
+			{
+				uniqueid = UrlDecodeToMem( (char *)el->hme_Data );
+			}
+			
 			User *u = loggedSession->us_User;
+			int destUserFound = 0;
 		
 			if( msg != NULL && loggedSession->us_User != NULL )
 			{
 				int msgsndsize = 0;
-				DEBUG("[UMWebRequest] Send message session by sessionid\n");
+				//DEBUG("[UMWebRequest] Send message session by sessionid\n");
 			
 				int msgsize = 512 + strlen(msg);
 				char *tmpmsg = FMalloc( msgsize );
@@ -472,7 +457,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 						{
 							char q[ 1024 ];
 							
-							sqllib->SNPrintF( sqllib, q, sizeof(q), "SELECT `UserId` FROM `FApplication` a  WHERE ua.AuthID=\"%s\" and ua.ApplicationID = a.ID LIMIT 1", authid );
+							sqllib->SNPrintF( sqllib, q, sizeof(q), "SELECT ua.UserID FROM `FApplication` a, `FUserApplication` ua WHERE ua.AuthID=\"%s\" AND ua.ApplicationID = a.ID LIMIT 1", authid );
 
 							void *res = sqllib->Query( sqllib, q );
 							if( res != NULL )
@@ -491,15 +476,53 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 						if( userId > 0 )
 						{
 							u = UMGetUserByID( l->sl_UM, userId );
+							if( u ) destUserFound = 1;
 						}
 					}
+					// Do it on destination user unique ID and appname
+					else if( uniqueid != NULL && appname != NULL )
+					{
+					    FULONG userId = 0;
+						
+						SQLLibrary *sqllib  = l->LibrarySQLGet( l );
+						if( sqllib != NULL )
+						{
+							char q[ 1024 ];
+							
+							// TODO: Add filter - we mustn't send to ALL users! Add check if we're in a group with the target user
+							sqllib->SNPrintF( sqllib, q, sizeof(q), "SELECT ua.UserID FROM `FApplication` a, `FUserApplication` ua, `FUser` us WHERE a.Name=\"%s\" AND ua.ApplicationID = a.ID AND ua.UserID = us.ID AND us.UniqueID=\"%s\" LIMIT 1", appname, uniqueid );
 
-					if( loggedSession->us_User != NULL )
+							void *res = sqllib->Query( sqllib, q );
+							if( res != NULL )
+							{
+								char **row;
+								if( ( row = sqllib->FetchRow( sqllib, res ) ) )
+								{
+									char *next;
+									userId = strtol ( (char *)row[ 0 ], &next, 0 );
+								}
+								sqllib->FreeResult( sqllib, res );
+							}
+							l->LibrarySQLDrop( l, sqllib );
+						}
+						
+						if( userId > 0 )
+						{
+							u = UMGetUserByID( l->sl_UM, userId );
+							if( u ) destUserFound = 1;
+						}
+					}
+					else
+					{
+					    DEBUG( "[UMebRequest] Seems we have no user..\n" );
+					}
+
+					if( u && loggedSession->us_User != NULL )
 					{
 						USER_LOCK( u );
 						
 						UserSessListEntry *ses = u->u_SessionsList;
-						while( ses != NULL )
+						while( ses != NULL && ses->us != NULL )
 						{
 							FBOOL sendMsg = FALSE;
 							UserSession *uses = (UserSession *) ses->us;
@@ -706,6 +729,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 						email = NULL;
 						locusr->u_Password = usrpass;
 						locusr->u_Timezone = timezone;
+						locusr->u_CreationTime = time( NULL );
 						usrpass = NULL;
 						userCreated = TRUE;
 						
@@ -756,12 +780,10 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 		{
 			FFree( level );
 		}
-		
 		if( workgroups != NULL )
 		{
 			FFree( workgroups );
 		}
-
 		if( usrname != NULL )
 		{
 			FFree( usrname );
@@ -838,36 +860,71 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 					
 					if( ( tmpQuery = FCalloc( querysize, sizeof(char) ) ) != NULL )
 					{
-						User * usr = UMGetUserByID( l->sl_UM, id );
+						User *usr;
+						User *usrToDelete;
+						
+						// we must mark user in database "to be deleted". This way we will be able to clean all his stuff after some period of time
+						
+						usrToDelete = UMGetUserByIDDB( l->sl_UM, id );
+						if( usrToDelete != NULL )
+						{
+							UserToDelete *utd = UserToDeleteNew( );
+							if( utd != NULL )
+							{
+								utd->utd_UserName = StringDuplicate( usrToDelete->u_Name );
+								utd->utd_UserID = id;
+								
+								// now lets store new entry
+								
+								SQLLibrary *lsqllib = l->LibrarySQLGet( l );
+								if( lsqllib != NULL )
+								{
+									lsqllib->Save( lsqllib, FUserToDeleteDesc, utd );
+									l->LibrarySQLDrop( l, lsqllib );
+								}
+								
+								UMPurgeUserData( l->sl_UM, id, usrToDelete->u_Name );
+								
+								UserToDeleteDelete( utd );
+							}
+							
+							UserDelete( usrToDelete );
+						}
+						
+						usr = UMGetUserByID( l->sl_UM, id );
+						
 						if( usr != NULL && usr->u_Status != USER_STATUS_TO_BE_REMOVED )
 						{
 							DEBUG( "[UMWebRequest] UMRemoveAndDeleteUser %d! before unmount\n", usr->u_InUse );
 							
 							l->UserDeviceUnMount( l, usr, loggedSession );
 							
-							DEBUG( "[UMWebRequest] UMRemoveAndDeleteUser %d!\n", usr->u_InUse );
-							UMRemoveAndDeleteUser( l->sl_UM, usr, ((SystemBase*)m)->sl_USM);
+							DEBUG( "[UMWebRequest] UMRemoveAndDeleteUser in use %d userid %ld!\n", usr->u_InUse, usr->u_ID );
+							UMRemoveAndDeleteUser( l->sl_UM, usr, ((SystemBase*)m)->sl_USM, loggedSession );
 						}
-
-						sprintf( tmpQuery, "DELETE FROM `FUser` WHERE ID=%lu", id );
 						
-						sqllib->QueryWithoutResults( sqllib, tmpQuery );
+						if( request->http_RequestSource != HTTP_SOURCE_NODE_SERVER )
+						{
+							sprintf( tmpQuery, "DELETE FROM `FUser` WHERE ID=%lu", id );
 						
-						sprintf( tmpQuery, " DELETE FROM `FUserGroup` WHERE UserID=%lu", id );
+							sqllib->QueryWithoutResults( sqllib, tmpQuery );
 						
-						sqllib->QueryWithoutResults( sqllib, tmpQuery );
+							sprintf( tmpQuery, " DELETE FROM `FUserGroup` WHERE UserID=%lu", id );
 						
-						sprintf( tmpQuery, " DELETE FROM `FUserSession` WHERE UserID=%lu", id );
+							sqllib->QueryWithoutResults( sqllib, tmpQuery );
 						
-						sqllib->QueryWithoutResults( sqllib, tmpQuery );
+							sprintf( tmpQuery, " DELETE FROM `FUserSession` WHERE UserID=%lu", id );
 						
-						sprintf( tmpQuery, " DELETE FROM `Filesystem` WHERE UserID=%lu", id );
+							sqllib->QueryWithoutResults( sqllib, tmpQuery );
 						
-						sqllib->QueryWithoutResults( sqllib, tmpQuery );
+							sprintf( tmpQuery, " DELETE FROM `Filesystem` WHERE UserID=%lu", id );
 						
-						sprintf( tmpQuery, "DELETE FROM `FUserToGroup` WHERE UserID=%lu", id );
+							sqllib->QueryWithoutResults( sqllib, tmpQuery );
 						
-						sqllib->QueryWithoutResults( sqllib, tmpQuery );
+							sprintf( tmpQuery, "DELETE FROM `FUserToGroup` WHERE UserID=%lu", id );
+						
+							sqllib->QueryWithoutResults( sqllib, tmpQuery );
+						}
 						
 						FFree( tmpQuery );
 						
@@ -975,12 +1032,15 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 						FBOOL gotFromDB = FALSE;
 						time_t  updateTime = time( NULL );
 						
-						// update status and modify timestamp
-						sprintf( tmpQuery, "UPDATE `FUser` set Status=%lu,ModifyTime=%lu where ID=%lu", status, updateTime, id );
+						if( request->http_RequestSource != HTTP_SOURCE_NODE_SERVER )
+						{
+							// update status and modify timestamp
+							sprintf( tmpQuery, "UPDATE `FUser` set Status=%lu,ModifyTime=%lu where ID=%lu", status, updateTime, id );
 						
-						DEBUG( "[UMWebRequest] status updated\n");
+							DEBUG( "[UMWebRequest] status updated\n");
 						
-						sqllib->QueryWithoutResults( sqllib, tmpQuery );
+							sqllib->QueryWithoutResults( sqllib, tmpQuery );
+						}
 						
 						User *usr = UMGetUserByID( l->sl_UM, id );
 						if( usr != NULL )
@@ -996,17 +1056,21 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 						
 						if( status == USER_STATUS_ENABLED )
 						{
-							time_t tm = 0;
-							time_t tm_now = time( NULL );
-							if( usr != NULL )
+							if( request->http_RequestSource != HTTP_SOURCE_NODE_SERVER )
 							{
-								FBOOL access = UMGetLoginPossibilityLastLogins( l->sl_UM, usr->u_Name, usr->u_Password, l->sl_ActiveAuthModule->am_BlockAccountAttempts, &tm );
+								time_t tm = 0;
+								time_t tm_now = time( NULL );
 							
-								// if access is disabled and user should be enabled, we remove last login fail
-								if( access == FALSE )
+								if( usr != NULL )
 								{
-									sqllib->SNPrintF( sqllib, tmpQuery, sizeof(tmpQuery), "DELETE from `FUserLogin` where UserID=%lu AND Failed is not null AND LoginTime>%lu", id, (tm_now-l->sl_ActiveAuthModule->am_BlockAccountTimeout) );
-									sqllib->QueryWithoutResults( sqllib, tmpQuery );
+									FBOOL access = UMGetLoginPossibilityLastLogins( l->sl_UM, usr->u_Name, usr->u_Password, l->sl_ActiveAuthModule->am_BlockAccountAttempts, &tm );
+							
+									// if access is disabled and user should be enabled, we remove last login fail
+									if( access == FALSE )
+									{
+										sqllib->SNPrintF( sqllib, tmpQuery, sizeof(tmpQuery), "DELETE from `FUserLogin` where UserID=%lu AND Failed is not null AND LoginTime>%lu", id, (tm_now-l->sl_ActiveAuthModule->am_BlockAccountTimeout) );
+										sqllib->QueryWithoutResults( sqllib, tmpQuery );
+									}
 								}
 							}
 						}
@@ -1028,7 +1092,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 									if( u != NULL )
 									{
 										DEBUG("[UMWebRequest] user sessions will be removed\n");
-										killUserSessionByUser( l, u, NULL );
+										killUserSessionByUser( u, NULL );
 									}
 									msize = snprintf( msg, sizeof(msg), "{\"userid\":\"%s\",\"isdisabled\":true,\"lastupdate\":%lu,\"groups\":[", usr->u_UUID, usr->u_ModifyTime );
 								}
@@ -1163,17 +1227,20 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 					{
 						HttpAddTextContent( response, "ok<!--separate-->{\"updatepassword\":\"success!\"}" );
 					
-						SQLLibrary *sqllib  = l->LibrarySQLGet( l );
-						if( sqllib != NULL )
+						if( request->http_RequestSource != HTTP_SOURCE_NODE_SERVER )
 						{
-							char tmpQuery[ 256 ];
-							time_t  updateTime = time( NULL );
+							SQLLibrary *sqllib  = l->LibrarySQLGet( l );
+							if( sqllib != NULL )
+							{
+								char tmpQuery[ 256 ];
+								time_t  updateTime = time( NULL );
 					
-							// update status and modify timestamp
-							sprintf( tmpQuery, "UPDATE `FUser` set ModifyTime=%lu where ID=%lu", updateTime, usr->u_ID );
+								// update status and modify timestamp
+								sprintf( tmpQuery, "UPDATE `FUser` set ModifyTime=%lu where ID=%lu", updateTime, usr->u_ID );
 					
-							sqllib->QueryWithoutResults( sqllib, tmpQuery );
-							l->LibrarySQLDrop( l, sqllib );
+								sqllib->QueryWithoutResults( sqllib, tmpQuery );
+								l->LibrarySQLDrop( l, sqllib );
+							}
 						}
 					}
 					else
@@ -1457,38 +1524,37 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 						char *error = NULL;
 						DEBUG("[UMWebRequest] FC will do a change\n");
 					
-						GenerateUUID( &( logusr->u_UUID ) );
+						//GenerateUUID( &( logusr->u_UUID ) );
 						
-						if( status >= 0 )
+						if( request->http_RequestSource != HTTP_SOURCE_NODE_SERVER )
 						{
-							char msg[ 512 ];
-							logusr->u_Status = status;
-
-							if( status == USER_STATUS_DISABLED )
+							if( status >= 0 )
 							{
-								snprintf( msg, sizeof(msg), "{\"userid\":\"%s\",\"isdisabled\",\"true\"}", logusr->u_UUID );
+								char msg[ 512 ];
+								logusr->u_Status = status;
+								
+								if( status == USER_STATUS_DISABLED )
+								{
+									snprintf( msg, sizeof(msg), "{\"userid\":\"%s\",\"isdisabled\",\"true\"}", logusr->u_UUID );
+								}
+								else
+								{
+									snprintf( msg, sizeof(msg), "{\"userid\":\"%s\"}", logusr->u_UUID );
+								}
+								NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "user", "update", msg );
 							}
-							else
-							{
-								snprintf( msg, sizeof(msg), "{\"userid\":\"%s\"}", logusr->u_UUID );
-							}
-							NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "user", "update", msg );
+							UMUserUpdateDB( l->sl_UM, logusr );
 						}
-						UMUserUpdateDB( l->sl_UM, logusr );
-					
+						else
+						{
+							logusr->u_Status = status;
+						}
+						
 						UGMAssignGroupToUserByStringDB( l->sl_UGM, logusr, level, workgroups );
 					
 						RefreshUserDrives( l->sl_DeviceManager, loggedSession, NULL, &error );
 						
 						DEBUG("[update/user] before notification\n");
-					
-						NotifyExtServices( l, request, logusr, "update" );
-					
-						// we must notify user
-						//if( logusr != loggedSession->us_User )
-						//{
-						//	UserNotifyFSEvent2( l->sl_DeviceManager, logusr, "refresh", "Mountlist:" );
-						//}
 					
 						if( error != NULL )
 						{
@@ -1498,6 +1564,23 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 						DEBUG("[update/user] after notification\n");
 					
 						HttpAddTextContent( response, "ok<!--separate-->{\"update\":\"success!\"}" );
+						
+						if( request->http_RequestSource != HTTP_SOURCE_NODE_SERVER )
+						{
+							NotifyExtServices( l, request, logusr, "update" );
+							
+							BufString *res = SendMessageToSessionsAndWait( l, logusr->u_ID, request );
+							if( res != NULL )
+							{
+								DEBUG("RESPONSE: %s\n", res->bs_Buffer );
+								BufStringDelete( res );
+							}
+						}
+						else
+						{
+							UMSendUserChangesNotification( l->sl_UM, loggedSession );
+						}
+						// maybe we should send message via WS to notifi desktop about changes
 					}
 					else
 					{
@@ -1676,9 +1759,12 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 
 					UGMAssignGroupToUserByStringDB( l->sl_UGM, logusr, NULL, workgroups );
 					
-					RefreshUserDrives( l->sl_DeviceManager, loggedSession, NULL, &error );
+					//RefreshUserDrives( l->sl_DeviceManager, loggedSession, NULL, &error );
 					
-					NotifyExtServices( l, request, logusr, "update" );
+					if( request->http_RequestSource != HTTP_SOURCE_NODE_SERVER )
+					{
+						NotifyExtServices( l, request, logusr, "update" );
+					}
 					
 					if( error != NULL )
 					{
@@ -1698,6 +1784,22 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 				if( userFromSession == FALSE )
 				{
 					UserDelete( logusr );
+				}
+				
+				if( request->http_RequestSource != HTTP_SOURCE_NODE_SERVER )
+				{
+					NotifyExtServices( l, request, logusr, "update" );
+					
+					BufString *res = SendMessageToSessionsAndWait( l, logusr->u_ID, request );
+					if( res != NULL )
+					{
+						DEBUG("RESPONSE: %s\n", res->bs_Buffer );
+						BufStringDelete( res );
+					}
+				}
+				else
+				{
+					UMSendUserChangesNotification( l->sl_UM, loggedSession );
 				}
 			}
 		}
@@ -1771,28 +1873,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 				if( sess != NULL )
 				{
 					Log( FLOG_INFO, "[UMWebRequest] Logout user, user: %s deviceID: %s\n", sess->us_User->u_Name, sess->us_DeviceIdentity );
-					/*
-					SQLLibrary *sqlLib =  l->LibrarySQLGet( l );
-					if( sqlLib != NULL )
-					{
-						sqlLib->Delete( sqlLib, UserSessionDesc, sess );
-						
-						if( sess->us_MobileAppID > 0 )
-						{
-							char temp[ 1024 ];
-							snprintf( temp, sizeof(temp), "DELETE from `FUserMobileApp` where `ID`=%lu", sess->us_MobileAppID );
-	
-							sqlLib->QueryWithoutResults( sqlLib, temp );
-						}
-						l->LibrarySQLDrop( l, sqlLib );
-					}
-					
-					if( l->sl_ActiveAuthModule != NULL )
-					{
-						l->sl_ActiveAuthModule->Logout( l->sl_ActiveAuthModule, request, sessid );
-					}
-					*/
-					
+
 					error = USMUserSessionRemove( l->sl_USM, sess );
 					
 					sess->us_Status = USER_SESSION_STATUS_TO_REMOVE;
@@ -1902,20 +1983,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_USER_NOT_FOUND] , DICT_USER_NOT_FOUND );
 			HttpAddTextContent( response, buffer );
 		}
-		
-		
-		/*	if there is no parameter current user sessions should be returned
-		else
-		{
-			FERROR("[ERROR] username parameter is missing\n" );
-			char buffer[ 256 ];
-			char buffer1[ 256 ];
-			snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_USER_DEV_REQUIRED], "username" );
-			snprintf( buffer, sizeof(buffer), ERROR_STRING_TEMPLATE, buffer1 , DICT_USER_DEV_REQUIRED );
-			HttpAddTextContent( response, buffer );
-		}
-		*/
-		
+
 		if( usrname != NULL )
 		{
 			FFree( usrname );
@@ -1986,7 +2054,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			User *u = UMGetUserByName( l->sl_UM, usrname );
 			if( u != NULL )
 			{
-				killUserSessionByUser( l, u, deviceid );
+				killUserSessionByUser( u, deviceid );
 			}
 			else
 			{

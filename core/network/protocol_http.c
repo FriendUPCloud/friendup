@@ -212,41 +212,6 @@ static inline BufString *RunPHPScript( const char *command )
 	//DEBUG( "[RunPHPScript] Finished PHP call...(%lu length)-\n", ls->ls_Size );
 	//return ls;
 	return bs;
-	
-	/*
-	FILE *pipe = popen( command, "r" );
-	if( !pipe )
-	{
-		Log( FLOG_ERROR,"Cannot open pipe for command: %s\n", command );
-		return NULL;
-	}
-
-	FULONG size = 0;
-	ListString *data = ListStringNew();
-
-#define PHP_READ_SIZE 65536
-	char *buf = FCalloc( PHP_READ_SIZE, sizeof( char ) );
-	if( buf != NULL )
-	{
-		while( !feof( pipe ) )
-		{
-			// Make a new buffer and read
-			size = fread( buf, sizeof(char), PHP_READ_SIZE, pipe );
-
-			if( size > 0 )
-			{
-				ListStringAdd( data, buf, size );
-			}
-			pthread_yield();
-		}
-		ListStringJoin( data );		
-		FFree( buf );
-	}
-	// Free buffer if it's there
-	pclose( pipe );
-
-	return data;
-	*/
 }
 
 /**
@@ -784,7 +749,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 								}
 								else
 								{
-									HttpAddTextContent( response, "fail<!--separate-->PHP script return error" );
+									HttpAddTextContent( response, "fail<!--separate-->{\"message\":\"PHP script returned error message.\",\"response\"-1}" );
 								}
 
 								// write here and set data to NULL!!!!!
@@ -797,43 +762,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 									ls->bs_Buffer = NULL;
 									BufStringDelete( ls );
 								}
-								/*
-								ListString *ls = RunPHPScript( command );
-								if( ls != NULL )
-								{
-									//DEBUG("\n\n\n\n\n\nDATA: %s\n\n\n\n\n\n", ls->ls_Data );
-									res = ls->ls_Size;
-								}
-								
-								struct TagItem tags[] = {
-									{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate("text/html") },
-									{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-									{ HTTP_HEADER_CACHE_CONTROL, (FULONG )StringDuplicate( "max-age = 3600" ) },
-									{TAG_DONE, TAG_DONE}
-								};
 
-								response = HttpNewSimple( HTTP_200_OK, tags );
-
-								if( ls != NULL && ls->ls_Data != NULL )
-								{
-									HttpSetContent( response, ls->ls_Data, res );
-								}
-								else
-								{
-									HttpAddTextContent( response, "fail<!--separate-->PHP script return error" );
-								}
-
-								// write here and set data to NULL!!!!!
-								// return response
-								HttpWrite( response, sock );
-								result = 200;
-
-								if( ls != NULL )
-								{
-									ls->ls_Data = NULL;
-									ListStringDelete( ls );
-								}
-								*/
 								DEBUG("Response delivered\n");
 								
 								FFree( command );
@@ -913,7 +842,6 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 							char *fs_Name = NULL;
 							char *fs_Type = NULL;
 							char *fs_Path = NULL;
-							FBOOL sessionIDGenerated = FALSE;
 
 							DEBUG("First call releated to shared files did not return any results\n");
 							sqllib->SNPrintF( sqllib, query, 1024, "select fs.Name,fs.Devname,fs.Path,fs.UserID,f.Type,fs.ID from FFileShared fs inner join Filesystem f on fs.FSID=f.ID where `Hash`='%s'", path->p_Parts[ 1 ] );
@@ -1791,7 +1719,8 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 												
 												qery[ 1024 ] = 0;
 												
-												sqllib->SNPrintF( sqllib, qery, 1024, "SELECT Source FROM FTinyUrl WHERE `Hash`=\"%s\"", hash ? hash : "-" );
+												snprintf( qery, 1024, "SELECT Source FROM FTinyUrl WHERE `Hash`=\"%s\"", hash ? hash : "-" );
+												//sqllib->SNPrintF( sqllib, qery, 1024, "SELECT Source FROM FTinyUrl WHERE `Hash`=\"%s\"", hash ? hash : "-" );
 												void *res = sqllib->Query( sqllib, qery );
 												if( res != NULL )
 												{
@@ -2016,84 +1945,6 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 													//bs->ls_Data = NULL; 
 													BufStringDelete( phpResp );
 												}
-												/*
-												if( phpResp && phpResp->ls_Data != NULL && phpResp->ls_Size > 0 )
-												{
-													// Check header and remove from data
-													char *cntype = CheckEmbeddedHeaders( phpResp->ls_Data, phpResp->ls_Size, "Content-Type" );
-													char *code = CheckEmbeddedHeaders( phpResp->ls_Data, phpResp->ls_Size, "Status Code" );
-
-													if( cntype != NULL )
-													{
-														phpResp->ls_Size = StripEmbeddedHeaders( &phpResp->ls_Data, phpResp->ls_Size );
-													}
-
-													struct TagItem tags[] = {
-														{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( cntype ? cntype : "text/html" ) },
-														{ HTTP_HEADER_CONNECTION,   (FULONG)StringDuplicate( "close" ) },
-														{ TAG_DONE, TAG_DONE }
-													};
-
-													if( code != NULL )
-													{
-														char *pEnd;
-														int errCode = -1;
-
-														char *next;
-														errCode = strtol ( code, &next, 10);
-														if( ( next == code ) || ( *next != '\0' ) ) 
-														{
-															errCode = -1;
-														}
-
-														if( errCode == -1 )
-														{
-															response = HttpNewSimple( HTTP_200_OK, tags );
-														}
-														else
-														{
-															response = HttpNewSimple( errCode, tags );
-														}
-
-														Log( FLOG_DEBUG, "PHP catch returned err code: %d\n", errCode );
-													}
-													else
-													{
-														response = HttpNewSimple( HTTP_200_OK, tags );
-													}
-
-													char *resp = phpResp->ls_Data;
-													if( resp != NULL )
-													{
-														const char *hsearche = "---http-headers-end---\n";
-														const int hsearchLene = 23;
-
-														char *tmp = NULL;
-														if( ( tmp = strstr( resp, hsearche ) ) != NULL )
-														{
-															resp = tmp + 23;
-														}
-													}
-
-													HttpWrite( response, sock );
-
-													response->http_Content = NULL;
-													response->http_SizeOfContent = 0;
-
-													response->http_WriteType = FREE_ONLY;
-
-													sock->s_Interface->SocketWrite( sock, resp, (FLONG)(phpResp->ls_Size - (resp - phpResp->ls_Data)) );
-
-													if( cntype != NULL ) FFree( cntype );
-													if( code != NULL ) FFree( code );
-
-													result = 200;
-
-													Log( FLOG_ERROR, "Module call returned bytes: %lu\n", phpResp->ls_Size );
-													//bs->ls_Data = NULL; 
-													ListStringDelete( phpResp );
-												}
-												*/
 												else 
 												{
 													Log( FLOG_ERROR,"File do not exist (PHPCall)\n");

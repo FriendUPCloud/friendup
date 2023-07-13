@@ -81,6 +81,13 @@ body
    -ms-transform: rotateZ(0deg);
  	transform: rotateZ(0deg);*/
 	overflow: hidden;
+    touch-action: none;
+}
+
+
+body[mobile=mobile], body[tablet=tablet]
+{
+    touch-action: auto;
 }
 
 /* Preload images */
@@ -390,6 +397,19 @@ body .Button.IconButton
 {
 	background-color: transparent !important;
 	border: 0 !important;
+}
+
+span.VerticalLine
+{
+    background-color: #455155;
+    width: 3px;
+    top: -1px;
+    border-radius: 5px;
+    position: relative;
+    height: 14px;
+    border: 0;
+    margin: 0px 10px 0 4px;
+    display: inline-block;
 }
 
 .Button.Glue, 
@@ -862,6 +882,12 @@ p.Layout
 .PaddingSmall
 {
 	padding: 4px;
+	box-sizing: border-box;
+}
+
+.PaddingMedium
+{
+	padding: 8px;
 	box-sizing: border-box;
 }
 
@@ -2204,6 +2230,7 @@ body:not([mobile]):not([tablet]) #Available_tutorials .Tutorial > div:hover
 	box-shadow: 0 2px 3px rgba(0,0,0,0.3);
 	color: white;
 	border-radius: 3px;
+	outline : unset;
 }
 
 .Widget.Fadable
@@ -2295,6 +2322,12 @@ body:not([mobile]):not([tablet]) .Widget .MenuItems .MenuItem:hover
 	background: rgba(255,255,255,0.2);
 	color: white;
 	text-shadow: 0px 1px 1px rgba(0,0,0,0.6);
+}
+
+.Widget .MenuItems .MenuHeader
+{
+	overflow      : hidden;
+	text-overflow : ellipsis;
 }
 
 .Widget .MenuItems .MenuHeader
@@ -3585,6 +3618,12 @@ body.Offline #OfflineMessage
 	color: white;
 	text-shadow: 0px 1px 1px rgba(0,0,0,0.5);
 	font-weight: bold;
+}
+
+.Screen > .TitleBar > .Left .Extra.Hover > span,
+.Screen > .TitleBar > .Left .Extra.Hover > div
+{
+    color: white;
 }
 
 .Screen > .TitleBar > .Left .Extra .Offline
@@ -5568,7 +5607,6 @@ div.Orange, button.Orange
 	background-color: #444444;
 	background-position: center;
 	background-repeat: no-repeat;
->>>>>>> master-incoming
 }
 
 .ShareDialog .ShareItem.Selected

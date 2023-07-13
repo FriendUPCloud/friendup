@@ -59,6 +59,9 @@ Friend.FileBrowser = function( initElement, flags, callbacks )
 {
 	let self = this;
 	
+	// Make ready for alternative to bookmarks
+	this.favorites = [];
+	
 	this.clickType = null;
 	this.prevPath = null;
 	
@@ -173,15 +176,60 @@ Friend.FileBrowser.prototype.drop = function( elements, e, win )
 // Supported flags ( { lockHistory: true|false } )
 Friend.FileBrowser.prototype.setPath = function( target, cbk, tempFlags, e )
 {
+	let winobj = false;
+	if( this.directoryView.window.windowObject )
+		winobj = this.directoryView.window.windowObject;
+	else return false;
+	
+	let path = target;
+			
+	if( !Workspace.diskNotificationList[ path ] )
+	{
+		Workspace.diskNotificationList[ path ] = {
+			type: 'directory',
+			view: winobj
+		};
+		let f = new Library( 'system.library' );
+		f.addVar( 'sessionid', Workspace.sessionId );
+		f.addVar( 'path', path );
+		f.onExecuted = function( e, d )
+		{
+			if( e == 'ok' )
+			{
+				let j = JSON.parse( d );
+				winobj.addEvent( 'systemclose', function()
+				{
+					winobj.removeEvent( 'systemclose', this );
+					let ff = new Library( 'system.library' );
+					ff.addVar( 'sessionid', Workspace.sessionId );
+					ff.addVar( 'path', path );
+					ff.addVar( 'id', j.Result );
+					ff.onExecuted = function( es, ds )
+					{
+						Workspace.diskNotificationList[ path ] = false;
+					}
+					ff.execute( 'file/notificationremove' );
+				} );
+			}
+			//console.log( 'File notification start result: ' + e, d );
+		}
+		f.execute( 'file/notificationstart' );
+		//console.log('notification start ' + path);
+	}
+	
 	// Already set
 	if( this.flags.path && this.flags.path == target ) 
 	{
 		return;
 	}
-
+	
 	this.tempFlags = false;
 	this.flags.path = target; // This is the current target path..
 	if( tempFlags ) this.tempFlags = tempFlags;
+	
+	console.log( '[setPath] Refreshing on this path: (' + this.rootPath + ') ' + target, { context: this.lastContext } );
+	console.log( '[setPath] --' );
+	
 	this.refresh( this.rootPath, this.dom, cbk, 0, { context: this.lastContext } );
 }
 
@@ -189,53 +237,169 @@ Friend.FileBrowser.prototype.rollOver = function( elements )
 {
 	// Do some user feedback later
 };
-Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, depth, flags, evt )
+Friend.FileBrowser.prototype.updateFavorites = function()
 {
-	let self = this;
-	if( !evt ) evt = {};
+    let self = this;
+    
+    let rootElement = this.dom;
+    
+    if( self.favoritesDom && !self.favoritesDom.parentNode )
+        self.favoritesDom = null;
+    
+	// No favorites container? Remove
+	if( !self.favoritesDom && self.favorites.length )
+	{
+		self.favoritesDom = document.createElement( 'div' );
+		self.favoritesDom.className = 'Favorites';
+		
+		let m = document.createElement( 'div' );
+		m.innerHTML = '<p><strong>Favorites:</strong></p>';
+		self.favoritesDom.appendChild( m );
+		
+		self.favoritesContainer = document.createElement( 'div' );
+		self.favoritesContainer.className = 'FileBrowserFavorites';
+		self.favoritesDom.appendChild( self.favoritesContainer );
+		
+		rootElement.insertBefore( self.favoritesDom, rootElement.firstChild );
+	}
+	// No favorites? Clean up
+	if( self.favoritesDom && !self.favorites.length && rootElement && rootElement.parentNode )
+	{
+		rootElement.removeChild( self.favoritesDom );
+		self.favoritesDom = false;
+		self.favoritesContainer = false;
+		return;
+	}
+	if( !self.favoritesContainer ) return;
 	
-	if( !rootElement ) rootElement = this.dom;
-	if( !callback ) callback = false;
-	if( !path ) path = this.rootPath; // Use the rootpath
-	if( !depth ) depth = 1;
+	let ul = self.favoritesContainer.getElementsByTagName( 'ul' );
+	if( ul.length )
+	{
+	    ul = ul[0];
+	}
+	else
+	{
+	    ul = document.createElement( 'ul' );
+	    self.favoritesContainer.appendChild( ul );
+	}
 	
-	// Fix column problem
-	if ( path.indexOf( ':' ) < 0 )
-		path += ':';
+	let existing = ul.getElementsByTagName( 'li' );
 
-	let refreshMode = 'normal';
-	let context = null;
-	if( flags )
+	for( let a = 0; a < self.favorites.length; a++ )
+	{
+	    // Check for doubles
+	    let found = false;
+	    for( let b = 0; b < existing.length; b++ )
+	    {
+	        if( self.favorites[ a ].ID == existing[ b ].getAttribute( 'bookmark-id' ) )
+	        {
+	            found = true;
+	            break;
+	        }
+	    }
+	    if( found ) continue;
+	    
+		let item = self.favorites[ a ];
+		let li = document.createElement( 'li' );
+		li.setAttribute( 'bookmark-id', item.ID );
+		
+		let icon = document.createElement( 'span' );
+		icon.className = 'FileBrowserItemImage';
+		icon.style.backgroundImage = 'url(/iconthemes/friendup15/DriveLabels/Bookmark.svg)';
+		let label = document.createElement( 'span' );
+		label.className = 'FileBrowserItemLabel';
+		label.innerHTML = item.Title;
+		let rem = document.createElement( 'span' );
+		rem.className = 'IconSmall fa-remove';
+		
+		( function( liElement, ulElement, remmer, path )
+		{
+		    liElement.onclick = function( e )
+		    {
+		        // Find active list item
+		        let lis = ulElement.getElementsByTagName( 'li' );
+		        for( let a = 0; a < lis.length; a++ )
+		        {
+		            if( lis[ a ] == liElement )
+		            {
+		                lis[ a ].classList.add( 'Activated' );
+		                self.callbacks.folderOpen( path, e );
+		            }
+		            else
+		            {
+		                lis[ a ].classList.remove( 'Activated' );
+		            }
+		        }
+		        // Remove active state on disks
+		        let disks = rootElement.getElementsByClassName( 'DiskItem' );
+		        for( let a = 0; a < disks.length; a++ )
+		        {
+		            let everything = disks[ a ].getElementsByTagName( 'div' );
+		            for( let b = 0; b < everything.length; b++ )
+		            {
+		                everything[b].classList.remove( 'Open' );
+		                everything[b].classList.remove( 'Active' );
+		            }
+		        }
+		    }
+		    remmer.onclick = function( ev )
+		    {
+		        let mo = new Module( 'system' );
+			    mo.onExecuted = function( eo, od )
+			    {
+				    if( eo == 'ok' )
+				    {
+					    self.clear();
+					    self.refresh( null, null, null, null, { mode: 'poll' } );
+				    }
+			    }
+			    mo.execute( 'removebookmark', { name: path } );
+			    return cancelBubble( ev );
+		    }
+		} )( li, ul, rem, item.Path );
+		
+		li.appendChild( icon ); li.appendChild( label );
+		li.appendChild( rem );
+		ul.appendChild( li );
+	}
+	
+	self.favoritesContainer.appendChild( ul );
+}
+// Create onclick action function for refresh function
+Friend.FileBrowser.prototype.getOnClickActionFunc = function( data )
+{
+    let self = this;
+    let context = refreshMode = path = rootElement = callback = depth = flags = evt = false;
+    if( data )
+    {
+        if( data.context )
+            context = data.context;
+        if( data.path )
+            path = data.path;
+        if( data.rootElement )
+            rootElement = data.rootElement;
+        if( data.callback )
+            callback = data.callback;
+        if( data.depth )
+            depth = data.depth;
+        if( data.flags )
+            flags = data.flags;
+        if( data.evt )
+            evt = data.evt;
+    }
+    
+    if( flags )
 	{
 		if( flags.context )
 		{
-			if( self.lastContext != flags.context && !evt.button )
-			{
-				return;
-			}
 			context = flags.context;
 			self.lastContext = context;
 		}
 		if( flags.mode )
 			refreshMode = flags.mode;
 	}
-
-	if( !this.headerDisks )
-	{
-		this.headerDisks = document.createElement( 'div' );
-		this.headerDisks.innerHTML = '<p class="Layout BorderBottom PaddingBottom"><strong>' + i18n( 'i18n_your_devices' ) + ':</strong></p>';
-		rootElement.appendChild( this.headerDisks );
-	}
-	
-	// What are we looking for at this level?
-	// Keeps the whole target path, but searches on each level recursively..
-	let targetPath = false;
-	if( this.flags.path )
-	{
-		targetPath = this.flags.path;
-	}
-	
-	function createOnclickAction( ele, ppath, type, depth )
+    
+    function createOnclickAction( ele, ppath, type, depth )
 	{
 		// Not more than once
 		if( ele.onclick ) return;
@@ -259,6 +423,16 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 		
 		ele.onclick = function( e )
 		{
+			// Remove favorites active state
+			if( self.favoritesDom )
+			{
+			    let lis = self.favoritesContainer.getElementsByTagName( 'li' );
+			    for( let a = 0; a < lis.length; a++ )
+			    {
+			        lis[a].classList.remove( 'Activated' );
+			    }
+			}
+			
 			// Real click removes temp flags
 			if( e && ( e.button === 0 || e.button > 0 ) )
 				self.tempFlags = false;
@@ -423,6 +597,12 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 		}
 		ele.oncontextmenu = function( e )
 		{
+			console.log( 'oncontextmenu', {
+				isMobile      : isMobile,
+				noContextMenu : self.flags.noContextMenu,
+				type          : type,
+				theme         : window?.Workspace?.theme,
+			});
 			if( isMobile ) return;
 			if( self.flags.noContextMenu ) return cancelBubble( e );
 			
@@ -459,22 +639,29 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 			}
 			if( type == 'volume' )
 			{
-				menu.push( {
-					name: i18n( 'menu_show_icon_information' ),
-					command: function()
-					{
-						for( let c = 0; c < Workspace.icons.length; c++ )
+				if ( window?.Workspace?.theme != 'jeanie' )
+				{
+					menu.push( {
+						name: i18n( 'menu_show_icon_information' ),
+						command: function()
 						{
-							if( Workspace.icons[ c ].Volume === ppath )
+							for( let c = 0; c < Workspace.icons.length; c++ )
 							{
-								Workspace.fileInfo( Workspace.icons[ c ] );
-								break;
+								if( Workspace.icons[ c ].Volume === ppath )
+								{
+									Workspace.fileInfo( Workspace.icons[ c ] );
+									break;
+								}
 							}
 						}
-					}
-				} );
+					} );
+				}
 			}
 			if( cf ) menu.push( cf );
+			
+			if ( menu.length < 1 )
+				return cancelBubble( e );
+			
 			if( window.ShowContextMenu )
 			{
 				ShowContextMenu( i18n( 'i18n_file_menu' ), menu );
@@ -484,9 +671,70 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 			return cancelBubble( e );
 		}
 	}
+	return createOnclickAction;
+}
+// Refresh the file browser (side bar)
+Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, depth, flags, evt )
+{
+	let self = this;
+	if( !evt ) evt = {};
+	
+	if( !rootElement ) rootElement = this.dom;
+	if( !callback ) callback = false;
+	if( !path ) path = this.rootPath; // Use the rootpath
+	if( !depth ) depth = 1;
+	
+	// Fix column problem
+	if ( path.indexOf( ':' ) < 0 )
+		path += ':';
 
+	let refreshMode = 'normal';
+	let context = null;
+	if( flags )
+	{
+		if( flags.context )
+		{
+			if( self.lastContext != flags.context && !evt.button )
+			{
+				return;
+			}
+			context = flags.context;
+			self.lastContext = context;
+		}
+		if( flags.mode )
+			refreshMode = flags.mode;
+	}
+
+	if( !this.headerDisks )
+	{
+		this.headerDisks = document.createElement( 'div' );
+		this.headerDisks.innerHTML = '<p class="Layout BorderBottom PaddingBottom"><strong>' + i18n( 'i18n_your_devices' ) + ':</strong></p>';
+		rootElement.appendChild( this.headerDisks );
+	}
+	
+	// What are we looking for at this level?
+	// Keeps the whole target path, but searches on each level recursively..
+	let targetPath = false;
+	if( this.flags.path )
+	{
+		targetPath = this.flags.path;
+	}
+	
+	let createOnclickAction = self.getOnClickActionFunc( { 
+	    context: context,
+	    path: path, 
+	    rootElement: rootElement, 
+	    callback: callback, 
+	    depth: depth, 
+	    flags: flags, 
+	    evt: evt
+    } );  
+		
 	// A click element for incoming path
 	let clickElement = null;
+	
+	// Check for theme engine (goes into favorites mode)
+	let favoritesMode = document.body.classList.contains( 'ThemeEngine' );
 
 	// Just get a list of disks
 	if( path == 'Mountlist:' )
@@ -554,17 +802,18 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 					// Check our list (also contains bookmarks!)
 					for( let b = 0; b < msg.list.length; b++ )
 					{
-						if( msg.list[ b ].Volume == 'System:' ) continue;
+						let vol = msg.list[ b ].Volume;
+						if( vol == 'System:' ) continue;
 						
 						// Ignore shared: TODO: We are trying to remove it
-						if( self.directoryView && self.directoryView.filedialog && msg.list[ b ].Volume == 'Shared:' )
+						if( self.directoryView && self.directoryView.filedialog && vol == 'Shared:' )
 						{
 							continue;
 						}
 						
 						if( eles[a].id == 'diskitem_' + msg.list[b].Title )
 						{
-							createOnclickAction( eles[a], msg.list[b].Volume, 'volume', depth + 1 );
+							createOnclickAction( eles[a], vol, 'volume', depth + 1 );
 							
 							// Don't add twice
 							if( !found.find( function( ele ){ ele == msg.list[b].Title } ) )
@@ -603,11 +852,15 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 					// Add the bookmark header if it doesn't exist
 					if( self.flags.bookmarks && msg.list[a].Type && msg.list[a].Type == 'header' && !self.bookmarksHeader )
 					{
-						let d = document.createElement( 'div' );
-						self.bookmarksHeader = d;
-						d.innerHTML = '<p class="Layout BorderBottom PaddingTop BorderTop PaddingBottom"><strong>' + i18n( 'i18n_bookmarks' ) + ':</strong></p>';
-						rootElement.appendChild( d );
-						continue;
+						// Only add bookmarks header when not in favorites mode
+						if( !favoritesMode )
+						{
+							let d = document.createElement( 'div' );
+							self.bookmarksHeader = d;
+							d.innerHTML = '<p class="Layout BorderBottom PaddingTop BorderTop PaddingBottom"><strong>' + i18n( 'i18n_bookmarks' ) + ':</strong></p>';
+							rootElement.appendChild( d );
+							continue;
+						}
 					}
 					
 					// Check if this item already exists
@@ -673,36 +926,43 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 						
 						if( msg.list[a].Type && msg.list[a].Type == 'bookmark' )
 						{
-							// Set nice folder icon
-							nm.classList.remove( 'IconSmall' );
-							nm.classList.remove( 'IconDisk' );
-							let img = '/iconthemes/friendup15/DriveLabels/Bookmark.svg';
-							let i = document.createElement( 'div' );
-							i.className = 'FileBrowserItemImage';
-							i.style.backgroundImage = 'url("' + img + '")';
-							nm.appendChild( i );
-							
-							( function( ls ){
-								let ex = document.createElement( 'span' );
-								ex.className = 'FloatRight IconButton IconSmall fa-remove';
-								ex.onclick = function( e )
-								{
-									let m = new Module( 'system' );
-									m.onExecuted = function( e, d )
+							if( favoritesMode )
+							{
+								continue;
+							}
+							else
+							{
+								// Set nice folder icon
+								nm.classList.remove( 'IconSmall' );
+								nm.classList.remove( 'IconDisk' );
+								let img = '/iconthemes/friendup15/DriveLabels/Bookmark.svg';
+								let i = document.createElement( 'div' );
+								i.className = 'FileBrowserItemImage';
+								i.style.backgroundImage = 'url("' + img + '")';
+								nm.appendChild( i );
+								
+								( function( ls ){
+									let ex = document.createElement( 'span' );
+									ex.className = 'FloatRight IconButton IconSmall fa-remove';
+									ex.onclick = function( e )
 									{
-										if( e == 'ok' )
+										let m = new Module( 'system' );
+										m.onExecuted = function( e, d )
 										{
-											self.clear();
-											self.refresh( null, null, null, null, { mode: 'poll' } );
+											if( e == 'ok' )
+											{
+												self.clear();
+												self.refresh( null, null, null, null, { mode: 'poll' } );
+											}
 										}
+										m.execute( 'removebookmark', { name: ls.Path } );
+										return cancelBubble( e );
 									}
-									m.execute( 'removebookmark', { name: ls.Path } );
-									return cancelBubble( e );
-								}
-								nm.appendChild( ex );
-							} )( msg.list[a] );
-							
-							ctype = 'bookmark';
+									nm.appendChild( ex );
+								} )( msg.list[a] );
+								
+								ctype = 'bookmark';
+							}
 						}
 						
 						let s = document.createElement( 'div' );
@@ -764,10 +1024,16 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 						}, 5 );
 					}
 				}
+				
+				if( favoritesMode )
+				{
+					self.updateFavorites();
+				}
 			}
 			
 			if( self.flags.bookmarks )
 			{
+				self.favorites = [];
 				let m = new Module( 'system' );
 				m.onExecuted = function( e, d )
 				{
@@ -780,12 +1046,16 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 							js = JSON.parse( d );
 						}
 						catch( e ){}
+					    //console.log( 'Got favorites', js );
 					}
 					
-					msg.list.push( {
-						Title: i18n( 'i18n_bookmarks' ) + ':',
-						Type: 'header'
-					} );
+					if( !favoritesMode )
+					{
+						msg.list.push( {
+							Title: i18n( 'i18n_bookmarks' ) + ':',
+							Type: 'header'
+						} );
+					}
 					
 					self.hasBookmarks = false;
 					
@@ -797,9 +1067,17 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 								Title: js[a].name,
 								Type: 'bookmark',
 								Path: js[a].path,
-								Volume: js[a].path
+								Volume: js[a].path,
+								ID: js[a].id
 							};
-							msg.list.push( ele );
+							if( !favoritesMode )
+							{
+    							msg.list.push( ele );
+    					    }
+    						else
+    						{
+							    self.favorites.push( ele );
+							}
 						}
 						self.hasBookmarks = true;
 					}
@@ -817,6 +1095,9 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 	// Get sub directories
 	else
 	{
+	    // If we're in favorites mode, skip (we don't care about subdirs here)
+        if( self.favoritesDom ) return;
+    
 		// Support both API scope and Workspace scope
 		let func = function( path, flags, cb )
 		{

@@ -59,7 +59,7 @@ class SqlDatabase
 		}
 		if( $this->_link )
 		{
-			mysqli_set_charset( $this->_link, 'utf8' );
+			$this->_link->set_charset( 'utf8' );
 			return true;
 		}
 		return false;
@@ -587,6 +587,10 @@ class DbIO extends DbTable
 		{
 			// Hook
 			if( method_exists( $this, 'OnSaved' ) ) $this->OnSaved();
+		}
+		else
+		{
+		    error_log( '[dbio.php] Failed to execute query: ' . $query );
 		}
 		$this->_lastQuery = $query;
 		

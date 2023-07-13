@@ -25,6 +25,8 @@
 #include <system/fsys/door_notification.h>
 #include <util/session_id.h>
 
+#include <strings.h>
+
 /**
  * Create new User Session Manager
  *
@@ -148,11 +150,40 @@ UserSession *USMGetSessionBySessionID( UserSessionManager *usm, char *sessionid 
 	UserSession *us = usm->usm_Sessions;
 	while( us != NULL )
 	{
+		//
+		// If session is in "to remove" state, we can skip it
+		//
+		
+		if( us->us_Status == USER_SESSION_STATUS_TO_REMOVE )
+		{
+			us = (UserSession *) us->node.mln_Succ;
+			continue;
+		}
+		
+		if( FRIEND_MUTEX_LOCK( &us->us_Mutex ) == 0 )
+		{
+			us->us_InUseCounter++;
+			FRIEND_MUTEX_UNLOCK( &us->us_Mutex );
+		}
+		
 		if( strcmp( sessionid, us->us_SessionID ) == 0 )
 		{
 			DEBUG("CHECK4END found\n");
+			if( FRIEND_MUTEX_LOCK( &us->us_Mutex ) == 0 )
+			{
+				us->us_InUseCounter--;
+				FRIEND_MUTEX_UNLOCK( &us->us_Mutex );
+			}
 			SESSION_MANAGER_RELEASE( usm );
 			return us;
+		}
+		else
+		{
+			if( FRIEND_MUTEX_LOCK( &us->us_Mutex ) == 0 )
+			{
+				us->us_InUseCounter--;
+				FRIEND_MUTEX_UNLOCK( &us->us_Mutex );
+			}
 		}
 		us = (UserSession *) us->node.mln_Succ;
 	}
@@ -213,12 +244,15 @@ UserSession *USMGetSessionByDeviceIDandUser( UserSessionManager *usm, char *devi
 	UserSession *us = usm->usm_Sessions;
 	while( us != NULL )
 	{
-		DEBUG("[USMGetSessionByDeviceIDandUser] userid >%ld< devidentity >%s< compare to UID %ld and DEVID %s\n", us->us_UserID, us->us_DeviceIdentity, uid, devid );
-		if( us->us_UserID == uid && us->us_DeviceIdentity != NULL && strcmp( devid, us->us_DeviceIdentity ) == 0 && us->us_Status != USER_SESSION_STATUS_TO_REMOVE )
+		if( us->us_Status != USER_SESSION_STATUS_TO_REMOVE && us->us_Status != USER_SESSION_STATUS_DELETE_IN_PROGRESS )
 		{
-			DEBUG("[USMGetSessionByDeviceIDandUser] found user by deviceid: %s sessionID: %s\n", devid, us->us_SessionID );
-			SESSION_MANAGER_RELEASE( usm );
-			return us;
+			DEBUG("[USMGetSessionByDeviceIDandUser] userid >%ld< devidentity >%s< compare to UID %ld and DEVID %s\n", us->us_UserID, us->us_DeviceIdentity, uid, devid );
+			if( us->us_UserID == uid && us->us_DeviceIdentity != NULL && strcmp( devid, us->us_DeviceIdentity ) == 0 && us->us_Status != USER_SESSION_STATUS_TO_REMOVE )
+			{
+				DEBUG("[USMGetSessionByDeviceIDandUser] found user by deviceid: %s sessionID: %s\n", devid, us->us_SessionID );
+				SESSION_MANAGER_RELEASE( usm );
+				return us;
+			}
 		}
 		us = (UserSession *) us->node.mln_Succ;
 	}
@@ -678,22 +712,6 @@ UserSession *USMUserSessionAdd( UserSessionManager *smgr, UserSession *us )
 			UserAddSession( locusr, us );
 
 			us->us_User = locusr;
-			
-			/*
-			DEBUG("[USMUserSessionAdd] have more sessions: %d mainsessionid: '%s'\n", userHaveMoreSessions, locusr->u_MainSessionID );
-			
-			if( userHaveMoreSessions == FALSE && ( locusr->u_MainSessionID == NULL || ( strlen( locusr->u_MainSessionID ) <= 0 ) ) )
-			{
-				DEBUG("[USMUserSessionAdd] is api: %d\n", locusr->u_IsAPI );
-				if( locusr != NULL && locusr->u_IsAPI == FALSE )
-				{
-					// we cannot regenerate session because drives are using this sessionid
-					UserRegenerateSessionID( smgr->usm_SB, locusr, NULL );
-				}
-				
-				DEBUG("[USMUserSessionAdd] SessionID will be overwriten\n");
-			}
-			*/
 		}
 	}
 	else
@@ -879,7 +897,7 @@ int USMSessionSaveDB( UserSessionManager *smgr, UserSession *ses )
 		int error = 0;
 		char *temptext = FMalloc( TEMPSIZE );
 		
-		sqllib->SNPrintF( sqllib, temptext, TEMPSIZE, "SELECT ID FROM `FUserSession` WHERE `DeviceIdentity` = '%s' AND `UserID`=%lu", ses->us_DeviceIdentity,  ses->us_UserID );
+		snprintf( temptext, TEMPSIZE, "SELECT ID FROM `FUserSession` WHERE `DeviceIdentity`='%s' AND `UserID`=%lu", ses->us_DeviceIdentity,  ses->us_UserID );
 
 		void *res = sqllib->Query( sqllib, temptext );
 		char **row;
@@ -1088,7 +1106,7 @@ UserSession *USMCreateTemporarySession( UserSessionManager *smgr, SQLLibrary *sq
 		locSQLused = TRUE;
 	}
 	
-	ses = UserSessionNew( NULL, "tempsession" );
+	ses = UserSessionNew( NULL, "tempsession", sb->fcm->fcm_ID );
 	if( ses != NULL )
 	{
 		ses->us_UserID = userID;
@@ -1125,6 +1143,8 @@ void USMDestroyTemporarySession( UserSessionManager *smgr, SQLLibrary *sqllib, U
 	FBOOL locSQLused = FALSE;
 	SystemBase *sb = NULL;
 	
+	DEBUG("[USMDestroyTemporarySession] start\n");
+	
 	SQLLibrary *locSqllib = sqllib;
 	if( sqllib == NULL )
 	{
@@ -1151,8 +1171,10 @@ void USMDestroyTemporarySession( UserSessionManager *smgr, SQLLibrary *sqllib, U
 	
 	if( ses != NULL )
 	{
+		DEBUG("[USMDestroyTemporarySession] session will be deleted: %p\n", ses );
 		UserSessionDelete( ses );
 	}
+	DEBUG("[USMDestroyTemporarySession] end\n");
 }
 
 /**
@@ -1166,6 +1188,7 @@ void USMDestroyTemporarySession( UserSessionManager *smgr, SQLLibrary *sqllib, U
 User *USMIsSentinel( UserSessionManager *usm, char *username, UserSession **rus, FBOOL *isSentinel )
 {
 	User *tuser = NULL;
+	/*
 	SystemBase *sb = (SystemBase *)usm->usm_SB;
 	FBOOL isUserSentinel = FALSE;
 	
@@ -1181,30 +1204,12 @@ User *USMIsSentinel( UserSessionManager *usm, char *username, UserSession **rus,
 		{
 			isUserSentinel = TRUE;
 			break;
-			/*
-			// Check both username and password
-
-			if( tuser != NULL && strcmp( tuser->u_Name, username ) == 0 )
-			{
-				FBOOL isUserSentinel = FALSE;
-			
-				Sentinel *sent = sb->GetSentinelUser( sb );
-				if( sent != NULL )
-				{
-					if( tuser == sent->s_User )
-					{
-						isUserSentinel = TRUE;
-					}
-				}
-				*rus = tusers;
-				break;
-			}
-			*/
 		}
 		tusers = (UserSession *)tusers->node.mln_Succ;
 	}
 	
 	SESSION_MANAGER_RELEASE( usm );
+	*/
 	
 	return tuser;
 }
@@ -1218,6 +1223,7 @@ int countSessionSize( UserSession *us )
 	if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
 	{
 		size = USERSESSION_SIZE + 255;	// approx 255 for sessionid
+
 		FQEntry *fqe = us->us_MsgQueue.fq_First;
 		while( fqe != NULL )
 		{

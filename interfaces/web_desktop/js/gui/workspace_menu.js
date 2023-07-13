@@ -18,7 +18,7 @@ var WorkspaceMenu =
 	},
 	show: function( resetMode )
 	{	
-		hideKeyboard();
+	    hideKeyboard();
 		
 		WorkspaceMenu.scrolling = false;
 		
@@ -436,7 +436,7 @@ var WorkspaceMenu =
 		if( menudiv && menudiv.menu != menuItems ) menudiv.menu = menuItems; else return;
 		
 		// This need to be able to stringify to validate menu items
-		if( depth == 0 )
+		if( depth == 0 && menuItems && typeof( menuItems.push ) != 'undefined' )
 		{
 			if( !menuItems.length && isMobile )
 			{
@@ -467,7 +467,7 @@ var WorkspaceMenu =
 				menudiv.innerHTML = '';
 			}
 			
-			if( isMobile && ( appid || ( currentMovable && currentMovable.content.directoryview ) ) )
+			if( isMobile && ( appid || ( currentMovable && currentMovable.content && currentMovable.content.directoryview ) ) )
 			{
 				let found = false;
 				for( var z = 0; z < menuItems.length; z++ )
@@ -699,7 +699,7 @@ var WorkspaceMenu =
 	{
 		if( !wm ) return;
 		var mode = ( Workspace && Workspace.menuMode == 'miga' ) ? 'onmouseover' : 'onmousedown';
-		if( isMobile ) mode = 'ontouchend';
+		if( isMobile || isTouchDevice() ) mode = 'ontouchend';
 		
 		// We generated a new menu?
 		var menus = wm.getElementsByTagName( 'div' );

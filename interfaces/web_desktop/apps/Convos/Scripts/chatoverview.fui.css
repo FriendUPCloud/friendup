@@ -1,0 +1,73 @@
+/* Channels */
+
+.FUIChatoverview > .Channels
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100px;
+	height: 100%;
+	padding: 20px;
+	box-sizing: border-box;
+	background-color: var(--fui-module-background);
+	transition: width,padding 0.25s,0.25s;
+	overflow-x: hidden;
+}
+
+@media(max-width: 768px)
+{
+    .FUIChatoverview.Chat > .Channels
+    {
+        width: 0;
+        padding: 20px 0;
+    }
+}
+
+.FUIChatoverview > .Channels > .Channel
+{
+	border-radius: 100%;
+	background-color: var(--fui-background);
+	width: 100%;
+	height: 60px;
+	margin: 0 0 20px 0;
+	cursor: pointer;
+	background-position: center;
+	background-repeat: no-repeat;
+	border-width: 0px;
+	border-color: none;
+	border-style: solid;
+	box-sizing: border-box;
+}
+
+.FUIChatoverview > .Channels > .Channel:not(.Active) 
+{
+    background-color: var(--fui-palette-chan03-dim);
+}
+
+.FUIChatoverview > .Channels > .Channel.Active
+{
+	background-color: var(--fui-palette-chan03);
+	border-width: 3px; 
+	border-color: var(--fui-border-color-negative);
+}
+
+/* Chat list */
+
+.FUIChatoverview > .Chatlist
+{
+	position: absolute;
+	top: 0;
+	left: 100px;
+	width: calc(100% - 100px);
+	height: 100%;
+	transition: width,left 0.25s,0.25s;
+}
+
+@media(max-width: 768px)
+{
+    .FUIChatoverview.Chat > .Chatlist
+    {
+        left: 0;
+        width: 100%;
+    }
+}

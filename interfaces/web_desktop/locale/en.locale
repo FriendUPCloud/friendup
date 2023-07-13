@@ -21,6 +21,7 @@ i18n_network                         : Network
 i18n_language                        : Language
 i18n_bookmarks                       : Bookmarks
 i18n_upload_a_file                   : Upload file
+i18n_change_up_path                  : Change path
 i18n_selected_files                  : Selected files
 i18n_in_total                        : In total
 i18n_deleting_files                  : Deleting files
@@ -34,7 +35,7 @@ i18n_bookmarks_remove                : Remove
 i18n_empty_view                      : Empty view
 i18n_no_bookmarks                    : You have no bookmarks.
 i18n_illegal_path                    : Illegal path
-i18n_illegal_fld_mountlist           : You can not make a new directory in the mountlist.
+i18n_illegal_fld_mountlist           : You can not make a new folder in the mountlist.
 i18n_desklets                        : Desklets
 i18n_software                        : Software
 i18n_sound                           : Sound
@@ -108,10 +109,10 @@ i18n_continue                           : Continue
 i18n_couldnotinstallapp                 : Could not install application.
 
 i18n_choose_file                        : Choose file
-i18n_new_container                      : New directory
-i18n_create_container                   : Make directory
+i18n_new_container                      : New folder
+i18n_create_container                   : Make folder
 i18n_name                               : Name
-i18n_make_a_new_container               : Make a new directory
+i18n_make_a_new_container               : Make a new folder
 i18n_error_could_not_list_directory     : Empty directory
 
 i18n_error                              : Error
@@ -243,6 +244,13 @@ i18n_your_apps                          : Apps
 i18n_favorites                          : Favorites
 i18n_menu                               : Menu
 
+i18n_new_folder                         : New folder
+i18n_new_file                           : New file
+i18n_new_document                       : New document
+i18n_new_presentation                   : New presentation
+i18n_new_spreadsheet                    : New spreadsheet
+i18n_new_memo                           : New memo
+
 i18n_close_menu                         : Close menu
 i18n_delete_shortcut                    : Delete shortcut
 
@@ -301,19 +309,21 @@ i18n_only_executables_can_drop          : Only executables can be dropped on the
 
 i18n_copy_operation                     : File copy operation
 i18n_copying_files_complete             : Copying files complete.
+i18n_copying_files_stopped              : Copying files stopped.
 
 i18n_choose_file_to_upload              : Choose file to upload
 i18n_upload_target                      : Upload target
 i18n_browse                             : Browse
-i18n_upload_the_file                    : Start upload
+i18n_upload_the_file                    : Upload
 i18n_file_upload                        : File upload
 i18n_upload_completed                   : Upload completed.
 i18n_upload_failed                      : Upload failed.
 i18n_upload_completed_description       : The upload process completed successfully.
 i18n_upload_failed_description          : Could not upload your file.
-i18n_select_local_files                 : Select local files
+i18n_select_local_files                 : Select file(s) to upload
 i18n_not_upload_target                  : Not an upload target
 i18n_not_upload_target_desc             : You can not upload to the Shared drive.
+i18n_upload_file_to_storage             : Upload file(s)
 
 i18n_unzip_completed                    : Decompressing completed.
 i18n_unzip_comdesc                      : Decompressing a file(s) completed successfully
@@ -363,7 +373,7 @@ i18n_swipe_down_to_close                : Swipe down to close
 
 menu_buildwebapp                        : Build web application
 menu_icons                              : File
-menu_new_directory                      : Make directory
+menu_new_directory                      : Make folder
 menu_new_weblink                        : Create web link
 menu_show_icon_information              : Properties
 menu_edit_filename                      : Rename file
@@ -502,8 +512,8 @@ i18n_stat_operation                     : File information
 i18n_could_not_stat_file                : Could not stat file.
 i18n_protect_operation                  : Protecting of file(s)
 i18n_could_not_protect_files            : Could not protect file(s).
-i18n_makedir_operation                  : New directory
-i18n_could_not_make_dir                 : Could not create new directory.
+i18n_makedir_operation                  : New folder
+i18n_could_not_make_dir                 : Could not create new folder.
 i18n_volume_information                 : Disk information
 i18n_volume_permissions                 : Disk permissions
 i18n_disk_full                          : The disk is full
@@ -527,6 +537,10 @@ i18n_illegal_path_desc                  : The path you tried to enter does not e
 #Colorpicker -------------------------------------------------------------------
 
 i18n_color_picker                       : Color picker
+
+#Dashboard ---------------------------------------------------------------------
+i18n_dashboard_favorites                : Favorites
+i18n_dashboard_tasks                    : Open tasks
 
 #Misc --------------------------------------------------------------------------
 
@@ -633,6 +647,7 @@ i18n_dir_btn_iconview                   : Normal
 i18n_dir_btn_compact                    : Compact
 i18n_dir_btn_listview                   : List
 i18n_dir_btn_imageview                  : Gallery
+i18n_disk_usage                         : Disk usage
 
 #Sessions ----------------------------------------------------------------------
 

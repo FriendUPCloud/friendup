@@ -143,7 +143,7 @@ User * UMUserGetByNameDB( UserManager *smgr, const char *name );
 //
 //
 
-User *UMUserGetByID( UserManager *um, FQUAD id );
+User *UMUserGetByID( UserManager *um, FUQUAD id );
 
 //
 //
@@ -252,7 +252,7 @@ void UMRemoveUserFromList( UserManager *um,  User *usr );
 //
 //
 
-int UMRemoveAndDeleteUser(UserManager *um, User *usr, UserSessionManager *user_session_manager);
+int UMRemoveAndDeleteUser(UserManager *um, User *usr, UserSessionManager *user_session_manager, UserSession *us );
 
 //
 //
@@ -283,6 +283,18 @@ int UMCheckAndLoadAPIUser( UserManager *um );
 //
 
 int UMReturnAllUsers( UserManager *um, BufString *bs, char *grname );
+
+//
+//
+//
+
+void UMRemoveOldUserLoginEntries( UserManager *um );
+
+//
+//
+//
+
+void UMRemoveRemovedUsersData( UserManager *um );
 
 //
 //
@@ -324,6 +336,42 @@ FBOOL UMSendDoorNotification( UserManager *usm, void *notif, UserSession *ses, F
 //
 //
 
+int UMSendUserChangesNotification( UserManager *um, UserSession *ses );
+
+//
+//
+//
+
 int UMRemoveOldSessions( void *lsb );
+
+//
+//
+//
+
+void UMRemoveUsersFromGroup( UserManager *um, FUQUAD groupid );
+
+//
+//
+//
+
+void UMNotifyAllUsersInGroup( UserManager *um, FQUAD groupid, int type );
+
+//
+//
+//
+
+void UMAddExistingUsersToGroup( UserManager *um, UserGroup *ug );
+
+//
+//
+//
+
+int killUserSession( void *l, UserSession *ses, FBOOL remove );
+
+//
+//
+//
+
+void UMPurgeUserData( UserManager *um, FQUAD id, char *userName );
 
 #endif //__SYSTEM_USER_USER_MANAGER_H__

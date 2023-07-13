@@ -1,0 +1,34 @@
+<group uniqueid="maingroup">
+    <rows>
+        <row padding="normal">
+            <fui-chatoverview uniqueid="convos"></fui-chatoverview>
+        </row>
+    </rows>
+</group>
+<fui-fragment uniqueid="chat-message-head">
+    <div class="Avatar"><span style="background-image: url({avatar-image})"></span></div>
+    <p class="Nickname">
+        <span class="Name">{fullname}</label>
+    </p>
+    <p class="Date">
+        <span>{date}</label>
+    </p>
+    <div class="Text">
+        {message}
+    </div>
+</fui-fragment>
+<fui-fragment uniqueid="chat-message">
+    <div class="Text Alone">
+        {message}
+    </div>
+</fui-fragment>
+<script src="Progdir:Scripts/convos.js"></script>
+<script src="Progdir:Scripts/contacts.fui.js"></script>
+<script src="Progdir:Scripts/chatoverview.fui.js"></script>
+<script src="Progdir:Scripts/chatlog.fui.js"></script>
+<script src="Progdir:Scripts/popwidget.fui.js"></script>
+<link rel="stylesheet" href="Progdir:Scripts/main.css"/>
+<link rel="stylesheet" href="Progdir:Scripts/contacts.fui.css"/>
+<link rel="stylesheet" href="Progdir:Scripts/chatoverview.fui.css"/>
+<link rel="stylesheet" href="Progdir:Scripts/chatlog.fui.css"/>
+<link rel="stylesheet" href="Progdir:Scripts/popwidget.fui.css"/>

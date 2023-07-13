@@ -105,8 +105,8 @@
 					$mail->isHTML(true); 
 					
 					
-					
-					$mail->Subject = 'FriendUP password recovery';
+					$subject = $cfg['Mail']['subject'] ? $cfg['Mail']['subject'] : 'FriendOS Password Recovery';
+					$mail->Subject = $subject;
 					$mail->Body    = $mailtemplate;
 					$mail->AltBody = strip_tags($mailtemplate);
 					
@@ -121,7 +121,7 @@
 						}
 						else
 						{
-							die('done2'); // . $mail->ErrorInfo
+							die('done2<!--separate-->'. $mail->ErrorInfo );
 						}
 										
 					} catch (phpmailerException $e) {
@@ -230,7 +230,7 @@
 					$result = FriendCoreQuery( '/system.library/user/updatepassword', $d, 'POST', false, false, true );
 					if( $result && substr( $result, 0, 3 ) == 'ok<' )
 					{
-						$mail->Subject = 'FriendUP password recovery - new password';
+						$mail->Subject = isset( $cfg['Mail']['recover_subject'] )?$cfg['Mail']['recover_subject']:'Friend OS password recovery - new password';
 						$mail->Body    = $mailtemplate;
 						$mail->AltBody = strip_tags($mailtemplate);
 				

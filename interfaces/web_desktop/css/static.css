@@ -32,6 +32,7 @@ body > .WelcomeGraphic.Animate.Done
 
 html > body
 {
+    border: 0 !important;
 	position: absolute;
 	top: 0;
 	left: 0;
@@ -47,7 +48,7 @@ html > body
 
 body:not(.Offline) #OfflineMessage
 {
-	display: none;
+	/*display: none;*/
 }
 
 body:before
@@ -71,3 +72,4 @@ body.ThemeRefreshing:before
 	z-index: 2147483646;
 	opacity: 1;
 }
+

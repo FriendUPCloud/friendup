@@ -102,12 +102,38 @@ function _file_output( $filepath, $display )
 
 // End dependency --------------------------------------------------------------
 
+// figure out whos avatar to load ( target user ). The absense of a user id input
+// will be considered a request for that users own avatar
 
-// Get UserID
+$targetId = false;
+$targetUId = false;
+// look for userid
 if( isset( $args->args->userid ) && !isset( $args->userid ) )
 {
 	$args->userid = $args->args->userid;
 }
+
+if ( isset( $args->userid ))
+{
+	$targetId = $args->userid;
+}
+else
+{
+	$targetId = $User->ID;
+}
+
+// look for unique user id
+if ( isset( $args->args->fuserid ) && !isset( $args->fuserid ))
+{
+	$args->fuserid;
+}
+
+if ( isset( $args->fuserid ))
+{
+	$targetUId = $args->fuserid;
+}
+
+/*
 // Get AuthID
 if( isset( $args->args->authid ) && !isset( $args->authid ) )
 {
@@ -150,7 +176,7 @@ else
 					// If user has GLOBAL or WORKGROUP access to this user
 			
 					if( $perm->data->users == '*' || strstr( ','.$perm->data->users.',', ','.$args->userid.',' ) )
-					{*/
+					{
 						$userid = intval( $args->userid );
 					/*}
 			
@@ -158,15 +184,15 @@ else
 		
 			}
 		}
-	}*/
+	}
 }
+*/
 
 // Default thumbnail size
 $width = 256;
 $height = 256;
 $mode = 'resize';
 $hash = false;
-
 $display = 'default';
 
 // Image was set
@@ -195,6 +221,78 @@ if( isset( $args->display ) )
 	$display = $args->display;
 }
 
+
+// fetch target user
+// the in workgroup check is preserved, but currently not a limitation
+$targetUser = false;
+$inWorkGroup = false;
+$self = false;
+/*
+if( isset( $args->userid ) ) $targetUser = $args->userid;
+else if( isset( $args->args ) && isset( $args->args->userid ) ) 
+	$targetUser = $args->args->userid;
+*/
+
+$tuWhere = 'tu.ID = \'' . $targetId . '\'';
+if ( $targetUId )
+	$tuWhere = 'tu.UniqueID = \'' . $targetUId . '\'';
+
+$targetUser = $SqlDatabase->fetchObject('
+	SELECT tu.* FROM
+		FUser tu
+	WHERE ' . $tuWhere . '
+');
+
+if ( null != $targetUser )
+{
+	if ( $targetUser->ID == $User->ID )
+	{
+		// user is asking for his own avatar
+		$self = true;
+	}
+	else
+	{
+		// in workgroup check
+		$relation = $SqlDatabase->fetchObject('
+			SELECT tug.* FROM
+				FUserToGroup tug,
+				FUserToGroup sug
+			WHERE
+				sug.UserID = \'' . $User->ID . '\' AND
+				tug.UserGroupID = sug.UserGroupID AND
+				tug.UserID = \'' . $targetUser->ID . '\'
+		');
+		
+		if ( null != $relation )
+		{
+			$inWorkGroup = true;
+		}
+	}
+}
+else
+{
+	// invalid request, do invalid request things
+	_file_broken( $display );
+}
+
+/* duplicated above, remove this later i guess
+if( $targetUser )
+{
+	if( $row = $SqlDatabase->fetchObject( '
+		SELECT tug.* FROM 
+			FUserToGroup tug,
+			FUserToGroup sug
+		WHERE
+			sug.UserID = \'' . $User->ID . '\' AND
+			tug.UserGroupID = sug.UserGroupID AND
+			tug.UserID = \'' . intval( $targetUser, 10 ) . '\'
+	' ) )
+	{
+		$userid = $row->UserID;
+	}
+}
+*/
+
 // Sanitized username
 $wname = $Config->FCUpload;
 if( substr( $wname, -1, 1 ) != '/' ) $wname .= '/';
@@ -203,7 +301,7 @@ if( !file_exists( $wname . 'thumbnails' ) )
 	mkdir( $wname . 'thumbnails' );
 }
 
-
+$userid = $targetUser->ID;
 
 if( $userid > 0 && $wname )
 {
@@ -211,6 +309,11 @@ if( $userid > 0 && $wname )
 	$folderpath = ( $wname . 'thumbnails/avatar_' . $userid . '/' );
 	
 	// Check if it exists!
+	if ( !$hash && $targetUser->Image )
+	{
+		$hash = $targetUser->Image;
+	}
+	
 	if( $hash && file_exists( $folderpath . ( $hash . '_' . $mode . '_' . $width . 'x' . $height ) . '.png' ) )
 	{
 		_file_output( $folderpath . ( $hash . '_' . $mode . '_' . $width . 'x' . $height ) . '.png', $display );
@@ -219,7 +322,6 @@ if( $userid > 0 && $wname )
 	// Try to generate it
 	else
 	{
-	
 		$avatar = '';
 		
 		$s = new dbIO( 'FSetting' );
@@ -245,6 +347,10 @@ if( $userid > 0 && $wname )
 			}
 			else $avatar = $s->Data;
 			
+			
+			$hash = md5( $avatar );
+			
+			/*
 			if( $s->ID > 0 && $avatar && $s->UserID > 0 )
 			{
 				$u = new dbIO( 'FUser' );
@@ -258,10 +364,10 @@ if( $userid > 0 && $wname )
 					$hash = md5( $avatar );
 				}
 			}
+			*/
 			
 			// Fix filename
 			$fname = ( $hash . '_' . $mode . '_' . $width . 'x' . $height ) . '.png';
-			
 			$filepath = ( $wname . 'thumbnails/avatar_' . $userid . '/' . $fname );
 		}
 		// Generate default avatar -------------------------------------------------
@@ -284,7 +390,9 @@ if( $userid > 0 && $wname )
 			}
 			else $hex = trim( $palette[ rand( 0, count( $palette ) - 1 ) ] );
 	
-			$img = imagecreatetruecolor( 256, 256 );
+			$gw = 1024;
+			$gh = 1024;
+			$img = imagecreatetruecolor( $gw, $gh );
 			imagealphablending( $img, false );
 			imagesavealpha( $img, true );
 			imageantialias( $img, true );
@@ -292,10 +400,15 @@ if( $userid > 0 && $wname )
 	
 			// Make transparentgim
 			$transparent = imagecolorallocatealpha( $img, 255, 255, 255, 127 );
-			imagefilledrectangle( $img, 0, 0, 256, 256, $transparent );
+			imagefilledrectangle( $img, 0, 0, $gw, $gh, $transparent );
 	
 			// Draw color circle (3x the size)
-			$factor = 3 * 256;
+			$factor = 0;
+			if ( $gw > $gh )
+				$factor = 3 * $gh;
+			else
+				$factor = 3 * $gw;
+			
 			$nimg = imagecreatetruecolor( $factor, $factor );
 			imageantialias( $nimg, true );
 			imagealphablending( $nimg, false );
@@ -310,7 +423,7 @@ if( $userid > 0 && $wname )
 			imagefilledellipse( $nimg, $factor >> 1, $factor >> 1, $factor, $factor, $color );
 	
 			// Copy resized version
-			imagecopyresampled( $img, $nimg, 0, 0, 0, 0, 256, 256, $factor, $factor );
+			imagecopyresampled( $img, $nimg, 0, 0, 0, 0, $gw, $gh, $factor, $factor );
 	
 			// Font path
 			$font = 'resources/themes/friendup12/fonts/Assistant-ExtraBold.ttf';
@@ -322,8 +435,8 @@ if( $userid > 0 && $wname )
 			$initials = explode( ' ', $initials );
 			$initials = strtoupper( count( $initials ) > 1 ? $initials[0]{0} . $initials[1]{0} : substr( $initials[0], 0, 2 ) );
 			
-			$dims = getsetting_calculateTextBox( $initials, $font, 88, 0 );
-			imagettftext( $img, 88, 0, 128 - ( $dims[ 'width' ] >> 1 ) - $dims[ 'left' ], 128 + ( $dims[ 'height' ] >> 1 ) + ( $dims[ 'height' ] - $dims[ 'top' ] ), $color, $font, $initials );
+			$dims = getsetting_calculateTextBox( $initials, $font, ( $factor / 6 ) * ( 24 / 35 ), 0 );
+			imagettftext( $img, ( $factor / 6 ) * ( 24 / 35 ), 0, ( $factor / 6 ) - ( $dims[ 'width' ] >> 1 ) - $dims[ 'left' ], ( $factor / 6 ) + ( $dims[ 'height' ] >> 1 ) + ( $dims[ 'height' ] - $dims[ 'top' ] ), $color, $font, $initials );
 			ob_start();
 			imagepng( $img );
 			$png = ob_get_clean();
@@ -367,7 +480,6 @@ if( $userid > 0 && $wname )
 			
 			// Fix filename
 			$fname = ( $hash . '_' . $mode . '_' . $width . 'x' . $height ) . '.png';
-			
 			$filepath = ( $wname . 'thumbnails/avatar_' . $userid . '/' . $fname );
 		}
 		
@@ -380,7 +492,6 @@ if( $userid > 0 && $wname )
 		if( $avatar && $hash && $fname && $filepath )
 		{
 			// create image from blob ...
-			
 			if( $data = explode( ',', $avatar ) )
 			{
 				$source = false;

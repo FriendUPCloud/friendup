@@ -18,6 +18,8 @@ ini_set( 'display_errors', 1 );
 include_once( 'php/include/helpers.php' );
 include_once( 'php/classes/mailserver.php' );
 
+$reinvite = false; // In case we are reinviting
+
 if( $args->command )
 {
 	$Conf = parse_ini_file( 'cfg/cfg.ini', true );
@@ -251,7 +253,6 @@ if( $args->command )
 			// verifyinvite (args: hash=123d4h)
 			
 			// TODO: Verify and remove personal invites, keep the general invites ...
-			
 			if( isset( $args->args->hash ) && $args->args->hash )
 			{
 				if( $f = $SqlDatabase->FetchObject( '
@@ -266,9 +267,7 @@ if( $args->command )
 						{
 							if( $json = json_decode( decodeUrl( $f->Source ) ) )
 							{
-								
-								// TODO: Add support for adding to workgroup(s) when that is ready ...
-								
+								// Working on adding user to group
 								if( $json->data->workgroups )
 								{
 									foreach( $json->data->workgroups as $group )
@@ -326,6 +325,7 @@ if( $args->command )
 											AND c.ID = ' . $User->ID . ' AND c.Status = 0 
 									' ) )
 									{
+										// Adding relationship between user and contact
 										if( $result = FriendCoreQuery( '/system.library/user/addrelationship', 
 										[
 											'mode'       => $json->data->mode,
@@ -502,14 +502,28 @@ if( $args->command )
 							
 								if( isset( $args->args->groupId ) && !$found ) continue;
 							
-								$obj = new stdClass();
+							    $gname = '';
+							    
+							    $obj = new stdClass();
+								$obj->Hash          = $f->Hash;
 								$obj->EventID       = 0;
 								$obj->InviteLinkID  = $f->ID;
 								$obj->UserID        = ( isset( $json->contact->ID       ) ? $json->contact->ID       : false                                );
 								$obj->TargetGroupID = ( isset( $args->args->groupId     ) ? $args->args->groupId     : ( count( $groupid ) ? $groupid : 0 ) );
 								$obj->Fullname      = ( isset( $json->contact->FullName ) ? $json->contact->FullName : false                                );
 								$obj->Email         = ( isset( $json->contact->Email    ) ? $json->contact->Email    : false                                );
-							
+								
+								if( $group = $SqlDatabase->FetchObject( '
+					                SELECT ID, Name FROM FUserGroup 
+					                WHERE Type = "Workgroup" AND ID=\'' .  $obj->TargetGroupID . '\' 
+					                ORDER BY ID ASC 
+				                ' ) )
+				                {
+					                $gname = $group->Name;
+				                }
+								
+								$obj->LinkUrl       = $baseUrl . '/webclient/index.html#invite=' . $f->Hash . 'BASE64' . 
+														base64_encode( '{"user":"' . utf8_decode( $User->FullName ) . '","hash":"' . $f->Hash . '","group":"' . $gname . '"}' );
 								$out[] = $obj;
 							}
 						}
@@ -527,6 +541,11 @@ if( $args->command )
 			die( 'fail<!--separate-->' . json_encode( $reason ) );
 			
 			break;
+		
+		// Just resend an existing invite
+		case 'resendinvite':
+			$reinvite = true;
+			// Then send invite
 		
 		case 'sendinvite':
 			
@@ -561,8 +580,6 @@ if( $args->command )
 				}
 			}
 			
-			
-			
 			if( isset( $args->args->userid ) && $args->args->userid )
 			{
 				if( !$contact = $SqlDatabase->FetchObject( '
@@ -589,8 +606,7 @@ if( $args->command )
 				}
 			}
 			
-			
-			
+			// Loads user and avatar
 			if( $usr = $SqlDatabase->FetchObject( '
 				SELECT f.ID, f.Name, f.FullName, f.Email, f.UniqueID, f.Status, s.Data AS Avatar 
 				FROM FUser f 
@@ -608,11 +624,9 @@ if( $args->command )
 				$data->username   = $usr->Name;
 				$data->fullname   = $usr->FullName;
 				
-				
-				
 				$hash = false; $online = false; $found = false;
 				
-				
+				// Generate invite hash (tiny url)
 				$f = new dbIO( 'FTinyUrl' );
 				$f->Source = ( $baseUrl . '/system.library/user/addrelationship?data=' . urlencode( json_encode( $data ) ) . '&contact=' . urlencode( json_encode( $contact ) ) );
 				if( !$f->Load() )
@@ -630,7 +644,21 @@ if( $args->command )
 				}
 				else
 				{
-					$found = true;
+					// When reinviting, just re-use the thing
+					if( $reinvite )
+					{
+						$found = true;
+					}
+				    // If the invite is over a week old, just allow reinvite
+				    else if( strtotime( $f->DateCreated ) > strtotime( time() ) - ( 60 * 60 * 24 * 7 ) )
+				    {
+					    $found = true;
+					}
+					// So when the invite is old and we are trying to make a new one, delete the old one
+					else
+					{
+					    $f->delete();
+					}
 				}
 				if( $f->ID > 0 )
 				{
@@ -646,12 +674,11 @@ if( $args->command )
 					die( 'fail<!--separate-->{"response":-1,"message":"Could not read invite hash."}' );
 				}
 				
-				
+				$Logger->log( '[sendinvite] Getting contact information for queued event.' );
 				
 				if( $contact->ID > 0 )
 				{
 					// Check if user is online ...
-					
 					if( !$online && ( $res1 = FriendCoreQuery( '/system.library/user/activewslist',
 					[
 						'usersonly' => true,
@@ -667,8 +694,7 @@ if( $args->command )
 						}
 					}
 					
-					// TODO: Remove this once all old databases that is missing this column is updated.
-					$SqlDatabase->query( 'ALTER TABLE `FQueuedEvent` ADD `InviteLinkID` bigint(20) NOT NULL DEFAULT \'0\';' );
+					$Logger->log( '[sendinvite] Making queued event.' );
 					
 					// Send a notification message			
 					$n = new dbIO( 'FQueuedEvent' );
@@ -701,29 +727,47 @@ if( $args->command )
 						}
 					}
 				}
-				
-				
+				else
+				{
+					$Logger->log( '[sendinvite] Making queued event without contact relation.' );
+					
+					// Send a notification message			
+					$n = new dbIO( 'FQueuedEvent' );
+					$n->UserID = $usr->ID;
+					$n->Date = date( 'Y-m-d H:i:s' );
+					$n->TargetUserID = 0;
+					$n->TargetGroupID = $gid;
+					$n->InviteLinkID = $f->ID;
+					$n->Save();
+					
+					$Logger->log( '[sendinvite] Event saved: ' . $n->ID );
+				}
 				
 				// Send email if not online or if email is specified ...
-				
 				if( !$online )
 				{
-					
-					if( $found )
+					// We have already sent a link, and we don't want to reinvite
+					if( $found && !$reinvite )
 					{
 						die( 'fail<!--separate-->{"response":-1,"message":"Invitation already sent, try removing the pending invite and resend."}' );
 					}
 					
-					$invitelink = buildUrl( $hash, $Conf, $ConfShort );
-					
 					// Set up mail content!
-					$cnt = file_get_contents( "php/templates/mail/base_email_template.html" );
+					if( isset( $Conf[ 'Mail' ][ 'TemplateDir' ] ) )
+					{
+						$tplDir = $Conf[ 'Mail' ][ 'TemplateDir' ];
+						$cnt = file_get_contents( $tplDir . "/base_email_template.html" );
+					}
+					else
+					{
+						$cnt = file_get_contents( "php/templates/mail/base_email_template.html" );
+					}
 				
 					$repl = new stdClass(); $baserepl = new stdClass();
 			
 					$repl->baseUrl = $baserepl->baseUrl = $baseUrl;
 				
-					$repl->url = ( $baseUrl . '/webclient/index.html#invite=' . $hash . 'BASE64' . base64_encode( '{"user":"' . utf8_decode( $usr->FullName ) . '","hash":"' . $hash . '"}' ) );
+					$repl->url = ( $baseUrl . '/webclient/index.html#invite=' . $hash . 'BASE64' . base64_encode( '{"user":"' . utf8_decode( $usr->FullName ) . '","hash":"' . $hash . '","group":"' . $gname . '"}' ) );
 					
 					$repl->sitename = ( isset( $Conf[ 'Registration' ][ 'reg_sitename' ] ) ? $Conf[ 'Registration' ][ 'reg_sitename' ] : 'Friend Sky' );
 					$repl->user     = $usr->FullName;
@@ -733,7 +777,15 @@ if( $args->command )
 					
 					// TODO: Get avatar / group info somewhere public or with access code / invite token ...
 					
-					$baserepl->body = doReplacements( file_get_contents( $gname ? "php/templates/mail/group_invite_email_template.html" : "php/templates/mail/invite_email_template.html" ), $repl );
+					if( isset( $Conf[ 'Mail' ][ 'TemplateDir' ] ) )
+					{
+						$tplDir = $Conf[ 'Mail' ][ 'TemplateDir' ];
+						$baserepl->body = doReplacements( file_get_contents( $tplDir . ( $gname ? "/group_invite_email_template.html" : "/invite_email_template.html" ) ), $repl );
+					}
+					else
+					{
+						$baserepl->body = doReplacements( file_get_contents( $gname ? "php/templates/mail/group_invite_email_template.html" : "php/templates/mail/invite_email_template.html" ), $repl );
+					}
 					
 					$cnt = doReplacements( $cnt, $baserepl );
 					
@@ -761,17 +813,11 @@ if( $args->command )
 						
 						die( 'fail<!--separate-->{"response":-1,"message":"Could not send e-mail."}' );
 					}
-					
-					die( 'ok<!--separate-->Mail sent!' );
-					
+					die( 'ok<!--separate-->Mail sent!' );	
 				}
-				
 				die( 'ok<!--separate-->{"Response":"Invitation notification registered in database id: ' . ( $n->ID ? $n->ID : 0 ) . '"}' );
-				
 			}
-			
 			die( 'fail<!--separate-->{"Response":"Could not send invite"}' );
-			
 			break;
 		
 	}

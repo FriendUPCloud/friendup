@@ -24,6 +24,7 @@
 @append url(System:css/icons.css);
 @append url(System:css/tabs.css);
 @append url(System:css/workspace.css);
+@append url(System:css/FUI.css);
 @append url(System:css/font-awesome.min.css);
 
 @declaration
@@ -263,6 +264,10 @@
 	/* Other */
 	$LineHeightInput:        14px;
 }
+
+/* FUI OVERRIDES */
+
+/* ... */
 
 /* VIRTUAL ELEMENTS --------------------------------------------------------- */
 
@@ -674,7 +679,11 @@ html #DoorsScreen > .ScreenContent > div > div > .File .Title > span
 	display: inline-block;
 	color: #f0f0f0;
 	border-radius: 15px;
-	padding: 2px 8px 2px 8px;
+	padding: 1px 8px 2px 8px;
+	overflow: hidden;
+	max-height: 37px;
+	box-shadow: inset 0px 0px 2px rgb(0 0 0 / 25%);
+	background-color: rgba(0,0,0,0.2);
 }
 
 html #DoorsScreen > .ScreenContent > div > div > .File .Title
@@ -1332,6 +1341,7 @@ body:not([tablet])[mobile=mobile]:not(.WidgetSlideDown) #CalendarWidget
 }
 
 /* Window menu */
+
 body.WindowMenu #Screens .View.Active[maximized=true],
 body.WindowMenu #Screens .View.Active,
 body.WindowMenu #Screens .View
@@ -1393,6 +1403,8 @@ body.WindowMenu .Widget, body.WindowMenu #Statusbar
 	opacity: 0;
 	pointer-events: none;
 }
+
+/* Desklet */
 
 .Desklet.HasWindowlist
 {
@@ -1481,6 +1493,11 @@ html .Desklet[position=top_right] .Launcher.Running:after
 html #DockWindowList.Size32 .Task
 {
 	height: 28px;
+}
+
+html body.InputParadigmTablet .Desklet
+{
+	display: none;
 }
 
 
@@ -1674,6 +1691,16 @@ html .Screen > .TitleBar > .Left .Extra:hover
 html .Screen > .TitleBar > .Left .Extra:hover .Time
 {
 	color: white;
+}
+
+html .Screen > .TitleBar > .Left > .Extra > span 
+{
+    margin: 0 5px 0 0;
+}
+
+html .Screen > .TitleBar > .Left > .Extra > div:last-child
+{
+    margin: 0;
 }
 
 html .Screen > .TitleBar
@@ -3966,5 +3993,4 @@ html > body[mobile] > div .Button.IconButton:hover
 @append url(System:../themes/friendup12/flavors_dark.css);
 @append url(System:../themes/friendup12/flavors_charcoal.css);
 @append url(System:../themes/friendup12/flavors_synthwave.css);
-
-
+@append url(System:../themes/friendup12/paradigm_tablet.css);

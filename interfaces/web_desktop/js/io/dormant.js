@@ -71,9 +71,11 @@ DormantMaster =
 {
 	appDoors: [],
 	events: {}, // Events from all applications, based on type
+	listeners : {}, // all listeners, by app
 	// Add an application to the dormant master
 	addAppDoor: function( dormantDoorObject )
 	{
+		const self = this;
 		// Variables for an unique appdoor name
 		var num = 0;
 		var nam = dormantDoorObject.title;
@@ -104,6 +106,46 @@ DormantMaster =
 		{
 			if( Workspace.refreshDormantDisks )
 				Workspace.refreshDormantDisks();
+		}
+		
+		// check if anyone is already listening for this app
+		if ( this.listeners[ namnum ])
+		{
+			Object.keys( this.listeners[ namnum ]).forEach( listener => {
+				self.listeners[ namnum ][ listener ].callback( 'open', dormantDoorObject );
+			});
+		}
+	},
+	// Listen for an app to be available in dormant
+	listen : function( listenForAppName, listenerName, callback )
+	{
+		const self = this;
+		if ( self.listeners[ listenForAppName ])
+		{
+			self.listeners[ listenForAppName ][ listenerName ] = {
+				listener : listenerName,
+				callback : callback,
+			};
+		}
+		else
+		{
+			self.listeners[ listenForAppName ] = {};
+			self.listen( listenForAppName, listenerName, callback );
+			return;
+		}
+		
+		// send event if app is already available
+		if ( !self.appDoors.length )
+			return;
+		
+		for ( let a = self.appDoors.length; a; )
+		{
+			a--;
+			if ( self.appDoors[ a ] && self.appDoors[ a ].title == listenForAppName )
+			{
+				callback( 'open', self.appDoors[ a ]);
+				break;
+			}
 		}
 	},
 	// Get all doors
@@ -284,6 +326,48 @@ DormantMaster =
 		}
 		// Remove ones that are one off events
 		evs[ obj.eventName ] = newL;
+	},
+	/*
+		handle event from an app and emit it to registered listeners
+	*/
+	handleEvent : function( event ) {
+		const self = this;
+		let door = null;
+		// loop through apps doors
+		for ( let l = self.appDoors.length; l; )
+		{
+			l--;
+			const d = self.appDoors[ l ];
+			if ( d.doorId === event.doorId ) {
+				door = d;
+				break;
+			}
+		}
+		
+		if ( null == door ){
+			console.log( 'DormantMaster.handleEvent - no door was found', {
+				event : event,
+				doors : self.appDoors,
+			});
+			return;
+		}
+		
+		if ( null == door.listeners[ event.path ] || door.listeners[ event.path ] == 0 ) {
+			console.log( 'DormantMaster.handleEvent - no listeners for event', {
+				event     : event,
+				listeners : door.listeners,
+			});
+		}
+		else
+		{
+			// loop through listeners
+			for ( let l = door.listeners[ event.path ].length; l; )
+			{
+				l--;
+				const listenId = door.listeners[ event.path ][ l ];
+				door.listeners[ listenId ]( event.data );
+			}
+		}
 	}
 }
 

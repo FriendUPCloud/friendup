@@ -1,0 +1,256 @@
+
+/** Tables ********************************************************************/
+.List
+{
+	width: 100%;
+	border-collapse: var(--TblListsBorderCollapse);
+	border-spacing: var(--TblListsBorderSpacing);
+	background-color: var(--ColorBgTdListTable);
+}
+.List tr th.Active
+{
+	background: #e4e4e4;
+}
+.List tr th
+{
+	padding: var(--PaddingListsTh);
+	background-color: var(--ColorBgThListSw1);
+	color: var(--ColorThListSw1);
+	font-weight: var(--FontWeightThList);
+	text-align: left;
+	text-transform: var(--FontTransformThList);
+	text-shadow: var(--TxtShdThList);
+}
+.List tr.sw2 th
+{
+	background-color: var(--ColorBgThListSw2);
+	color: var(--ColorThListSw2);
+}
+
+.List tr td
+{
+	padding: var(--PaddingListsTd);
+	text-shadow: var(--TxtShdTdList);
+}
+.List tr.sw1,
+.List div.sw1
+{
+	background-color: var(--ColorBgListSw1);
+	color: var(--ColorTdListSw1);
+}
+.List tr.sw2,
+.List .sw2
+{
+	background-color: var(--ColorBgListSw2);
+	color: var(--ColorTdListSw2);
+}
+.List tr.sw1.Selected,
+.List div.sw1.Selected
+{
+	background-color: var(--ColorAcceptButtonBg);
+	color: var(--ColorAcceptButton);
+}
+.List tr.sw2.Selected,
+.List .sw2.Selected
+{
+	background-color: var(--ColorAcceptButtonBg);
+	color: var(--ColorAcceptButton);
+}
+.List td.Number, .List th.Number,
+.List div.Number
+{
+	text-align: right;
+}
+
+.List button
+{
+	margin: 0 2px 0 0;
+	padding: 4px 3px;
+}
+
+.List button > img
+{
+	position: relative;
+	top: 1px; left: 1px;
+}
+
+/* Alternating list divs ---------------------------------------------------- */
+
+.BackgroundNegativeAlt .Selected
+{
+	background-color: var(--ColorNegative);
+	color:            var(--ColorNegativeAlt);
+}
+
+.BackgroundNegativeAlt .Selected a
+{
+	color:            var(--ColorNegativeAlt);
+}
+
+.BackgroundLists .sw1
+{
+	background: var(--ColorBgListSw1);
+	color: var(--ColorListSw1);
+}
+
+.BackgroundLists .sw2
+{
+	background: var(--ColorBgListSw2);
+	color: var(--ColorListSw2);
+}
+
+/* .ZebraList */
+
+.ZebraList {}
+.ZebraList > tr,
+.ZebraList > div {
+	background: var(--ColorBgListSw1);
+	color: var(--ColorListSw1);
+}
+.ZebraList > tr .PadBorder,
+.ZebraList > div .PadBorder {
+	border-color : var(--ColorBgListSw1);
+}
+
+.ZebraList > tr .PadBackground,
+.ZebraList > div .PadBackground {
+	background-color : var(--ColorBgListSw1);
+}
+
+.ZebraList > tr:nth-child( 2n ),
+.ZebraList > div:nth-child( 2n )
+{
+	background: var(--ColorBgListSw2);
+	color: var(--ColorListSw2);
+}
+.ZebraList > tr:nth-child( 2n ) .PadBorder,
+.ZebraList > div:nth-child( 2n ) .PadBorder
+{
+	border-color : var(--ColorBgListSw2);
+}
+
+.ZebraList > tr:nth-child( 2n ) .PadBackground,
+.ZebraList > div:nth-child( 2n ) .PadBackground
+{
+	background-color : var(--ColorBgListSw2);
+}
+
+.ZebraList.Interactive > tr:hover,
+.ZebraList.Interactive > div:hover
+{
+	background-color : var(--ColorBgListSwHover);
+}
+
+.ZebraList.Interactive > tr:hover .PadBorder,
+.ZebraList.Interactive > div:hover .PadBorder
+{
+	border-color : var(--ColorBgListSwHover);
+}
+
+.ZebraList.Interactive > tr:hover .PadBackground,
+.ZebraList.Interactive > div:hover .PadBackground
+{
+	background-color : var(--ColorBgListSwHover);
+}
+
+.ZebraList > div, .BackgroundLists > div
+{
+	padding: var(--PaddingListsTd);
+	box-sizing: border-box;
+}
+
+.ZebraList > div.Columns, .BackgroundLists > div.Columns
+{
+	padding: 0;
+}
+
+.ZebraList > div.Columns > div, .BackgroundLists > div.Columns > div
+{
+	padding: var(--PaddingListsTd);
+	box-sizing: border-box;
+}
+
+/* Ul list */
+
+ul.List
+{
+	list-style: none;
+	box-sizing: border-box;
+	background-color: none;
+	margin: 0;
+	padding: 0;
+}
+
+ul.List > li
+{
+	list-style: none;
+	display: block;
+	padding: var(--PaddingListsTd);
+	padding-left: var(--PaddingBox);
+	box-sizing: border-box;
+}
+
+/*ul.List > li:first-child
+{
+	border-radius: 5px 5px 0 0;
+}
+
+ul.List > li:last-child
+{
+	border-radius: 0 0 5px 5px;
+}*/
+
+ul.List > li:nth-child(odd)
+{
+	background: var(--ColorBgListSw1);
+	color: var(--ColorListSw1);
+}
+
+ul.List > li:nth-child(even)
+{
+	background: var(--ColorBgListSw2);
+	color: var(--ColorListSw2);
+}
+
+ul.Negative.List > li:nth-child(odd)
+{
+	background: var(--ColorBgNegativeListSw1);
+	color: var(--ColorNegativeListSw1);
+}
+
+ul.Negative.List > li:nth-child(even)
+{
+	background: var(--ColorBgNegativeListSw2);
+	color: var(--ColorNegativeListSw2);
+}
+
+/* Plain lists */
+
+.ListItemPlain
+{
+	transition: background-color 0.25s;
+	background-color: rgba(255,255,255,0);
+	border-radius: 2px;
+}
+
+.ListItemPlain:hover
+{
+	background-color: rgba(180,180,180,0.15);
+}
+
+/* Hidden details */
+
+.HiddenDetails
+{
+	position: relative;
+	max-height: 0px;
+	overflow: hidden;
+	transition: max-height 0.25s;
+}
+
+
+.Show > .HiddenDetails
+{
+	max-height: 400px;
+}
+

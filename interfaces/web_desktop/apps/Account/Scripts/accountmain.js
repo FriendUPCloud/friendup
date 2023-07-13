@@ -38,38 +38,65 @@ Application.run = function( msg, iface )
 		d.execute( 'getsetting', { setting: 'avatar_color' } );
 	} );
 	
-	refreshGroups( ge( 'groupSearcher' ).value );
+	// Check if we disabled groups
+	const g = new Module( 'system' );
+	g.onExecuted = ( s, d ) => {
+		if ( 'ok' == s )
+		{
+			let serverConfig = null;
+			try
+			{
+				serverConfig =  JSON.parse( d );
+			}
+			catch( ex )
+			{
+				refreshGroups( ge( 'groupSearcher' ).value );
+				return;
+			}
+			
+			if ( null != serverConfig.hasGroupsFeature )
+			{
+				if ( false === serverConfig.hasGroupsFeature )
+					return;
+			}
+		}
+		refreshGroups( ge( 'groupSearcher' ).value );
+	}
+	g.execute( 'sampleconfig' );
 	
 	// Clear / autoregenerate avatar
-	ge( 'ClearAvatar' ).onclick = function( e )
+	if( ge( 'ClearAvatar' ) )
 	{
-		var m = new Module( 'system' );
-		m.onExecuted = function( e, d )
-		{
-			var d = new Module( 'system' );
-			d.onExecuted = function( r, c )
-			{
-				refreshAvatar();
-				if( r == 'ok' )
-				{
-					try
-					{
-						var data = JSON.parse( c );
-						refreshPalette( data.avatar_color );
-					}
-					catch( e )
-					{
-						refreshPalette();
-					}
-				}
-				else
-				{
-					refreshPalette();
-				}
-			}
-			d.execute( 'getsetting', { setting: 'avatar_color' } );
-		}
-		m.execute( 'getsetting', { setting: 'avatar', mode: 'reset' } );
+	    ge( 'ClearAvatar' ).onclick = function( e )
+	    {
+		    var m = new Module( 'system' );
+		    m.onExecuted = function( e, d )
+		    {
+			    var d = new Module( 'system' );
+			    d.onExecuted = function( r, c )
+			    {
+				    refreshAvatar();
+				    if( r == 'ok' )
+				    {
+					    try
+					    {
+						    var data = JSON.parse( c );
+						    refreshPalette( data.avatar_color );
+					    }
+					    catch( e )
+					    {
+						    refreshPalette();
+					    }
+				    }
+				    else
+				    {
+					    refreshPalette();
+				    }
+			    }
+			    d.execute( 'getsetting', { setting: 'avatar_color' } );
+		    }
+		    m.execute( 'getsetting', { setting: 'avatar', mode: 'reset' } );
+	    }
 	}
 }
 
@@ -409,7 +436,7 @@ function refreshAvatar()
 				avSrc.onload = function()
 				{
 					var ctx = avatar.getContext( '2d' );
-					ctx.drawImage( avSrc, 0, 0, 128, 128 );
+					ctx.drawImage( avSrc, 0, 0, 512, 512 );
 				}
 			}
 		}
@@ -707,13 +734,13 @@ function changeAvatar()
 			if ( item )
 			{
 				// Load the image
-				var image = new Image();
+				var image = new Image()
 				image.onload = function()
 				{
 					// Resizes the image
 					var canvas = ge( 'Avatar' );
 					var context = canvas.getContext( '2d' );
-					context.drawImage( image, 0, 0, 128, 128 );
+					context.drawImage( image, 0, 0, 512, 512 );
 				}
 				image.src = getImageUrl( item[ 0 ].Path );
 			}

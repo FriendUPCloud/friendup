@@ -70,14 +70,16 @@ if( $app->ID )
 		$ua = new dbIO( 'FUserApplication' );
 		$ua->UserID = $app->UserID;
 		$ua->ApplicationID = $app->ID;
-		if( $ua->Load() )
+		
+		// User application part is not stored, app not installed
+		if( !$ua->Load() )
 		{
-			$d = substr( $path, 11, strlen( $path ) - 10 );
-			$scrp = preg_replace( '/progdir\:/i', '/system.library/module/?module=system&authid=' . $ua->AuthID . '&command=resource&file=' . rawurlencode( $d ), $scrp );
+			die( 'fail<!--separate-->{"response":"application lacks user installation record"}' );
 		}
 		else
 		{
-			die( 'fail<!--separate-->{"response":"application lacks user installation record"}' );
+			$d = substr( $path, 11, strlen( $path ) - 10 );
+			$scrp = preg_replace( '/progdir\:/i', '/system.library/module/?module=system&authid=' . $ua->AuthID . '&command=resource&file=' . rawurlencode( $d ), $scrp );
 		}
 	}
 	// This one is probably from the resources/ directory
@@ -110,17 +112,21 @@ if( $app->ID )
 		<base href="' . $path . '"/>
 		<script src="/webclient/js/apps/api.js"></script>' . $scripts . '
 		<script>
-			' . $scrp . '
-			Application.checkAppPermission = function( key )
-			{
-				var permissions = {}; // <- inject user specific permissions here
-				if( permissions[ key ] )
-					return permissions[ key ];
-				return false;
-			}
+		    let Friend = window.Friend ? window.Friend : {};
+		    Friend.launch = function()
+		    {
+			    ' . $scrp . '
+			    Application.checkAppPermission = function( key )
+			    {
+				    let permissions = {}; // <- inject user specific permissions here
+				    if( permissions[ key ] )
+					    return permissions[ key ];
+				    return false;
+			    }
+		    }
 		</script>
 	</head>
-	<body>
+	<body onload="Friend.launch()">
 	</body>
 </html>';
 

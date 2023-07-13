@@ -462,13 +462,13 @@ function apiWrapper( event, force )
 							// Setup the callback message
 							let nmsg = 
 							{
-								viewId: msg.viewId,
-								applicationId: msg.applicationId,
-								callback: cbk,
-								response: response,
-								permissions: permissions,
-								path: msg.path, 
-								extra: extra
+								viewId        : msg.viewId,
+								applicationId : msg.applicationId,
+								callback      : cbk,
+								response      : response,
+								permissions   : permissions,
+								path          : msg.path, 
+								extra         : extra
 							};
 							if( tar )
 								tar.iframe.contentWindow.postMessage( JSON.stringify( nmsg ), '*' );
@@ -476,10 +476,44 @@ function apiWrapper( event, force )
 								app.contentWindow.postMessage( JSON.stringify( nmsg ), '*' );
 						}, msg.extra );
 						break;
+					case 'openWindowByPath':
+						Friend.DOS.getFileAccess( msg.path, {}, ( response, permissions, extra ) => {
+							if ( !response )
+								return
+							
+							Friend.DOS.getFileInfo( msg.path, {}, ( response, fileInfo, extra ) => {
+								if ( !response )
+									return
+								
+								if( msg.flags.context && msg.flags.context == '$CURRENTVIEWID' )
+								{
+								    msg.flags.context = currentMovable.windowObject.getViewId();
+								}
+								
+								fileInfo.flags = msg.flags;
+								
+								if( 'File' == fileInfo.Type )
+									Friend.DOS.openWindowByFilename( fileInfo );
+								if( 'Directory' == fileInfo.Type )
+								{
+									fileInfo.MetaType = 'Directory';
+									fileInfo.Path = msg.path;
+									console.log( 'open path', fileInfo );
+									OpenWindowByFileinfo( fileInfo );
+								}
+							})
+						})
+						break;
 					case 'openWindowByFilename':
 						if( msg.args )
 						{
-							Friend.DOS.openWindowByFilename( msg.args.fileInfo, msg.args.ext );
+							console.log( 'openWindowByFilename', msg )
+						    let appId = false;
+						    if( currentMovable && currentMovable.windowObject && currentMovable.windowObject.applicationId )
+						    {
+						        appId = currentMovable.windowObject.applicationId;
+						    }
+							Friend.DOS.openWindowByFilename( msg.args.fileInfo, msg.args.ext, appId );
 						}
 						break;
 				}
@@ -995,7 +1029,7 @@ function apiWrapper( event, force )
 				{
 					case 'execute':
 
-						//find our door
+						//find the door
 						var door = false;
 						for (var a = 0; a < DormantMaster.appDoors.length; a++)
 						{
@@ -1056,10 +1090,10 @@ function apiWrapper( event, force )
 						if( msg.data )
 						{
 							//find our door
-							var door = false;
-							for (var a = 0; a < DormantMaster.appDoors.length; a++)
+							let door = false
+							for (var a = 0; a < DormantMaster.appDoors.length; a++ )
 							{
-								if (DormantMaster.appDoors[a].doorId == msg.doorId)
+								if (DormantMaster.appDoors[a].doorId == msg.doorId )
 								{
 									door = DormantMaster.appDoors[a];
 								}
@@ -1088,7 +1122,10 @@ function apiWrapper( event, force )
 					case 'delappevents':
 						DormantMaster.delApplicationEvents(msg.applicationName);
 						break;
-						// Make proxy object
+					case 'emit':
+						DormantMaster.handleEvent( msg );
+						break;
+				  	// Make proxy object
 					case 'addAppDoor':
 
 						// Make sure we have a unique name!
@@ -1115,6 +1152,7 @@ function apiWrapper( event, force )
 							title         : namnum,
 							doorId        : msg.doorId,
 							applicationId : msg.applicationId,
+			   				listeners     : {},
 							getDoor: function ()
 							{
 								var icon = 'apps/' + msg.title + '/icon.png';
@@ -1132,7 +1170,7 @@ function apiWrapper( event, force )
 									Flags    : '',
 									Type     : 'Dormant',
 									Path	 : namnum + ':',
-									Dormant  : this
+									Dormant  : this,
 								};
 							},
 							addWindow: function( win )
@@ -1191,12 +1229,15 @@ function apiWrapper( event, force )
 								);
 							},
 							// Execute a dormant command!
-							execute: function( fnObj, args )
+							execute: function( fnObj, args, callback )
 							{
 								var path = fnObj.Path;
 								var command = fnObj.Title || fnObj.Filename;
-								var id = addWrapperCallback(function (data)
+								var id = addWrapperCallback( data =>
 								{
+									
+									if ( callback )
+										callback( null, data );
 									//
 								});
 								// Callback
@@ -1250,6 +1291,20 @@ function apiWrapper( event, force )
 								app.contentWindow.postMessage(
 										JSON.stringify(ret), '*'
 								);
+							},
+							listen : function( eventPath, listener )
+							{
+								const self = this;
+								const listenId = friendUP.tool.uid();
+								if ( null == self.listeners[ eventPath ] )
+								{
+									self.listeners[ eventPath ] = [];
+								}
+								
+								self.listeners[ eventPath ].push( listenId );
+								self.listeners[ listenId ] = listener;
+								
+								return listenId;
 							},
 							dosAction: function( func, args, callback )
 							{
@@ -1808,6 +1863,16 @@ function apiWrapper( event, force )
 								win.focusOnElement( msg.identifier, msg.flag );
 							}
 							break;
+					    // Set quick menu on window
+					    case 'setQuickMenu':
+					        msg.data.uniqueName = MD5( msg.applicationId + '-' + msg.viewId );
+					        if( win )
+					        {
+					            win._window.parentNode.quickMenu = msg.data;
+					        }
+					        CheckScreenTitle();
+					        break;
+					    // Set menu items on window
 						case 'setMenuItems':
 							if( win )
 								win.setMenuItems( msg.data, msg.applicationId, msg.viewId );
@@ -1897,7 +1962,23 @@ function apiWrapper( event, force )
 						}
 					}
 					
+					// Does the view msg override the context?
+					if( msg.context )
+					{
+						window.currentContext = false;
+					}
+					
 					let v = new View( msg.data );
+					
+					if( msg.context )
+					{						
+						v.recentLocation = 'viewId:' + msg.context;
+					}
+					else if( msg.applicationId )
+					{
+						v.recentLocation = window.Workspace && Workspace.dashboard ? 'dashboard' : '';
+					}
+					
 					let win = msg.parentViewId && app.windows ? app.windows[ msg.parentViewId ] : false;
 					if( win )
 					{
@@ -3456,7 +3537,13 @@ function apiWrapper( event, force )
 						break;
 					case 'alert':
 						let alerv = Alert( msg.title, msg.string );
-						app.windows[ alerv.viewId ] = alerv;
+						if( alerv )
+						{
+							if( alerv && alerv.viewId )
+								app.windows[ alerv.viewId ] = alerv;
+							if( msg.applicationId )
+								alerv.applicationId = msg.applicationId;
+						}
 						break;
 					case 'confirm':
 						var nmsg = {};
@@ -3491,6 +3578,8 @@ function apiWrapper( event, force )
 						);
 						app.windows[ confv.viewId ] = confv;
 						msg.callback = false;
+						if( msg.applicationId )
+							confv.applicationId = msg.applicationId;
 						break;
 
 					case 'reload_user_settings':
@@ -3695,6 +3784,9 @@ function apiWrapper( event, force )
 						m.execute( 'savestate', { state: msg.state, authId: msg.authId } );
 						break;
 					case 'quit':
+					    // Look if we are allowed to quit
+        			    if( !canQuitApp( app.applicationName ) ) return;
+        			    
 						if( app ) app.quit( msg.force ? msg.force : false );
 						if( PollTray ) PollTray();
 						break;
@@ -3763,6 +3855,13 @@ function apiWrapper( event, force )
 						break;
 					case 'refreshdoors':
 						Workspace.refreshDesktop( false, true );
+						for( let a in movableWindows )
+						{
+						    if( movableWindows[ a ].content && movableWindows[ a ].content.fileBrowser )
+						    {
+						        movableWindows[ a ].content.fileBrowser.refresh();
+						    }
+						}
 						break;
 					case 'executeapplication':
 						// TODO: Make "can run applications" permission
@@ -3787,6 +3886,14 @@ function apiWrapper( event, force )
 									runWrapperCallback( nmsg.callback, response );
 								}
 							}
+							
+							// Add flags
+							let flags = false;
+							if( msg.flags )
+							{
+								flags = msg.flags;
+							}
+							
 							// Special case
 							if( msg.path && msg.path.split( ':' )[0] == 'System' )
 							{
@@ -3798,7 +3905,7 @@ function apiWrapper( event, force )
 							}
 							else
 							{
-								ExecuteApplication( msg.executable, msg.args, cb );
+								ExecuteApplication( msg.executable, msg.args, cb, false, flags );
 							}
 							msg = null;
 						}
@@ -3990,6 +4097,7 @@ function apiWrapper( event, force )
 						break;
 					// File dialogs --------------------------------------------
 					case 'filedialog':
+						console.log( '[test] Filedialog', msg );
 						var win = app.windows ? app.windows[ msg.viewId ] : false;
 						var tar = win ? app.windows[msg.targetViewId] : false; // Target for postmessage
 						// No targetview id? Then just use the parent view
@@ -4006,11 +4114,12 @@ function apiWrapper( event, force )
 							multiSelect:        msg.multiSelect,
 							keyboardNavigation: msg.keyboardNavigation,
 							rememberPath:       msg.rememberPath,
+							applicationId:      msg.applicationId,
 							triggerFunction: function( data )
 							{
 								var nmsg = msg;
 								nmsg.data = data;
-								if( tar )
+								if( tar && tar.iframe && tar.iframe.contentWindow )
 									tar.iframe.contentWindow.postMessage( JSON.stringify( nmsg ), '*' );
 								else app.contentWindow.postMessage( JSON.stringify( nmsg ), '*' );
 							}

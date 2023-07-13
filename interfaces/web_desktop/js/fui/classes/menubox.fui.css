@@ -1,0 +1,41 @@
+.FUIMenubox
+{
+	
+}
+
+.FUIMenuboxHead
+{
+	border-radius: var(--fui-border-radius-small) var(--fui-border-radius-small) 0 0;
+	background-color: var(--fui-module-background);
+	color: var(--fui-module-color);
+	padding: var(--fui-padding-normal);
+}
+
+.FUIMenuboxTitle
+{
+
+}
+
+.FUIMenuboxContent
+{
+	background-color: var(--fui-background-foreground);
+	color: var(--fui-color);
+	padding-bottom: var(--fui-padding-row);
+	border-radius: 0 0 var(--fui-border-radius-small) var(--fui-border-radius-small);
+}
+
+.FUIMenuboxItems
+{
+	background-color: transparent;
+    color: var(--fui-color);
+    padding: var(--fui-padding-row);
+    
+}
+
+.FUIMenuboxItems > div
+{
+    padding: var(--fui-padding-row) var(--fui-padding-normal) var(--fui-padding-row) var(--fui-padding-normal);
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	box-sizing: border-box;
+}

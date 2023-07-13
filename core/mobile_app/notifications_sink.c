@@ -48,7 +48,7 @@ typedef struct SinkProcessMessage{
 }SinkProcessMessage;
 
 
-const char *errorMsg[] =
+const char *errorMsg[ WS_NOTIF_SINK_ERROR_MAX ] =
 {
 	"Success",
 	"Json cannot be parsed",
@@ -58,7 +58,6 @@ const char *errorMsg[] =
 	"No authentication elements in message",
 	"Parameters not found",
 	"JSON Tokens not found (request is not in JSON format probably)"
-	
 };
 
 int globalServerEntriesNr = 0;

@@ -74,7 +74,7 @@ int newpopen(const char *cmd, NPOpenFD *po )
 		struct sigaction sa;
 		sa.sa_handler = &handle_sigchld;
 		sigemptyset(&sa.sa_mask);
-		sa.sa_flags = SA_RESTART | SA_NOCLDSTOP;
+		sa.sa_flags = SA_RESTART; // | SA_NOCLDSTOP; (We may not need this flag)
 		if( sigaction(SIGCHLD, &sa, 0) == -1 )
 		{
 			perror( 0 );

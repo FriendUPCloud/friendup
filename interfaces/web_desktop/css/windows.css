@@ -41,8 +41,7 @@ body:not([mobile]) .ViewContainer
 	-webkit-user-select: none;
 	user-select: none;
 	pointer-events: all;
-	background: black;
-	
+	background-color: transparent;
 }
 body:not([mobile]) .View
 {
@@ -60,6 +59,9 @@ html body[singletask] .View > .Title
 	border-radius: 0;
 	box-shadow: none;
 }
+
+.ViewContainer > .ViewTitle { display: none; }
+
 html body[singletask] .View > .Title
 {
 	border-top: 1px solid rgba(255,255,255,0.05);
@@ -77,6 +79,11 @@ html body[singletask] .View > .Title > div > .Minimize
 .ViewContainer.DelayedDeactivation > .View > .Content
 {
 	overflow: hidden !important;
+}
+
+.ViewContainer > .View.TransparentBg > .Content
+{
+    background: transparent !important;
 }
 
 /* Disabled for default theme */
@@ -540,7 +547,6 @@ body:not([mobile]) #Screens .View.Opening
 	transition: none;
 	-moz-transition: none;
 	-webkit-transition: none;
-	will-change: transform, content;
 }
 
 /* Don't animate but the opacity when fading in a window */

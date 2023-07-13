@@ -98,6 +98,8 @@ typedef struct File
 	
 	int							f_OperationMode;	// read, write, etc.
 	FilesystemActivity			f_Activity;			// information how many bytes user can read/store
+	
+	FBOOL						f_WorkgroupDrive;	// if workgroup drive, then value is set to TRUE
 } File;
 
 
@@ -197,6 +199,12 @@ int FileUploadFileOrDirectory( Http *request, void *us, const char *dst, const c
 //
 
 int FileDownloadFilesOrFolder( Http *request, void *us, const char *basepath, const char *dst, char *src, int *numberFiles );
+
+//
+//
+//
+
+int FileDownloadFile( Http *request, void *us, const char *dst, char *src );
 
 //
 //

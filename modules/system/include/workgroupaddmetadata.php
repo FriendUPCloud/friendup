@@ -10,6 +10,11 @@
 *                                                                              *
 *****************************************************************************©*/
 
+if( is_string( $args->args ) )
+{
+	$args->args = json_decode( stripslashes( $args->args ) );
+}
+
 if( $args->args->groupId && $args->args->roomId )
 {
 	$g = new dbIO( 'FUserGroup' );
@@ -32,6 +37,6 @@ if( $args->args->groupId && $args->args->roomId )
 	}
 	die( 'fail<!--separate-->{"response":-1,"message":"Could not load group."}' );
 }
-die( 'fail<!--separate-->{"response":-1,"message":"Params missing ..."}' );
+die( 'fail<!--separate-->{"response":-1,"message":"Params missing. Please check your args variable."}' );
 
 ?>

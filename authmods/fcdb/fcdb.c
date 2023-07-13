@@ -440,7 +440,7 @@ UserSession *Authenticate( struct AuthMod *l, Http *r, struct UserSession *logse
 			if( usl == NULL )
 			{
 				if(  tmpusr != NULL && userFromDB == TRUE ){ UserDelete( tmpusr );	tmpusr =  NULL; }
-				UserSession *ses = UserSessionNew( sessionId, "remote" );
+				UserSession *ses = UserSessionNew( sessionId, "remote", sb->fcm->fcm_ID );
 				if( ses != NULL )
 				{
 					ses->us_UserID = tmpusr->u_ID;
@@ -582,7 +582,7 @@ UserSession *Authenticate( struct AuthMod *l, Http *r, struct UserSession *logse
 				//Generate new session ID for the user
 				char *new_session_id = SessionIDGenerate();
 			
-				uses = UserSessionNew( new_session_id, devname );
+				uses = UserSessionNew( new_session_id, devname, sb->fcm->fcm_ID );
 			
 				FFree( new_session_id );
 				uses->us_UserID = tmpusr->u_ID;
@@ -705,8 +705,7 @@ loginfail:
 void Logout( struct AuthMod *l, Http *r __attribute__((unused)), char *name )
 {
 	SystemBase *sb = (SystemBase *)l->sb;
-	//UserSession *users = sb->sl_UserSessionManagerInterface.USMGetSessionBySessionID( sb->sl_USM, name );
-	
+
 	DEBUG("Logout get\n");
 	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
 	if( sqlLib != NULL )

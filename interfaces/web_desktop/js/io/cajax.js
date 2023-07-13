@@ -11,12 +11,16 @@
 let _cajax_process_count = 0;
 
 let _cajax_connection_seed = Math.random(0,999)+Math.random(0,999)+Math.random(0,999)+'_';
-let _cajax_connection_num = 0;
 
 let _cajax_http_connections = 0;                // How many?
 let _cajax_http_max_connections = 6;            // Max
 let _cajax_http_last_time = 0;                  // Time since last
 let _cajax_mutex = 0;
+
+let _cajax_ws_connections = 0;                  // How many?
+let _cajax_ws_max_connections = 12;             // Max
+
+let _cajax_ws_disabled = 0;                     // Disable websocket usage?
 
 let _cajax_origin = document.location.origin;
 
@@ -25,10 +29,22 @@ let _c_count = 0;
 let _c_destroyed = 0;
 
 if( !window.Friend ) window.Friend = {};
-if( !Friend.cajax ) Friend.cajax = [];
+if( !Friend.cajax ) 
+{
+	Friend.cajax = {};
+	Friend.cajaxTypes = [];
+}
 
 function AddToCajaxQueue( ele )
 {
+	if( typeof( Friend.cajax[ ele.type ] ) == 'undefined' )
+	{
+		Friend.cajax[ ele.type ] = { count: 0, max: 0, queue: [] };
+		Friend.cajaxTypes.push( ele.type );
+	}
+	
+	let queue = Friend.cajax[ ele.type ].queue;
+	
 	// If we're queueing it
 	if( ele.onQueue ) ele.onQueue();
 	
@@ -52,63 +68,62 @@ function AddToCajaxQueue( ele )
 	}
 	
 	// TODO: Support a nice queue.. :-)
-	if( !window.Friend || !window.Friend.cajax )
+	if( !window.Friend )
 	{
 		return false;
 	}
 	// Duplicate check
-	for( let a = 0; a < Friend.cajax.length; a++ )
+	for( let a = 0; a < queue.length; a++ )
 	{
-		if( Friend.cajax[a] == ele )
+		if( queue[a] == ele )
 		{
 			return false;
 		}
 	}
-	// Add ajax element to the top of the queue
-	let o = [ ele ];
-	for( let a = 0; a < Friend.cajax.length; a++ )
-		o.push( Friend.cajax[ a ] );
-	Friend.cajax = o;
+	// Add ajax element to the bottom of the queue
+	let o = [];
+	for( let a = 0; a < queue.length; a++ )
+		o.push( queue[ a ] );
+	o.push( ele );
+	Friend.cajax[ ele.type ].queue = o;
 }
 
 function RemoveFromCajaxQueue( ele )
 {
+	if( typeof( Friend.cajax[ ele.type ] ) == 'undefined' )
+		return;
+		
+	let queue = Friend.cajax[ ele.type ].queue;
 	let o = [];
-	let executeLength = 6;
-	let executors = [];
-	for( let a = 0; a < Friend.cajax.length; a++ )
+	for( let a = 0; a < queue.length; a++ )
 	{
-		if( Friend.cajax[a] != ele )
+		if( queue[a] != ele )
 		{
-			if( executeLength > 0 )
-			{
-				executors.push( Friend.cajax[a] );
-				executeLength--;
-			}
-			else
-			{
-				o.push( Friend.cajax[a] );
-			}
+			o.push( queue[a] );
 		}
 	}
-	Friend.cajax = o;
+	Friend.cajax[ ele.type ].queue = o;
 }
 
 // Cancel all queued cajax calls on id
 function CancelCajaxOnId( id )
 {
-	let o = [];
-	for( let a = 0; a < Friend.cajax.length; a++ )
+	for( let type in Friend.cajax )
 	{
-		if( Friend.cajax[ a ].cancelId != id )
-			o.push( Friend.cajax[ a ] );
-		else 
+		let queue = Friend.cajax[ type ].queue;
+		let o = [];
+		for( let a = 0; a < queue.length; a++ )
 		{
-			// Tell it it failed
-			Friend.cajax[ a ].destroy();
+			if( queue[ a ].cancelId != id )
+				o.push( queue[ a ] );
+			else 
+			{
+				// Tell it it failed
+				queue[ a ].destroy();
+			}
 		}
+		Friend.cajax[ type ].queue = o;
 	}
-	Friend.cajax = o;
 }
 
 // A simple ajax function
@@ -116,6 +131,8 @@ function CancelCajaxOnId( id )
 cAjax = function()
 {
 	let self = this;
+	
+	self.type = 'normal'; // Type of ajax call (group for queueing) 
 	
 	_cajax_process_count++;
 	
@@ -310,6 +327,11 @@ cAjax = function()
 		// Something went wrong!
 		else if( this.readyState == 4 && ( this.status == 500 || this.status == 0 || this.status == 404 ) )
 		{
+		    // If we have available slots, but we have other ajax calls in pipe, execute them
+		    if( _cajax_http_connections < _cajax_http_max_connections )
+		    {
+		        CleanAjaxCalls();
+		    }
 			// tell our caller...
 			if( jax.onload ) 
 			{
@@ -400,8 +422,7 @@ cAjax.prototype.destroy = function()
 // Open an ajax query
 cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 {
-	let self = this;
-	
+	const self = this
 	if( this.opened )
 	{
 		//console.log( '[cajax] Impossible error! Illegal reuse of object.' );
@@ -410,8 +431,23 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 	}
 	this.opened = true;
 	
+	// Move dos calls onto http
+	let dosCall = false;
+	if( 
+		url.indexOf( '/file/read'   ) >= 0 ||
+		url.indexOf( '/file/copy'   ) >= 0 ||
+		url.indexOf( '/file/delete' ) >= 0 ||
+		url.indexOf( '/file/write'  ) >= 0 ||
+		url.indexOf( '/file/dir'    ) >= 0 ||
+		url.indexOf( '/file/expose' )
+	)
+	{
+		dosCall = true;
+	}
+	
 	// Try websockets!!
 	if( 
+		!_cajax_ws_disabled &&
 		!this.forceHTTP &&
 		window.Workspace &&
 		Workspace.conn && 
@@ -422,11 +458,12 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 		typeof( url ) == 'string' && 
 		url.indexOf( 'http' ) != 0 && 
 		url.indexOf( 'system.library' ) >= 0 &&
-		url.indexOf( '/file/read' ) < 0 &&
-		url.indexOf( '/file/write' ) < 0
+		!dosCall
 	)
-	{	
+	{
 		this.mode = 'websocket';
+		if( self.type.indexOf( '_websocket' ) < 0 )
+			self.type += '_websocket';
 		this.url = url;
 		this.hasReturnCode = hasReturnCode;
 		//console.log( 'WebSocket call: ' + url );
@@ -463,10 +500,10 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 	else
 	{
 		this.lastOptions = {
-			method: method,
-			url: url,
-			syncing: syncing,
-			hasReturnCode: hasReturnCode
+			method        : method,
+			url           : url,
+			syncing       : syncing,
+			hasReturnCode : hasReturnCode
 		};
 	
 		if( !method ) method = this.method ? this.method : 'POST';
@@ -543,19 +580,11 @@ cAjax.prototype.responseText = function()
 // Send ajax query
 cAjax.prototype.send = function( data, callback )
 {
+	let self = this;
+	
 	RemoveFromCajaxQueue( this );
 
-    // TODO: Make queue work
-    /*if( window.Workspace && Workspace.refreshWorkspaces && !Workspace.sessionId && !this.loginCall )
-    {
-        this.cachedData = data;
-        this.cachedCallback = callback;
-        AddToCajaxQueue( this );
-        console.log( 'Added to queue.' );
-        return;
-    }*/
-	
-	// Make sure we don't f this up!
+    // Make sure we don't f this up!
 	if( this.onload && !this.onloadAfter )
 	{
 		this.onloadAfter = this.onload;
@@ -568,8 +597,6 @@ cAjax.prototype.send = function( data, callback )
 		}
 	}
 
-	let self = this;
-	
 	if( self.life )
 	{
 		clearTimeout( self.life );
@@ -600,8 +627,7 @@ cAjax.prototype.send = function( data, callback )
 
 	// Wait in case of check server connection
 	if( window.Workspace && ( window.Friend && Friend.User && Friend.User.State == 'offline' ) && !this.forceSend )
-	{	
-		//console.log( 'Adding because!' );
+	{
 		AddToCajaxQueue( self );
 		return;
 	}
@@ -609,14 +635,26 @@ cAjax.prototype.send = function( data, callback )
 	// Can't have too many! Queue control
 	if( this.mode != 'websocket' )
 	{
-		if( !this.forceSend && _cajax_http_connections >= _cajax_http_max_connections )
+		if( !this.forceSend && ( _cajax_http_connections >= _cajax_http_max_connections ) )
 		{
 			//console.log( 'We got max connections!' );
 			AddToCajaxQueue( self );
 			return;
 		}
 		if( !this.forceSend )
+		{
 			_cajax_http_connections++;
+		}
+	}
+	// Limit on websockets
+	else
+	{
+		if( _cajax_ws_connections >= _cajax_ws_max_connections )
+		{
+			AddToCajaxQueue( self );
+			return;
+		}
+		_cajax_ws_connections++;
 	}
 	
 	// Register successful send
@@ -683,6 +721,7 @@ cAjax.prototype.send = function( data, callback )
 		{
 			let u = this.url.split( '?' );
 			u = u[ 0 ] + '?' + ( u[ 1 ] ? ( u[ 1 ] + '&' ) : '' ) + 'cachekiller=' + this.getRandNumbers();
+
 			this.proxy.setRequestHeader( 'Method', 'POST ' + u + ' HTTP/1.1' );
 			this.proxy.setRequestHeader( 'Content-Type', 'application/x-www-form-urlencoded' );
 			
@@ -708,7 +747,7 @@ cAjax.prototype.send = function( data, callback )
 				let out = [];
 				for( let a in this.vars )
 					out.push( a + '=' + this.vars[ a ] );
-				
+
 				new Promise( function( resolve, reject )
 				{
 				    // Will throw an error unless we are forcing http for testing!
@@ -765,6 +804,7 @@ cAjax.prototype.send = function( data, callback )
 		{
 			let u = this.url.split( '?' );
 			u = u[0] + '?' + ( u[ 1 ] ? ( u[ 1 ] + '&' ) : '' ) + 'cachekiller=' + this.getRandNumbers();
+
 			this.proxy.setRequestHeader( 'Method', 'GET ' + u + ' HTTP/1.1' );
 			try 
 			{ 
@@ -820,6 +860,8 @@ cAjax.prototype.decreaseProcessCount = function()
 cAjax.prototype.handleWebSocketResponse = function( wsdata )
 {	
 	let self = this;
+	
+	_cajax_ws_connections--;
 	
 	if( self.life )
 		clearTimeout( self.life );
@@ -1001,22 +1043,41 @@ if( typeof bindSingleParameterMethod != 'function' )
 }
 
 // Clean ajax calls!
-function CleanAjaxCalls()
+let currentCajaxType = 0;
+function CleanAjaxCalls( depth = false )
 {
-	if( _cajax_connection_num == 0 && Friend.cajax.length == 0 )
+	// Cycle types
+	let type;
+	do
 	{
-		// Clean it up!
-		_cajax_process_count = 0;
-		let titleBars = document.getElementsByClassName( 'TitleBar' );
-		for( let b = 0; b < titleBars.length; b++ )
+		currentCajaxType++;
+		if( currentCajaxType >= Friend.cajaxTypes.length )
+			currentCajaxType = 0;
+		type = Friend.cajaxTypes[ currentCajaxType ];
+	}
+	while( currentCajaxType != 0 && Friend.cajax[ type ].queue.length < 1 );
+	
+	// Try to execute queue
+	if( typeof( Friend.cajax[ type ] ) != 'undefined' )
+	{
+		if( Friend.cajax[ type ].queue.length == 0 )
 		{
-			titleBars[b].classList.remove( 'Busy' );
+			// Clean it up!
+			_cajax_process_count = 0;
+			let titleBars = document.getElementsByClassName( 'TitleBar' );
+			for( let b = 0; b < titleBars.length; b++ )
+			{
+				titleBars[b].classList.remove( 'Busy' );
+			}
+			document.body.classList.remove( 'Busy' );
+			return false;
 		}
-		document.body.classList.remove( 'Busy' );
+		else
+		{
+			Friend.cajax[ type ].queue[ 0 ].send();
+			return true;
+		}
 	}
-	else
-	{
-		Friend.cajax[0].send();
-	}
+	return false;
 }
 
