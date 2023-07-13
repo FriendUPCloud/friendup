@@ -1,8 +1,6 @@
 Friend OS v1.3.0, "Helium"
 ==========================
 
-*NB1*: Friend OS v1.3.0, "Helium", is just around the corner. While it has been in development, this readme has become a bit outdated. Please head over to [this link](https://github.com/FriendUPCloud/friendup/tree/release/1.3.0) to check out the next release, if you want to get your hands dirty.
-
 *NB2*: For extended functionality and related Friend projects such as the Android app refer [here](https://github.com/FriendSoftwareLabs).
 
 ---
@@ -16,11 +14,6 @@ The Friend OS leverages the computing power of the Internet to offer many of the
 The FriendOS liberates you from Big Tech:  It gives you control to create, collaborate, store and share information, data and content across all your devices in a secure private environment and access it anywhere on any device.
 
 ![Friend OS Hydrogen](https://friendos.com/Hydrogen.jpg)
-
-Free account
-------------
-
-Get a free account on our production environment: https://friendsky.cloud/
 
 Across devices
 --------------
