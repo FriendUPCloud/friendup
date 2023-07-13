@@ -48,7 +48,7 @@ static inline void EscapeConfigFromString( char *str, char **configEscaped, char
 		{
 			int n = 0; for( ; n < len; n++ )
 			{
-				if( str[n] == '"' && str[ n-1 ] != '\\' )
+				if( str[n] == '"' )
 				{
 					(*configEscaped)[k++] = '\\';
 				}
@@ -109,7 +109,7 @@ static inline void FillDeviceInfo( int devnr, char *tmp, int tmplen, int mounted
 {
 	if( devnr == 0 )
 	{
-		snprintf( tmp, tmplen, "{\"Name\":\"%s\",\"Type\":\"%s\",\"Path\":\"%s\",\"FSys\":\"%s\",\"Config\":\"%s\",\"Visible\":\"%s\",\"Execute\":\"%s\",\"IsLimited\":\"%d\",\"Server\":\"%s\",\"Port\":\"%d\",\"GroupID\":\"%lu\",\"Mounted\":%d}", 
+		snprintf( tmp, tmplen, "{\"Name\":\"%s\",\"Type\":\"%s\",\"Path\":\"%s\",\"FSys\":\"%s\",\"Config\":\"%s\",\"Visible\":\"%s\",\"Execute\":\"%s\",\"IsLimited\":\"%d\",\"Server\":\"%s\",\"Port\":\"%d\",\"GroupID\":\"%lu\",\"Mounted\":%d}\n", 
 			fname ? fname : "", 
 			fsysname ? fsysname : "", 
 			path ? path : "",
@@ -126,7 +126,7 @@ static inline void FillDeviceInfo( int devnr, char *tmp, int tmplen, int mounted
 	}
 	else
 	{
-		snprintf( tmp, tmplen, ",{\"Name\":\"%s\",\"Type\":\"%s\",\"Path\":\"%s\",\"FSys\":\"%s\",\"Config\":\"%s\",\"Visible\":\"%s\",\"Execute\":\"%s\",\"IsLimited\":\"%d\",\"Server\":\"%s\",\"Port\":\"%d\",\"GroupID\":\"%lu\",\"Mounted\":%d}", 
+		snprintf( tmp, tmplen, ",{\"Name\":\"%s\",\"Type\":\"%s\",\"Path\":\"%s\",\"FSys\":\"%s\",\"Config\":\"%s\",\"Visible\":\"%s\",\"Execute\":\"%s\",\"IsLimited\":\"%d\",\"Server\":\"%s\",\"Port\":\"%d\",\"GroupID\":\"%lu\",\"Mounted\":%d}\n", 
 			fname ? fname : "",
 			fsysname ? fsysname : "", 
 			path ? path : "",
@@ -475,6 +475,7 @@ f.Name ASC";
 		char *devname = NULL;
 		char *path = NULL;
 		char *type = NULL;
+		char *visible = NULL;
 		char *execute = NULL;
 		char *enc = NULL; // if enc = 'yes' the whole transmission is encoded by private key
 		UserGroup *usrgrp = NULL;
@@ -567,6 +568,9 @@ f.Name ASC";
 			type = (char *)el->hme_Data;
 		}
 		
+		int mountError = 0;
+		
+		//if( sessionid == NULL || devname == NULL )
 		if( devname == NULL )
 		{
 			FERROR("One of required arguments is missing: sessionid, devname\n");
@@ -581,12 +585,12 @@ f.Name ASC";
 			FULONG userID = 0;
 			char *host = NULL;
 			char *port = NULL;
-			User *usr = loggedSession->us_User;
-			FBOOL foundUserInMemory = TRUE;
-			FBOOL groupLoadedFromDB = FALSE;
 			
 			el = HttpGetPOSTParameter( request, "execute" );
 			if( el != NULL ) execute = ( char *)el->hme_Data;
+			
+			el = HttpGetPOSTParameter( request, "visible" );
+			if( el != NULL ) visible = ( char *)el->hme_Data;
 			
 			el = HttpGetPOSTParameter( request, "Server" );
 			if( el != NULL )
@@ -618,7 +622,7 @@ f.Name ASC";
 				userID = (FLONG)strtol(( char *)el->hme_Data, &next, 0);
 			}
 			
-			el = HttpGetPOSTParameter( request, "groupid" );
+			el = HttpGetPOSTParameter( request, "usergroupid" );
 			if( el != NULL )
 			{
 				char *next;
@@ -627,23 +631,10 @@ f.Name ASC";
 				{
 					usrgrp = UGMGetGroupByID( l->sl_UGM, locid );
 				}
-				
-				// if group is not avaiable we should try to load it from DB
-				if( usrgrp == NULL )
-				{
-					// if user have access to group or if he is admin, he can mount drive there
-					FBOOL accessToGroup = FALSE;
-					if( UGMUserToGroupISConnectedDB( l->sl_UGM, locid, userID ) || (loggedSession->us_User != NULL && loggedSession->us_User->u_IsAdmin ) )
-					{
-						DEBUG("There is no group in memory but user have access to it. FCore will load it into memory\n");
-						accessToGroup = TRUE;
-						usrgrp = UGMGetGroupByIDDB( l->sl_UGM, locid );
-						groupLoadedFromDB = TRUE;
-					}
-				}
-				
-				DEBUG("Mount groupid parameter received %ld group ptr %p\n", locid, usrgrp );
 			}
+			
+			User *usr = loggedSession->us_User;
+			FBOOL foundUserInMemory = TRUE;
 			
 			//
 			// this functionality allow admins to mount other users drives
@@ -678,6 +669,10 @@ f.Name ASC";
 						foundUserInMemory = FALSE;
 					}
 				} // isAdmin or permissions granted
+				//if( args != NULL )
+				//{
+				//	FFree( args );
+				//}
 			}
 			else
 			{
@@ -687,22 +682,12 @@ f.Name ASC";
 				}
 			}
 			
-			if( usrgrp != NULL )
-			{
-				if( usr == NULL )
-				{
-					usr = loggedSession->us_User;
-				}
-				foundUserInMemory = TRUE;
-			}
-			
 			/*
 			 * sage: {"type":"msg","data":{"type":"request","requestid":"fconn-req-jlvisbkv-ja2ufn3z-fxlv2z81","path":"system.library/module/","data":{"sessionid":"9b9d2f7e7ead5bd01ee57f57be2cff47e09dc82d","module":"system","args":"%7B%22ID%22%3A%22%22%2C%22Name%22%3A%22Projects%22%2C%22ShortDescription%22%3A%22%22%2C%22Type%22%3A%22SQLDrive%22%2C%22KeysID%22%3A%22%22%2C%22conf.DiskSize%22%3A%221000MB%22%2C%22userid%22%3A%222981%22%7D","command":"addfilesystem"},"sessionid":"9b9d2f7e7ead5bd01ee57f57be2cff47e09dc82d"}}
 
 			 */
 			
 			FBOOL updateDatabase = FALSE;
-			File *mountedDev = NULL;
 			
 			if( foundUserInMemory == FALSE )
 			{
@@ -726,16 +711,16 @@ f.Name ASC";
 					{ FSys_Mount_Mount,				(FULONG)TRUE },
 					{ FSys_Mount_SysBase,			(FULONG)l },
 					{ FSys_Mount_UserGroup,			(FULONG)usrgrp },
+					{ FSys_Mount_Visible,			visible == NULL ? (FULONG)1 : (FULONG)0 },
 					{ FSys_Mount_UserID,			userID },
 					//{ FSys_Mount_Execute,        execute == NULL ? (FULONG)NULL : (FULONG)execute },
 					{ TAG_DONE, TAG_DONE }
 				};
-
+				
+				File *mountedDev = NULL;
 				char *error = NULL;
 				
 				int mountError = MountFS( l->sl_DeviceManager, (struct TagItem *)&tags, &mountedDev, usr, &error, loggedSession, TRUE );
-				
-				DEBUG("Mount: mount error: %d\n", mountError );
 				
 				// This is ok!
 				if( mountError != 0 && mountError != FSys_Error_DeviceAlreadyMounted )
@@ -808,16 +793,6 @@ f.Name ASC";
 				if( mountedDev != NULL && l->sl_UnMountDevicesInDB == 1 && mountError != FSys_Error_DeviceAlreadyMounted )
 				{
 					updateDatabase = TRUE;
-					
-					if( groupLoadedFromDB == TRUE && usrgrp != NULL )
-					{
-						DEBUG("Device was mounted and group loaded. Group will be attached to global list\n");
-						UGMAddGroup( l->sl_UGM, usrgrp );
-						
-						// lets notify users about changes which happened in his group
-
-						UMAddExistingUsersToGroup( l->sl_UM, usrgrp );
-					}
 
 					mountedDev->f_Mounted = TRUE;
 					
@@ -828,14 +803,6 @@ f.Name ASC";
 						sprintf( devfull, "%s:", devname );
 						DoorNotificationCommunicateChanges( l, loggedSession, mountedDev, devfull );
 						FFree( devfull );
-					}
-				}
-				else
-				{
-					if( groupLoadedFromDB == TRUE && usrgrp != NULL )
-					{
-						DEBUG("Device wasnt mounted group loaded. Group will be deleted\n");
-						UserGroupDelete( l, usrgrp );
 					}
 				}
 			}	// usr != NULL
@@ -856,8 +823,6 @@ f.Name ASC";
 						// owner and groupID parameter must be set
 						if( usrgrp != NULL )
 						{
-							snprintf( temptext, 512, "UPDATE `Filesystem` f SET f.Mounted='1' where ID=%ld", mountedDev->f_ID );
-							/*
 							sqllib->SNPrintF( sqllib,  temptext, 512,"\
 UPDATE `Filesystem` f SET f.Mounted = '1', f.Owner='%lu', f.GroupID='%lu' \
 WHERE \
@@ -865,7 +830,6 @@ WHERE \
 AND LOWER(f.Name) = LOWER('%s')", 
 								userID, usrgrp->ug_ID, userID, devname 
 							);
-							*/
 						}
 						else
 						{
@@ -893,28 +857,6 @@ AND LOWER(f.Name) = LOWER('%s')",
 					l->LibrarySQLDrop( l, sqllib );
 				}
 			}
-			
-			//
-			// If server is in cluster then message other sessions on different servers
-			//
-			
-			userID = 0;
-			if( loggedSession != NULL )
-			{
-				userID = loggedSession->us_UserID;
-			}
-			
-			
-			if( request->http_RequestSource != HTTP_SOURCE_NODE_SERVER )
-			{
-				BufString *res = SendMessageToSessionsAndWait( l, userID, request );
-				if( res != NULL )
-				{
-					DEBUG("RESPONSE: %s\n", res->bs_Buffer );
-					BufStringDelete( res );
-				}
-			}
-			
 		}		// check mount parameters
 		*result = 200;
 	}
@@ -926,7 +868,6 @@ AND LOWER(f.Name) = LOWER('%s')",
 	*
 	* @param sessionid - (required) session id of logged user
 	* @param devname - (required) device name which system will try unmount.
-	* @param groupid - id of group to which drive belong
 	* @return { Response: Successfully unmounted } when success, otherwise error code
 	*/
 	/// @endcond
@@ -935,7 +876,6 @@ AND LOWER(f.Name) = LOWER('%s')",
 		char *devname = NULL;
 		int mountError = 0;
 		FULONG userID = 0;
-		FQUAD groupID = 0;
 
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( DEFAULT_CONTENT_TYPE ) },
@@ -958,9 +898,8 @@ AND LOWER(f.Name) = LOWER('%s')",
 			
 			goto error;
 		}
-
+		
 		HashmapElement *el = HttpGetPOSTParameter( request, "userid" );
-		if( !el ) el = HashmapGet( request->http_Query, "userid" );
 		if( el != NULL )
 		{
 			char *next;
@@ -969,16 +908,6 @@ AND LOWER(f.Name) = LOWER('%s')",
 		else
 		{
 			userID = loggedSession->us_UserID;
-		}
-
-		el = HttpGetPOSTParameter( request, "groupid" );
-		if( !el ) el = HashmapGet( request->http_Query, "groupid" );
-		if( el != NULL )
-		{
-			char *next;
-			groupID = (FLONG)strtol(( char *)el->hme_Data, &next, 0);
-			
-			DEBUG("device/unmount groupid: %ld\n", groupID );
 		}
 		
 		el = HttpGetPOSTParameter( request, "devname" );
@@ -1071,12 +1000,8 @@ AND LOWER(f.Name) = LOWER('%s')",
 						// user is not in memory, we can remove his entries in DB only
 						if( locusr == NULL )
 						{
-							// we want to remove group drive, so there is no need to get it from user
-							if( groupID <= 0 )
-							{
-								deviceUnmounted = TRUE;
-								mountError = 0;
-							}
+							deviceUnmounted = TRUE;
+							mountError = 0;
 						}
 						else
 						{
@@ -1108,60 +1033,73 @@ AND LOWER(f.Name) = LOWER('%s')",
 					{
 						if( strcmp( devname, f->f_Name ) == 0 )
 						{
-							mountError = 0;
-							f->f_Mounted = FALSE;
-							fid = f->f_ID; // Need the ID too!
-							type = ( char *) f->f_FSysName;//   f->f_Type; // Copy the type, we need it
-							ldevname = f->f_Name;
-							
-							break;
+							// if this is shared drive only admin or owner can unmount it
+							if( strcmp( f->f_FSysName, "SQLWorkgroupDrive" ) == 0 && ( activeUser->u_ID == f->f_UserID || activeUser->u_IsAdmin ) )
+							{
+								mountError = 0;
+								f->f_Mounted = FALSE;
+								fid = f->f_ID; // Need the ID too!
+								type = ( char *) f->f_FSysName;//   f->f_Type; // Copy the type, we need it
+								ldevname = f->f_Name;
+								// please check Types next time
+								break;
+							}
+							else
+							{
+								mountError = 0;
+								f->f_Mounted = FALSE;
+								fid = f->f_ID; // Need the ID too!
+								type = ( char *) f->f_FSysName;//   f->f_Type; // Copy the type, we need it
+								ldevname = f->f_Name;
+								// please check Types next time
+								break;
+							}
 						}
 					}
 					
 					DEBUG("[DeviceMWebRequest] ldevname: %s\n", ldevname );
 				
 					// check also device attached to groups
-					if( ldevname == NULL && groupID > 0 )
+					if( ldevname == NULL )
 					{
-						UserGroup *ug = UGMGetGroupByID( l->sl_UGM, groupID );
-						if( ug != NULL )
+						UserGroupLink *ugl = activeUser->u_UserGroupLinks;
+						while( ugl != NULL )
 						{
-							File *f = NULL;
-							LIST_FOR_EACH( ug->ug_MountedDevs, f, File * )
+							UserGroup *ug = ugl->ugl_Group;
+							if( ug != NULL )
 							{
-								FBOOL owner = FALSE;
-								if( f->f_User != NULL )
+								File *f = NULL;
+								LIST_FOR_EACH( ug->ug_MountedDevs, f, File * )
 								{
-									User *u = (User *)f->f_User;
-									if( u->u_ID == activeUser->u_ID )
+									FBOOL owner = FALSE;
+									if( f->f_User != NULL )
 									{
-										owner = TRUE;
+										User *u = (User *)f->f_User;
+										if( u->u_ID == activeUser->u_ID )
+										{
+											owner = TRUE;
+										}
+									}
+							
+									if( owner == TRUE && strcmp( devname, f->f_Name ) == 0 )
+									{
+										mountError = 0;
+										f->f_Mounted = FALSE;
+										fid = f->f_ID; // Need the ID too!
+										type = ( char *) f->f_FSysName;//   f->f_Type; // Copy the type, we need it
+										ldevname = f->f_Name;
 									}
 								}
-								
-								if( IS_SESSION_ADMIN( loggedSession ) == TRUE )
-								{
-									owner = TRUE;
-								}
-							
-								if( owner == TRUE && strcmp( devname, f->f_Name ) == 0 )
-								{
-									mountError = 0;
-									f->f_Mounted = FALSE;
-									fid = f->f_ID; // Need the ID too!
-									type = ( char *) f->f_FSysName;//   f->f_Type; // Copy the type, we need it
-									ldevname = f->f_Name;
-								}
 							}
+							ugl = (UserGroupLink *)ugl->node.mln_Succ;
 						}
 					}
 				
 					struct TagItem tags[] = {
-						{ FSys_Mount_ID, (FULONG)fid },
-						{ FSys_Mount_Name, (FULONG)devname },
-						{ FSys_Mount_Type, (FULONG)type },
-						{ FSys_Mount_UserGroupID, (FULONG)groupID },
-						{ TAG_DONE, TAG_DONE }
+						{FSys_Mount_ID, (FULONG)fid },
+						{FSys_Mount_Name, (FULONG)devname },
+						{FSys_Mount_Type, (FULONG)type },
+						{TAG_DONE, TAG_DONE }
 					};
 					DEBUG("[DeviceMWebRequest] call UnMountFS\n");
 				
@@ -1184,22 +1122,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 					SQLLibrary *sqllib  = l->LibrarySQLGet( l );
 					if( sqllib != NULL )
 					{
-						if( IS_SESSION_ADMIN( loggedSession ) == TRUE && groupID > 0 )
-						{
-							snprintf( temptext, sizeof(temptext),"\
-UPDATE `Filesystem` f SET f.Mounted = '0' \
-WHERE \
-( \
-`UserID` = '%ld' OR \
-f.GroupID = '%ld' \
-) \
-AND LOWER(f.Name) = LOWER('%s')", 
-							userID, groupID, devname 
-							);
-						}
-						else
-						{
-							snprintf( temptext, sizeof(temptext),"\
+						sqllib->SNPrintF( sqllib,  temptext, sizeof(temptext),"\
 UPDATE `Filesystem` f SET f.Mounted = '0' \
 WHERE \
 ( \
@@ -1213,8 +1136,7 @@ ug.UserID = '%ld' \
 ) \
 AND LOWER(f.Name) = LOWER('%s')", 
 							userID, userID, devname 
-							);
-						}
+						);
 						
 						Log( FLOG_INFO, "Device was unmounted with success: %s!\n", devname );
 						
@@ -1224,16 +1146,6 @@ AND LOWER(f.Name) = LOWER('%s')",
 						*result = 200;
 
 						l->LibrarySQLDrop( l, sqllib );
-					}
-				}
-				
-				if( request->http_RequestSource != HTTP_SOURCE_NODE_SERVER )
-				{
-					BufString *res = SendMessageToSessionsAndWait( l, userID, request );
-					if( res != NULL )
-					{
-						DEBUG("RESPONSE: %s\n", res->bs_Buffer );
-						BufStringDelete( res );
 					}
 				}
 			}
@@ -1470,7 +1382,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 			
 			user = UMGetUserByName( l->sl_UM, username );
 			
-			usergroup = UGMGetGroupByNameDB( l->sl_UGM, usergroupname );
+			usergroup = UGMGetGroupByName( l->sl_UGM, usergroupname );
 			
 			if( user == NULL )
 			{
@@ -1562,11 +1474,6 @@ AND LOWER(f.Name) = LOWER('%s')",
 				HttpAddTextContent( response, dictmsgbuf );
 			}
 			
-			if( usergroup != NULL )
-			{
-				UserGroupDeleteAll( l, usergroup );
-			}
-			
 			//char tmp[ 100 ];
 			//char temptext[ 512 ];
 			//sprintf( tmp, "ok<!--separate-->Mouting error: %d (already mounted)\n", l->GetError( l ) );
@@ -1644,7 +1551,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 						{
 							sysname = sys->Name;
 						}
-						//Filesystem *fsys = ( Filesystem *)dev->f_DOSDriver;
+						Filesystem *fsys = ( Filesystem *)dev->f_DOSDriver;
 				
 						EscapeConfigFromString( dev->f_Config, &configEscaped, &executeCmd );
 					
@@ -1675,6 +1582,40 @@ AND LOWER(f.Name) = LOWER('%s')",
 							}
 							BufStringAddSize( bsMountedDrives, inttmp, addlen );
 						}
+						/*
+						if( devnr == 0 )
+						{
+							snprintf( tmp, TMP_SIZE_MIN1, "{\"Name\":\"%s\",\"Type\":\"%s\",\"Path\":\"%s\",\"FSys\":\"%s\",\"Config\":\"%s\",\"Visible\":\"%s\",\"Execute\":\"%s\",\"IsLimited\":\"%d\",\"Server\":\"%s\",\"Port\":\"%d\",\"GroupID\":\"%lu\"}\n", 
+								dev->f_Name ? dev->f_Name : "", 
+								dev->f_FSysName ? dev->f_FSysName : "", 
+								dev->f_Path ? dev->f_Path : "",
+								sys && sys->Name ? sys->Name : "",
+								configEscaped ? configEscaped: "{}",
+								dev->f_Visible == 1 ? "true" : "false",
+								executeCmd != NULL && strlen( executeCmd ) ? executeCmd : "", 
+								isLimited,
+								dev->f_DevServer ? dev->f_DevServer : "",
+								dev->f_DevPort,
+								dev->f_UserGroupID
+							);
+						}
+						else
+						{
+							snprintf( tmp, TMP_SIZE_MIN1, ",{\"Name\":\"%s\",\"Type\":\"%s\",\"Path\":\"%s\",\"FSys\":\"%s\",\"Config\":\"%s\",\"Visible\":\"%s\",\"Execute\":\"%s\",\"IsLimited\":\"%d\",\"Server\":\"%s\",\"Port\":\"%d\",\"GroupID\":\"%lu\"}\n", 
+								dev->f_Name ? dev->f_Name : "",
+								dev->f_FSysName ? dev->f_FSysName : "", 
+								dev->f_Path ? dev->f_Path : "",
+								sys && sys->Name ? sys->Name : "",
+								configEscaped ? configEscaped: "{}",
+								dev->f_Visible == 1 ? "true" : "false",
+								executeCmd != NULL && strlen( executeCmd ) ? executeCmd : "",
+								isLimited,
+								dev->f_DevServer ? dev->f_DevServer : "",
+								dev->f_DevPort,
+								dev->f_UserGroupID
+							);
+						}
+						*/
 					
 						if( executeCmd )
 						{
@@ -1694,15 +1635,33 @@ AND LOWER(f.Name) = LOWER('%s')",
 					}
 
 					USER_UNLOCK( curusr );
-
+						
+					/*
+					else
+					{
+						if( executeCmd )
+						{
+							FFree( executeCmd );
+							executeCmd = NULL;
+						}
+						if( configEscaped )
+						{
+							FFree( configEscaped );
+							configEscaped = NULL;
+						}
+					}
+					*/
+				
 					//
 					// get information about shared group drives
 					//
-
+				
 					UserGroupLink *ugl = loggedSession->us_User->u_UserGroupLinks;
 					while( ugl != NULL )
+					//int gr = 0;
+					//for( gr = 0 ; gr < curusr->u_GroupsNr ; gr++ )
 					{
-						//DEBUG("\n\n\n\nGROUP: %s\n\n\n\n\n", ugl->ugl_Group->ug_Name );
+						//DEBUG("\n\n\n\nGROUP: %s\n\n\n\n\n", curusr->u_Groups[ gr ]->ug_Name );
 						File *dev = NULL;
 						if( ugl->ugl_Group != NULL )
 						{
@@ -1711,7 +1670,6 @@ AND LOWER(f.Name) = LOWER('%s')",
 					
 						while( dev != NULL )
 						{
-							DEBUG("Going through all group drives. Drive: %s\n", dev->f_Name );
 							// if this is shared drive and user want details we must point to original drive
 							if( dev->f_SharedFile != NULL )
 							{
@@ -1762,53 +1720,85 @@ AND LOWER(f.Name) = LOWER('%s')",
 								}
 								BufStringAddSize( bsMountedDrives, inttmp, addlen );
 							}
-					
-							if( executeCmd )
-							{
-								FFree( executeCmd );
-								executeCmd = NULL;
-							}
-							if( configEscaped )
-							{
-								FFree( configEscaped );
-								configEscaped = NULL;
-							}
+					/*
+						if( devnr == 0 )
+						{
+							snprintf( tmp, TMP_SIZE_MIN1, "{\"Name\":\"%s\",\"Type\":\"%s\",\"Path\":\"%s\",\"FSys\":\"%s\",\"Config\":\"%s\",\"Visible\":\"%s\",\"Execute\":\"%s\",\"IsLimited\":\"%d\",\"Server\":\"%s\",\"Port\":\"%d\",\"GroupID\":\"%lu\"}\n", 
+								dev->f_Name ? dev->f_Name : "", 
+								dev->f_FSysName ? dev->f_FSysName : "", 
+								dev->f_Path ? dev->f_Path : "",
+								sys && sys->Name ? sys->Name : "",
+								configEscaped ? configEscaped: "{}",
+								dev->f_Visible == 1 ? "true" : "false",
+								executeCmd != NULL && strlen( executeCmd ) ? executeCmd : "", 
+								isLimited,
+								dev->f_DevServer ? dev->f_DevServer : "",
+								dev->f_DevPort,
+								dev->f_UserGroupID
+							);
 						
-							// remove private user data
-							int size = strlen( tmp );
+						}
+						else
+						{
+							snprintf( tmp, TMP_SIZE_MIN1, ",{\"Name\":\"%s\",\"Type\":\"%s\",\"Path\":\"%s\",\"FSys\":\"%s\",\"Config\":\"%s\",\"Visible\":\"%s\",\"Execute\":\"%s\",\"IsLimited\":\"%d\",\"Server\":\"%s\",\"Port\":\"%d\",\"GroupID\":\"%lu\"}\n", 
+								dev->f_Name ? dev->f_Name : "",
+								dev->f_FSysName ? dev->f_FSysName : "", 
+								dev->f_Path ? dev->f_Path : "",
+								sys && sys->Name ? sys->Name : "",
+								configEscaped ? configEscaped: "{}",
+								dev->f_Visible == 1 ? "true" : "false",
+								executeCmd != NULL && strlen( executeCmd ) ? executeCmd : "",
+								isLimited,
+								dev->f_DevServer ? dev->f_DevServer : "",
+								dev->f_DevPort,
+								dev->f_UserGroupID
+							);
+						}
+						*/
+					
+						if( executeCmd )
+						{
+							FFree( executeCmd );
+							executeCmd = NULL;
+						}
+						if( configEscaped )
+						{
+							FFree( configEscaped );
+							configEscaped = NULL;
+						}
+						
+						// remove private user data
+						int size = strlen( tmp );
 
+						{
+							char *lockey = strstr( tmp, "PublicKey" );
+							if( lockey != NULL )
 							{
-								char *lockey = strstr( tmp, "PublicKey" );
-								if( lockey != NULL )
+								// add  PublicKey"="
+								lockey += 13;
+								while( *lockey != '"' )
 								{
-									// add  PublicKey"="
-									lockey += 13;
-									while( *lockey != '"' )
+									if( *lockey == 0 || *lockey == ',' )
 									{
-										if( *lockey == 0 || *lockey == ',' )
-										{
-											break;
-										}
-										*lockey = ' ';
-										lockey++;
+										break;
 									}
+									*lockey = ' ';
+									lockey++;
 								}
 							}
-					
-							BufStringAddSize( bs, tmp, size );
-					
-							devnr++;
-							dev = (File *)dev->node.mln_Succ;
 						}
-						ugl = (UserGroupLink *)ugl->node.mln_Succ;
-					}	// while
 					
+						BufStringAddSize( bs, tmp, size );
+					
+						devnr++;
+						dev = (File *)dev->node.mln_Succ;
+					}
+						ugl = (UserGroupLink *)ugl->node.mln_Succ;
+					}
 					FFree( tmp );
 				}
 				
 				BufStringAdd( bs, "]" );
-				
-				DEBUG("Devicelist -> %s\n", bs->bs_Buffer );
 				
 				HttpAddTextContent( response, bs->bs_Buffer );
 				

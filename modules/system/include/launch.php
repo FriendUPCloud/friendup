@@ -70,16 +70,14 @@ if( $app->ID )
 		$ua = new dbIO( 'FUserApplication' );
 		$ua->UserID = $app->UserID;
 		$ua->ApplicationID = $app->ID;
-		
-		// User application part is not stored, app not installed
-		if( !$ua->Load() )
-		{
-			die( 'fail<!--separate-->{"response":"application lacks user installation record"}' );
-		}
-		else
+		if( $ua->Load() )
 		{
 			$d = substr( $path, 11, strlen( $path ) - 10 );
 			$scrp = preg_replace( '/progdir\:/i', '/system.library/module/?module=system&authid=' . $ua->AuthID . '&command=resource&file=' . rawurlencode( $d ), $scrp );
+		}
+		else
+		{
+			die( 'fail<!--separate-->{"response":"application lacks user installation record"}' );
 		}
 	}
 	// This one is probably from the resources/ directory

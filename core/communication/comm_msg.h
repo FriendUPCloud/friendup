@@ -102,8 +102,6 @@ typedef FLONG ID;
 #define ID_CITY MAKE_ID32('C','I','T','Y')		// geolocalization - city
 #define ID_COUN MAKE_ID32('C','O','U','N')		// geolocalization - country code
 
-#define ID_SESS MAKE_ID32('S','E','S','S')		// user sessionid
-
 #define MSG_END 						0
 #define MSG_GROUP_START					0xf0000001
 #define MSG_GROUP_END					0xf0000002
@@ -112,8 +110,7 @@ typedef FLONG ID;
 #define FC_QUERY_DEFAULT				0x000f0000
 #define FC_QUERY_SERVICES				(FC_QUERY_DEFAULT)
 #define FC_QUERY_GEOLOC					(FC_QUERY_DEFAULT+1)
-#define FC_QUERY_FRIENDCORE_INFO		(FC_QUERY_DEFAULT+2)	// information about FriendCore
-#define FC_QUERY_FRIENDCORE_SYNC		(FC_QUERY_DEFAULT+3)	// synchronization between cores (user data)
+#define FC_QUERY_FRIENDCORE_INFO		(FC_QUERY_DEFAULT+2)
 
 //
 // Message item defined by the user
@@ -170,16 +167,10 @@ int64_t DataFormAddForm( DataForm **dst, DataForm *afm );
 FBYTE *DataFormFind( DataForm *df, ID id );
 
 //
-// Used for remote commands
+//
 //
 
-DataForm *DataFormFromHttpRemoteCommand( Http *http );
-
-//
-// Convert http to DataForm
-//
-
-DataForm *DataFormFromHttpToSync( char *fcid, Http *http, char *sessionid );
+DataForm *DataFormFromHttp( Http *http );
 
 //
 //
@@ -192,6 +183,5 @@ char *createParameter( char *key, char *value, int *len );
 //
 
 char *createParameterFULONG( char *key, FULONG value, int *len );
-
 
 #endif // __COMMUNICATION_COMM_MSG_H__

@@ -288,11 +288,7 @@ Workspace = {
 										
 											// Open the thank you template
 											var jo = new cAjax();
-											let templPath = '/webclient/templates/thankyou.html';
-											if ( -1 != document.location.host.indexOf( 'jeanie' ))
-												templPath = '/webclient/templates/thankyoujeanie.html';
-											
-											jo.open( 'get', templPath, true, false );
+											jo.open( 'get', '/webclient/templates/thankyou.html', true, false );
 											jo.onload = function()
 											{
 												if( ge( 'Thanks' ) ) return;

@@ -30,7 +30,6 @@
 void NotificationAndroidSendingThread( FThread *data )
 {
 	pthread_detach( pthread_self() );
-	signal(SIGPIPE, SIG_IGN);
 	
 	data->t_Launched = TRUE;
 	NotificationManager *nm = (NotificationManager *)data->t_Data;
@@ -117,7 +116,6 @@ void NotificationAndroidSendingThread( FThread *data )
 						break;
 					}
 				}
-				usleep( 25 );
 			}
 			
 			if( FRIEND_MUTEX_LOCK( &(nm->nm_AndroidSendMutex) ) == 0 )

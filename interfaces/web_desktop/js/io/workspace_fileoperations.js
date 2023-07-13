@@ -74,9 +74,7 @@ Workspace.deleteFile = function( mode )
 						v = new View( {
 							title: i18n( titles ),
 							width: 320,
-							height: 100,
-							dialog: true,
-							dockable: true
+							height: 100
 						} );
 					}
 					
@@ -102,10 +100,6 @@ Workspace.deleteFile = function( mode )
 					bar.style.width = '0';
 					bar.style.height = 'calc(100% - 2px)';
 					
-					let container = document.createElement( 'div' );
-					container.className = 'ProgressBar';
-					cont.appendChild( container );
-					
 					var progress = document.createElement( 'div' );
 					progress.className = 'Progress';
 					progress.style.position = 'absolute';
@@ -117,9 +111,9 @@ Workspace.deleteFile = function( mode )
 					progress.style.lineHeight = '28px';
 					progress.style.zIndex = 2;
 					
-					container.appendChild( frame );						
-					container.appendChild( bar );
-					container.appendChild( progress );
+					cont.appendChild( frame );						
+					cont.appendChild( bar );
+					cont.appendChild( progress );
 					
 					var stop = false;
 					

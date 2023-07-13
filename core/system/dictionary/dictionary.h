@@ -162,7 +162,6 @@ enum {
 	DICT_USB_REMOTE_CANNOT_BE_REMOVED,
 	DICT_CANNOT_REMOVE_GROUP_WITH_LEVEL_TYPE,
 	DICT_CANNOT_EDIT_OR_REMOVE_USER_GROUP_LOCKED,
-	DICT_CANNOT_COPY_OVER_SAME_FILE,
 	DICT_MAX
 };
 /*
@@ -263,13 +262,8 @@ INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) 
 INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) VALUES (NULL, '0', 'Application not found: %s', 'ENG', '74');
 INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) VALUES (NULL, '0', 'Application Session not found', 'ENG', '75');
 
-INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) VALUES (NULL, '0', 'USB remote connection cannot be created', 'ENG', '76');
-INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) VALUES (NULL, '0', 'USB remote connection cannot be removed', 'ENG', '77');
-
-INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) VALUES (NULL, '0', 'Cannot remove group with Level type', 'ENG', '78');
-INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) VALUES (NULL, '0', 'Cannot edit or remove UserGroup because its locked', 'ENG', '79');
-
-INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) VALUES (NULL, '0', 'Cannot copy over same file', 'ENG', '80');
+INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) VALUES (NULL, '0', 'Cannot remove group with Level type', 'ENG', '76');
+INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) VALUES (NULL, '0', 'Cannot edit or remove UserGroup because its locked', 'ENG', '77');
 */
 
 // User status

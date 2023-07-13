@@ -58,11 +58,11 @@ if( isset( $args->authid ) )
 
 $blacklist = isset( $configfilesettings[ 'FriendCore' ][ 'dosdriverblacklist' ] ) ?
 	$configfilesettings[ 'FriendCore' ][ 'dosdriverblacklist' ] : false;
-if( isset( $blacklist ) )
+if( $blacklist )
 {
 	$blacklist = explode( ',', $blacklist );
 }
-if( isset( $blacklist ) && count( $blacklist ) )
+if( count( $blacklist ) )
 {
 	$out = new stdClass();
 	foreach( $blacklist as $bl )
@@ -88,7 +88,7 @@ if( $dir = opendir( 'devices/DOSDrivers' ) )
 			continue;
 		
 		// Skip entries found in blacklist
-		if( isset( $blacklist ) && isset( $blacklist->{$f} ) )
+		if( $blacklist && isset( $blacklist->{$f} ) )
 		{
 			continue;
 		}

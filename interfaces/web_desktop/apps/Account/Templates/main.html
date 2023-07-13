@@ -1,5 +1,5 @@
 
-	<div class="Gui LayoutButtonbarBottom MyAccount">
+	<div class="Gui LayoutButtonbarBottom">
 		<div class="VContentTop" style="top: 10px; left: 10px; bottom: 50px; right: 10px">
 			<div class="HContentLeft HContent100 ScrollArea BackgroundWindow" id="MainContainer">
 				<div id="MTabs" class="Tabs">
@@ -26,7 +26,7 @@
 								<div class="AvatarRect MarginTop MarginBottom HRow">
 									<div class="FloatLeft TextCenter Relative HContent50">
 										<div id="AvatarArea">
-											<canvas id="Avatar" style="" width="512" height="512"></canvas>
+											<canvas id="Avatar" width="128" height="128"></canvas>
 										</div>
 										<button type="button" style="vertical-align:top" class="fa-image Button IconSmall" onclick="changeAvatar()">
 											{i18n_changeavatar}
@@ -201,24 +201,19 @@
 					{friendNetwork2}
 				</div>
 				<script> 
-					if ( !window.initTabsHasRun )
+					InitTabs( 'MTabs' );
+					let tabs = ge( 'MTabs' ).getElementsByClassName( 'Tab' );
+					if( ge( 'activeTab' ).value != 'null' )
 					{
-						window.initTabsHasRun = true;
-						InitTabs( 'MTabs' );
-						let tabs = ge( 'MTabs' ).getElementsByClassName( 'Tab' );
-						if( ge( 'activeTab' ).value != 'null' )
+						for( let a = 0; a < tabs.length; a++ )
 						{
-							for( let a = 0; a < tabs.length; a++ )
+							if( tabs[a].classList.contains( 'fa-' + ge( 'activeTab' ).value ) )
 							{
-								if( tabs[a].classList.contains( 'fa-' + ge( 'activeTab' ).value ) )
-								{
-									tabs[a].click();
-									break;
-								}
+								tabs[a].click();
+								break;
 							}
 						}
 					}
-					
 				</script>
 			</div>
 		</div>

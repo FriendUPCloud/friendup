@@ -931,7 +931,7 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 			
 			if( loggedSession == NULL )
 			{
-				loggedSession = UserSessionNew( NULL, "webdav", sb->fcm->fcm_ID );
+				loggedSession = UserSessionNew( NULL, "webdav" );
 				if( loggedSession != NULL )
 				{
 					loggedSession->us_UserID = usr->u_ID;
@@ -1221,7 +1221,7 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 		}
 		else
 		{
-			have = FSManagerCheckAccess( sb->sl_FSM, path, rootDev->f_ID, usr->u_ID, "-R----" );
+			have = FSManagerCheckAccess( sb->sl_FSM, path, rootDev->f_ID, usr, "-R----" );
 		}
 		
 		if( have == TRUE )
@@ -1368,7 +1368,7 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 		}
 		else
 		{
-			have = FSManagerCheckAccess( sb->sl_FSM, path, rootDev->f_ID, usr->u_ID, "-R----" );
+			have = FSManagerCheckAccess( sb->sl_FSM, path, rootDev->f_ID, usr, "-R----" );
 		}
 		
 		if( have == TRUE )
@@ -1411,7 +1411,7 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 		}
 		else
 		{
-			have = FSManagerCheckAccess( sb->sl_FSM, path, rootDev->f_ID, usr->u_ID, "--W---" );
+			have = FSManagerCheckAccess( sb->sl_FSM, path, rootDev->f_ID, usr, "--W---" );
 		}
 		
 		DEBUG("[HandleWebDav] PUT access : %d\n", have );
@@ -1541,7 +1541,7 @@ Host: 192.168.153.138:6502
 		}
 		else
 		{
-			have = FSManagerCheckAccess( sb->sl_FSM, path, rootDev->f_ID, usr->u_ID, "--W---" );
+			have = FSManagerCheckAccess( sb->sl_FSM, path, rootDev->f_ID, usr, "--W---" );
 		}
 		
 		if( have == TRUE )
@@ -1576,7 +1576,7 @@ Host: 192.168.153.138:6502
 		}
 		else
 		{
-			have = FSManagerCheckAccess( sb->sl_FSM, path, rootDev->f_ID, usr->u_ID, "----D-" );
+			have = FSManagerCheckAccess( sb->sl_FSM, path, rootDev->f_ID, usr, "----D-" );
 		}
 		
 		if( have == TRUE )

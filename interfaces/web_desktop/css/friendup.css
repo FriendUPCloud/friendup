@@ -40,8 +40,6 @@ html > body:not([mobile]).Login div #Login.View
 	border-radius: 15px;
 }
 
-body .ViewTitle { display: none; }
-
 body.Login .View > .Content:before
 {
 	display: none;

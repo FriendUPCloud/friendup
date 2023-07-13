@@ -1,7 +1,9 @@
 Friend OS v1.3.0, "Helium"
 ==========================
 
-*NB*: For extended functionality and related Friend projects such as the Android app refer [here](https://github.com/FriendSoftwareLabs).
+*NB1*: Friend OS v1.3.0, "Helium", is just around the corner. While it has been in development, this readme has become a bit outdated. Please head over to [this link](https://github.com/FriendUPCloud/friendup/tree/release/1.3.0) to check out the next release, if you want to get your hands dirty.
+
+*NB2*: For extended functionality and related Friend projects such as the Android app refer [here](https://github.com/FriendSoftwareLabs).
 
 ---
 

@@ -5,8 +5,7 @@ import random
 import os
 import sys
 import time
-import _thread
-#import thread
+import thread
 
 remoteAddress = None
 remotePort = 0
@@ -27,10 +26,10 @@ body = []
 body_lenght = 100
 
 def help():
-    print ("usage httphunter.py --host host --port|-p port")
-    print ("\n\t--host\t\t\tThe host where the server is running")
-    print ("\t-p, --port\t\tThe port that the server is running on")
-    sys.exit(0)
+	print "usage httphunter.py --host host --port|-p port"
+	print "\n\t--host\t\t\tThe host where the server is running"
+	print "\t-p, --port\t\tThe port that the server is running on"
+	sys.exit(0)
 
 def inc_counter():
 	global request_counter
@@ -298,26 +297,24 @@ def fuzz(file, p_method, p_url):
 def MonitorThread():
 	previous=request_counter
 	while 1:
-		if (previous+100<request_counter) & (previous!=request_counter):
+		if (previous+100<request_counter) & (previous<>request_counter):
 			rate = float(request_counter) / float(total_request)
 			rate_num = rate*100
-			print ("\r%f%%\t%d Requests Sent. Error request: %d Error create socket: %d" % (rate_num,request_counter, error_request, error_create_socket) )
+			print "\r%f%%\t%d Requests Sent. Error request: %d Error create socket: %d" % (rate_num,request_counter, error_request, error_create_socket),
 			time.sleep(0.002)
 			previous=request_counter
 		if (request_counter == total_request):
-			print ("\n[--- DAN Fuzzing Finished ---]")
+			print "\n[--- DAN Fuzzing Finished ---]"
 			break
 
 			
-print ("Before parseCommandLine")
 remoteAddress, remotePort = parseCommandLine()
-print ("After parseCommandLine")
 bulidlist()
 total_request = len(method)*len(uri)*len(querystring)*len(headers)*len(cookie)*len(content_lenght)*len(body)
-print ("[--- DAN Fuzzing Started ---]")
-print ('Total Requests : %d' % total_request )
+print "[--- DAN Fuzzing Started ---]"
+print 'Total Requests : %d' % total_request
 for k in range(len(method)):
 	for kk in range(len(uri)):
-			_thread.start_new_thread(fuzz, (str(k)+'_'+str(kk)+'.txt', k, kk))
+			thread.start_new_thread(fuzz, (str(k)+'_'+str(kk)+'.txt', k, kk))
 thread.start_new_thread(MonitorThread, ())
 time.sleep(1000000)

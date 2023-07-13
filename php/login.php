@@ -28,7 +28,7 @@ function initLoginModules()
 	// check which modules to load...
 	$modules = checkFCConfig();
 	$moduleconfigs = [];
-
+	
 	// Specific regext to trap oauth login module
 	if( preg_match( '/\/oauth[\/]{0,1}/i', $GLOBALS['argv'][1], $m ) )
 	{
@@ -56,10 +56,12 @@ function initLoginModules()
 		
 		if( count( $moduleconfigs ) > 0 )
 		{
+		
 			//now we have configs... make a global variable here
 			$GLOBALS['loginmodules'] = $moduleconfigs;
 						
 			parseRequest();
+			
 			//check if a valid module shouted "use me, use me"
 			if(
 				$GLOBALS['request_variables'] 

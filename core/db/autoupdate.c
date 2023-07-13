@@ -58,21 +58,6 @@ void DBUpdateDelete( DBUpdate *dbu )
 	}
 }
 
-/**
- * Delete all DBUpdate objects
- * @param dbu pointer to DBUpdate object which will be deleted
- */
-void DBUpdateDeleteAll( DBUpdate *dbu )
-{
-	while( dbu != NULL )
-	{
-		DBUpdate *rdbu = dbu;
-		dbu = (DBUpdate *) dbu->node.mln_Succ;
-		
-		DBUpdateDelete( rdbu );
-	}
-}
-
 //
 // we need structure which will hold name of scripts and their numbers
 //
@@ -479,7 +464,6 @@ void CheckAndUpdateDB( SystemBase *l, int type )
 						BufStringDelete( errorString );
 					}
 				}
-				DBUpdateDeleteAll( dbu );
 			}
 
 			FFree( dbentries );

@@ -371,61 +371,61 @@ int FriendCoreManagerInit( FriendCoreManager *fcm )
 int FriendCoreManagerInitServices( FriendCoreManager *fcm )
 {
 	if( fcm->fcm_DisableWS != TRUE )
-	{
-		if( ( fcm->fcm_WebSocket = WebSocketNew( SLIB, fcm->fcm_WSPort, fcm->fcm_WSSSLEnabled, WEBSOCKET_TYPE_BROWSER, fcm->fcm_WSExtendedDebug, fcm->fcm_WSTimeout, fcm->fcm_WSka_time, fcm->fcm_WSka_probes, fcm->fcm_WSka_interval ) ) != NULL )
 		{
-			WebSocketStart( fcm->fcm_WebSocket );
-		}
-		else
-		{
-			Log( FLOG_FATAL, "Cannot launch websocket server\n");
-			return -1;
-		}
-		
-		if( fcm->fcm_DisableExternalWS == 0 )
-		{
-			if( ( fcm->fcm_WebSocketNotification = WebSocketNew( SLIB, fcm->fcm_WSNotificationPort, FALSE, WEBSOCKET_TYPE_EXTERNAL, fcm->fcm_WSExtendedDebug, fcm->fcm_WSTimeout, fcm->fcm_WSka_time, fcm->fcm_WSka_probes, fcm->fcm_WSka_interval ) ) != NULL )
+			if( ( fcm->fcm_WebSocket = WebSocketNew( SLIB, fcm->fcm_WSPort, fcm->fcm_WSSSLEnabled, WEBSOCKET_TYPE_BROWSER, fcm->fcm_WSExtendedDebug, fcm->fcm_WSTimeout, fcm->fcm_WSka_time, fcm->fcm_WSka_probes, fcm->fcm_WSka_interval ) ) != NULL )
 			{
-				WebSocketStart( fcm->fcm_WebSocketNotification );
+				WebSocketStart( fcm->fcm_WebSocket );
 			}
 			else
 			{
 				Log( FLOG_FATAL, "Cannot launch websocket server\n");
 				return -1;
 			}
+			
+			if( fcm->fcm_DisableExternalWS == 0 )
+			{
+				if( ( fcm->fcm_WebSocketNotification = WebSocketNew( SLIB, fcm->fcm_WSNotificationPort, FALSE, WEBSOCKET_TYPE_EXTERNAL, fcm->fcm_WSExtendedDebug, fcm->fcm_WSTimeout, fcm->fcm_WSka_time, fcm->fcm_WSka_probes, fcm->fcm_WSka_interval ) ) != NULL )
+				{
+					WebSocketStart( fcm->fcm_WebSocketNotification );
+				}
+				else
+				{
+					Log( FLOG_FATAL, "Cannot launch websocket server\n");
+					return -1;
+				}
+			}
 		}
-	}
 
-	SLIB->fcm = fcm;
-	fcm->fcm_SB = SLIB;
-	
-	Log( FLOG_INFO,"Start SSH console\n");
+		SLIB->fcm = fcm;
+		fcm->fcm_SB = SLIB;
+		
+		Log( FLOG_INFO,"Start SSH console\n");
 
 #ifdef ENABLE_SSH
-	fcm->fcm_SSHServer = SSHServerNew( SLIB, fcm->fcm_SSHRSAKey, fcm->fcm_SSHDSAKey );
+		fcm->fcm_SSHServer = SSHServerNew( SLIB, fcm->fcm_SSHRSAKey, fcm->fcm_SSHDSAKey );
 #endif
-	
-	fcm->fcm_Shutdown = FALSE;
-	
+		
+		fcm->fcm_Shutdown = FALSE;
+		
 #ifdef COMMUNICATION_SERVICE
-	fcm->fcm_CommService = CommServiceNew( fcm->fcm_ComPort, fcm->fcm_SSLEnabledCommuncation, SLIB, fcm->fcm_MaxpCom, fcm->fcm_BufsizeCom );
-	
-	if( fcm->fcm_CommService )
-	{
-		CommServiceStart( fcm->fcm_CommService );
-	}
+		fcm->fcm_CommService = CommServiceNew( fcm->fcm_ComPort, fcm->fcm_SSLEnabledCommuncation, SLIB, fcm->fcm_MaxpCom, fcm->fcm_BufsizeCom );
+		
+		if( fcm->fcm_CommService )
+		{
+			CommServiceStart( fcm->fcm_CommService );
+		}
 #endif
 
 #ifdef COMMUNICATION_REM_SERVICE
-	fcm->fcm_CommServiceRemote = CommServiceRemoteNew( fcm->fcm_ComRemotePort, fcm->fcm_SSLEnabledCommuncation, SLIB, fcm->fcm_MaxpComRemote );
-	
-	if( fcm->fcm_CommServiceRemote )
-	{
-		CommServiceRemoteStart( fcm->fcm_CommServiceRemote );
-	}
+		fcm->fcm_CommServiceRemote = CommServiceRemoteNew( fcm->fcm_ComRemotePort, fcm->fcm_SSLEnabledCommuncation, SLIB, fcm->fcm_MaxpComRemote );
+		
+		if( fcm->fcm_CommServiceRemote )
+		{
+			CommServiceRemoteStart( fcm->fcm_CommServiceRemote );
+		}
 #endif
-	
-	return 0;
+		
+		return 0;
 }
 
 /**

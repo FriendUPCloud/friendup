@@ -11,12 +11,6 @@
 *****************************************************************************©*/
 
 $userid = $User->ID;
-$groupid = '';
-
-if( isset( $args->args->groupid ) )
-{
-    $groupid = $args->args->groupid;
-}
 
 if( isset( $args->args->authid ) && !isset( $args->authid ) )
 {
@@ -110,13 +104,7 @@ if( $q )
 		if( $userid == $User->ID )
 		{
 			$door = new Door( $row->Name . ':' );
-			$req = '/system.library/device/unmount?devname=' . $row->Name;
-			if( $groupid )
-			{
-			    $req .= '&groupid=' . $groupid;
-			}
-			
-			$door->dosQuery( $req );
+			$door->dosQuery( '/system.library/device/unmount?devname=' . $row->Name );
 		}
 
 		$q = false;

@@ -18,8 +18,6 @@ import getopt
 import argparse
 import certifi, urllib3, ssl
 import test_class
-import string
-import random
 from test_class import TestClass
 
 print("------------Friend Test started: " + datetime.datetime.now().strftime("%Y-%m-%d %H:%M") )
@@ -39,7 +37,6 @@ PASS = "1_test_1"
 TEST_DIRECTORY = "tests"
 SSL = False
 WS_URL = ""
-HTTP_PERF=False
 
 #PASS = hashlib.sha256(PASS.encode('utf-8')).hexdigest()
 
@@ -59,7 +56,6 @@ parser.add_argument("-t", help="test directory - which directory test should be 
 parser.add_argument("-s", help="SSL - use secured connection (true/false)")
 parser.add_argument("-pc", help="Process count - number of processes launched in same time by user")
 parser.add_argument("-mi", help="Message interval - interval between test calls")
-parser.add_argument("-hp", help="Http performance check")
 
 args = parser.parse_args()
 
@@ -77,11 +73,9 @@ if args.s is not None:
     if args.s == "true":
         SSL = True
 if args.pc is not None:
-    PROCESS_COUNT = int( args.pc )
+    PROCESS_COUNT = args.pc
 if args.mi is not None:
     MSG_INTERVAL = float( args.mi )
-if args.hp is not None:
-    HTTP_PERF = True
 
 PASS = "HASHED" + hashlib.sha256(PASS.encode('utf-8')).hexdigest()
 
@@ -114,7 +108,6 @@ http = urllib3.PoolManager( cert_reqs='CERT_REQUIRED', ca_certs=certifi.where() 
 #print("Using certs: " + requests.certs.where() )
 # sending get request and saving the response as response object
 try:
-    print("Request post: " + str( URL ) )
     r = requests.post(url = URL, data = PARAMS, verify=False)
  
 # extracting data in json format
@@ -174,87 +167,21 @@ def load_class( full_class_string ):
     # Finally, we retrieve the Class
     return getattr(module, class_str)
 
-#
-# Http test call
-#
-
-def httpTest():
-    print("HttpTest")
-    
-    result1 = ''.join((random.choice(string.ascii_lowercase) for x in range(4000000 ))) # run loop until the define length
-    result2 = ''.join((random.choice(string.ascii_lowercase) for x in range(2000000 ))) # run loop until the define length
-    result3 = ''.join((random.choice(string.ascii_lowercase) for x in range(1000000 ))) # run loop until the define length
-    #print(''.join(random.choices(string.ascii_lowercase, k=5)))
-    
-    LPARAMS = {'test1':result1, 'test2':result2, 'test3':result3 }
-    if SSL == True:
-        LURL = "https://" + HOST + ":" + PORT + "/"
-    else:
-        LURL = "http://" + HOST + ":" + PORT + "/"
-        
-    print("HttpTest1")
-        
-    multipart_form_data = {
-        'ab': (None, result1),
-        'cd': ('result2', result2)
-    }
-    
-    r = requests.post(url = LURL, files=multipart_form_data, data = LPARAMS, verify=False)
-    
-    print("HttpTest end")
-
-#
 # Parse all python files in tests directory and load classes
 #
 
 print("------------Load test classes----------")
 
-#
-# Check performance and http/s stability
-#
-
-if HTTP_PERF == True:
-    #
-    # Start threads
-
-    startTime = time.process_time()
-
-    print("-------Starting http %d processes" + str(PROCESS_COUNT) )
-
-    pids = {}
-    for i in range(0, PROCESS_COUNT):
-        try:
-            newpid = os.fork()
-            if newpid == 0:
-                #t = threading.Thread(target=child)
-                #t.start()
-                _thread.start_new_thread( httpTest, () )
-                #httpTest()
-            else:
-                pids[newpid] = 1
-            time.sleep(1.01)
-            
-        except:
-            print("Excetion in process creation")
-            traceback.print_exc()
-    time.sleep(100.01)
-    exit(0)
-else:
-
-#
-# Check functionality via WS
-#
-
 #reqid = 0
-    for file in os.listdir( TEST_DIRECTORY ):
-        if file.endswith(".py"):
-            lpath = os.path.join( TEST_DIRECTORY+"/", file ) 
-            lpath = lpath[:-3] + ".TestClass"
+for file in os.listdir( TEST_DIRECTORY ):
+    if file.endswith(".py"):
+        lpath = os.path.join( TEST_DIRECTORY+"/", file ) 
+        lpath = lpath[:-3] + ".TestClass"
 
-            #print( lpath )
-            class_ = load_class( lpath )
-            print('Added TestClass ' + str(class_) + ' path ' + lpath )
-            LIST_OF_CLASSES.append( class_ )
+        #print( lpath )
+        class_ = load_class( lpath )
+        print('Added TestClass ' + str(class_) + ' path ' + lpath )
+        LIST_OF_CLASSES.append( class_ )
 # TEST purpose
 #        reqid = reqid + 1
 #        object_ = class_( SESSION_ID, str( reqid ) )
