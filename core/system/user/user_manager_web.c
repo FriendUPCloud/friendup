@@ -522,7 +522,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 						USER_LOCK( u );
 						
 						UserSessListEntry *ses = u->u_SessionsList;
-						while( ses != NULL )
+						while( ses != NULL && ses->us != NULL )
 						{
 							FBOOL sendMsg = FALSE;
 							UserSession *uses = (UserSession *) ses->us;

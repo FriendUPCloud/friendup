@@ -2431,14 +2431,14 @@ int WebSocketSendMessageInt( UserSession *usersession, char *msg, int len )
 	int bytes = 0;
 	
 	{
-		buf = (unsigned char *)FCalloc( len + 128+24, sizeof( unsigned char ) );
+		buf = (unsigned char *)FCalloc( len + 128 + 24, sizeof( unsigned char ) );
 		if( buf != NULL )
 		{
-			memcpy( buf, msg,  len );
+			memcpy( buf, msg, len );
 
 			if( usersession->us_WSD != NULL && usersession->us_WebSocketStatus == WEBSOCKET_SERVER_CLIENT_STATUS_ENABLED )
 			{
-				int ret = UserSessionWebsocketWrite( usersession , buf , len, LWS_WRITE_TEXT );
+				int ret = UserSessionWebsocketWrite( usersession, buf, len, LWS_WRITE_TEXT );
 				if( ret > 0 )
 				{
 					bytes += ret;
