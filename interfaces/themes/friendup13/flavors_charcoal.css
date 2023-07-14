@@ -171,6 +171,12 @@ html > body.Charcoal > div button, html > body.Charcoal > div .Button
     color: #e0e0e0;
 }
 
+html > body.Charcoal > div button:hover, 
+html > body.Charcoal > div .Button:hover
+{
+    border: 1px solid var(--ColorBgButtonHover);
+}
+
 html body.Charcoal .View .DirectoryToolbar,
 html body.Charcoal .View.Active .DirectoryToolbar 
 {
