@@ -43,6 +43,7 @@
 	width: 100%;
 	height: calc(100% - 35px);
 	overflow: auto;
+	overflow-x: hidden;
 	overflow-y: scroll;
 	scroll-behavior: smooth;
 	box-sizing: border-box;

@@ -59,9 +59,14 @@ html body[mobile=mobile]
 	font-size: 1em;
 }
 
-html body hr.Divider
+html body hr.Divider,
+hr
 {
-	border-top: 1px solid rgba(0,0,0,0.05);
+	border: 0;
+	height: 1px;
+	width: 100%;
+	display: block;
+	background: linear-gradient(90deg,transparent,var(--ColorOverlayBg),transparent);
 	margin: 10px 0 10px 0;
 }
 

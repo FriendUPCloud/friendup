@@ -8,4 +8,7 @@ i18n_minutes_ago                       : minutes ago
 i18n_hours_ago                         : hours ago
 i18n_gotoparent                        : Back
 i18n_just_now                          : Just now.
-
+i18n_create_your_own_group             : Create group
+i18n_name                              : Name
+i18n_group_description                 : Group description
+i18n_create_group                      : Save group
