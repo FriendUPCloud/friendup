@@ -79,6 +79,43 @@ class FUIChatoverview extends FUIElement
     {
         this.domElement.innerHTML = '<h2 class="Error">' + string + '</h2>';
     }
+    inactivate()
+    {
+        this.domChannels.classList.add( 'Inactivated' );
+        this.domChatlist.classList.add( 'Inactivated' );
+    }
+    activate()
+    {
+        this.domChannels.classList.remove( 'Inactivated' );
+        this.domChatlist.classList.remove( 'Inactivated' );
+    }
+    // Show a sliding menu
+    showSlidingMenu( tpl )
+    {
+        this.inactivate();
+        if( this.domElement.querySelector( '.SlidingMenu' ) )
+        {
+            this.destroySlidingMenu();
+        }
+        let d = document.createElement( 'div' );
+        d.className = 'SlidingMenu';
+        this.domElement.appendChild( d );
+        let f = new File( 'Progdir:Markup/room.html' );
+        f.onLoad = function( data )
+        {
+            d.innerHTML = data;
+            FUI.initialize();
+            d.classList.add( 'Showing' );
+        }
+        f.load();
+    }
+    // Remove and purge existing sliding menu(s)
+    destroySlidingMenu()
+    {
+        let sm = this.domElement.querySelector( '.SlidingMenu' );
+        if( !sm ) return;
+        sm.parentNode.removeChild( sm );
+    }
     // Redraw channels
     redrawChannels()
     {
@@ -122,14 +159,7 @@ class FUIChatoverview extends FUIElement
     				ele.style.backgroundImage = 'url(' + getImageUrl( 'Progdir:Assets/add.png' ) + ')';
 					ele.onclick = function()
 					{
-						let n = new View( {
-						    title: i18n( 'i18n_create_room' ),
-						    width: 600,
-						    height: 600,
-						    assets: [
-						        'Progdir:Markup/room.html'
-						    ]
-						} );
+						self.showSlidingMenu( 'room.html' );
 						//self.setActiveChannel( prop, this );
 					}
 				}
