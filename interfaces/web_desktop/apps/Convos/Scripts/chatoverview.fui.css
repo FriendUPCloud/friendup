@@ -45,6 +45,8 @@
     white-space: nowrap;
     display: inline-block;
     vertical-align: bottom;
+    position: relative;
+    top: -3px;
 }
 .FUIChatoverview .SlidingMenu input
 {
