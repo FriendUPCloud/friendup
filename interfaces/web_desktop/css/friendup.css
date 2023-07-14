@@ -20,9 +20,9 @@ body
 body.Login
 {
 	background-image: url('/graphics/release_loginimage.jpg');
-	background-size: cover;
+	background-size: auto;
 	background-position: center;
-	background-repeat: no-repeat;
+	background-repeat: repeat;
     background-attachment: fixed;
 }
 
