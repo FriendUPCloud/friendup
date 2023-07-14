@@ -48,6 +48,16 @@
     position: relative;
     top: -3px;
 }
+.FUIChatoverview .SlidingMenu label.Full
+{
+    width: auto;
+}
+
+.FUIChatoverview .SlidingMenu textarea
+{
+    width: 100%;
+}
+
 .FUIChatoverview .SlidingMenu input
 {
     vertical-align: bottom;

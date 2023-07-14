@@ -10,3 +10,5 @@ i18n_gotoparent                        : Back
 i18n_just_now                          : Just now.
 i18n_create_your_own_group             : Create your own group
 i18n_name                              : Name
+i18n_group_description                 : Group description
+i18n_create_group                      : Create group
