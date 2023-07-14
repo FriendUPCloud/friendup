@@ -870,8 +870,8 @@ html .View.Active > .Title
 html .View > .Title
 {
 	border-top: none;
-	border-bottom: 1px solid rgba(0,0,0,0);
-	height: 29px;
+	border-bottom: 0;
+	height: 26px;
 	background-image: none;
 	border-radius: 10px 10px 0 0;
 	/* --- old color --- */
