@@ -101,6 +101,7 @@ class FUIChatoverview extends FUIElement
         d.className = 'SlidingMenu';
         this.domElement.appendChild( d );
         let f = new File( 'Progdir:Markup/room.html' );
+        f.i18n();
         f.onLoad = function( data )
         {
             d.innerHTML = data;
