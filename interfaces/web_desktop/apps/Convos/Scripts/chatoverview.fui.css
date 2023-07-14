@@ -87,7 +87,7 @@
 
 .FUIChatoverview > .Chatlist:before
 {
-    background-color: var(--fui-background);
+    background-color: var(--fui-palette-chan01-dim);
 }
 
 .FUIChatoverview > .Channels.Inactivated:before,

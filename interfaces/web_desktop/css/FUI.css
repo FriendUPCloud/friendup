@@ -60,22 +60,22 @@
     
     --fui-alert-border-color: red;
     
-    --fui-palette-chan01: #1c5cff;
-    --fui-palette-chan02: #a98cd8;
-    --fui-palette-chan03: #a84cd3;
-    --fui-palette-chan04: #78e8bf;
+    --fui-palette-chan01: #20374D;
+    --fui-palette-chan02: #058ED9;
+    --fui-palette-chan03: #d7c2ad;
+    --fui-palette-chan04: #FF82A9;
     --fui-palette-chan05: #b9fc97;
     
-    --fui-palette-chan01-dim: #1c5cff88;
-    --fui-palette-chan02-dim: #a98cd888;
-    --fui-palette-chan03-dim: #a84cd388;
-    --fui-palette-chan04-dim: #78e8bf88;
+    --fui-palette-chan01-dim: #20374D88;
+    --fui-palette-chan02-dim: #058ED988;
+    --fui-palette-chan03-dim: #d7c2ad88;
+    --fui-palette-chan04-dim: #FF82A988;
     --fui-palette-chan05-dim: #b9fc9788;
     
-    --fui-palette-chan01-dimmer: #1c5cff33;
-    --fui-palette-chan02-dimmer: #a98cd833;
-    --fui-palette-chan03-dimmer: #a84cd333;
-    --fui-palette-chan04-dimmer: #78e8bf33;
+    --fui-palette-chan01-dimmer: #20374D33;
+    --fui-palette-chan02-dimmer: #058ED933;
+    --fui-palette-chan03-dimmer: #d7c2ad33;
+    --fui-palette-chan04-dimmer: #FF82A933;
     --fui-palette-chan05-dimmer: #b9fc9733;
     
     --font-size-small: 12px;
