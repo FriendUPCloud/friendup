@@ -155,6 +155,14 @@ class FUIChatoverview extends FUIElement
 						self.setActiveChannel( prop, this );
 					}
 				}
+				else if( prop == 'chatroom' )
+				{
+					ele.style.backgroundImage = 'url(' + getImageUrl( 'Progdir:Assets/group.png' ) + ')';
+					ele.style.onclick = function()
+					{
+						self.setActiveChannel( prop, this );
+					}
+				}
 				else if( prop == 'add' )
     			{
     				ele.style.backgroundImage = 'url(' + getImageUrl( 'Progdir:Assets/add.png' ) + ')';
@@ -247,6 +255,10 @@ class FUIChatoverview extends FUIElement
     	let n = new Module( 'system' );
     	n.onExecuted = function( ne, nd )
     	{
+    		if( ne == 'ok' )
+    		{
+    			self.redrawChannels();
+    		}
 			self.destroySlidingMenu();
 			self.activate();
     	}

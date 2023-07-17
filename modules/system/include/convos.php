@@ -202,6 +202,19 @@ if( isset( $args->args ) )
         }
         else if( $args->args->method == 'addroom' )
         {
+        	$o = new dbIO( 'FUserGroup' );
+        	$o->UserID = $User->ID;
+        	$o->ParentID = 0;
+        	$o->Name = $args->args->roomName;
+        	$o->Description = $args->args->roomDescription;
+        	$o->Type = 'chatroom';
+        	$o->Status = 0;
+        	$o->UniqueID = hash( 'sha256', 'chatroom|' . $o->Name . '|' . $User->ID );
+        	$o->Save();
+        	if( $o->ID > 0 )
+        	{
+        		die( 'ok<!--separate-->{"UniqueID":"' . $o->UniqueID . '"}' );
+        	}
         	die( 'fail<!--separate-->' );
         }
         else if( $args->args->method == 'contacts' )
