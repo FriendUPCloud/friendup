@@ -580,9 +580,9 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 							lenmsg = snprintf( tmpmsg, msgsize, "{\"type\":\"msg\",\"data\":{\"type\":\"server-msg\",\"session\":{\"message\":%s}}}", msg );
 						}
 						
-						UserSessListEntry *ses = u->u_SessionsList;
 						
 						// Rewind session list
+						UserSessListEntry *ses = loggedSession->u_SessionsList;
 						while( 1 )
 						{
 							UserSessListEntry *s = ( UserSessListEntry *)ses->node.mln_Pred;
