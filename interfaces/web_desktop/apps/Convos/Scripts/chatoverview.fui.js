@@ -240,9 +240,21 @@ class FUIChatoverview extends FUIElement
     }
     createGroup()
     {
-    	this.destroySlidingMenu();
-    	this.activate();
+    	let self = this;
     	
+    	let nam = ge( 'Name' ).value; let des = ge( 'Description' ).value;
+    	
+    	let n = new Module( 'system' );
+    	n.onExecuted = function( ne, nd )
+    	{
+			self.destroySlidingMenu();
+			self.activate();
+    	}
+    	n.execute( 'convos', { 
+    		method: 'addroom', 
+    		roomName: nam, 
+    		roomDescription: des 
+    	} );
     }
 }
 FUI.registerClass( 'chatoverview', FUIChatoverview );

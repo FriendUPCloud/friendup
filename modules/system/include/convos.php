@@ -200,6 +200,10 @@ if( isset( $args->args ) )
             }
             die( 'fail<!--separate-->{"response":0,"message":"Failed to retrieve messages."}' );
         }
+        else if( $args->args->method == 'addroom' )
+        {
+        	die( 'fail<!--separate-->' );
+        }
         else if( $args->args->method == 'contacts' )
         {
             $filterA = $filterB = '';
