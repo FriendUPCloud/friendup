@@ -157,7 +157,7 @@ class FUIChatoverview extends FUIElement
 				}
 				else if( prop == 'chatroom' )
 				{
-					ele.style.backgroundImage = 'url(' + getImageUrl( 'Progdir:Assets/group.png' ) + ')';
+					ele.style.backgroundImage = 'url(' + getImageUrl( 'Progdir:Assets/groups.png' ) + ')';
 					ele.style.onclick = function()
 					{
 						self.setActiveChannel( prop, this );
