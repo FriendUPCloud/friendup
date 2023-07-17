@@ -565,7 +565,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 					// Try to alert other sessions of source user that we have an update!
 					USER_LOCK( loggedSession->us_User );	
 					
-					//DEBUG( "Trying to send to self.\n" );
+					DEBUG( "Trying to send to self.\n" );
 					
 					if( 1 )
 					{
@@ -590,13 +590,14 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 							else break;
 						}
 						
+						// Find all user sessions other than self
 						while( ses != NULL && ses->us != NULL )
 						{
 							FBOOL sendMsg = FALSE;
 							UserSession *uses = (UserSession *) ses->us;
 							if( uses != loggedSession )
 							{
-								//DEBUG( "Sending to self: %p != %p, %s\n", loggedSession, uses, msg );
+								DEBUG( "Sending to other self: %p != %p, %s\n", loggedSession, uses, msg );
 								WebSocketSendMessageInt( uses, tmpmsg, lenmsg );
 							}
 			
