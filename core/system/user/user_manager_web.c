@@ -586,7 +586,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 						// Rewind session list
 						while( 1 )
 						{
-							UserSessListEntry *s = ses->node.mln_Pred;
+							UserSessListEntry *s = ( UserSessListEntry *)ses->node.mln_Pred;
 							if( s != NULL )
 								ses = s;
 							else break;
