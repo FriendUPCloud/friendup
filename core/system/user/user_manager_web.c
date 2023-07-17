@@ -596,8 +596,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 						// Find all user sessions other than self
 						while( ses != NULL && ses->us != NULL )
 						{
-							FBOOL sendMsg = FALSE;
-							UserSession *uses = (UserSession *) ses->us;
+							UserSession *uses = ( UserSession *)ses->us;
 							if( uses != NULL && uses != loggedSession && uses->us_UserID == loggedSession->us_UserID )
 							{
 								DEBUG( "Sending to other self: %p != %p, %s\n", loggedSession, uses, msg );
