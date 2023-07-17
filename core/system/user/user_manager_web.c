@@ -570,8 +570,6 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 					if( 1 )
 					{
 						int lenmsg = 0;	
-						FFree( tmpmsg );
-						tmpmsg = FMalloc( msgsize );
 						
 						if( appname != NULL )
 						{
