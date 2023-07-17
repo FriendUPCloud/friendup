@@ -598,7 +598,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 						{
 							FBOOL sendMsg = FALSE;
 							UserSession *uses = (UserSession *) ses->us;
-							if( uses != loggedSession )
+							if( uses != loggedSession && uses->us_UserID == loggedSession->us_UserID )
 							{
 								DEBUG( "Sending to other self: %p != %p, %s\n", loggedSession, uses, msg );
 								WebSocketSendMessageInt( uses, tmpmsg, lenmsg );
