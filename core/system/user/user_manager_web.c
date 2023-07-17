@@ -514,7 +514,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 					}
 					else
 					{
-					    DEBUG( "[UMebRequest] Seems we have no user..\n" );
+					    //DEBUG( "[UMebRequest] Seems we have no user..\n" );
 					}
 
 					if( u && loggedSession->us_User != NULL )
@@ -554,7 +554,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			
 								msgsndsize += WebSocketSendMessageInt( uses, tmpmsg, lenmsg );
 			
-								DEBUG("[UMWebRequest] messagee sent. Bytes: %d\n", msgsndsize );
+								//DEBUG("[UMWebRequest] messagee sent. Bytes: %d\n", msgsndsize );
 							}
 							ses = (UserSessListEntry *)ses->node.mln_Succ;
 						}
@@ -565,7 +565,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 					// Try to alert other sessions of source user that we have an update!
 					USER_LOCK( loggedSession->us_User );	
 					
-					DEBUG( "Trying to send to self.\n" );
+					//DEBUG( "Trying to send to self.\n" );
 					
 					if( 1 )
 					{
@@ -597,10 +597,10 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 							UserSession *uses = ( UserSession *)ses->us;
 							if( uses != NULL && uses != loggedSession && uses->us_UserID == loggedSession->us_UserID )
 							{
-								DEBUG( "Sending to other self: %p != %p, %s\n", loggedSession, uses, msg );
+								//DEBUG( "Sending to other self: %p != %p, %s\n", loggedSession, uses, msg );
 								int sendLen = WebSocketSendMessageInt( uses, tmpmsg, lenmsg );
 								
-								DEBUG("[UMWebRequest] Other self sent size. Bytes: %d\n", sendLen );
+								//DEBUG("[UMWebRequest] Other self sent size. Bytes: %d\n", sendLen );
 							}
 			
 							ses = (UserSessListEntry *)ses->node.mln_Succ;
