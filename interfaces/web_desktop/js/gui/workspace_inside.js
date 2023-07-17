@@ -11369,6 +11369,9 @@ function handleSASRequest( e )
 
 function handleServerMessage( e )
 {
+	if( e.message && e.appname )
+		console.log( 'We received someting: ', e );
+	
     function base64ToBytes( base64 )
     {
         const binString = atob( base64 );
