@@ -586,7 +586,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 						{
 							UserSessListEntry *s = ses->node.mln_Pred;
 							if( s != NULL )
-								ses = ses = s;
+								ses = s;
 							else break;
 						}
 						
