@@ -238,6 +238,12 @@ class FUIChatoverview extends FUIElement
 		    messages.domTopic.innerHTML = label;
 	    }
     }
+    createGroup()
+    {
+    	this.destroySlidingMenu();
+    	this.activate();
+    	
+    }
 }
 FUI.registerClass( 'chatoverview', FUIChatoverview );
 
