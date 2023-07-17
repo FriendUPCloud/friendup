@@ -598,7 +598,9 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 							if( uses != NULL && uses != loggedSession && uses->us_UserID == loggedSession->us_UserID )
 							{
 								DEBUG( "Sending to other self: %p != %p, %s\n", loggedSession, uses, msg );
-								WebSocketSendMessageInt( uses, tmpmsg, lenmsg );
+								int sendLen = WebSocketSendMessageInt( uses, tmpmsg, lenmsg );
+								
+								DEBUG("[UMWebRequest] Other self sent size. Bytes: %d\n", sendLen );
 							}
 			
 							ses = (UserSessListEntry *)ses->node.mln_Succ;
