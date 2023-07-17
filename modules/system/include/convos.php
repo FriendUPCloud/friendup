@@ -200,6 +200,31 @@ if( isset( $args->args ) )
             }
             die( 'fail<!--separate-->{"response":0,"message":"Failed to retrieve messages."}' );
         }
+        else if( $args->args->method == 'getrooms' )
+        {
+        	if( $rows = $SqlDatabase->fetchObjects( '
+        		SELECT * FROM
+        			FUserGroup
+    			WHERE
+    				UserID=\'' . $User->ID . '\' AND
+    				`Type`=\'chatroom\'
+				ORDER BY
+					`Name` ASC
+        	' ) )
+        	{
+        		$out = [];
+        		foreach( $rows as $row )
+        		{
+        			$o = new stdClass();
+        			$o->UniqueID = $row->UniqueID;
+        			$o->Name = $row->Name;
+        			$o->Description = $row->Description;
+        			$out[] = $row;
+        		}
+        		die( 'ok<!--separate-->' . json_encode( $out ) );
+        	}
+        	die( 'fail<!--separate-->{"message":"You have no chat room.","response":-1}' );
+        }
         else if( $args->args->method == 'addroom' )
         {
         	$o = new dbIO( 'FUserGroup' );

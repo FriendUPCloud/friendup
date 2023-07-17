@@ -122,63 +122,81 @@ class FUIChatoverview extends FUIElement
     {
     	let self = this;
     	
-    	if( this.channels )
+    	if( self.channels )
     	{
     		return;
     	}
-    	// Default
-    	this.domChannels.innerHTML = '\
-    	<div class="Channel Jeanie" uniqueid="jeanie"></div>\
-    	<div class="Channel DM" uniqueid="dm"></div>\
-    	<div class="Channel Add" uniqueid="add"></div>\
-    	';
     	
-    	let chans = this.domChannels.getElementsByClassName( 'Channel' );
-    	for( let a = 0; a < chans.length; a++ )
+    	// Default
+    	self.domChannels.innerHTML = '\
+    	<div class="Channel Jeanie" uniqueid="jeanie"></div>\
+    	<div class="Channel DM" uniqueid="dm"></div>';
+    	
+    	let m = new Module( 'system' );
+    	m.onExecuted = function( me, md )
     	{
-    		let uniqueid = chans[ a ].getAttribute( 'uniqueid' );
-    		( function( ele, prop )
+    		let rooms = [];
+    		if( me == 'ok' )
     		{
-    			if( prop == 'jeanie' )
+    			md = JSON.parse( md );
+    			console.log( 'What: ', md );
+    			for( let a = 0; a < md.length; a++ )
     			{
-    				ele.style.backgroundImage = 'url(' + getImageUrl( 'Progdir:Assets/mascot-small-black.png' ) + ')';
-					ele.onclick = function()
-					{
-						self.setActiveChannel( prop, this );
-					}
-				}
-				else if( prop == 'dm' )
-    			{
-    				ele.style.backgroundImage = 'url(' + getImageUrl( 'Progdir:Assets/dm.png' ) + ')';
-					ele.onclick = function()
-					{
-						self.setActiveChannel( prop, this );
-					}
-				}
-				else if( prop == 'chatroom' )
+    				self.domChannels.innerHTML += '<div class="Channel Group" uniqueid="chatroom" id="' + md[a].UniqueID + '"></div>';
+    			}
+    		}
+    		
+    		self.domChannels.innerHTML += '<div class="Channel Add" uniqueid="add"></div>';
+    	
+			let chans = self.domChannels.getElementsByClassName( 'Channel' );
+			for( let a = 0; a < chans.length; a++ )
+			{
+				let uniqueid = chans[ a ].getAttribute( 'uniqueid' );
+				( function( ele, prop )
 				{
-					ele.style.backgroundImage = 'url(' + getImageUrl( 'Progdir:Assets/groups.png' ) + ')';
-					ele.style.onclick = function()
+					if( prop == 'jeanie' )
 					{
-						self.setActiveChannel( prop, this );
+						ele.style.backgroundImage = 'url(' + getImageUrl( 'Progdir:Assets/mascot-small-black.png' ) + ')';
+						ele.onclick = function()
+						{
+							self.setActiveChannel( prop, this );
+						}
 					}
-				}
-				else if( prop == 'add' )
-    			{
-    				ele.style.backgroundImage = 'url(' + getImageUrl( 'Progdir:Assets/add.png' ) + ')';
-					ele.onclick = function()
+					else if( prop == 'dm' )
 					{
-						self.showSlidingMenu( 'room.html' );
-						//self.setActiveChannel( prop, this );
+						ele.style.backgroundImage = 'url(' + getImageUrl( 'Progdir:Assets/dm.png' ) + ')';
+						ele.onclick = function()
+						{
+							self.setActiveChannel( prop, this );
+						}
 					}
-				}
-				else
-				{
-					console.log( 'not yet.' );
-				}
-    		} )( chans[ a ], uniqueid );
+					else if( prop == 'chatroom' )
+					{
+						ele.style.backgroundImage = 'url(' + getImageUrl( 'Progdir:Assets/groups.png' ) + ')';
+						ele.style.onclick = function()
+						{
+							self.setActiveChannel( prop, this );
+						}
+					}
+					else if( prop == 'add' )
+					{
+						ele.style.backgroundImage = 'url(' + getImageUrl( 'Progdir:Assets/add.png' ) + ')';
+						ele.onclick = function()
+						{
+							self.showSlidingMenu( 'room.html' );
+							//self.setActiveChannel( prop, this );
+						}
+					}
+					else
+					{
+						console.log( 'not yet.' );
+					}
+				} )( chans[ a ], uniqueid );
+			}
+			if( chans )
+				chans[ 0 ].click();
     	}
-    	chans[ 0 ].click();
+    	m.execute( 'convos', { 'method': 'getrooms' } );
     }
     activateDirectMessage( user, message )
     {
