@@ -561,8 +561,54 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 						
 						USER_UNLOCK( u );
 					}	// if user != NULL
+					
+					// Try to alert other sessions of source user that we have an update!
+					USER_LOCK( loggedSession->us_User );	
+					
+					//DEBUG( "Trying to send to self.\n" );
+					
+					if( 1 )
+					{
+						int lenmsg = 0;	
+						if( appname != NULL )
+						{
+							lenmsg = snprintf( tmpmsg, msgsize, "{\"type\":\"msg\",\"data\":{\"type\":\"server-msg\",\"session\":{\"message\":%s,\"appname\":\"%s\"}}}", msg, appname );
+						}
+						else
+						{
+							lenmsg = snprintf( tmpmsg, msgsize, "{\"type\":\"msg\",\"data\":{\"type\":\"server-msg\",\"session\":{\"message\":%s}}}", msg );
+						}
+						
+						UserSessListEntry *ses = u->u_SessionsList;
+						
+						// Rewind session list
+						while( 1 )
+						{
+							UserSessListEntry *s = ses->node.mln_Pred;
+							if( s != NULL )
+								ses = ses = s;
+							else break;
+						}
+						
+						while( ses != NULL && ses->us != NULL )
+						{
+							FBOOL sendMsg = FALSE;
+							UserSession *uses = (UserSession *) ses->us;
+							if( uses != loggedSession )
+							{
+								//DEBUG( "Sending to self: %p != %p, %s\n", loggedSession, uses, msg );
+								WebSocketSendMessageInt( uses, tmpmsg, lenmsg );
+							}
+			
+							ses = (UserSessListEntry *)ses->node.mln_Succ;
+						}
+					}
+					
+					USER_UNLOCK( loggedSession->us_User );
+					
 					FFree( tmpmsg );
 				}
+				
 
 				if( msgsndsize >= 0 )
 				{

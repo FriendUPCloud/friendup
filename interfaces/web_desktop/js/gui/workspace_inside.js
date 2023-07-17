@@ -11374,7 +11374,7 @@ function handleServerMessage( e )
         const binString = atob( base64 );
         return Uint8Array.from( binString, ( m ) => m.codePointAt( 0 ) );
     }
-
+    
 	if( e.message && e.appname )
 	{	    
 		let found = false;

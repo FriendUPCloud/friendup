@@ -174,6 +174,13 @@ class FUIChatoverview extends FUIElement
     }
     activateDirectMessage( user, message )
     {
+    	// Just poll myself!
+        if( user == Application.fullName )
+        {
+        	let chat = FUI.getElementByUniqueId( 'messages' );
+        	chat.refreshMessages();
+        	return;
+        }
         let tabs = this.domChannels.getElementsByClassName( 'Channel' );
         for( let a = 0; a < tabs.length; a++ )
     	{
