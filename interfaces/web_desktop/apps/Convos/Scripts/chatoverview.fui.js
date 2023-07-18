@@ -341,8 +341,14 @@ class FUIChatoverview extends FUIElement
 		if( messages )
 		{
 		    // On init, set the correct topic on the channel
-		    messages.setTopic( groupName ? groupName : label );
+		    messages.setTopic( groupName ? groupName : label, label );
 	    }
+    }
+    abortGroupCreation()
+    {
+    	let self = this;
+    	self.destroySlidingMenu();
+		self.activate();
     }
     createGroup()
     {

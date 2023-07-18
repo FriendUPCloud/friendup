@@ -23,6 +23,36 @@
 	overflow-x: hidden;
 }
 
+@media (max-width: 512px)
+{
+	html .FUIChatoverview .SlidingMenu
+	{
+		top: 0;
+		height: 100%;
+		left: 0;
+		width: 0px;
+		border: 0px;
+		border-radius: 0;
+		border-top: 2px solid var(--BackgroundHeavier); 
+		border-bottom: 2px solid var(--BackgroundHeavier);
+	}
+	html .FUIChatoverview .SlidingMenu.Showing
+	{
+		width: 100%;
+	}
+	
+	html .FUIChatoverview .SlidingMenu label
+	{
+		display: block;
+		margin: 0 0 10px 0;
+	}
+}
+
+.FUIChatoverview .SlidingMenu > div
+{
+	min-width: calc(100vw - 80px);
+}
+
 .FUIChatoverview .SlidingMenu
 {
     position: absolute;

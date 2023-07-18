@@ -414,11 +414,21 @@ class FUIChatlog extends FUIElement
         this.toBottom();
         this.refreshDom();
     }
-    setTopic( topic )
+    setTopic( topic, type = false )
     {
-    	let p = this.domTopic.querySelector( '.ParentLink' );
-    	this.domTopic.innerHTML = topic;
-    	if( p ) this.domTopic.appendChild( p );
+    	// Jeanie is a top level chat
+    	// TODO: Figure out if we are showing contacts or not while running 
+    	//       this topic
+    	if( type != 'jeanie' )
+    	{
+    		let p = this.domTopic.querySelector( '.ParentLink' );
+			this.domTopic.innerHTML = topic;
+			if( p ) this.domTopic.appendChild( p );
+		}
+		else
+		{
+			this.domTopic.innerHTML = topic;
+		}
     }
     toBottom( way )
     {
