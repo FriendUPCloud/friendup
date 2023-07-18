@@ -244,12 +244,18 @@ if( isset( $args->args ) )
         }
         else if( $args->args->method == 'contacts' )
         {
-            $filterA = $filterB = '';
+            $filterA = $filterB = $groupSpec = $groupContacts = '';
             if( isset( $args->args->filter ) )
             {
                 $f = $SqlDatabase->_link->real_escape_string( trim( $args->args->filter ) );
                 $filterA = ' AND ( u.Name LIKE "%' . $f . '%" OR u.FullName LIKE "%' . $f . '%" )';
                 $filterB = ' AND ( f.Firstname LIKE "%' . $f . '%" OR f.Lastname LIKE "%' . $f . '%" )';
+            }
+            
+            if( isset( $args->args->groupid ) )
+            {
+            	$groupSpec = ' AND ug.ID = \'' . intval( $args->args->groupid, 1 ) . '\'';
+            	$groupContacts = ' 1 == 2 AND '; // Cancel getting contacts here
             }
             
             $rows = $SqlDatabase->FetchObjects( '
@@ -268,7 +274,7 @@ if( isset( $args->args ) )
                         AND mes.UserGroupID = ug.ID
                         AND mes.UserID = \'' . $User->ID . '\'
                         AND fug.UserGroupID = ug.ID
-                        AND fug.UserID = u.ID
+                        AND fug.UserID = u.ID' . $groupSpec . '
                         AND fug.UserID != mes.UserID' . $filterA . '
                 ) a UNION (
                     SELECT 
@@ -281,6 +287,7 @@ if( isset( $args->args ) )
                         1 AS `LoginTime`
                     FROM FContact f
                     WHERE
+                    	' . $groupContacts . '
                         f.OwnerUserID = \'' . $User->ID . '\'' . $filterB . '
                 )
                 ORDER BY LoginTime DESC, Fullname ASC

@@ -63,6 +63,9 @@ class FUIContacts extends FUIElement
         let uniqueId = domElement.getAttribute( 'uniqueid' );
         if( uniqueId ) this.options.uniqueid = uniqueId;
         
+        let groupId = domElement.getAttribute( 'group' );
+        if( groupId ) this.options.groupid = groupId;
+        
         let parentElement = domElement.getAttribute( 'parentelement' );
         if( parentElement ) this.options.parentElement = parentElement;
         
@@ -250,7 +253,12 @@ class FUIContacts extends FUIElement
                 if( self.queuedClick )
                     self.queuedClick();
             }
-            m.execute( 'convos', { method: 'contacts' } );
+            let opts = { method: 'contacts' };
+            if( this.options.groupid )
+            {
+            	opts.groupid = this.options.groupid;
+            }
+            m.execute( 'convos', opts );
         }
     }
     // Get markup for object

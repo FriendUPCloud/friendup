@@ -139,7 +139,6 @@ class FUIChatoverview extends FUIElement
     		if( me == 'ok' )
     		{
     			md = JSON.parse( md );
-    			console.log( 'What: ', md );
     			for( let a = 0; a < md.length; a++ )
     			{
     				self.domChannels.innerHTML += '<div class="Channel Group" uniqueid="chatroom" id="' + md[a].UniqueID + '"></div>';
@@ -152,7 +151,8 @@ class FUIChatoverview extends FUIElement
 			for( let a = 0; a < chans.length; a++ )
 			{
 				let uniqueid = chans[ a ].getAttribute( 'uniqueid' );
-				( function( ele, prop )
+				let groupId = chans[ a ].getAttribute( 'id' );
+				( function( ele, prop, gid = false )
 				{
 					if( prop == 'jeanie' )
 					{
@@ -173,9 +173,9 @@ class FUIChatoverview extends FUIElement
 					else if( prop == 'chatroom' )
 					{
 						ele.style.backgroundImage = 'url(' + getImageUrl( 'Progdir:Assets/groups.png' ) + ')';
-						ele.style.onclick = function()
+						ele.onclick = function()
 						{
-							self.setActiveChannel( prop, this );
+							self.setActiveChannel( prop, this, gid );
 						}
 					}
 					else if( prop == 'add' )
@@ -191,7 +191,7 @@ class FUIChatoverview extends FUIElement
 					{
 						console.log( 'not yet.' );
 					}
-				} )( chans[ a ], uniqueid );
+				} )( chans[ a ], uniqueid, groupId );
 			}
 			if( chans )
 				chans[ 0 ].click();
@@ -231,7 +231,7 @@ class FUIChatoverview extends FUIElement
     	FUI.initialize();
     }
     // Set active channel
-    setActiveChannel( label, tab )
+    setActiveChannel( label, tab, groupId = false )
     {
     	let tabs = this.domChannels.getElementsByClassName( 'Channel' );
     	for( let a = 0; a < tabs.length; a++ )
@@ -254,6 +254,11 @@ class FUIChatoverview extends FUIElement
 	    else if( label == 'dm' )
 	    {
 	        chlist.innerHTML = '<fui-contacts parentelement="convos" uniqueid="contacts"></fui-contacts>';
+	    }
+	    // Initialize a contacts element, with 
+	    else if( label == 'chatroom' )
+	    {
+	    	chlist.innerHTML = '<fui-contacts parentelement="convos" uniqueid="contacts" group="' + groupId + '"></fui-contacts>';
 	    }
 		FUI.initialize();
 		
