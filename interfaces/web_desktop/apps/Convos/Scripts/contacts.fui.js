@@ -266,6 +266,10 @@ class FUIContacts extends FUIElement
                         self.addContact( list.contacts[a] );
                     }
                 }
+                else
+                {
+                	self.showNoContactsMenu();
+                }
                 if( self.queuedClick )
                     self.queuedClick();
             }
@@ -276,6 +280,11 @@ class FUIContacts extends FUIElement
             }
             m.execute( 'convos', opts );
         }
+    }
+    // Oh, no contacts, do something about it?
+    showNoContactsMenu()
+    {
+    	
     }
     // Get markup for object
     getMarkup( data )
