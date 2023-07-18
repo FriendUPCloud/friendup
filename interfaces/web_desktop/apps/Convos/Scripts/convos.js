@@ -125,30 +125,23 @@ Application.holdConnection = function( flags )
                 {
                     if( typeof( musers[ b ] ) != 'undefined' )
                     {
-                    	console.log( 'Test: ' + types[ b ] );
                     	if( types[ b ] == 'chatroom' )
                     	{
-                    		console.log( 'Getting contacts.' );
                     		let cn = FUI.getElementByUniqueId( 'contacts' );
                     		if( cn )
                     		{
                     			let contacts = cn.getContacts();
-                    			console.log( 'We have ' + contacts.length + ' contacts.' );
                     			for( let c = 0; c < contacts.length; c++ )
                     			{
-                    				console.log( 'Sending to ' + contacts[ c ].fullname + '..' );
                     				let amsg = {
 						                'appname': 'Convos',
 						                'dstuniqueid': contacts[ c ].uniqueId,
-						                'msg': '{"sender":"' + Application.fullName + '","message":"' + messages[ b ] + '"}'
+						                'msg': '{"sender":"' + Application.fullName + '","message":"' + messages[ b ] + '","type":"chatroom","uniqueId":"' + musers[ b ] + '"}'
 						            };
 						            if( c == 0 )
 						            {
-						            	console.log( ' -> With a callback' );
 						            	amsg.callback = 'yes';
 					            	}
-					            	else
-					            		console.log( 'Not calling back person two.' );
 						            let m = new Library( 'system.library' );
 						            m.execute( 'user/session/sendmsg', amsg );
                     			}
