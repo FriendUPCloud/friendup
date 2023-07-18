@@ -20,6 +20,19 @@ class FUIContacts extends FUIElement
         this.userListOrder = []; // Sorted list
         
         this.refreshDom();
+        
+        if( this.options )
+        {
+        	// If this is group list, initialize the group chat
+        	if( this.options.groupid && this.options.groupname )
+        	{
+        		this.setChatView( {
+        			Type: 'chatroom',
+        			ID: this.options.groupid,
+        			Fullname: this.options.groupname
+        		} );
+        	}
+        }
     }
     attachDomElement()
     {
@@ -65,6 +78,9 @@ class FUIContacts extends FUIElement
         
         let groupId = domElement.getAttribute( 'group' );
         if( groupId ) this.options.groupid = groupId;
+        
+        let groupName = domElement.getAttribute( 'name' );
+        if( groupName ) this.options.groupname = groupName;
         
         let parentElement = domElement.getAttribute( 'parentelement' );
         if( parentElement ) this.options.parentElement = parentElement;
@@ -176,9 +192,9 @@ class FUIContacts extends FUIElement
     }
     setChatView( record )
     {
-        let context = ' context="' + ( record.Type == 'User' ? 'user' : 'contact' ) + '"';
+        let context = ' context="' + ( record.Type == 'User' ? 'user' : ( record.Type == 'chatroom' ? 'chatroom' : 'contact' ) ) + '"';
         context += ' cid="' + record.ID + '"';
-        let dm = record.Type == 'User' ? 'dm-user' : 'dm-contact';
+        let dm = record.Type == 'User' ? 'dm-user' : ( record.Type == 'chatroom' ? 'chatroom' : 'dm-contact' );
         this.domChat.innerHTML = '<fui-chatlog parentelement="' + this.options.uniqueid + '" uniqueid="messages" type="' + dm + '" name="' + record.Fullname + '"' + context + '></fui-chatlog>';
         FUI.initialize();
         

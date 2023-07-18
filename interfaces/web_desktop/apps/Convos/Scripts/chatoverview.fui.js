@@ -141,7 +141,7 @@ class FUIChatoverview extends FUIElement
     			md = JSON.parse( md );
     			for( let a = 0; a < md.length; a++ )
     			{
-    				self.domChannels.innerHTML += '<div class="Channel Group" uniqueid="chatroom" id="' + md[a].UniqueID + '"></div>';
+    				self.domChannels.innerHTML += '<div class="Channel Group" uniqueid="chatroom" name="' + md[a].Name + '" id="' + md[a].UniqueID + '"></div>';
     			}
     		}
     		
@@ -152,7 +152,8 @@ class FUIChatoverview extends FUIElement
 			{
 				let uniqueid = chans[ a ].getAttribute( 'uniqueid' );
 				let groupId = chans[ a ].getAttribute( 'id' );
-				( function( ele, prop, gid = false )
+				let groupName = chans[ a ].getAttribute( 'name' );
+				( function( ele, prop, gid = false, gnam = false )
 				{
 					if( prop == 'jeanie' )
 					{
@@ -175,7 +176,7 @@ class FUIChatoverview extends FUIElement
 						ele.style.backgroundImage = 'url(' + getImageUrl( 'Progdir:Assets/groups.png' ) + ')';
 						ele.onclick = function()
 						{
-							self.setActiveChannel( prop, this, gid );
+							self.setActiveChannel( prop, this, gid, gnam );
 						}
 					}
 					else if( prop == 'add' )
@@ -184,14 +185,13 @@ class FUIChatoverview extends FUIElement
 						ele.onclick = function()
 						{
 							self.showSlidingMenu( 'room.html' );
-							//self.setActiveChannel( prop, this );
 						}
 					}
 					else
 					{
 						console.log( 'not yet.' );
 					}
-				} )( chans[ a ], uniqueid, groupId );
+				} )( chans[ a ], uniqueid, groupId, groupName );
 			}
 			if( chans )
 				chans[ 0 ].click();
@@ -231,7 +231,7 @@ class FUIChatoverview extends FUIElement
     	FUI.initialize();
     }
     // Set active channel
-    setActiveChannel( label, tab, groupId = false )
+    setActiveChannel( label, tab, groupId = false, groupName = false )
     {
     	let tabs = this.domChannels.getElementsByClassName( 'Channel' );
     	for( let a = 0; a < tabs.length; a++ )
@@ -258,7 +258,7 @@ class FUIChatoverview extends FUIElement
 	    // Initialize a contacts element, with 
 	    else if( label == 'chatroom' )
 	    {
-	    	chlist.innerHTML = '<fui-contacts parentelement="convos" uniqueid="contacts" group="' + groupId + '"></fui-contacts>';
+	    	chlist.innerHTML = '<fui-contacts parentelement="convos" uniqueid="contacts" group="' + groupId + '" name="' + groupName + '"></fui-contacts>';
 	    }
 		FUI.initialize();
 		
@@ -266,7 +266,7 @@ class FUIChatoverview extends FUIElement
 		if( messages )
 		{
 		    // temporary!
-		    messages.domTopic.innerHTML = label;
+		    messages.domTopic.innerHTML = groupName ? groupName : label;
 	    }
     }
     createGroup()
