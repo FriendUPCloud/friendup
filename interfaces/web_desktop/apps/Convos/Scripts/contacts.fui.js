@@ -190,6 +190,22 @@ class FUIContacts extends FUIElement
             par.setChat( false );
         }
     }
+    getContacts()
+    {
+    	let out = [];
+    	let contacts = this.domContacts.getElementsByClassName( 'Contact' );
+        for( let a = 0; a < contacts.length; a++ )
+        {
+            if( contacts[ a ].record )
+            {
+            	out.push( {
+            		uniqueId: contacts[ a ].record.ID,
+            		fullname: contacts[ a ].record.Fullname
+            	} );
+            }
+        }
+        return out;
+    }
     setChatView( record )
     {
         let context = ' context="' + ( record.Type == 'User' ? 'user' : ( record.Type == 'chatroom' ? 'chatroom' : 'contact' ) ) + '"';

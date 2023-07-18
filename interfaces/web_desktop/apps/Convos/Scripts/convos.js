@@ -99,6 +99,7 @@ Application.holdConnection = function( flags )
 	        // Alert the other user
             let musers = [];
             let messages = [];
+            let types = [];
             for( let b = 0; b < args.outgoing.length; b++ )
             {
                 let found = false;
@@ -114,6 +115,7 @@ Application.holdConnection = function( flags )
                 {
                     musers.push( args.outgoing[ b ].targetId );
                     messages.push( args.outgoing[ b ].message );
+                    types.push( args.outgoing[ b ].type );
                 }
             }
             
@@ -123,13 +125,46 @@ Application.holdConnection = function( flags )
                 {
                     if( typeof( musers[ b ] ) != 'undefined' )
                     {
-                        let amsg = {
-                            'appname': 'Convos',
-                            'dstuniqueid': musers[ b ],
-                            'msg': '{"sender":"' + Application.fullName + '","message":"' + messages[ b ] + '"}'
-                        };
-                        let m = new Library( 'system.library' );
-                        m.execute( 'user/session/sendmsg', amsg );
+                    	console.log( 'Test: ' + types[ b ] );
+                    	if( types[ b ] == 'chatroom' )
+                    	{
+                    		console.log( 'Getting contacts.' );
+                    		let cn = FUI.getElementByUniqueId( 'contacts' );
+                    		if( cn )
+                    		{
+                    			let contacts = cn.getContacts();
+                    			console.log( 'We have ' + contacts.length + ' contacts.' );
+                    			for( let c = 0; c < contacts.length; c++ )
+                    			{
+                    				console.log( 'Sending to ' + contacts[ c ].fullname + '..' );
+                    				let amsg = {
+						                'appname': 'Convos',
+						                'dstuniqueid': contacts[ c ].uniqueId,
+						                'msg': '{"sender":"' + Application.fullName + '","message":"' + messages[ b ] + '"}'
+						            };
+						            if( c == 0 )
+						            {
+						            	console.log( ' -> With a callback' );
+						            	amsg.callback = 'yes';
+					            	}
+					            	else
+					            		console.log( 'Not calling back person two.' );
+						            let m = new Library( 'system.library' );
+						            m.execute( 'user/session/sendmsg', amsg );
+                    			}
+                			}
+                    	}
+                    	else
+                    	{
+		                    let amsg = {
+		                        'appname': 'Convos',
+		                        'dstuniqueid': musers[ b ],
+		                        'callback': 'yes',
+		                        'msg': '{"sender":"' + Application.fullName + '","message":"' + messages[ b ] + '"}'
+		                    };
+		                    let m = new Library( 'system.library' );
+		                    m.execute( 'user/session/sendmsg', amsg );
+	                    }
                     }
                 }
             }
