@@ -232,7 +232,7 @@ class FUIContacts extends FUIElement
         if( this.options.parentElement )
         {
             let par = FUI.getElementByUniqueId( this.options.parentElement );
-            par.setChat( true, record.Type );
+            par.setChat( true, record );
         }
         
         Application.holdConnection( { method: 'messages', roomType: dm, cid: record.ID } );
