@@ -46,8 +46,6 @@
     position: relative;
     cursor: pointer;
     transition: background-color 0.25s;
-    background-color: var(--fui-list-item-background);
-    color: var(--fui-list-item-color);
     height: 55px;
     padding: 5px;
     box-sizing: border-box;
