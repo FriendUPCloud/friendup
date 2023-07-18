@@ -174,6 +174,21 @@ if( isset( $args->args ) )
                         m.Date DESC, m.ID DESC LIMIT 50
                     ' );
                 }
+                else if( $args->args->roomType == 'chatroom' )
+                {
+                	$rows = $SqlDatabase->FetchObjects( '
+                    SELECT 
+                        m.ID, m.Message, m.Date, u.Name, u.UniqueID FROM `Message` m, FUser u 
+                    WHERE
+                        m.RoomType = \'chatroom\' AND 
+                        ( 
+                            m.UniqueUserID = u.UniqueID AND
+                            m.TargetID = \'' . $SqlDatabase->_link->real_escape_string( $args->args->cid ) . '\'
+                        )' . $lastId . '
+                    ORDER BY 
+                        m.Date DESC, m.ID DESC LIMIT 50
+                    ' );
+                }
             }
             // We got rows!
             if( $rows && count( $rows ) > 0 )
@@ -203,13 +218,14 @@ if( isset( $args->args ) )
         else if( $args->args->method == 'getrooms' )
         {
         	if( $rows = $SqlDatabase->fetchObjects( '
-        		SELECT * FROM
-        			FUserGroup
+        		SELECT y.* FROM
+        			FUserGroup y, FUserToGroup l
     			WHERE
-    				UserID=\'' . $User->ID . '\' AND
-    				`Type`=\'chatroom\'
+    				l.UserID = \'' . $User->ID . '\' AND
+    				l.UserGroupID=y.ID AND
+    				y.Type = \'chatroom\'
 				ORDER BY
-					`Name` ASC
+					y.Name ASC
         	' ) )
         	{
         		$out = [];
@@ -238,6 +254,8 @@ if( isset( $args->args ) )
         	$o->Save();
         	if( $o->ID > 0 )
         	{
+        		// Link user
+        		$SqlDatabase->Query( 'INSERT INTO FUserToGroup ( UserID, UserGroupID ) VALUES ( \'' . $User->ID . '\', \'' . $o->ID . '\' )' );
         		die( 'ok<!--separate-->{"UniqueID":"' . $o->UniqueID . '"}' );
         	}
         	die( 'fail<!--separate-->' );
@@ -254,8 +272,8 @@ if( isset( $args->args ) )
             
             if( isset( $args->args->groupid ) )
             {
-            	$groupSpec = ' AND ug.ID = \'' . intval( $args->args->groupid, 1 ) . '\'';
-            	$groupContacts = ' 1 == 2 AND '; // Cancel getting contacts here
+            	$groupSpec = ' AND ug.UniqueID = \'' . $SqlDatabase->_link->real_escape_string( $args->args->groupid ) . '\'';
+            	$groupContacts = ' 1 = 2 AND '; // Cancel getting contacts here
             }
             
             $rows = $SqlDatabase->FetchObjects( '
@@ -270,7 +288,7 @@ if( isset( $args->args ) )
                         u.LoginTime
                     FROM FUser u, FUserToGroup mes, FUserToGroup fug, FUserGroup ug
                     WHERE
-                            ug.Type = "Workgroup"
+                            ( ug.Type = "Workgroup" OR ug.Type = "chatroom" )
                         AND mes.UserGroupID = ug.ID
                         AND mes.UserID = \'' . $User->ID . '\'
                         AND fug.UserGroupID = ug.ID
