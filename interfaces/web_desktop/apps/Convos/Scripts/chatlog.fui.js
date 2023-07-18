@@ -414,6 +414,10 @@ class FUIChatlog extends FUIElement
         this.toBottom();
         this.refreshDom();
     }
+    setTopic( topic )
+    {
+    	this.domTopic.innerHTML = topic;
+    }
     toBottom( way )
     {
         let self = this;

@@ -265,8 +265,8 @@ class FUIChatoverview extends FUIElement
 		let messages = FUI.getElementByUniqueId( 'messages' );
 		if( messages )
 		{
-		    // temporary!
-		    messages.domTopic.innerHTML = groupName ? groupName : label;
+		    // On init, set the correct topic on the channel
+		    messages.setTopic( groupName ? groupName : label );
 	    }
     }
     createGroup()
