@@ -232,6 +232,43 @@ class FUIChatoverview extends FUIElement
     	}
     	m.execute( 'convos', { 'method': 'getrooms' } );
     }
+    pollChatroom( user, uid )
+    {
+    	// Just poll myself!
+        if( user == Application.fullName )
+        {
+        	let chat = FUI.getElementByUniqueId( 'messages' );
+        	chat.refreshMessages();
+        	return;
+        }
+        let tabs = this.domChannels.getElementsByClassName( 'Channel' );
+        for( let a = 0; a < tabs.length; a++ )
+    	{
+    		if( tabs[ a ].classList.contains( 'Group' ) )
+    		{
+    		    if( tabs[ a ].getAttribute( 'id' ) == uid )
+    		    {
+					// It is already active
+				    if( tabs[ a ].classList.contains( 'Active' ) )
+				    {
+				    	console.log( 'Already active! Just refresh.' );
+				        let chat = FUI.getElementByUniqueId( 'messages' );
+				    	chat.refreshMessages();
+				        return;
+				    }
+				    // Activity in an inactive tab - add some info
+				    // TODO: Add a flash or bubble
+				    else
+				    {
+				    	// There will be notifications
+				    }
+			    }
+    		}
+    	}
+    	let chlist = this.domElement.querySelector( '.Chatlist' );
+    	chlist.innerHTML = '<fui-contacts parentelement="convos" uniqueid="contacts" user="' + user + '"></fui-contacts>';
+    	FUI.initialize();
+    }
     activateDirectMessage( user, message )
     {
     	// Just poll myself!

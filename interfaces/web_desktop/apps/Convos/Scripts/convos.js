@@ -25,7 +25,14 @@ Application.receiveMessage = function( msg )
     if( msg.sender )
     {
         let overview = FUI.getElementByUniqueId( 'convos' );
-        overview.activateDirectMessage( msg.sender, msg.message );
+        if( msg.type && msg.type == 'chatroom' && msg.uniqueId )
+        {
+        	overview.pollChatroom( msg.sender, msg.uniqueId );
+        }
+        else
+        {
+        	overview.activateDirectMessage( msg.sender, msg.message );
+    	}
     }
 }
 
