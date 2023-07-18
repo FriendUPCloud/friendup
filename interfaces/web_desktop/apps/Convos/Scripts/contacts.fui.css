@@ -67,12 +67,6 @@
     border: 2px solid white;
 }
 
-.FUIContacts .Contacts .Slot:nth-child(even) .Contact
-{
-    background-color: var(--fui-list-item-background-alternate);
-    color: var(--fui-list-item-color-alternate);
-}
-
 .FUIContacts .Contacts .Contact.Active, 
 .FUIContacts .Contacts .Contact:hover,
 .FUIContacts .Contacts .Slot:nth-child(even) .Contact:hover,
