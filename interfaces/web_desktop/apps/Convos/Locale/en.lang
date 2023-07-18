@@ -12,3 +12,6 @@ i18n_create_your_own_group             : Create group
 i18n_name                              : Name
 i18n_group_description                 : Group description
 i18n_create_group                      : Save group
+i18n_add_a_new_chatroom                : Add a new chatroom.
+i18n_direct_messages                   : Direct messages.
+i18n_jeanie_ai_assistant               : Jeanie AI assistant.

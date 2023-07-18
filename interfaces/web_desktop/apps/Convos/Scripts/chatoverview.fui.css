@@ -1,5 +1,14 @@
 /* Channels */
 
+.FUIChatoverview
+{
+	position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
 .FUIChatoverview > .Channels
 {
 	position: absolute;
@@ -137,6 +146,36 @@
 	background-color: var(--fui-palette-chan03);
 	border-width: 3px; 
 	border-color: var(--fui-border-color-negative);
+}
+
+.FUIChatoverview > .HoverElement
+{
+	opacity: 0;
+	transition: opacity 0.2s;
+	pointer-events: none;
+	background-color: black;
+	color: white;
+	border-radius: 15px;
+	position: absolute;
+	min-width: 90px;
+	padding: 15px;
+}
+
+.FUIChatoverview > .HoverElement:before
+{
+	position: absolute;
+	top: calc(50% - 4px);
+	left: -4px;
+	height: 8px;
+	width: 8px;
+	transform: rotate(45deg);
+	content: " ";
+	background-color: black;
+}
+
+.FUIChatoverview > .HoverElement.Showing
+{
+	opacity: 0.85;
 }
 
 /* Chat list */

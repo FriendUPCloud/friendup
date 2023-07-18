@@ -153,6 +153,40 @@ class FUIChatoverview extends FUIElement
 				let uniqueid = chans[ a ].getAttribute( 'uniqueid' );
 				let groupId = chans[ a ].getAttribute( 'id' );
 				let groupName = chans[ a ].getAttribute( 'name' );
+				
+				if( !chans[ a ].hoverElement )
+				{
+					let h = document.createElement( 'div' );
+					h.className = 'HoverElement';
+					chans[ a ].parentNode.parentNode.appendChild( h );
+					chans[ a ].hoverElement = h;
+					chans[ a ].onmouseover = function()
+					{
+						h.style.top = GetElementTop( this ) + 'px';
+						h.style.left = GetElementLeft( this ) + this.offsetWidth + 16 + 'px';
+						h.classList.add( 'Showing' );
+					}
+					chans[ a ].onmouseout = function()
+					{
+						h.classList.remove( 'Showing' );
+					}
+					switch( uniqueid )
+					{
+						case 'jeanie':
+							h.innerHTML = i18n( 'i18n_jeanie_ai_assistant' );
+							break;
+						case 'dm':
+							h.innerHTML = i18n( 'i18n_direct_messages' );
+							break;
+						case 'chatroom':
+							h.innerHTML = groupName;
+							break;
+						case 'add':
+							h.innerHTML = i18n( 'i18n_add_a_new_chatroom' );
+							break;
+					}
+				}
+			
 				( function( ele, prop, gid = false, gnam = false )
 				{
 					if( prop == 'jeanie' )
