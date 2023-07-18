@@ -162,7 +162,7 @@ class FUIChatoverview extends FUIElement
 					chans[ a ].hoverElement = h;
 					chans[ a ].onmouseover = function()
 					{
-						h.style.top = GetElementTop( this ) + 'px';
+						h.style.top = GetElementTop( this ) + 6 + 'px';
 						h.style.left = GetElementLeft( this ) + this.offsetWidth + 16 + 'px';
 						h.classList.add( 'Showing' );
 					}
