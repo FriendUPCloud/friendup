@@ -416,7 +416,9 @@ class FUIChatlog extends FUIElement
     }
     setTopic( topic )
     {
+    	let p = this.domTopic.querySelector( '.ParentLink' );
     	this.domTopic.innerHTML = topic;
+    	if( p ) this.domTopic.appendChild( p );
     }
     toBottom( way )
     {

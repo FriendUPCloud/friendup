@@ -148,7 +148,8 @@
 	border-color: var(--fui-border-color-negative);
 }
 
-.FUIChatoverview > .HoverElement
+
+body:not([mobile=mobile]) .FUIChatoverview > .HoverElement
 {
 	opacity: 0;
 	transition: opacity 0.2s;
@@ -161,7 +162,7 @@
 	padding: 15px;
 }
 
-.FUIChatoverview > .HoverElement:before
+body:not([mobile=mobile]) .FUIChatoverview > .HoverElement:before
 {
 	position: absolute;
 	top: calc(50% - 4px);
@@ -173,7 +174,7 @@
 	background-color: black;
 }
 
-.FUIChatoverview > .HoverElement.Showing
+body:not([mobile=mobile]) .FUIChatoverview > .HoverElement.Showing
 {
 	opacity: 0.85;
 }
