@@ -50,7 +50,7 @@ class FUIChatoverview extends FUIElement
         
         this.redrawChannels();
     }
-    setChat( mode )
+    setChat( mode, type = false )
     {
         if( mode == true )
         {
@@ -59,6 +59,21 @@ class FUIChatoverview extends FUIElement
         else
         {
             this.domElement.classList.remove( 'Chat' );
+        }
+        if( type == 'contact' )
+        {
+        	let tabs = this.domChannels.getElementsByClassName( 'Channel' );
+		    for( let a = 0; a < tabs.length; a++ )
+			{
+				if( tabs[ a ].classList.contains( 'DM' ) )
+				{
+					tabs[ a ].classList.add( 'Active' );
+				}
+				else
+				{
+					tabs[ a ].classList.remove( 'Active' );
+				}
+			}
         }
     }
     // Get markup for object
