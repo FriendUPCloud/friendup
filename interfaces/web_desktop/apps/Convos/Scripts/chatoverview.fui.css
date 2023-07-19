@@ -219,6 +219,7 @@ body:not([mobile=mobile]) .FUIChatoverview > .HoverElement.Showing
 	width: calc(100% - 100px);
 	height: 100%;
 	transition: width,left 0.25s,0.25s;
+	background-color: var(--fui-list-background);
 }
 
 @media(max-width: 768px)

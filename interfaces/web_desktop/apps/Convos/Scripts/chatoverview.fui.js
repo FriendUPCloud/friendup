@@ -231,8 +231,6 @@ class FUIChatoverview extends FUIElement
 					}
 				} )( chans[ a ], uniqueid, groupId, groupName );
 			}
-			if( chans )
-				chans[ 0 ].click();
     	}
     	m.execute( 'convos', { 'method': 'getrooms' } );
     }
@@ -308,6 +306,7 @@ class FUIChatoverview extends FUIElement
     // Set active channel
     setActiveChannel( label, tab, groupId = false, groupName = false )
     {
+    	document.body.classList.add( 'ChannelActive' );
     	let tabs = this.domChannels.getElementsByClassName( 'Channel' );
     	for( let a = 0; a < tabs.length; a++ )
     	{
