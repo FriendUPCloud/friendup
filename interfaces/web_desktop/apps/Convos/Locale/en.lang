@@ -28,4 +28,6 @@ i18n_no_new_events                     : No new events.
 i18n_news                              : News
 i18n_invite_to_chatroom                : Invite to a chatroom
 i18n_invite_to_chatroom_desc           : You were invited to a chatroom {groupname} by {username}.
+i18n_news_and_events                   : News and events
+
 

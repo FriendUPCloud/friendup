@@ -160,10 +160,18 @@
 	cursor: pointer;
 	background-position: center;
 	background-repeat: no-repeat;
-	border-width: 0px;
-	border-color: none;
 	border-style: solid;
 	box-sizing: border-box;
+	border-width: 3px;
+    border-color: transparent;
+}
+
+.FUIChatoverview > .Channels > .Channel.Home 
+{
+    color: #000000;
+    font-size: 30px;
+    text-align: center;
+    line-height: 54px;
 }
 
 .FUIChatoverview > .Channels > .Channel:not(.Active) 
@@ -257,7 +265,7 @@ body:not([mobile=mobile]) .FUIChatoverview > .HoverElement.Showing
     width: 50%;
     height: 50%;
     top: 15px;
-    left: 15px;
+    left: 0px;
     background-color: var(--ColorBackground);
     color: var(--ColorText);
     box-sizing: border-box;
@@ -274,8 +282,8 @@ body:not([mobile=mobile]) .FUIChatoverview > .HoverElement.Showing
 .FUIChatoverview .OverviewUpdates .Updates 
 {
     height: calc(50% - 15px);
-    left: calc(50% + 30px);
-    width: calc(50% - 45px);
+    left: calc(50% + 15px);
+    width: calc(50% - 30px);
     border-radius: 15px;
 }
 
@@ -283,8 +291,8 @@ body:not([mobile=mobile]) .FUIChatoverview > .HoverElement.Showing
 {
     height: calc(50% - 30px);
     top: calc(50% + 15px);
-    width: calc(50% - 45px);
-    left: calc(50% + 30px);
+    width: calc(50% - 30px);
+    left: calc(50% + 15px);
     border-radius: 15px;
 }
 

@@ -33,18 +33,44 @@ class FUIChatoverview extends FUIElement
         this.domChannels = this.domElement.querySelector( '.Channels' );
         this.domChatlist = this.domElement.querySelector( '.Chatlist' );
         
-        let f = new File( 'Progdir:Markup/main_updates.html' );
+        this.initHome();
+        
+        // Set stuff on this.domElement.innerHTML
+        this.refreshDom();
+    }
+    initHome()
+    {
+    	// Init content
+    	let self = this;
+    	let f = new File( 'Progdir:Markup/main_updates.html' );
         f.i18n();
         f.onLoad = function( data )
         {
         	self.domChatlist.innerHTML = data;
         	self.renderOverview();
         	FUI.initialize();
+        	
+        	// Check channels
+			let chans = self.domChannels.getElementsByClassName( 'Channel' );
+			if( chans && chans.length && chans.length > 0 )
+			{
+				for( let a in chans )
+				{
+					if( chans[ a ].getAttribute )
+					{
+						if( chans[ a ].getAttribute( 'uniqueid' ) == 'home' )
+						{
+							chans[ a ].classList.add( 'Active' );
+						}
+						else
+						{
+							chans[ a ].classList.remove( 'Active' );
+						}
+					}
+				}
+			}
         }
         f.load();
-        
-        // Set stuff on this.domElement.innerHTML
-        this.refreshDom();
     }
     renderOverview()
     {
@@ -170,6 +196,7 @@ class FUIChatoverview extends FUIElement
     	
     	// Default
     	self.domChannels.innerHTML = '\
+    	<div class="Channel Home" uniqueid="home"></div>\
     	<div class="Channel Jeanie" uniqueid="jeanie"></div>\
     	<div class="Channel DM" uniqueid="dm"></div>';
     	
@@ -213,6 +240,9 @@ class FUIChatoverview extends FUIElement
 					}
 					switch( uniqueid )
 					{
+						case 'home':
+							h.innerHTML = i18n( 'i18n_news_and_events' );
+							break;
 						case 'jeanie':
 							h.innerHTML = i18n( 'i18n_jeanie_ai_assistant' );
 							break;
@@ -230,7 +260,15 @@ class FUIChatoverview extends FUIElement
 			
 				( function( ele, prop, gid = false, gnam = false )
 				{
-					if( prop == 'jeanie' )
+					if( prop == 'home' )
+					{
+						ele.innerHTML = '<i class="fa fa-home"></i>';
+						ele.onclick = function()
+						{
+							self.initHome();
+						}
+					}
+					else if( prop == 'jeanie' )
 					{
 						ele.style.backgroundImage = 'url(' + getImageUrl( 'Progdir:Assets/mascot-small-black.png' ) + ')';
 						ele.onclick = function()
