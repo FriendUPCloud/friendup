@@ -81,15 +81,56 @@ class FUIChatoverview extends FUIElement
     		if( me == 'ok' )
     		{
     			let j = JSON.parse( md );
-    			let str = '';
+    			
+    			let cnt = self.domChatlist.querySelector( '.Online' ).querySelector( '.Content' );
+    			cnt.innerHTML = '';
+    			
     			for( let a = 0; a < j.length; a++ )
     			{
     				let mess = i18n( j[a].Message );
     				mess = mess.split( '{username}' ).join( '<strong>' + j[a].User + '</strong>' );
     				mess = mess.split( '{groupname}' ).join( '<strong>#' + ( j[a].Groupname ) + '</strong>' );
-    				str += '<div class="UserEvent"><div class="Title"><span>' + i18n( j[a].Title ) + '</span><div class="Buttons"><div class="Ball fa fa-check"></div><div class="Ball fa fa-times"></div></div></div><div class="Message">' + mess + '</div></div>';
+    				
+    				let d = document.createElement( 'div' );
+    				d.className = 'UserEvent';
+    				
+    				let t = document.createElement( 'div' );
+    				t.className = 'Title';
+    				t.innerHTML = '<span>' + i18n( j[a].Title ) + '</span><div class="Buttons" iid="' + j[a].ID + '"><div class="Ball fa fa-check"></div><div class="Ball fa fa-times"></div></div>';
+    				
+    				let m = document.createElement( 'div' );
+    				m.className = 'Message';
+    				m.innerHTML = mess;
+    				
+    				d.appendChild( t );
+    				d.appendChild( m );
+    				
+    				( function( bt )
+    				{
+    					let b = bt.querySelector( '.fa-check' );
+    					let c = bt.querySelector( '.fa-times' );
+    					b.onclick = function()
+    					{
+    						let m = new Module( 'system' );
+    						m.onExecuted = function( ne, nd ){ self.renderOverview(); self.redrawChannels(); }
+    						m.execute( 'convos', { 
+    							method: 'accept-invite', 
+    							inviteId: this.parentNode.getAttribute( 'iid' ) 
+							} );
+    					}
+    					c.onclick = function()
+    					{
+    						let m = new Module( 'system' );
+    						m.onExecuted = function( ne, nd ){ self.renderOverview(); self.redrawChannels(); }
+    						m.execute( 'convos', { 
+    							method: 'reject-invite', 
+    							inviteId: this.parentNode.getAttribute( 'iid' ) 
+							} );
+    					}
+    				} )( t );
+    				
+    				cnt.appendChild( d );
     			}
-    			self.domChatlist.querySelector( '.Online' ).querySelector( '.Content' ).innerHTML = str;
     		}
     		else
     		{
@@ -230,7 +271,7 @@ class FUIChatoverview extends FUIElement
 					chans[ a ].hoverElement = h;
 					chans[ a ].onmouseover = function()
 					{
-						h.style.top = GetElementTop( this ) + 6 + 'px';
+						h.style.top = ( GetElementTop( this ) + 6 - document.querySelector( '.Channels' ).scrollTop ) + 'px';
 						h.style.left = GetElementLeft( this ) + this.offsetWidth + 16 + 'px';
 						h.classList.add( 'Showing' );
 					}

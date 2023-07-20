@@ -293,6 +293,42 @@ if( isset( $args->args ) )
         	}
         	die( 'fail<!--separate-->{"message":"Unknown parameters.","response":-1}' );
         }
+        // Accept an invite
+        else if( $args->args->method == 'accept-invite' )
+        {
+        	$o = new dbIO( 'FQueuedEvent' );
+        	$o->TargetUserID = $User->ID;
+        	$o->ID = $args->args->inviteId;
+        	if( $o->Load() )
+        	{
+        		if( $o->Status == 'done' ) 
+        			die( 'fail<!--separate-->{"message":"Already processed.","response":-1}' );
+        		
+        		$o->Status = 'done';
+        		$o->Save();
+        		
+        		$SqlDatabase->query( 'INSERT INTO FUserToGroup ( UserID, UserGroupID ) VALUES ( \'' . $User->ID . '\', \'' . $o->TargetGroupID . '\' )' );
+        		die( 'ok<!--separate-->{"message":"Invite accepted.","response":1}' );
+        	}
+        	die( 'ok<!--separate-->{"message":"Invite error.","response":-1}' );
+        }
+        // Reject an invite
+        else if( $args->args->method == 'reject-invite' )
+        {
+        	$o = new dbIO( 'FQueuedEvent' );
+        	$o->TargetUserID = $User->ID;
+        	$o->ID = $args->args->inviteId;
+        	if( $o->Load() )
+        	{
+        		if( $o->Status == 'done' ) 
+        			die( 'fail<!--separate-->{"message":"Already processed.","response":-1}' );
+        		
+        		$o->Delete();
+        		
+        		die( 'ok<!--separate-->{"message":"Invite rejected.","response":1}' );
+        	}
+        	die( 'ok<!--separate-->{"message":"Invite error.","response":-1}' );
+        }
         // Invite a user to a chat room group
         else if( $args->args->method == 'invite' )
         {
