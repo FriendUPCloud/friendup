@@ -289,3 +289,11 @@ body:not([mobile=mobile]) .FUIChatoverview > .HoverElement.Showing
 }
 
 
+.FUIChatoverview .OverviewUpdates .UserEvent 
+{
+    background-color: var(--fui-list-background);
+    color: var(--fui-list-item-color);
+    padding: 10px;
+    border-radius: 10px;
+}
+
