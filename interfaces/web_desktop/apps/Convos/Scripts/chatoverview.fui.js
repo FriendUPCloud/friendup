@@ -87,7 +87,7 @@ class FUIChatoverview extends FUIElement
     				let mess = i18n( j[a].Message );
     				mess = mess.split( '{username}' ).join( '<strong>' + j[a].User + '</strong>' );
     				mess = mess.split( '{groupname}' ).join( '<strong>#' + ( j[a].Groupname ) + '</strong>' );
-    				str += '<div class="UserEvent"><div class="Title">' + i18n( j[a].Title ) + '</div><div class="Message">' + mess + '</div></div>';
+    				str += '<div class="UserEvent"><div class="Title"><span>' + i18n( j[a].Title ) + '</span><div class="Buttons"><div class="Ball fa fa-check"></div><div class="Ball fa fa-times"></div></div></div><div class="Message">' + mess + '</div></div>';
     			}
     			self.domChatlist.querySelector( '.Online' ).querySelector( '.Content' ).innerHTML = str;
     		}

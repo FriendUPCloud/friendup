@@ -299,17 +299,35 @@ body:not([mobile=mobile]) .FUIChatoverview > .HoverElement.Showing
 
 .FUIChatoverview .OverviewUpdates .UserEvent 
 {
-	cursor: pointer;
     background-color: var(--fui-list-background);
     color: var(--fui-list-item-color);
     padding: 10px;
     border-radius: 10px;
-    outline: 1px solid transparent;
-    transition: outline 0.1s;
+    margin: 0 0 10px 0;
 }
 
-.FUIChatoverview .OverviewUpdates .UserEvent:hover
+.FUIChatoverview .OverviewUpdates .UserEvent .Title
 {
-	outline: 2px solid var(--fui-palette-chan01);
+    border-bottom: 1px solid rgba(0,0,0,0.1);
+    margin: 0 0 10px 0;
+    padding: 0 0 10px 0;
+    font-weight: 600;
+	display: flex;
+	justify-content: space-between;
+}
+
+.FUIChatoverview .OverviewUpdates .UserEvent .Title > .Buttons
+{
+	width: 40px;
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    align-items: center;
+    flex-direction: row;
+}
+
+.FUIChatoverview .OverviewUpdates .UserEvent .Title > .Buttons > div
+{
+	cursor: pointer;
 }
 
