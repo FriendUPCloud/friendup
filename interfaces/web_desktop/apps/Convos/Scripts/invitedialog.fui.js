@@ -109,7 +109,7 @@ class FUIInviteDialog extends FUIElement
 						{
 							b.onclick = function()
 							{
-								self.executeInvite( ct );
+								self.executeInvite( ct, btn );
 								btn.classList.add( 'Disabled' );
 							}
 						} )( JS.contacts[ a ], d );
@@ -121,9 +121,24 @@ class FUIInviteDialog extends FUIElement
 		}
 		m.execute( 'convos', { method: 'contacts', filter: query } );
 	}
-	executeInvite( contact )
+	executeInvite( contact, btn )
 	{
-		console.log( contact, 'to be invited' );
+		let m = new Module( 'system' );
+		m.onExecuted = function( me, md )
+		{
+			if( me == 'fail' )
+			{
+				btn.classList.remove( 'Disabled' );
+				btn.classList.add( 'Error' );
+				console.log( 'Error here: ', me, md );
+			}
+			else
+			{
+				btn.classList.remove( 'Error' );
+				console.log( 'Yes Here: ', me, md );
+			}
+		}
+		m.execute( 'convos', { method: 'invite', userId: contact.ID, groupId: this.options.groupId } );
 	}
 	
 	destroy()

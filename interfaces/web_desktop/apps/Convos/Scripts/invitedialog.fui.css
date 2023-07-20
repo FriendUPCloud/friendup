@@ -160,3 +160,9 @@
 	pointer-events: none;
 }
 
+.FUIInvitedialog .SearchResult.Error .Button
+{
+	background-color: var(--ColorBgStError);
+    color: var(--ColorStError);
+}
+

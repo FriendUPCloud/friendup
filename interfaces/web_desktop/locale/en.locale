@@ -172,6 +172,8 @@ i18n_invite_friend                      : Invites
 i18n_account_setup                      : My account - setup
 
 #Invites
+i18n_invite_to_chatroom                 : Chat room invite
+i18n_invite_to_chatroom_desc            : Click here to see the chat invite.
 i18n_add_invite                         : Add a new invite
 i18n_current_invites                    : Existing invites
 i18n_current_invite                     : Your invite link

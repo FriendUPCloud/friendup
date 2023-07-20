@@ -260,6 +260,49 @@ if( isset( $args->args ) )
         	}
         	die( 'fail<!--separate-->' );
         }
+        // Invite a user to a chat room group
+        else if( $args->args->method == 'invite' )
+        {
+        	if( !isset( $args->args->groupId ) || !isset( $args->args->userId ) )
+        	{
+        		die( 'fail<!--separate-->{"message":"Unknown parameters.","response":-1}' );
+        	}
+        	
+        	// Fetch target
+        	$t = new dbIO( 'FUser' );
+        	$t->UniqueID = $args->args->userId;
+        	if( $t->Load() )
+        	{
+        		$g = new dbIO( 'FUserGroup' );
+        		$g->UniqueID = $args->args->groupId;
+        		if( $g->Load() )
+        		{
+					$o = new dbIO( 'FQueuedEvent' );
+					$o->UserID = $User->ID;
+					$o->TargetGroupID = $g->ID;
+					$o->TargetUserID = $t->ID;
+					$o->Type = 'chatroom-invite';
+					$o->Load(); // Fix multiple
+					$o->Date = date( 'Y-m-d H:i:s' );
+					$o->Status = 'pending';
+					$o->Title = 'i18n_invite_to_chatroom';
+					$o->Message = 'i18n_invite_to_chatroom_desc';
+					$o->ActionSeen = 'none';
+					$o->ActionAccepted = 'none';
+					$o->ActionRejected = 'none';
+					$o->Save();
+					if( $o->ID > 0 )
+					{
+						die( 'ok<--separate-->{"message":"Invite was sent.","response":1}' );
+					}
+					else
+					{
+						die( 'fail<!--separate-->{"message":"Failed to save invite.","response":-1}' );
+					}
+				}
+	    	}
+	    	die( 'fail<!--separate-->{"message":"Unknown contact.","response":-1}' );
+        }
         else if( $args->args->method == 'contacts' )
         {
             $filterA = $filterB = $groupSpec = $groupContacts = '';

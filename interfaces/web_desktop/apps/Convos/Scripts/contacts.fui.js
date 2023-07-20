@@ -317,7 +317,7 @@ class FUIContacts extends FUIElement
     	this.domContacts.appendChild( b );
     	b.querySelector( '.AddButton' ).onclick = function()
     	{
-    		self.inviteDialog = new FUIInvitedialog( { channelName: self.record.Fullname } );
+    		self.inviteDialog = new FUIInvitedialog( { channelName: self.record.Fullname, groupId: self.record.ID } );
     	}
     }
     // Get markup for object

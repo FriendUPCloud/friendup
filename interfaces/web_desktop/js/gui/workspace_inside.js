@@ -1890,6 +1890,7 @@ let WorkspaceInside = {
 		    
 		    Workspace.getAnnouncements();
 		    
+		    console.log( 'Checking queued events!' );
 		    let no = new Module( 'system' );
 		    no.onExecuted = function( e, d )
 		    {
@@ -1904,14 +1905,31 @@ let WorkspaceInside = {
 		    		if( !list ) return;
 		    		for( let a = 0; a < list.length; a++ )
 		    		{
-		    			AddNotificationEvent( {
-		    				title: list[a].Title,
-		    				text: list[a].Message,
+		    			let tit = list[a].Title;
+		    			let mes = list[a].Message;
+		    			if( tit.substr( 0, 5 ) == 'i18n_' )
+		    				tit = i18n( tit );
+		    			if( mes.substr( 0, 5 ) == 'i18n_' )
+		    				mes = i18n( mes );
+		    			
+		    			let msg = {
+		    				title: tit,
+		    				text: mes,
 		    				time: list[a].Date,
 		    				type: list[a].Type,
 		    				eventId: list[a].ID,
 		    				seen: false
-		    			} );
+		    			};
+		    			
+		    			if( list[a].Type == 'chatroom-invite' )
+		    			{
+		    				msg.clickCallback = function()
+		    				{
+		    					ExecuteApplication( 'Convos' );
+		    				}
+		    			}
+		    			
+		    			AddNotificationEvent( msg );
 		    		}
 		    	}
 		    }
