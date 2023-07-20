@@ -207,11 +207,6 @@ register_shutdown_function( function()
 			foreach( $friendHeaders as $k=>$v )
 				$out .= "$k: $v\n";
 			$out .= "---http-headers-end---\n";
-			
-			/*$f = fopen( '/tmp/test.jpg', 'w+' );
-			fwrite( $f, $out . $string );
-			fclose( $f );*/
-			
 			die( $out . $string );
 		}
 	}
