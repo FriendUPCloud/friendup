@@ -303,7 +303,7 @@ body:not([mobile=mobile]) .FUIChatoverview > .HoverElement.Showing
     color: var(--fui-list-item-color);
     padding: 10px;
     border-radius: 10px;
-    margin: 0 0 10px 0;
+    margin: 0 0 15px 0;
 }
 
 .FUIChatoverview .OverviewUpdates .UserEvent .Title
