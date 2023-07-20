@@ -33,6 +33,15 @@ class FUIChatoverview extends FUIElement
         this.domChannels = this.domElement.querySelector( '.Channels' );
         this.domChatlist = this.domElement.querySelector( '.Chatlist' );
         
+        let f = new File( 'Progdir:Markup/main_updates.html' );
+        f.i18n();
+        f.onLoad = function( data )
+        {
+        	self.domChatlist.innerHTML = data;
+        	FUI.initialize();
+        }
+        f.load();
+        
         // Set stuff on this.domElement.innerHTML
         this.refreshDom();
     }

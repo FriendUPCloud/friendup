@@ -230,3 +230,53 @@ body:not([mobile=mobile]) .FUIChatoverview > .HoverElement.Showing
         width: 100%;
     }
 }
+
+/* Overview */
+
+.FUIChatoverview .OverviewUpdates 
+{
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    background: var(--fui-module-background);
+    color: var(--fui-module-color);
+}
+
+.FUIChatoverview .OverviewUpdates .Updates, 
+.FUIChatoverview .OverviewUpdates .Online, 
+.FUIChatoverview .OverviewUpdates .News 
+{
+    position: absolute;
+    background-color: red;
+    width: 50%;
+    height: 50%;
+    top: 15px;
+    left: 15px;
+}
+
+.FUIChatoverview .OverviewUpdates .News
+{
+	height: calc(100% - 30px);
+    border-radius: 15px;
+}
+
+.FUIChatoverview .OverviewUpdates .Updates 
+{
+    height: calc(50% - 15px);
+    left: calc(50% + 30px);
+    width: calc(50% - 45px);
+    border-radius: 15px;
+}
+
+.FUIChatoverview .OverviewUpdates .Online
+{
+    height: calc(50% - 30px);
+    top: calc(50% + 15px);
+    width: calc(50% - 45px);
+    left: calc(50% + 30px);
+    border-radius: 15px;
+}
+
+
