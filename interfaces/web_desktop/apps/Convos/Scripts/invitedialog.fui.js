@@ -64,7 +64,7 @@ class FUIInviteDialog extends FUIElement
 					clearTimeout( this.timeo );
 				this.timeo = setTimeout( function()
 				{
-					self.executeSearch( s.value );
+					self.executeSearch( s.value, r.querySelector( '.SearchResults' ) );
 				}, 100 );
 			}
 		}
@@ -80,9 +80,50 @@ class FUIInviteDialog extends FUIElement
 		this.refreshDom();
 	}
 	
-	executeSearch = function( query )
+	executeSearch = function( query, res )
 	{
-		console.log( 'Hey: ' + query );
+		let self = this;
+		
+		let m = new Module( 'system' );
+		m.onExecuted = function( me, md )
+		{
+			if( me == 'fail' )
+			{
+				res.innerHTML = '<p>You have no contact that matches your search query.</p>';
+			}
+			else
+			{
+				let JS = JSON.parse( md );
+				if( JS.response == 1 )
+				{
+					res.innerHTML = '';
+					for( let a = 0; a < JS.contacts.length; a++ )
+					{
+						let d = document.createElement( 'div' );
+						d.classList = 'SearchResult Contact';
+						d.innerHTML = '<div class="Name">' + JS.contacts[a].Fullname + '</div><div class="Button"><div class="Invite">' + i18n( 'i18n_invite_contact' ) + '</div></div>';
+						res.appendChild( d );
+						
+						let b = d.querySelector( '.Button' );
+						( function( ct, btn )
+						{
+							b.onclick = function()
+							{
+								self.executeInvite( ct );
+								btn.classList.add( 'Disabled' );
+							}
+						} )( JS.contacts[ a ], d );
+					}
+					return;
+				}
+				res.innerHTML = '<p>You have no contact that matches your search query.</p>';
+			}
+		}
+		m.execute( 'convos', { method: 'contacts', filter: query } );
+	}
+	executeInvite( contact )
+	{
+		console.log( contact, 'to be invited' );
 	}
 	
 	destroy()

@@ -128,3 +128,35 @@
 	box-sizing: border-box;
 }
 
+.FUIInvitedialog .SearchResult.Contact 
+{
+    padding: 10px;
+    background: var(--fui-background-foreground);
+    margin: 0 0 10px 0;
+    border-radius: 15px;
+    display: flex;
+    flex-wrap: nowrap;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.FUIInvitedialog .SearchResult .Button
+{
+	display: flex;
+    gap: 5px;
+    align-items: center;
+}
+
+.FUIInvitedialog .SearchResult .Button:before 
+{
+    content: "\f234";
+    font-family: 'FontAwesome';
+}
+
+.FUIInvitedialog .SearchResult .Button.Disabled
+{
+	opacity: 0.7;
+	pointer-events: none;
+}
+
