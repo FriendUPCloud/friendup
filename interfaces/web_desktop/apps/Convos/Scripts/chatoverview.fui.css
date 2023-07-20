@@ -244,16 +244,25 @@ body:not([mobile=mobile]) .FUIChatoverview > .HoverElement.Showing
     color: var(--fui-module-color);
 }
 
+.FUIChatoverview .OverviewUpdates p
+{
+	margin: 0 0 10px 0;
+}
+
 .FUIChatoverview .OverviewUpdates .Updates, 
 .FUIChatoverview .OverviewUpdates .Online, 
 .FUIChatoverview .OverviewUpdates .News 
 {
     position: absolute;
-    background-color: red;
     width: 50%;
     height: 50%;
     top: 15px;
     left: 15px;
+    background-color: var(--ColorBackground);
+    color: var(--ColorText);
+    box-sizing: border-box;
+    overflow: auto;
+    padding: 15px;
 }
 
 .FUIChatoverview .OverviewUpdates .News
