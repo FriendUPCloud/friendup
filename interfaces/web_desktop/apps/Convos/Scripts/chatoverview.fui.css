@@ -291,9 +291,17 @@ body:not([mobile=mobile]) .FUIChatoverview > .HoverElement.Showing
 
 .FUIChatoverview .OverviewUpdates .UserEvent 
 {
+	cursor: pointer;
     background-color: var(--fui-list-background);
     color: var(--fui-list-item-color);
     padding: 10px;
     border-radius: 10px;
+    outline: 1px solid transparent;
+    transition: outline 0.1s;
+}
+
+.FUIChatoverview .OverviewUpdates .UserEvent:hover
+{
+	outline: 2px solid var(--fui-palette-chan01);
 }
 
