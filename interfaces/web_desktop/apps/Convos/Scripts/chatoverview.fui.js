@@ -54,7 +54,13 @@ class FUIChatoverview extends FUIElement
     	{
     		if( me == 'ok' )
     		{
-    			console.log( 'We got events: ', md );
+    			let j = JSON.parse( md );
+    			let str = '';
+    			for( let a = 0; a < j.length; a++ )
+    			{
+    				str += '<div class="UserEvent">' + i18n( j[a].Title ) + '</div>';
+    			}
+    			self.domChatlist.querySelector( '.Online' ).querySelector( '.Content' ).innerHTML = str;
     		}
     		else
     		{
