@@ -38,12 +38,31 @@ class FUIChatoverview extends FUIElement
         f.onLoad = function( data )
         {
         	self.domChatlist.innerHTML = data;
+        	self.renderOverview();
         	FUI.initialize();
         }
         f.load();
         
         // Set stuff on this.domElement.innerHTML
         this.refreshDom();
+    }
+    renderOverview()
+    {
+    	let self = this;
+    	let ev = new Module( 'system' );
+    	ev.onExecuted = function( me, md )
+    	{
+    		if( me == 'ok' )
+    		{
+    			console.log( 'We got events: ', md );
+    		}
+    		else
+    		{
+    			self.domChatlist.querySelector( '.Online' ).querySelector( '.Content' ).innerHTML = '<p>' + i18n( 'i18n_no_new_events' ) + '</p>';
+    		}
+    		
+    	}
+    	ev.execute( 'convos', { method: 'getevents' } );
     }
     grabAttributes( domElement )
     {

@@ -260,6 +260,39 @@ if( isset( $args->args ) )
         	}
         	die( 'fail<!--separate-->' );
         }
+        // Get the events for the user
+        else if( $args->args->method == 'getevents' )
+        {
+        	if( $rows = $SqlDatabase->fetchObjects( '
+        		SELECT 
+        			e.*, g.Name AS GroupName, u.FullName 
+    			FROM 
+        			FQueuedEvent e, FUserGroup g, FUser u
+        		WHERE
+        			e.TargetUserID=\'' . $User->ID . '\' AND
+        			( e.Status = \'pending\' OR e.Status = \'seen\' ) AND
+        			e.Type = \'chatroom-invite\' AND
+        			g.ID = e.TargetGroupID AND
+        			u.ID = e.UserID
+        		ORDER BY
+        			e.Date DESC
+        	' ) )
+        	{
+        		$out = [];
+        		foreach( $rows as $row )
+        		{
+        			$n = new stdClass();
+        			$n->Title = $row->Title;
+        			$n->Message = $row->Message;
+        			$n->Groupname = $row->GroupName;
+        			$n->ID = $row->ID;
+        			$n->User = $row->FullName;
+        			$out[] = $n;
+        		}
+        		die( 'ok<!--separate-->' . json_encode( $out ) );
+        	}
+        	die( 'fail<!--separate-->{"message":"Unknown parameters.","response":-1}' );
+        }
         // Invite a user to a chat room group
         else if( $args->args->method == 'invite' )
         {
