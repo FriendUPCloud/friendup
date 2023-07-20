@@ -1890,7 +1890,6 @@ let WorkspaceInside = {
 		    
 		    Workspace.getAnnouncements();
 		    
-		    console.log( 'Checking queued events!' );
 		    let no = new Module( 'system' );
 		    no.onExecuted = function( e, d )
 		    {

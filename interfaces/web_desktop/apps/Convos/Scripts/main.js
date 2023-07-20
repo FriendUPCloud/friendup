@@ -11,6 +11,9 @@
 serverQueue = [];
 
 Application.run = function( msg ){
+	
+	this.setSingleInstance( true );
+
 	let v = new View( {
 		title: 'Convos',
 		assets: [
@@ -21,8 +24,7 @@ Application.run = function( msg ){
 		height: 600,
 		'min-width': 360,
 		'min-height': 360,
-		quitOnClose: true,
-		singleInstance: true
+		quitOnClose: true
 	} );
 	v.onClose = function()
 	{
