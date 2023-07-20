@@ -323,18 +323,28 @@ class FUIElement
     // Attaches GUI to dom element if specified
     attachDomElement()
     {
-        if( !this.options ) return;
-        
-        if( !this.domElement.parentNode && this.options.containerElement )
+        if( this.options )
         {
-            this.grabAttributes( this.options.containerElement );
-            this.options.containerElement.appendChild( this.domElement );
-        }
-        else if( !this.domElement.parentNode && this.options.placeholderElement )
-        {
-            this.grabAttributes( this.options.placeholderElement );
-            this.options.placeholderElement.parentNode.replaceChild( this.domElement, this.options.placeholderElement );
-        }
+		    if( !this.domElement.parentNode && this.options.containerElement )
+		    {
+		        this.grabAttributes( this.options.containerElement );
+		        this.options.containerElement.appendChild( this.domElement );
+		        return;
+		    }
+		    else if( !this.domElement.parentNode && this.options.placeholderElement )
+		    {
+		        this.grabAttributes( this.options.placeholderElement );
+		        this.options.placeholderElement.parentNode.replaceChild( this.domElement, this.options.placeholderElement );
+		        return;
+		    }
+	    }
+        // Create placeholder
+    	let d = document.createElement( 'div' );
+    	document.body.appendChild( d );
+    	if( !this.options ) this.options = new Object();
+    	this.options.placeholderElement = d;
+    	this.grabAttributes( this.options.placeholderElement );
+        this.options.placeholderElement.parentNode.replaceChild( this.domElement, this.options.placeholderElement );
     }
     // Grabs attributes from the dom element if they are supported
     grabAttributes( domElement )

@@ -18,7 +18,6 @@ class FUIContacts extends FUIElement
         this.contactFilter = '';
         this.userList = {}; // Dom elements
         this.userListOrder = []; // Sorted list
-        this.searchMode = 'normal';
         
         this.refreshDom();
         
@@ -62,27 +61,12 @@ class FUIContacts extends FUIElement
 	            clearTimeout( self.contacttimeo );
             if( self.newcontacttimeo )
             	clearTimeout( self.newcontacttimeo );
-        	if( this.searchMode == 'normal' )
-        	{
-		        self.contacttimeo = setTimeout( function()
-		        {
-		            self.contactFilter = s.value.toLowerCase();
-		            self.refreshDom();
-		        }, 100 );
-	        }
-	        else
+    	
+	        self.contacttimeo = setTimeout( function()
 	        {
-	        	self.newcontacttimeo = setTimeout( function()
-	        	{
-			    	// Try to fetch contacts
-			    	let m = new Module( 'system' );
-			    	m.onExecuted = function( me, md )
-			    	{
-			    		
-			    	}
-			    	m.execute( 'convos', { method: 'contacts' } );
-		    	}, 100 ); 	
-	        }
+	            self.contactFilter = s.value.toLowerCase();
+	            self.refreshDom();
+	        }, 100 );
         } );
         
         // Set stuff on this.domElement.innerHTML
@@ -227,6 +211,8 @@ class FUIContacts extends FUIElement
     }
     setChatView( record )
     {
+    	this.record = record;
+    	
         let context = ' context="' + ( record.Type == 'User' ? 'user' : ( record.Type == 'chatroom' ? 'chatroom' : 'contact' ) ) + '"';
         context += ' cid="' + record.ID + '"';
         let dm = record.Type == 'User' ? 'dm-user' : ( record.Type == 'chatroom' ? 'chatroom' : 'dm-contact' );
@@ -300,7 +286,6 @@ class FUIContacts extends FUIElement
                     {
                         self.addContact( list.contacts[a] );
                     }
-                    self.searchMode = 'normal';
                 }
                 else
                 {
@@ -332,13 +317,8 @@ class FUIContacts extends FUIElement
     	this.domContacts.appendChild( b );
     	b.querySelector( '.AddButton' ).onclick = function()
     	{
-    		self.domSearch.focus();
-    		this.style.opacity = '0.5';
-    		this.style.pointerEvents = 'none';
-    		this.setAttribute( 'disabled', 'disabled' );
+    		self.inviteDialog = new FUIInvitedialog( { channelName: self.record.Fullname } );
     	}
-    	this.domSearch.setAttribute( 'placeholder', i18n( 'i18n_find_and_add_contacts' ) );
-    	this.searchMode = 'add-contacts';
     }
     // Get markup for object
     getMarkup( data )
