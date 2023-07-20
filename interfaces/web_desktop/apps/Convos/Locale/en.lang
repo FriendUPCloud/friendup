@@ -16,3 +16,7 @@ i18n_add_a_new_chatroom                : Add a new chatroom.
 i18n_direct_messages                   : Direct messages.
 i18n_jeanie_ai_assistant               : Jeanie AI assistant.
 i18n_close                             : Close
+i18n_nobody_here                       : Nobody's here!
+i18n_you_have_no_contacts              : You have no contacts in this chat room. Perhaps you should add some? Use the search field to find contacts.
+i18n_add_contacts                      : Add contacts
+i18n_find_and_add_contacts             : Find and add contacts...

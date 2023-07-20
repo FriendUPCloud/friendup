@@ -161,6 +161,10 @@ $friendHeaders = [];
 function FriendHeader( $header )
 {
 	global $friendHeaders;
+	if( !is_array( $header ) )
+	{
+		$GLOBALS[ 'friendHeaders' ] = [];
+	}
 	
 	// Get content type and content
 	$headerA = explode( ':', $header );

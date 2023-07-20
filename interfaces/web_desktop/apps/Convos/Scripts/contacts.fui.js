@@ -18,6 +18,7 @@ class FUIContacts extends FUIElement
         this.contactFilter = '';
         this.userList = {}; // Dom elements
         this.userListOrder = []; // Sorted list
+        this.searchMode = 'normal';
         
         this.refreshDom();
         
@@ -57,13 +58,31 @@ class FUIContacts extends FUIElement
         this.domSearch.addEventListener( 'keyup', function( e )
         {
             let s = this;
-            if( self.contacttimeo )
-                clearTimeout( self.contacttimeo );
-            self.contacttimeo = setTimeout( function()
-            {
-                self.contactFilter = s.value.toLowerCase();
-                self.refreshDom();
-            }, 100 );
+	        if( self.contacttimeo )
+	            clearTimeout( self.contacttimeo );
+            if( self.newcontacttimeo )
+            	clearTimeout( self.newcontacttimeo );
+        	if( this.searchMode == 'normal' )
+        	{
+		        self.contacttimeo = setTimeout( function()
+		        {
+		            self.contactFilter = s.value.toLowerCase();
+		            self.refreshDom();
+		        }, 100 );
+	        }
+	        else
+	        {
+	        	self.newcontacttimeo = setTimeout( function()
+	        	{
+			    	// Try to fetch contacts
+			    	let m = new Module( 'system' );
+			    	m.onExecuted = function( me, md )
+			    	{
+			    		
+			    	}
+			    	m.execute( 'convos', { method: 'contacts' } );
+		    	}, 100 ); 	
+	        }
         } );
         
         // Set stuff on this.domElement.innerHTML
@@ -281,6 +300,7 @@ class FUIContacts extends FUIElement
                     {
                         self.addContact( list.contacts[a] );
                     }
+                    self.searchMode = 'normal';
                 }
                 else
                 {
@@ -300,7 +320,25 @@ class FUIContacts extends FUIElement
     // Oh, no contacts, do something about it?
     showNoContactsMenu()
     {
-    	
+    	let self = this;
+    	let d = document.createElement( 'div' );
+    	d.className = 'NoContacts';
+    	d.innerHTML = '<h2>' + i18n( 'i18n_nobody_here' ) + '</h2><p>' + i18n( 'i18n_you_have_no_contacts' ) + '</p>';
+    	let b = document.createElement( 'div' );
+    	b.className = 'NoContacts';
+    	b.innerHTML = '<p><button class="AddButton" type="button">' + i18n( 'i18n_add_contacts' ) + '</button></p>';
+    	this.domContacts.innerHTML = '';
+    	this.domContacts.appendChild( d );
+    	this.domContacts.appendChild( b );
+    	b.querySelector( '.AddButton' ).onclick = function()
+    	{
+    		self.domSearch.focus();
+    		this.style.opacity = '0.5';
+    		this.style.pointerEvents = 'none';
+    		this.setAttribute( 'disabled', 'disabled' );
+    	}
+    	this.domSearch.setAttribute( 'placeholder', i18n( 'i18n_find_and_add_contacts' ) );
+    	this.searchMode = 'add-contacts';
     }
     // Get markup for object
     getMarkup( data )

@@ -24,6 +24,8 @@
     position: absolute;
     top: 5px;
     left: 5px;
+    padding-left: 10px;
+    padding-right: 10px;
     width: calc(100% - 10px);
     height: calc(100% - 10px);
 }
@@ -38,6 +40,26 @@
     height: calc(100% - 35px);
     overflow: auto;
     border-radius: 15px 0 0 0;
+}
+
+.FUIContacts .Contacts .NoContacts:first-child
+{
+	margin-top: 10px;
+}
+
+.FUIContacts .Contacts .NoContacts
+{
+	padding: 5px 15px;
+}
+
+.FUIContacts .Contacts .NoContacts > p
+{
+	margin: 15px 0 15px 0;
+}
+
+.FUIContacts .Contacts .NoContacts + .NoContacts > p
+{
+	margin-top: 0;
 }
 
 .FUIContacts .Contacts .Contact
