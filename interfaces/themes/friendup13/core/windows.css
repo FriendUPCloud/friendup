@@ -542,6 +542,11 @@ body:not([mobile]) #Screens .View.Opening
 	z-index: 2147483646 !important;
 }
 
+html body:not([mobile]) .View[maximized=true] > .Content
+{
+	border-radius: 0;
+}
+
 /* Don't animate moving of windows! */
 .View:active, .View[moving=moving]
 {
