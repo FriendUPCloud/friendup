@@ -358,6 +358,7 @@ span.Emoticon:hover
 {
     font-weight: bold;
     cursor: pointer;
+    text-align: center;
 }
 
 .FUIChatlog .Messages div.OGImage > img
