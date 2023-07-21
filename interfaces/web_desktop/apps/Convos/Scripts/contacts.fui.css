@@ -101,7 +101,7 @@
     border-radius: 100%;
     border: 2px solid var(--fui-border-foreground);
     text-align: center;
-    color: white;
+    color: var(--fui-border-foreground);
     box-sizing: border-box;
     line-height: 26px;
 }
