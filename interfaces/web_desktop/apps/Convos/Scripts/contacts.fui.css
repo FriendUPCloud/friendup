@@ -63,6 +63,42 @@
 	padding: 15px;
 	background-color: var(--fui-module-background);
 	overflow: hidden;
+	display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: nowrap;
+}
+
+.FUIContacts .Contacts > .Settings > .Avatar
+{
+	content: " ";
+    display: block;
+    width: 45px;
+    height: 45px;
+    background: black;
+    border-radius: 100%;
+    border: 2px solid white;
+    margin: 0 15px 0 0;
+}
+
+.FUIContacts .Contacts > .Settings > .Gearbox
+{
+	content: " ";
+    display: block;
+    width: 30px;
+    height: 30px;
+    background: black;
+    border-radius: 100%;
+    border: 2px solid white;
+    text-align: center;
+    color: white;
+    box-sizing: border-box;
+    line-height: 26px;
+}
+.FUIContacts .Contacts > .Settings > .Gearbox:before
+{
+	content: "\f013";
+	font-family: FontAwesome;
 }
 
 .Channels.Scroll + .Chatlist .FUIContacts .Contacts
@@ -162,7 +198,7 @@
     height: 35px;
     background-color: var(--fui-list-background);
     border-radius: 35px;
-    border: 3px solid white;
+    border: 2px solid white;
     box-sizing: border-box;
 }
 

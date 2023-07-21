@@ -42,9 +42,11 @@ class FUIContacts extends FUIElement
         
         this.domElement.className = 'FUIContacts';
         
+        let ex = this.options.groupid ? ' Group' : '';
+        
         let data = '\
         <div class="ContactSearch"><input type="text" value="' + ( typeof( self.contactFilter ) != 'undefined' ? self.contactFilter : '' ) + '" placeholder="Find a contact..."/></div>\
-        <div class="Contacts"><div class="ContactList"></div><div class="Settings"></div></div>\
+        <div class="Contacts"><div class="ContactList"></div><div class="Settings"><div class="Avatar"></div><div class="Gearbox' + ex + '"></div></div></div>\
         <div class="Chat"></div>\
         ';
         
