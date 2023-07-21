@@ -58,17 +58,27 @@ class FUIContacts extends FUIElement
         this.domChat = this.domElement.querySelector( '.Chat' );
         this.domSearch = this.domElement.querySelector( '.ContactSearch' ).getElementsByTagName( 'input' )[0];
         
-        let i = new Image();
-        i.src = '/system.library/module/?module=system&command=getavatar&userid=' + Application.userId + '&width=128&height=128&authid=' + Application.authId;
-        i.onload = function()
+        // Cache this globally!
+        if( window.myAvatar )
         {
-            self.domSettings.querySelector( '.Avatar' ).style.backgroundImage = 'url(' + this.src + ')';
-            self.domSettings.querySelector( '.Avatar' ).classList.add( 'Loaded' );
-            document.body.removeChild( i );
+        	self.domSettings.querySelector( '.Avatar' ).style.backgroundImage = 'url(' + window.myAvatar.src + ')';
+	        self.domSettings.querySelector( '.Avatar' ).classList.add( 'Loaded' );
         }
-        i.style.position = 'absolute';
-        i.style.visibility = 'hidden';
-        document.body.appendChild( i );
+        else
+        {
+		    let i = new Image();
+		    window.myAvatar = i;
+		    i.src = '/system.library/module/?module=system&command=getavatar&userid=' + Application.userId + '&width=128&height=128&authid=' + Application.authId;
+		    i.onload = function()
+		    {
+		        self.domSettings.querySelector( '.Avatar' ).style.backgroundImage = 'url(' + this.src + ')';
+		        self.domSettings.querySelector( '.Avatar' ).classList.add( 'Loaded' );
+		        document.body.removeChild( i );
+		    }
+		    i.style.position = 'absolute';
+		    i.style.visibility = 'hidden';
+		    document.body.appendChild( i );
+	    }
         
         this.domSearch.addEventListener( 'keyup', function( e )
         {
@@ -330,9 +340,10 @@ class FUIContacts extends FUIElement
     	let b = document.createElement( 'div' );
     	b.className = 'NoContacts';
     	b.innerHTML = '<p><button class="AddButton" type="button">' + i18n( 'i18n_add_contacts' ) + '</button></p>';
-    	this.domContacts.innerHTML = '';
-    	this.domContacts.appendChild( d );
-    	this.domContacts.appendChild( b );
+    	let cl = this.domContacts.querySelector( '.ContactList' );
+    	cl.innerHTML = '';
+    	cl.appendChild( d );
+    	cl.appendChild( b );
     	b.querySelector( '.AddButton' ).onclick = function()
     	{
     		self.inviteDialog = new FUIInvitedialog( { channelName: self.record.Fullname, groupId: self.record.ID } );
