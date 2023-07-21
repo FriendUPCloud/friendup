@@ -19,6 +19,10 @@ class FUIChatoverview extends FUIElement
         window.addEventListener( 'resize', function()
         {
         	self.handleResize();
+        	setTimeout( function()
+        	{
+        		self.handleResize();
+        	}, 25 );
         } );
     }
     handleResize()
@@ -35,19 +39,33 @@ class FUIChatoverview extends FUIElement
     			self.domChannels.classList.remove( 'Scroll' );
     		}
     	}
+
     	let ov = document.body.querySelector( '.OverviewUpdates' );
-    	if( ov )
+    	
+		if( ov )
     	{
-    		for( let a = 0; a < ov.childNodes.length; a++ )
-    		{
-    			let ele = ov.childNodes[ a ];
-    			if( ele.tagName != 'DIV' ) continue;
-    			let eleHeight = ele.offsetHeight;
-    			if( eleHeight < ele.scrollHeight )
-    			{
-    				ov.childNodes[ a ].style.height = ele.scrollHeight + 'px';
-    			}
-    		}
+			if( window.innerWidth > 640 )
+			{
+				for( let a = 0; a < ov.childNodes.length; a++ )
+				{
+					let ele = ov.childNodes[ a ];
+					if( ele.tagName != 'DIV' ) continue;
+					ov.childNodes[ a ].style.height = '';
+				}
+			} 
+			else
+			{
+				for( let a = 0; a < ov.childNodes.length; a++ )
+				{
+					let ele = ov.childNodes[ a ];
+					if( ele.tagName != 'DIV' ) continue
+					let eleHeight = ele.offsetHeight;
+					if( eleHeight < ele.scrollHeight )
+					{
+						ov.childNodes[ a ].style.height = ele.scrollHeight + 'px';
+					}
+				}
+			}
     	}
 	}
     attachDomElement()
