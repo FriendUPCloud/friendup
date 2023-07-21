@@ -44,13 +44,15 @@ class FUIContacts extends FUIElement
         
         let data = '\
         <div class="ContactSearch"><input type="text" value="' + ( typeof( self.contactFilter ) != 'undefined' ? self.contactFilter : '' ) + '" placeholder="Find a contact..."/></div>\
-        <div class="Contacts"></div>\
+        <div class="Contacts"><div class="ContactList"></div><div class="Settings"></div></div>\
         <div class="Chat"></div>\
         ';
         
         this.domElement.innerHTML = data;
         
         this.domContacts = this.domElement.querySelector( '.Contacts' );
+        this.domContactList = this.domContacts.querySelector( '.ContactList' );
+        this.domSettings = this.domContacts.querySelector( '.Settings' );
         this.domChat = this.domElement.querySelector( '.Chat' );
         this.domSearch = this.domElement.querySelector( '.ContactSearch' ).getElementsByTagName( 'input' )[0];
         
@@ -132,6 +134,8 @@ class FUIContacts extends FUIElement
     {
         let self = this;
         
+        let parentEl = self.domContactList;
+        
         let d = document.createElement( 'div' );
         d.className = 'Contact';
         if( contact.Type == 'User' )
@@ -177,7 +181,7 @@ class FUIContacts extends FUIElement
         {
             this.userList[ contact.Fullname ] = document.createElement( 'div' );
             this.userList[ contact.Fullname ].className = 'Slot';
-            this.domContacts.appendChild( this.userList[ contact.Fullname ] );
+            parentEl.appendChild( this.userList[ contact.Fullname ] );
             // Add to slot
             this.userList[ contact.Fullname ].appendChild( d );
         }

@@ -38,8 +38,31 @@
     left: 0;
     width: 300px;
     height: calc(100% - 35px);
-    overflow: auto;
+    overflow: hidden;
     border-radius: 15px 0 0 0;
+}
+
+.FUIContacts .Contacts > .ContactList
+{
+	position: absolute;
+	left: 0;
+	top: 0;
+	width: 100%;
+	height: calc(100% - 85px);
+	overflow: auto;
+}
+
+.FUIContacts .Contacts > .Settings
+{
+	position: absolute;
+	left: 0;
+	box-sizing: border-box;
+	top: calc(100% - 80px);
+	width: 100%;
+	height: 80px;
+	padding: 15px;
+	background-color: var(--fui-module-background);
+	overflow: hidden;
 }
 
 .Channels.Scroll + .Chatlist .FUIContacts .Contacts

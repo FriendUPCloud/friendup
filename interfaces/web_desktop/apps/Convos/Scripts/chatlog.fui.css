@@ -349,9 +349,9 @@ span.Emoticon:hover
 .FUIChatlog .Messages .WebLinkPreview p.OGSite
 {
     display: block;
-    padding: 5px;
-    background-color: var(--fui-menu-background);
-    color: var(--fui-menu-color);
+    padding: 10px 15px;
+    background-color: var(--BackgroundHeaviest);
+    color: var(--fui-color);
     margin: 0;
 }
 .FUIChatlog .Messages .WebLinkPreview p.OGSite
@@ -369,9 +369,15 @@ span.Emoticon:hover
     cursor: pointer;
 }
 
+.FUIChatlog .Messages .WebLinkPreview p.WebLinkP
+{
+    text-align: center;
+}
+
 .FUIChatlog .Messages .WebLinkPreview p.WebLinkP a
 {
-    color: var(--fui-menu-color);
+    color: var(--fui-color);
+    text-decoration: underline;
 }
 
 .FUIChatlog .Messages .WebLinkPreview.Showing
