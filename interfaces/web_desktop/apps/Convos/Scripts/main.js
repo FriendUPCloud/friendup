@@ -20,7 +20,7 @@ Application.run = function( msg ){
 			'Progdir:Markup/main.html'
 		],
 		background: 'transparent',
-		width: 800,
+		width: 1100,
 		height: 600,
 		'min-width': 360,
 		'min-height': 360,
