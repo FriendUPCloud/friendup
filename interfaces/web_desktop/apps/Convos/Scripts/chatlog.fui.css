@@ -330,19 +330,11 @@ span.Emoticon:hover
 .FUIChatlog .Messages .WebLinkPreview 
 {
     display: block;
-    border: 1px solid rgba(0,0,0,0.2);
-    border-radius: 10px;
-    overflow: hidden;
-}
-
-.FUIChatlog .Messages .WebLinkPreview 
-{
-    display: block;
-    border: 1px solid rgba(0,0,0,0.2);
     border-radius: 10px;
     overflow: hidden;
     opacity: 0;
     transition: opacity 0.15s;
+    border: 2px solid var(--ColorBgBox);
 }
 
 .FUIChatlog .Messages .WebLinkPreview p.WebLinkP,
@@ -350,8 +342,8 @@ span.Emoticon:hover
 {
     display: block;
     padding: 10px 15px;
-    background-color: var(--BackgroundHeaviest);
-    color: var(--fui-color);
+    background-color: var(--fui-module-background);
+    color: var(--fui-module-color);
     margin: 0;
 }
 .FUIChatlog .Messages .WebLinkPreview p.OGSite
@@ -380,7 +372,7 @@ span.Emoticon:hover
 
 .FUIChatlog .Messages .WebLinkPreview p.WebLinkP a
 {
-    color: var(--fui-color);
+    color: var(--fui-module-color);
     text-decoration: underline;
 }
 
