@@ -21,7 +21,7 @@ Application.run = function( msg ){
 		],
 		background: 'transparent',
 		width: 1100,
-		height: 600,
+		height: 720,
 		'min-width': 360,
 		'min-height': 360,
 		quitOnClose: true
