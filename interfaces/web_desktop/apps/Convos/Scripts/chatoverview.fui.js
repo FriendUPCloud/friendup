@@ -35,6 +35,20 @@ class FUIChatoverview extends FUIElement
     			self.domChannels.classList.remove( 'Scroll' );
     		}
     	}
+    	let ov = document.body.querySelector( '.OverviewUpdates' );
+    	if( ov )
+    	{
+    		for( let a = 0; a < ov.childNodes.length; a++ )
+    		{
+    			let ele = ov.childNodes[ a ];
+    			if( ele.tagName != 'DIV' ) continue;
+    			let eleHeight = ele.offsetHeight;
+    			if( eleHeight < ele.scrollHeight )
+    			{
+    				ov.childNodes[ a ].style.height = ele.scrollHeight + 'px';
+    			}
+    		}
+    	}
 	}
     attachDomElement()
     {
@@ -157,6 +171,7 @@ class FUIChatoverview extends FUIElement
     		{
     			self.domChatlist.querySelector( '.Online' ).querySelector( '.Content' ).innerHTML = '<p>' + i18n( 'i18n_no_new_events' ) + '</p>';
     		}
+    		self.handleResize();
     		
     	}
     	ev.execute( 'convos', { method: 'getevents' } );

@@ -283,10 +283,11 @@ body:not([mobile=mobile]) .FUIChatoverview > .HoverElement.Showing
 	{
 		position: relative;
 		width: calc(100% - 30px);
-		height: auto;
+		height: 45px;
 		left: auto;
 		top: auto;
 		margin: 15px;
+		transition: height 0.2s;
 	}
 }
 
