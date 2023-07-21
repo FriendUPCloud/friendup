@@ -42,12 +42,12 @@ class FUIContacts extends FUIElement
         
         this.domElement.className = 'FUIContacts';
         
-        let ex = this.options.groupid ? ' Group' : '';
+        let ex = this.options.groupid ? '<div class="Group"></div>' : '';
         let add = this.options.groupid ? '<div class="Add"></div>' : '';
         
         let data = '\
         <div class="ContactSearch"><input type="text" value="' + ( typeof( self.contactFilter ) != 'undefined' ? self.contactFilter : '' ) + '" placeholder="Find a contact..."/></div>\
-        <div class="Contacts"><div class="ContactList"></div><div class="Settings"><div class="Avatar"></div><div class="Toolbar">' + add + '<div class="Gearbox' + ex + '"></div></div></div></div>\
+        <div class="Contacts"><div class="ContactList"></div><div class="Settings"><div class="Avatar"></div><div class="Toolbar">' + ex + add + '<div class="Gearbox"></div></div></div></div>\
         <div class="Chat"></div>\
         ';
         
@@ -65,6 +65,15 @@ class FUIContacts extends FUIElement
         	cntbtn.onclick = function()
         	{
         		self.inviteDialog = new FUIInvitedialog( { channelName: self.record.Fullname, groupId: self.record.ID } );
+        	}
+        }
+        
+        let cntbtn = this.domSettings.querySelector( '.Group' );
+        if( cntbtn )
+        {
+        	cntbtn.onclick = function()
+        	{
+        		self.groupSettings = new FUIGroupsettings( { channelName: self.record.Fullname, groupId: self.record.ID } );
         	}
         }
         
