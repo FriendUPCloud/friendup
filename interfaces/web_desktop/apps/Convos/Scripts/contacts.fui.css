@@ -110,7 +110,7 @@
 }
 .FUIContacts .Contacts > .Settings > .Gearbox:hover
 {
-	outline: 2px solid var(--fui-border-foreground);
+	outline: 1px solid var(--fui-border-foreground);
 }
 .FUIContacts .Contacts > .Settings > .Gearbox:before
 {
