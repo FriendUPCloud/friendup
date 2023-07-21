@@ -21,7 +21,6 @@
 	background-color: var(--fui-module-background);
 	transition: width,padding 0.25s,0.25s;
 	overflow-x: hidden;
-	border-right: 1px solid rgba(0,0,0,0.1);
 }
 
 @media (max-width: 512px)
@@ -370,7 +369,7 @@ html body.activated .FUIChatoverview .Channels.Scroll::-webkit-scrollbar-track
 {
 	padding-left: 19px;
 	padding-right: 19px;
-	width: 101px;
+	width: 102px;
 }
 
 
