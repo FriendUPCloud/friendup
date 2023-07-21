@@ -58,6 +58,18 @@ class FUIContacts extends FUIElement
         this.domChat = this.domElement.querySelector( '.Chat' );
         this.domSearch = this.domElement.querySelector( '.ContactSearch' ).getElementsByTagName( 'input' )[0];
         
+        let i = new Image();
+        i.src = '/system.library/module/?module=system&command=getavatar&userid=' + Application.userId + '&width=128&height=128&authid=' + Application.authId;
+        i.onload = function()
+        {
+            self.domSettings.querySelector( '.Avatar' ).style.backgroundImage = 'url(' + this.src + ')';
+            self.domSettings.querySelector( '.Avatar' ).classList.add( 'Loaded' );
+            document.body.removeChild( i );
+        }
+        i.style.position = 'absolute';
+        i.style.visibility = 'hidden';
+        document.body.appendChild( i );
+        
         this.domSearch.addEventListener( 'keyup', function( e )
         {
             let s = this;
