@@ -229,13 +229,13 @@ if( isset( $args->args ) )
         	' ) )
         	{
         		$out = [];
-        		$isset = new stdClass();
+        		$isset = [];
         		foreach( $rows as $row )
         		{
         			// Filter duplicates!
-        			if( isset( $isset{ $row->ID } ) )
+        			if( isset( $isset[ $row->ID ] ) )
         				continue;
-        			$isset{ $row->ID } = true;
+        			$isset[ $row->ID ] = true;
         			$o = new stdClass();
         			$o->UniqueID = $row->UniqueID;
         			$o->Name = $row->Name;
