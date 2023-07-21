@@ -334,7 +334,7 @@ span.Emoticon:hover
     overflow: hidden;
     opacity: 0;
     transition: opacity 0.15s;
-    border: 2px solid var(--ColorBgBox);
+    border: 2px solid var(--ColorBox);
 }
 
 .FUIChatlog .Messages .WebLinkPreview p.WebLinkP,
