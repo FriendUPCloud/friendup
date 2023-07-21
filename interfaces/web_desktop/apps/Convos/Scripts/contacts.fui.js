@@ -73,7 +73,7 @@ class FUIContacts extends FUIElement
         {
         	grp.onclick = function()
         	{
-        		self.groupSettings = new FUIGroupsettings( { channelName: self.record.Fullname, groupId: self.record.ID } );
+        		self.groupSettings = new FUIGroupsettings( { channelName: self.record.Fullname, groupId: self.record.ID, description: self.record.Description } );
         	}
         }
         

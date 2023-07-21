@@ -30,15 +30,57 @@ class FUIGroupsettings extends FUIInvitedialog
 		return t;
 	}
 	
+	refreshAvatar()
+	{
+		
+	}
+	
 	setFormContents( element )
 	{
+		let self = this;
+		
 		let f = new File( 'Progdir:Markup/groupsettings.html' );
 		//f.replacements = { 'channel-name': this.options.channelName.split( /\s/ ).join( '-' ) };
+		f.replacements = {
+			'room-name': this.options.channelName,
+			'room-description': this.options.description
+		};
 		f.i18n();
 		f.onLoad = function( data )
 		{
 			element.innerHTML = data;
 			element.classList.remove( 'Loading' );
+			
+			let upload = self.domElement.querySelector( '.Upload' );
+			upload.onclick = function()
+			{
+				let flags = {
+					multiSelect: false,
+					suffix: [ 'jpg', 'jpeg', 'png', 'gif' ],
+					triggerFunction: function( arr )
+					{
+						if( arr && arr.length > 0 )
+						{
+							let m = new Module( 'system' );
+							m.onExecuted = function( me, md )
+							{
+								if( me == 'ok' )
+								{
+									let res = JSON.parse( md );
+									self.avatar = res.data;
+									self.refreshAvatar();
+								}
+							}
+							m.execute( 'convos', { method: 'setroomavatar', path: arr[ 0 ].Path } );
+						}
+					},
+					path: false,
+					rememberPath: true,
+					type: 'load'
+				};
+			
+				new Filedialog( flags );
+			}
 		}
 		f.load();
 	}
