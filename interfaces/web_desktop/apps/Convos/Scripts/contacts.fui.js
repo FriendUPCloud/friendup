@@ -43,10 +43,11 @@ class FUIContacts extends FUIElement
         this.domElement.className = 'FUIContacts';
         
         let ex = this.options.groupid ? ' Group' : '';
+        let add = this.options.groupid ? '<div class="Add"></div>' : '';
         
         let data = '\
         <div class="ContactSearch"><input type="text" value="' + ( typeof( self.contactFilter ) != 'undefined' ? self.contactFilter : '' ) + '" placeholder="Find a contact..."/></div>\
-        <div class="Contacts"><div class="ContactList"></div><div class="Settings"><div class="Avatar"></div><div class="Gearbox' + ex + '"></div></div></div>\
+        <div class="Contacts"><div class="ContactList"></div><div class="Settings"><div class="Avatar"></div><div class="Toolbar">' + add + '<div class="Gearbox' + ex + '"></div></div></div></div>\
         <div class="Chat"></div>\
         ';
         
@@ -57,6 +58,15 @@ class FUIContacts extends FUIElement
         this.domSettings = this.domContacts.querySelector( '.Settings' );
         this.domChat = this.domElement.querySelector( '.Chat' );
         this.domSearch = this.domElement.querySelector( '.ContactSearch' ).getElementsByTagName( 'input' )[0];
+        
+        let cntbtn = this.domSettings.querySelector( '.Add' );
+        if( cntbtn )
+        {
+        	cntbtn.onclick = function()
+        	{
+        		self.inviteDialog = new FUIInvitedialog( { channelName: self.record.Fullname, groupId: self.record.ID } );
+        	}
+        }
         
         // Cache this globally!
         if( window.myAvatar )
@@ -314,9 +324,11 @@ class FUIContacts extends FUIElement
                     {
                         self.addContact( list.contacts[a] );
                     }
+                    self.domContacts.classList.remove( 'NoContacts' );
                 }
                 else
                 {
+                	self.domContacts.classList.add( 'NoContacts' );
                 	self.showNoContactsMenu();
                 }
                 if( self.queuedClick )

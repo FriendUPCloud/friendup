@@ -91,10 +91,17 @@
 	opacity: 1;
 }
 
-.FUIContacts .Contacts > .Settings > .Gearbox
+.FUIContacts .Contacts > .Settings .Toolbar
+{
+	display: flex;
+	gap: 10px;
+}
+
+.FUIContacts .Contacts > .Settings .Gearbox,
+.FUIContacts .Contacts > .Settings .Add
 {
 	content: " ";
-    display: block;
+    display: inline-block;
     width: 30px;
     height: 30px;
     background: black;
@@ -108,13 +115,20 @@
     outline: 0px solid transparent;
     transition: outline 0.12s;
 }
-.FUIContacts .Contacts > .Settings > .Gearbox:hover
+.FUIContacts .Contacts > .Settings .Gearbox:hover,
+'.FUIContacts .Contacts > .Settings .Add:hover
 {
 	outline: 1px solid var(--fui-border-foreground);
 }
-.FUIContacts .Contacts > .Settings > .Gearbox:before
+.FUIContacts .Contacts > .Settings .Gearbox:before
 {
 	content: "\f013";
+	font-family: FontAwesome;
+}
+
+.FUIContacts .Contacts > .Settings .Add:before
+{
+	content: "\f234";
 	font-family: FontAwesome;
 }
 
