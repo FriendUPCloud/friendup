@@ -222,15 +222,20 @@ if( isset( $args->args ) )
         			FUserGroup y, FUserToGroup l
     			WHERE
     				l.UserID = \'' . $User->ID . '\' AND
-    				l.UserGroupID=y.ID AND
+    				l.UserGroupID = y.ID AND
     				y.Type = \'chatroom\'
 				ORDER BY
 					y.Name ASC
         	' ) )
         	{
         		$out = [];
+        		$isset = new stdClass();
         		foreach( $rows as $row )
         		{
+        			// Filter duplicates!
+        			if( isset( $isset{ $row->ID } ) )
+        				continue;
+        			$isset{ $row->ID } = true;
         			$o = new stdClass();
         			$o->UniqueID = $row->UniqueID;
         			$o->Name = $row->Name;
