@@ -37,8 +37,8 @@ class FUIGroupsettings extends FUIInvitedialog
 		f.i18n();
 		f.onLoad = function( data )
 		{
-			r.innerHTML = data;
-			r.classList.remove( 'Loading' );
+			element.innerHTML = data;
+			element.classList.remove( 'Loading' );
 		}
 		f.load();
 	}

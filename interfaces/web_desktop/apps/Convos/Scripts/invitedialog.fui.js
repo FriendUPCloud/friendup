@@ -37,8 +37,8 @@ class FUIInvitedialog extends FUIElement
 		f.i18n();
 		f.onLoad = function( data )
 		{
-			r.innerHTML = data;
-			r.classList.remove( 'Loading' );
+			element.innerHTML = data;
+			element.classList.remove( 'Loading' );
 			
 			let input = element.getElementsByTagName( 'input' );
 			input[ 0 ].onkeyup = function( e )
