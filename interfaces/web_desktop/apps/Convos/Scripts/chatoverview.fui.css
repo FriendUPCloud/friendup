@@ -288,6 +288,7 @@ body:not([mobile=mobile]) .FUIChatoverview > .HoverElement.Showing
 		top: auto;
 		margin: 15px;
 		transition: height 0.2s;
+		overflow: hidden;
 	}
 }
 
