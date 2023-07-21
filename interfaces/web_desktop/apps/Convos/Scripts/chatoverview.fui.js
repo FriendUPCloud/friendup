@@ -22,7 +22,7 @@ class FUIChatoverview extends FUIElement
         	setTimeout( function()
         	{
         		self.handleResize();
-        	}, 25 );
+        	}, 50 );
         } );
     }
     handleResize()
