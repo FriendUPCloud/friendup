@@ -3,6 +3,12 @@ Friend OS v1.3.0, "Helium"
 
 *NB2*: For extended functionality and related Friend projects such as the Android app refer [here](https://github.com/FriendSoftwareLabs).
 
+Roadmap
+-------
+Check out our [Roadmap using this link](https://friendos.com/en/developers/index.html#Roadmap) on the Friend OS web site. The roadmap is updated up to several times a day, and shows a pretty realistic projection on when things are done.
+
+<img src="https://github.com/FriendUPCloud/friendup/assets/17009357/45f575f0-0be4-4309-9200-56975ffdf1cc" width="600px" height="auto" style="max-width: 100%x"/>
+
 ---
 
 **Release notes coming soon**
