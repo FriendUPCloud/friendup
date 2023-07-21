@@ -104,6 +104,13 @@
     color: var(--fui-border-foreground);
     box-sizing: border-box;
     line-height: 26px;
+    cursor: pointer;
+    outline: 0px solid transparent;
+    transition: outline 0.12s;
+}
+.FUIContacts .Contacts > .Settings > .Gearbox:hover
+{
+	outline: 2px solid var(--fui-border-foreground);
 }
 .FUIContacts .Contacts > .Settings > .Gearbox:before
 {
