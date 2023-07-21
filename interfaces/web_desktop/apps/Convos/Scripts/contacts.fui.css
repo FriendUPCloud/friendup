@@ -77,7 +77,7 @@
     height: 45px;
     background: black;
     border-radius: 100%;
-    border: 2px solid white;
+    border: 2px solid var(--fui-border-foreground);
     margin: 0 15px 0 0;
     opacity: 0;
     background-position: center;
@@ -99,7 +99,7 @@
     height: 30px;
     background: black;
     border-radius: 100%;
-    border: 2px solid white;
+    border: 2px solid var(--fui-border-foreground);
     text-align: center;
     color: white;
     box-sizing: border-box;
@@ -208,7 +208,7 @@
     height: 35px;
     background-color: var(--fui-list-background);
     border-radius: 35px;
-    border: 2px solid white;
+    border: 2px solid var(--fui-border-foreground);
     box-sizing: border-box;
 }
 

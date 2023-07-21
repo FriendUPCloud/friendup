@@ -235,4 +235,7 @@
 
 	/* Other */
 	--LineHeightInput:        14px;
+	
+	/* FUI Overrides */
+	--fui-border-foreground:  #fffef6;
 }
