@@ -49,7 +49,6 @@
 	box-sizing: border-box;
     padding: 15px 15px 95px 15px;
 	background-color: var(--fui-background-foreground);
-	border-radius: 15px 0 0 0;
 }
 
 .FUIChatlog .Input

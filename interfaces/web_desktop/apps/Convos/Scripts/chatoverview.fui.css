@@ -350,3 +350,20 @@ body:not([mobile=mobile]) .FUIChatoverview > .HoverElement.Showing
 	cursor: pointer;
 }
 
+/* Scrolling */
+
+.FUIChatoverview .Channels.Scroll::-webkit-scrollbar, 
+html body .FUIChatoverview .Channels.Scroll::-webkit-scrollbar-track,
+html body.activated .FUIChatoverview .Channels.Scroll::-webkit-scrollbar-track
+{
+	width: 2px;
+}
+
+.FUIChatoverview .Channels.Scroll
+{
+	padding-left: 19px;
+	padding-right: 19px;
+	width: 101px;
+}
+
+

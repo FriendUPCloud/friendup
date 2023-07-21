@@ -14,7 +14,28 @@ class FUIChatoverview extends FUIElement
     {
         super( options );
         // Do stuff
+        
+        let self = this;
+        window.addEventListener( 'resize', function()
+        {
+        	self.handleResize();
+        } );
     }
+    handleResize()
+    {
+    	let self = this;
+    	if( self.domChannels )
+    	{
+    		if( self.domChannels.scrollHeight > self.domChannels.offsetHeight )
+    		{
+    			self.domChannels.classList.add( 'Scroll' );
+    		}
+    		else
+    		{
+    			self.domChannels.classList.remove( 'Scroll' );
+    		}
+    	}
+	}
     attachDomElement()
     {
         super.attachDomElement();
@@ -153,6 +174,7 @@ class FUIChatoverview extends FUIElement
         let self = this;
         
         this.redrawChannels();
+        this.handleResize();
     }
     setChat( mode, record = false )
     {
@@ -347,6 +369,7 @@ class FUIChatoverview extends FUIElement
 					}
 				} )( chans[ a ], uniqueid, groupId, groupName );
 			}
+			self.handleResize();
     	}
     	m.execute( 'convos', { 'method': 'getrooms' } );
     }

@@ -42,6 +42,11 @@
     border-radius: 15px 0 0 0;
 }
 
+.Channels.Scroll + .Chatlist .FUIContacts .Contacts
+{
+	border-radius: 0;
+}
+
 .FUIContacts .Contacts .NoContacts:first-child
 {
 	margin-top: 10px;
