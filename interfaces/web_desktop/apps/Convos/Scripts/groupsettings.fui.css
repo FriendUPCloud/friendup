@@ -42,6 +42,8 @@
 .FUIInvitedialog.FUIGroupsettings > .Dia .TheForm > .Form .AvatarPreview
 {
 	display: inline-block;
+	background-size: cover;
+	background-position: center;
 	border-radius: 100%;
 	width: 128px;
 	height: 128px;

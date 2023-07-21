@@ -32,7 +32,30 @@ class FUIGroupsettings extends FUIInvitedialog
 	
 	refreshAvatar()
 	{
-		
+		let self = this;
+		let std = {
+			"method": "getroomavatar",
+			"groupid": self.options.groupId
+		};
+		let i = new Image();
+		i.src = '/system.library/module/?module=system&command=convos&args=' + encodeURIComponent( JSON.stringify( std ) ) + '&authid=' + Application.authId;
+		i.onload = function()
+		{
+			let c = document.createElement( 'canvas' );
+			let ctx = c.getContext( '2d' );
+			c.width = this.naturalWidth;     // update canvas size to match image
+			c.height = this.naturalHeight;
+			ctx.drawImage( this, 0, 0 );       // draw in image
+			c.toBlob( function( blob )
+			{
+				let a = new FileReader();
+				a.onload = function(e)
+				{
+					document.querySelector( '.AvatarPreview' ).style.backgroundImage = 'url(' + e.target.result + ')';
+				}
+				a.readAsDataURL( blob );
+			}, 'image/jpeg', 100 );
+		};
 	}
 	
 	setFormContents( element )
@@ -40,7 +63,6 @@ class FUIGroupsettings extends FUIInvitedialog
 		let self = this;
 		
 		let f = new File( 'Progdir:Markup/groupsettings.html' );
-		//f.replacements = { 'channel-name': this.options.channelName.split( /\s/ ).join( '-' ) };
 		f.replacements = {
 			'room-name': this.options.channelName,
 			'room-description': this.options.description
@@ -67,11 +89,10 @@ class FUIGroupsettings extends FUIInvitedialog
 								if( me == 'ok' )
 								{
 									let res = JSON.parse( md );
-									self.avatar = res.data;
 									self.refreshAvatar();
 								}
 							}
-							m.execute( 'convos', { method: 'setroomavatar', path: arr[ 0 ].Path } );
+							m.execute( 'convos', { method: 'setroomavatar', path: arr[ 0 ].Path, groupId: self.options.groupId } );
 						}
 					},
 					path: false,
@@ -81,6 +102,8 @@ class FUIGroupsettings extends FUIInvitedialog
 			
 				new Filedialog( flags );
 			}
+			
+			self.refreshAvatar();
 		}
 		f.load();
 	}

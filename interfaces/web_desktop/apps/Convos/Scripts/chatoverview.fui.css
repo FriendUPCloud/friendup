@@ -145,11 +145,6 @@
     }
 }
 
-.FUIChatoverview > .Channels > .Channel[uniqueid=chatroom]
-{
-	background-size: contain;
-}
-
 .FUIChatoverview > .Channels > .Channel
 {
 	border-radius: 100%;
@@ -159,11 +154,12 @@
 	margin: 0 0 20px 0;
 	cursor: pointer;
 	background-position: center;
+	background-size: cover;
 	background-repeat: no-repeat;
 	border-style: solid;
 	box-sizing: border-box;
 	border-width: 3px;
-    border-color: transparent;
+    border-color: var(--fui-background);
 }
 
 .FUIChatoverview > .Channels > .Channel.Home 

@@ -25,6 +25,35 @@ class FUIChatoverview extends FUIElement
         	}, 50 );
         } );
     }
+    refreshChannelAvatar( chan )
+	{
+		let self = this;
+		let std = {
+			"method": "getroomavatar",
+			"groupid": chan.id
+		};
+		console.log( 'Trying' );
+		let i = new Image();
+		i.src = '/system.library/module/?module=system&command=convos&args=' + encodeURIComponent( JSON.stringify( std ) ) + '&authid=' + Application.authId;
+		i.onload = function()
+		{
+			let c = document.createElement( 'canvas' );
+			let ctx = c.getContext( '2d' );
+			c.width = this.naturalWidth;     // update canvas size to match image
+			c.height = this.naturalHeight;
+			ctx.drawImage( this, 0, 0 );       // draw in image
+			c.toBlob( function( blob )
+			{
+				let a = new FileReader();
+				a.onload = function(e)
+				{
+					console.log( 'OJ fkjd' );
+					chan.style.backgroundImage = 'url(' + e.target.result + ')';
+				}
+				a.readAsDataURL( blob );
+			}, 'image/jpeg', 100 );
+		};
+	}
     handleResize()
     {
     	let self = this;
@@ -38,6 +67,19 @@ class FUIChatoverview extends FUIElement
     		{
     			self.domChannels.classList.remove( 'Scroll' );
     		}
+    		
+    		for( let a = 0; a < self.domChannels.childNodes.length; a++ )
+    		{
+    			let cn = self.domChannels.childNodes[ a ];
+    			if( cn.nodeName == 'DIV' && cn.classList.contains( 'Group' ) )
+    			{
+					if( cn.getAttribute( 'uniqueid' ) == 'chatroom' )
+					{
+						self.refreshChannelAvatar( cn );
+					}
+				}
+    		}
+    		
     	}
 
     	let ov = document.body.querySelector( '.OverviewUpdates' );

@@ -246,6 +246,87 @@ if( isset( $args->args ) )
         	}
         	die( 'fail<!--separate-->{"message":"You have no chat room.","response":-1}' );
         }
+        // Sets a share parameter for an image and shares it with the group
+        else if( $args->args->method == 'setroomavatar' )
+        {
+        	// Share file with group
+        	if( $args->args->groupId )
+        	{
+		    	$f = new File( $args->args->path );
+		    	if( $f->Load( $args->args->path ) )
+		    	{
+		    		$g = new dbIO( 'FUserGroup' );
+		    		$g->UniqueID = $args->args->groupId;
+		    		if( $g->Load() )
+		    		{
+						$o = new dbIO( 'FShared' );
+						$o->OwnerUserID = $User->ID;
+						$o->SharedType = 'chatroom';
+						$o->SharedID = $g->ID;
+						$o->Mode = 'room-avatar';
+						if( !$o->Load() )
+							$o->DateCreated = date( 'Y-m-d H:i:s' );
+						$o->Data = $args->args->path;
+						$o->DateTouched = date( 'Y-m-d H:i:s' );
+						$o->Save();
+						if( $o->ID > 0 )
+						{
+							die( 'ok<!--separate-->{"message":"Shared image.","response":1}' );
+						}
+		    		}
+		    	}
+	    	}
+        	die( 'fail<!--separate-->{"message":"Could not set chat room avatar.","response":-1}' );
+        }
+        // Gets a room avatar
+        else if( $args->args->method == 'getroomavatar' )
+        {
+        	// Check if the user is in the group
+        	if( $g = $SqlDatabase->fetchObject( '
+        		SELECT g.* FROM FUserGroup g, FUserToGroup ug
+        		WHERE 
+        			ug.UserID = \'' . $User->ID . '\' AND
+        			g.ID = ug.UserGroupID AND
+        			g.UniqueID = \'' . $SqlDatabase->_link->real_escape_string( $args->args->groupid ) . '\'
+        	' ) )
+        	{
+		    	$o = new dbIO( 'FShared' );
+				$o->SharedType = 'chatroom';
+				$o->SharedID = $g->ID;
+				$o->Mode = 'room-avatar';
+				if( $o->Load() )
+				{
+					$n = new dbIO( 'FUser' );
+					if( $n->Load( $o->OwnerUserID ) )
+					{
+						$f = new File( $o->Data );
+						$f->SetAuthContext( 'servertoken', $n->ServerToken );
+						if( $f->Load( $o->Data ) )
+						{
+							ob_clean();
+							$ext = explode( '.', $o->Data );
+							$ext = strtolower( array_pop( $ext ) );
+							switch( $ext )
+							{
+								case 'png':
+									FriendHeader( 'Content-Type: image/png' );
+									break;
+								case 'jpg':
+								case 'jpeg':
+									FriendHeader( 'Content-Type: image/jpeg' );
+									break;
+								case 'gif':
+									FriendHeader( 'Content-Type: image/gif' );
+									break;
+							}
+									
+							die( $f->_content );
+						}
+					}	
+				}
+			}
+			die( '' );
+        }
         else if( $args->args->method == 'addroom' )
         {
         	$o = new dbIO( 'FUserGroup' );
