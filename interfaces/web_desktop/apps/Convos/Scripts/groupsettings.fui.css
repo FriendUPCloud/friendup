@@ -1,0 +1,16 @@
+
+.FUIInvitedialog.FUIGroupsettings > .Dia
+{
+	left: calc(50% - 400px);
+	width: 800px;
+}
+
+.FUIInvitedialog.FUIGroupsettings > .Dia .TheForm > .Form
+{
+	position: absolute;
+	top: 0;
+	left: 15px;
+	width: calc(100% - 30px);
+	height: 100%;
+	overflow: auto;
+}

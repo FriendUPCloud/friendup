@@ -98,13 +98,14 @@
 }
 
 .FUIContacts .Contacts > .Settings .Gearbox,
-.FUIContacts .Contacts > .Settings .Add
+.FUIContacts .Contacts > .Settings .Add,
+.FUIContacts .Contacts > .Settings .Group
 {
 	content: " ";
     display: inline-block;
     width: 30px;
     height: 30px;
-    background: black;
+    background-color: black;
     border-radius: 100%;
     border: 2px solid var(--fui-border-foreground);
     text-align: center;
@@ -113,13 +114,16 @@
     line-height: 26px;
     cursor: pointer;
     outline: 0px solid transparent;
-    transition: outline 0.12s;
+    transition: outline,background-color 0.12s,0.2s;
 }
 .FUIContacts .Contacts > .Settings .Gearbox:hover,
-'.FUIContacts .Contacts > .Settings .Add:hover
+.FUIContacts .Contacts > .Settings .Add:hover,
+.FUIContacts .Contacts > .Settings .Group:hover
 {
 	outline: 1px solid var(--fui-border-foreground);
+    background-color: var(--fui-palette-chan04);
 }
+
 .FUIContacts .Contacts > .Settings .Gearbox:before
 {
 	content: "\f013";
@@ -129,6 +133,12 @@
 .FUIContacts .Contacts > .Settings .Add:before
 {
 	content: "\f234";
+	font-family: FontAwesome;
+}
+
+.FUIContacts .Contacts > .Settings .Group:before
+{
+	content: "\f0c0";
 	font-family: FontAwesome;
 }
 

@@ -32,3 +32,5 @@ i18n_news_and_events                   : News and events
 
 i18n_share_image_with_group            : Share image with chat room?
 i18n_share_image_desc                  : If you add the image to the chat room, everyone can see it. Do you want that?
+
+i18n_group_settings                    : Group settings

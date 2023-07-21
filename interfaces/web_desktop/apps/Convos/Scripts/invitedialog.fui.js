@@ -8,7 +8,7 @@
 *                                                                              *
 *****************************************************************************©*/
 
-class FUIInviteDialog extends FUIElement
+class FUIInvitedialog extends FUIElement
 {
 	constructor( options )
 	{
@@ -17,13 +17,51 @@ class FUIInviteDialog extends FUIElement
 		this.initialized = true;
 	}
 	
+	getClassName()
+	{
+		return 'FUIInvitedialog';
+	}
+	
+	createTitle()
+	{
+		let t = document.createElement( 'div' );
+		t.className = 'Title';
+		t.innerHTML = '<span>' + ( this.options.title ? this.options.title : i18n( 'i18n_invite_contacts' ) ) + '</span><span class="Close"></span>';
+		return t;
+	}
+	
+	setFormContents( element )
+	{
+		let f = new File( 'Progdir:Markup/invite.html' );
+		f.replacements = { 'channel-name': this.options.channelName.split( /\s/ ).join( '-' ) };
+		f.i18n();
+		f.onLoad = function( data )
+		{
+			r.innerHTML = data;
+			r.classList.remove( 'Loading' );
+			
+			let input = element.getElementsByTagName( 'input' );
+			input[ 0 ].onkeyup = function( e )
+			{
+				let s = this;
+				if( this.timeo )
+					clearTimeout( this.timeo );
+				this.timeo = setTimeout( function()
+				{
+					self.executeSearch( s.value, element.querySelector( '.SearchResults' ) );
+				}, 100 );
+			}
+		}
+		f.load();
+	}
+	
 	attachDomElement()
 	{
 		super.attachDomElement();
 		
 		let self = this;
 		
-		this.domElement.className = 'FUIInvitedialog';
+		this.domElement.className = this.getClassName();
 		
 		setTimeout( function()
 		{
@@ -39,36 +77,13 @@ class FUIInviteDialog extends FUIElement
 			d.classList.add( 'Showing' );
 		}, 200 );
 		
-		let t = document.createElement( 'div' );
-		t.className = 'Title';
-		t.innerHTML = '<span>' + ( this.options.title ? this.options.title : i18n( 'i18n_invite_contacts' ) ) + '</span><span class="Close"></span>';
+		let t = this.createTitle();
 		d.appendChild( t );
 		
 		let r = document.createElement( 'div' );
 		r.className = 'TheForm Loading';
 		d.appendChild( r );
-				
-		let f = new File( 'Progdir:Markup/invite.html' );
-		f.replacements = { 'channel-name': this.options.channelName.split( /\s/ ).join( '-' ) };
-		f.i18n();
-		f.onLoad = function( data )
-		{
-			r.innerHTML = data;
-			r.classList.remove( 'Loading' );
-			
-			let input = r.getElementsByTagName( 'input' );
-			input[ 0 ].onkeyup = function( e )
-			{
-				let s = this;
-				if( this.timeo )
-					clearTimeout( this.timeo );
-				this.timeo = setTimeout( function()
-				{
-					self.executeSearch( s.value, r.querySelector( '.SearchResults' ) );
-				}, 100 );
-			}
-		}
-		f.load();
+		this.setFormContents( r );
 		
 		this.domTitle = t;
 		
@@ -166,5 +181,5 @@ class FUIInviteDialog extends FUIElement
 	
 }
 
-FUI.registerClass( 'invitedialog', FUIInviteDialog );
+FUI.registerClass( 'invitedialog', FUIInvitedialog );
 

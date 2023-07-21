@@ -8,7 +8,7 @@
 *                                                                              *
 *****************************************************************************©*/
 
-class FUIGroupSettings extends FUIInviteDialog
+class FUIGroupsettings extends FUIInvitedialog
 {
 	constructor( options )
 	{
@@ -16,6 +16,32 @@ class FUIGroupSettings extends FUIInviteDialog
 		
 		this.initialized = true;
 	}
+	
+	getClassName()
+	{
+		return 'FUIInvitedialog FUIGroupsettings';
+	}
+	
+	createTitle()
+	{
+		let t = document.createElement( 'div' );
+		t.className = 'Title';
+		t.innerHTML = '<span>' + ( this.options.title ? this.options.title : i18n( 'i18n_group_settings' ) ) + '</span><span class="Close"></span>';
+		return t;
+	}
+	
+	setFormContents( element )
+	{
+		let f = new File( 'Progdir:Markup/groupsettings.html' );
+		//f.replacements = { 'channel-name': this.options.channelName.split( /\s/ ).join( '-' ) };
+		f.i18n();
+		f.onLoad = function( data )
+		{
+			r.innerHTML = data;
+			r.classList.remove( 'Loading' );
+		}
+		f.load();
+	}
 }
 
-FUI.registerClass( 'groupsettings', FUIInviteDialog );
+FUI.registerClass( 'groupsettings', FUIGroupsettings );

@@ -68,10 +68,10 @@ class FUIContacts extends FUIElement
         	}
         }
         
-        let cntbtn = this.domSettings.querySelector( '.Group' );
-        if( cntbtn )
+        let grp = this.domSettings.querySelector( '.Group' );
+        if( grp )
         {
-        	cntbtn.onclick = function()
+        	grp.onclick = function()
         	{
         		self.groupSettings = new FUIGroupsettings( { channelName: self.record.Fullname, groupId: self.record.ID } );
         	}
