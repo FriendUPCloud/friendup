@@ -372,6 +372,9 @@ span.Emoticon:hover
 .FUIChatlog .Messages .WebLinkPreview p.WebLinkP
 {
     text-align: center;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
 }
 
 .FUIChatlog .Messages .WebLinkPreview p.WebLinkP a
