@@ -364,6 +364,29 @@ if( isset( $args->args ) )
         	}
         	die( 'fail<!--separate-->{"message":"Failed to create topic.","response",-1}' );
         }
+        else if( $args->args->method == 'topics' )
+        {
+        	if( $rows = $SqlDatabase->fetchObjects( '
+        		SELECT * FROM `Message` m WHERE 
+        			m.RoomID = 0 AND m.RoomType = \'jeanie\' AND
+        			m.ParentID = 0 AND m.UniqueUserID = \'' . $User->UniqueID . '\'
+    			ORDER BY DateUpdated DESC
+        	' ) )
+        	{
+        		$out = [];
+        		foreach( $rows as $row )
+        		{
+		    		$o = new stdClass();
+		    		$o->ID = $row->ID;
+		    		$o->Fullname = substr( $row->Message, 0, 128 );
+		    		$o->Date = $row->Date;
+		    		$o->DateUpdated = $row->DateUpdated;
+		    		$out[] = $o;
+	    		}
+	    		die( 'ok<!--separate-->{"response":1,"topics":' . json_encode( $out ) . '}' );
+        	}
+        	die( 'fail<!--separate-->{"message":"Failed to find topics.","response",-1}' );
+        }
         // Get the events for the user
         else if( $args->args->method == 'getevents' )
         {

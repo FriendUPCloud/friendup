@@ -1,2 +1,106 @@
 
 
+.FUIContacts .Contacts .Topic
+{
+    opacity: 0;
+    transition: opacity 0.25s;
+    position: relative;
+    cursor: pointer;
+    transition: background-color 0.25s;
+    height: 55px;
+    padding: 5px;
+    box-sizing: border-box;
+}
+
+.Topic.Online:before 
+{
+    position: absolute;
+    top: 29px;
+    left: 31px;
+    content: " ";
+    width: 12px;
+    height: 12px;
+    z-index: 3;
+    background-color: var(--ColorLEDOn);
+    border-radius: 100%;
+    border: 2px solid white;
+}
+
+.FUIContacts .Contacts .Topic.Active, 
+.FUIContacts .Contacts .Topic:hover,
+.FUIContacts .Contacts .Slot:nth-child(even) .Topic:hover,
+.FUIContacts .Contacts .Slot:nth-child(even) .Topic.Active,
+.FUIContacts .Contacts .Slot:nth-child(odd) .Topic:hover,
+.FUIContacts .Contacts .Slot:nth-child(odd) .Topic.Active
+{
+    background-color: var(--fui-menu-background);
+    color: var(--fui-menu-color);
+}
+
+.FUIContacts .Contacts .Topic:hover
+{
+    background-color: var(--fui-module-background-hover);
+    color: var(--fui-module-color);
+}
+
+.FUIContacts .Contacts .Topic > span
+{
+    box-sizing: border-box;
+    padding: 15px;
+    height: 35px;
+}
+
+.FUIContacts .Contacts .Topic > span.Avatar
+{
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+}
+
+.FUIContacts .Contacts .Topic > span:first-child
+{
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    width: 35px;
+    height: 35px;
+    background-color: var(--fui-list-background);
+    border-radius: 35px;
+    border: 2px solid var(--fui-border-foreground);
+    box-sizing: border-box;
+}
+
+.FUIContacts .Contacts .Topic > span:last-child
+{
+    position: absolute;
+    top: 5px;
+    left: 45px;
+    width: calc(100% - 45px);
+    height: 45px;
+    padding: 0px 10px;
+    line-height: 44px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.FUIContacts .Contacts .Topic.Showing
+{
+    opacity: 1;
+}
+
+.FUIContacts .Contacts .Topic.Showing.NewActivity::after 
+{
+    display: inline-block;
+    content: "\f1d7";
+    font-family: fontawesome;
+    position: absolute;
+    z-index: 2;
+    right: 15px;
+    top: 0;
+    line-height: 45px;
+    animation-name: pulsingchat;
+    animation-duration: 1s;
+    animation-iteration-count: infinite;
+    transition: opacity 0.25s;
+}

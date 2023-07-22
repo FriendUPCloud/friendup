@@ -47,12 +47,28 @@ class FUITopics extends FUIContacts
     	}
     }
     
+    getMemberAttribute()
+    {
+    	return 'topics';
+    }
+    getRowClass()
+    {
+    	return 'Topic';
+    }
+    
     initChatTopic()
     {
     	let m = new Module( 'system' );
     	m.onExecuted = function( me, md )
     	{
-    		console.log( me, md );
+    		if( me == 'ok' )
+    		{
+				self.refreshDom();
+			}
+			else
+			{
+				// Perhaps make a message
+			}
     	}
     	m.execute( 'convos', { method: 'createtopic' } );
     }

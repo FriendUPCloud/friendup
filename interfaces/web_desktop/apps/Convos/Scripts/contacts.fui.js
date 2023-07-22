@@ -177,14 +177,18 @@ class FUIContacts extends FUIElement
             }
         }
     }
-    addContact( contact )
+    getRowClass()
+    {
+    	return 'Contact';
+    }
+    addRow( contact )
     {
         let self = this;
         
         let parentEl = self.domContactList;
         
         let d = document.createElement( 'div' );
-        d.className = 'Contact';
+        d.className = this.getRowClass();
         if( contact.Type == 'User' )
         {
             d.className += ' User';
@@ -293,6 +297,10 @@ class FUIContacts extends FUIElement
         
         Application.holdConnection( { method: 'messages', roomType: dm, cid: record.ID } );
     }
+    getMemberAttribute()
+    {
+    	return 'contacts';
+    }
     // Contacts are refreshed by date active
     refreshDom( evaluated = false )
     {
@@ -325,7 +333,7 @@ class FUIContacts extends FUIElement
             m.onExecuted = function( me, md )
             {
                 // Reset hidden
-                let conts = self.domContacts.getElementsByClassName( 'Contact' );
+                let conts = self.domContacts.getElementsByClassName( self.getRowClass() );
                 for( let a = 0; a < conts.length; a++ )
                 {
                     conts[ a ].parentNode.style.display = '';
@@ -333,9 +341,10 @@ class FUIContacts extends FUIElement
                 if( me == 'ok' )
                 {
                     let list = JSON.parse( md );
-                    for( let a = 0; a < list.contacts.length; a++ )
+                    let m = self.getMemberAttribute();
+                    for( let a = 0; a < list[ m ].length; a++ )
                     {
-                        self.addContact( list.contacts[a] );
+                        self.addRow( list[ m ][a] );
                     }
                     self.domContacts.classList.remove( 'NoContacts' );
                 }
