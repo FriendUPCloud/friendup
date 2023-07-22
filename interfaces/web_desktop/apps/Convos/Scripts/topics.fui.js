@@ -58,11 +58,17 @@ class FUITopics extends FUIContacts
     
     initChatTopic()
     {
+    	let self = this;
     	let m = new Module( 'system' );
     	m.onExecuted = function( me, md )
     	{
     		if( me == 'ok' )
     		{
+    			// Flush
+    			if( self.domContacts.querySelector( '.NoContacts' ) )
+    			{
+    				self.domContacts.querySelector( '.ContactList' ).innerHTML = '';
+    			}
 				self.refreshDom();
 			}
 			else

@@ -295,8 +295,7 @@ class FUIContacts extends FUIElement
             par.setChat( true, record );
         }
         
-        console.log( 'Trying this: ' + dm + '|' + record.ID, record );
-        Application.holdConnection( { method: 'messages', roomType: dm, cid: record.ID } );
+        Application.holdConnection( { method: 'messages', roomType: record.RoomType ? record.RoomType : dm, cid: record.ID } );
     }
     getMemberAttribute()
     {
