@@ -475,12 +475,15 @@ if( isset( $args->args ) )
         		$uo = new dbIO( 'FUser' );
         		$uo->Load( $o->UserID );
         		
+        		$g = new dbIO( 'FUserGroup' );
+        		$g->Load( $o->TargetGroupID );
+        		
         		// Notify user that we invited them!
         		$msg = new stdClass();
         		$msg->appname = 'Convos';
         		$msg->dstuniqueid = $uo->UniqueID;
         		$sub = new stdClass();
-        		$sub->groupId = $o->TargetGroupID;
+        		$sub->groupId = $g->UniqueID;
         		$sub->type = 'accept-invite';
         		$sub->message = 'i18n_accepted_invite';
         		$sub->fullname = $User->FullName;

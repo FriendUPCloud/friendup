@@ -54,7 +54,7 @@ Application.receiveMessage = function( msg )
     			text: msg.fullname + ' ' + i18n( msg.message )
 			}, false, function( e )
 			{
-				overview.initHome();
+				overview.pollChatroom( false, msg.groupId );
 			} );
     	}
     }
