@@ -51,7 +51,7 @@ if( isset( $args->args ) )
             $o->UniqueUserID = $User->UniqueID;
             $o->RoomID = 0;
             $o->RoomType = $out->type ? $out->type : 'jeanie';
-            $o->ParentID = 0;
+            $o->ParentID = $out->type == 'jeanie' ? $out->targetId : 0;
             if( isset( $out->targetId ) )
             {
                 $o->TargetID = $out->targetId;

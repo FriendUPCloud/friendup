@@ -271,6 +271,8 @@ class FUIContacts extends FUIElement
         let context = ' context="' + ( record.Type == 'User' ? 'user' : ( record.Type == 'chatroom' ? 'chatroom' : 'contact' ) ) + '"';
         context += ' cid="' + record.ID + '"';
         let dm = record.Type == 'User' ? 'dm-user' : ( record.Type == 'chatroom' ? 'chatroom' : 'dm-contact' );
+        if( record.RoomType )
+        	dm = record.RoomType;
         this.domChat.innerHTML = '<fui-chatlog parentelement="' + this.options.uniqueid + '" uniqueid="messages" type="' + dm + '" name="' + record.Fullname + '"' + context + '></fui-chatlog>';
         FUI.initialize();
         
@@ -295,7 +297,7 @@ class FUIContacts extends FUIElement
             par.setChat( true, record );
         }
         
-        Application.holdConnection( { method: 'messages', roomType: record.RoomType ? record.RoomType : dm, cid: record.ID } );
+        Application.holdConnection( { method: 'messages', roomType: dm, cid: record.ID } );
     }
     getMemberAttribute()
     {
