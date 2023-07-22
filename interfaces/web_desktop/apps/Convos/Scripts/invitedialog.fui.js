@@ -155,10 +155,10 @@ class FUIInvitedialog extends FUIElement
 				
 				// Notify user that we invited them!
 				Application.SendUserMsg( {
-					type: 'invite', 
 					recipientId: contact.ID,
 					message: {
-						groupId: self.options.groupId
+						groupId: self.options.groupId,
+						type: 'invite'
 					}
 				} );
 			}

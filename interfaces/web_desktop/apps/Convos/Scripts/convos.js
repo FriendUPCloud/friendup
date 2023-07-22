@@ -34,6 +34,21 @@ Application.receiveMessage = function( msg )
         	overview.activateDirectMessage( msg.sender, msg.message );
     	}
     }
+    else if( msg.type )
+    {
+    	if( msg.type == 'invite' )
+    	{
+    		let overview = FUI.getElementByUniqueId( 'convos' );
+    		Notify( {
+    			title: i18n( 'i18n_you_got_an_invite' ),
+    			text: i18n( 'i18n_please_check_your_messages' ),
+    			clickcallback: function( e )
+    			{
+    				overview.pollInvites();
+    			}
+    		} );
+    	}
+    }
     if( msg.command == 'drop' )
     {
     	// Check what we dropped
@@ -88,7 +103,7 @@ Application.playSound = function( snd )
 
 Application.SendUserMsg = function( opts )
 {
-	if( !destUserId ) return;
+	if( !opts.recipientId ) return;
 	
 	let amsg = {
         'appname': 'Convos',

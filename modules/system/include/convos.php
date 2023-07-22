@@ -12,6 +12,14 @@
 
 ini_set( 'max_execution_time', '300' ); // Die after 5 minutes
 
+// Send a message
+function sendUserMsg( $msg )
+{
+	global $User;
+	FriendCall( '/system.library/user/session/sendmsg/?servertoken=' . $User->servertoken . '&args=' . urlencode( json_encode( $msg ) ), 
+		false, true );
+}
+
 $response = new stdClass();
 
 // Check chat session
@@ -136,7 +144,7 @@ if( isset( $args->args ) )
                             m.ID, m.Message, m.Date, u.Name, u.UniqueID FROM `Message` m, FUser u 
                         WHERE
                             m.RoomType = \'jeanie\' AND m.UniqueUserID=\'' . $User->UniqueID . '\' AND
-                            m.ParentID = \'' . $args->args->cid . '\' AND m.UniqueUserID = u.UniqueID' . $lastId . '
+                            m.ParentID = \'' . ( isset( $args->args->cid ) ? $args->args->cid : '0' ) . '\' AND m.UniqueUserID = u.UniqueID' . $lastId . '
                         ORDER BY 
                             m.Date DESC, m.ID DESC LIMIT 50
                     ' );
@@ -453,14 +461,15 @@ if( isset( $args->args ) )
         		$o->Status = 'done';
         		$o->Save();
         		
-        		/*// Notify user that we invited them!
-				Application.SendUserMsg( {
-					type: 'invite', 
-					recipientId: contact.ID,
-					message: {
-						groupId: self.options.groupId
-					}
-				} );*/
+        		$uo = new dbIO( 'FUser' );
+        		$uo->Load( $o->UserID );
+        		
+        		// Notify user that we invited them!
+        		$msg = new stdClass();
+        		$msg->type = 'accept-invite';
+        		$msg->recipientId = $uo->UniqueID;
+        		$msg->message = '{"groupId":"' . $o->TargetGroupID . '"}';
+        		sendUserMsg( $msg );
         		
         		$SqlDatabase->query( 'INSERT INTO FUserToGroup ( UserID, UserGroupID ) VALUES ( \'' . $User->ID . '\', \'' . $o->TargetGroupID . '\' )' );
         		die( 'ok<!--separate-->{"message":"Invite accepted.","response":1}' );

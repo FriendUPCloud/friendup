@@ -47,6 +47,7 @@ Application.receiveMessage = function( msg )
     {
         if( msg.command == 'servermessage' )
         {
+        	console.log( 'Hey: ', msg );
             this.view.sendMessage( msg.data );
         }
         else if( msg.command == 'app-ready' )

@@ -45,3 +45,5 @@ i18n_no_topics                         : No topics
 i18n_you_have_no_topics                : You have no chat topics. Add one to start a conversation with your jeanie!
 i18n_add_topic                         : Add a topic
 
+i18n_you_got_an_invite                 : Chat room invite
+i18n_please_check_your_messages        : Please go to the home screen and check events.
