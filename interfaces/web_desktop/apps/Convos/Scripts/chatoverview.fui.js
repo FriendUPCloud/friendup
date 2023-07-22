@@ -32,22 +32,20 @@ class FUIChatoverview extends FUIElement
 			"method": "getroomavatar",
 			"groupid": chan.id
 		};
-		console.log( 'Trying' );
 		let i = new Image();
 		i.src = '/system.library/module/?module=system&command=convos&args=' + encodeURIComponent( JSON.stringify( std ) ) + '&authid=' + Application.authId;
 		i.onload = function()
 		{
 			let c = document.createElement( 'canvas' );
 			let ctx = c.getContext( '2d' );
-			c.width = this.naturalWidth;     // update canvas size to match image
+			c.width = this.naturalWidth;
 			c.height = this.naturalHeight;
-			ctx.drawImage( this, 0, 0 );       // draw in image
+			ctx.drawImage( this, 0, 0 );
 			c.toBlob( function( blob )
 			{
 				let a = new FileReader();
 				a.onload = function(e)
 				{
-					console.log( 'OJ fkjd' );
 					chan.style.backgroundImage = 'url(' + e.target.result + ')';
 				}
 				a.readAsDataURL( blob );
@@ -537,8 +535,6 @@ class FUIChatoverview extends FUIElement
 		if( label == 'jeanie' )
 		{
 			chlist.innerHTML = '<fui-topics parentelement="convos" uniqueid="topics" name="jeanie"></fui-topics>';
-		    //chlist.innerHTML = '<fui-chatlog parentelement="convos" uniqueid="messages" name="' + label + '"></fui-chatlog>';
-		    Application.holdConnection( { method: 'messages', roomType: 'jeanie' } );
 	    }
 	    else if( label == 'dm' )
 	    {
