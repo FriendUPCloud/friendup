@@ -453,6 +453,15 @@ if( isset( $args->args ) )
         		$o->Status = 'done';
         		$o->Save();
         		
+        		/*// Notify user that we invited them!
+				Application.SendUserMsg( {
+					type: 'invite', 
+					recipientId: contact.ID,
+					message: {
+						groupId: self.options.groupId
+					}
+				} );*/
+        		
         		$SqlDatabase->query( 'INSERT INTO FUserToGroup ( UserID, UserGroupID ) VALUES ( \'' . $User->ID . '\', \'' . $o->TargetGroupID . '\' )' );
         		die( 'ok<!--separate-->{"message":"Invite accepted.","response":1}' );
         	}

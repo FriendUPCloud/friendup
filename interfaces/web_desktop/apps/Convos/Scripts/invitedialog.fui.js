@@ -32,6 +32,7 @@ class FUIInvitedialog extends FUIElement
 	
 	setFormContents( element )
 	{
+		let self = this;
 		let f = new File( 'Progdir:Markup/invite.html' );
 		f.replacements = { 'channel-name': this.options.channelName.split( /\s/ ).join( '-' ) };
 		f.i18n();
@@ -138,6 +139,8 @@ class FUIInvitedialog extends FUIElement
 	}
 	executeInvite( contact, btn )
 	{
+		let self = this;
+		
 		let m = new Module( 'system' );
 		m.onExecuted = function( me, md )
 		{
@@ -145,12 +148,19 @@ class FUIInvitedialog extends FUIElement
 			{
 				btn.classList.remove( 'Disabled' );
 				btn.classList.add( 'Error' );
-				console.log( 'Error here: ', me, md );
 			}
 			else
 			{
 				btn.classList.remove( 'Error' );
-				console.log( 'Yes Here: ', me, md );
+				
+				// Notify user that we invited them!
+				Application.SendUserMsg( {
+					type: 'invite', 
+					recipientId: contact.ID,
+					message: {
+						groupId: self.options.groupId
+					}
+				} );
 			}
 		}
 		m.execute( 'convos', { method: 'invite', userId: contact.ID, groupId: this.options.groupId } );

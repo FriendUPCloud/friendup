@@ -86,6 +86,26 @@ Application.playSound = function( snd )
     }
 }
 
+Application.SendUserMsg = function( opts )
+{
+	if( !destUserId ) return;
+	
+	let amsg = {
+        'appname': 'Convos',
+        'dstuniqueid': opts.recipientId
+    };
+    if( opts.message )
+    {
+    	amsg.msg = JSON.stringify( opts.message );
+    }
+    if( opts.callback )
+    {
+    	amsg.callback = 'yes';
+	}
+    let m = new Library( 'system.library' );
+    m.execute( 'user/session/sendmsg', amsg );
+}
+
 // Start polling
 Application.holdConnection = function( flags )
 {

@@ -223,6 +223,32 @@ class FUIChatlog extends FUIElement
     	        if( this.popWidget )
     	            this.popWidget.destroy();
     	        this.popWidget = null;
+    	        
+    	        let flags = {
+					multiSelect: false,
+					suffix: [ 'jpg', 'jpeg', 'png', 'gif' ],
+					triggerFunction: function( arr )
+					{
+						if( arr && arr.length > 0 )
+						{
+							let m = new Module( 'system' );
+							m.onExecuted = function( me, md )
+							{
+								if( me == 'ok' )
+								{
+									let res = JSON.parse( md );
+									self.queueMessage( '<attachment type="' + res.type + '" image="' + res.url + '"/>' );
+								}
+							}
+							m.execute( 'convos', { method: 'addupload', path: arr[ 0 ].Path, groupId: self.options.groupId } );
+						}
+					},
+					path: false,
+					rememberPath: true,
+					type: 'load'
+				};
+			
+				new Filedialog( flags );
     	    }
     	    else
     	    {
