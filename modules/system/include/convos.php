@@ -42,6 +42,8 @@ if( isset( $args->args ) )
         $response->message = 'Stored message(s).';
         $response->messages = [];
         
+        $topicTest = false;
+        
         foreach( $args->args->outgoing as $out )
         {
             // Do not save empty messages.
@@ -66,6 +68,21 @@ if( isset( $args->args ) )
             $o->Date = date( 'Y-m-d H:i:s', $out->timestamp );
             $o->Message = $out->message;
             $o->Save();
+            
+            if( $out->type == 'jeanie' && !$topicTest )
+            {
+            	$topicTest = true;
+            	$p = new dbIO( 'Message' );
+            	if( $p->Load( $o->ParentID ) )
+            	{
+            		if( $p->Message == 'Start of history.' )
+            		{
+            			$p->Message = $o->Message;
+            			$p->Save();
+            		}
+            	}
+            }
+            
             //error_log( '[convos.php] Saved the message - got ID: ' . $o->ID );
             
             // Add to response
@@ -382,6 +399,7 @@ if( isset( $args->args ) )
 		    		$o->Date = $row->Date;
 		    		$o->DateUpdated = $row->DateUpdated;
 		    		$o->RoomType = 'jeanie';
+		    		
 		    		$out[] = $o;
 	    		}
 	    		die( 'ok<!--separate-->{"response":1,"topics":' . json_encode( $out ) . '}' );

@@ -191,6 +191,11 @@ class FUIContacts extends FUIElement
     {
     	return 'Contact';
     }
+    base64ToBytes( base64 )
+    {
+        const binString = atob( base64 );
+        return Uint8Array.from( binString, ( m ) => m.codePointAt( 0 ) );
+    }
     addRow( contact )
     {
         let self = this;
@@ -207,7 +212,21 @@ class FUIContacts extends FUIElement
        	let online = ( Math.floor( new Date().getTime() / 1000 ) - parseInt( contact.LastActionTime ) ) <= 600;
        	if( online )
        		d.className += ' Online';
-        d.innerHTML = '<span class="Avatar"></span><span class="Name">' + contact.Fullname + '</span>';
+       	
+       	let text = contact.Fullname;
+       	
+       	// TODO: Fix hack
+       	if( self.initChatTopic )
+       	{
+		   	try
+		    {
+		        let dec = new TextDecoder().decode( self.base64ToBytes( text ) );
+		        text = dec;
+		    }
+		    catch( e ){};
+	    }
+       		
+        d.innerHTML = '<span class="Avatar"></span><span class="Name">' + text + '</span>';
         d.onclick = function()
         {
             self.setChatView( this.record );
@@ -269,7 +288,7 @@ class FUIContacts extends FUIElement
     getContacts()
     {
     	let out = [];
-    	let contacts = this.domContacts.getElementsByClassName( 'Contact' );
+    	let contacts = this.domContacts.getElementsByClassName( self.getRowClass() );
         for( let a = 0; a < contacts.length; a++ )
         {
             if( contacts[ a ].record )
@@ -284,6 +303,8 @@ class FUIContacts extends FUIElement
     }
     setChatView( record )
     {
+    	let self = this;
+    	
     	this.record = record;
     	
         let context = ' context="' + ( record.Type == 'User' ? 'user' : ( record.Type == 'chatroom' ? 'chatroom' : 'contact' ) ) + '"';
@@ -294,7 +315,7 @@ class FUIContacts extends FUIElement
         this.domChat.innerHTML = '<fui-chatlog parentelement="' + this.options.uniqueid + '" uniqueid="messages" type="' + dm + '" name="' + record.Fullname + '"' + context + '></fui-chatlog>';
         FUI.initialize();
         
-        let contacts = this.domContacts.getElementsByClassName( 'Contact' );
+        let contacts = this.domContacts.getElementsByClassName( self.getRowClass() );
         for( let a = 0; a < contacts.length; a++ )
         {
             if( contacts[a].record == record )
@@ -332,7 +353,7 @@ class FUIContacts extends FUIElement
         
         if( self.contactFilter != '' )
         {
-            let conts = self.domContacts.getElementsByClassName( 'Contact' );
+            let conts = self.domContacts.getElementsByClassName( self.getRowClass() );
             for( let a = 0; a < conts.length; a++ )
             {
                 if( conts[ a ].querySelector( '.Name' ).innerText.toLowerCase().indexOf( self.contactFilter ) >= 0 )
