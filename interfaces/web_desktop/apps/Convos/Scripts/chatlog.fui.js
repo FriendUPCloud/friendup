@@ -70,7 +70,24 @@ class FUIChatlog extends FUIElement
         this.domInput = this.domElement.querySelector( '.Input' );
         
         if( this.options.name )
-            this.domTopic.innerHTML = this.options.name;
+        {
+        	if( this.options.type == 'jeanie' )
+        	{
+        		let text = this.options.name;
+		        try
+		        {
+		            let dec = new TextDecoder().decode( self.base64ToBytes( text ) );
+		            text = dec;
+		        }
+		        catch( e ){};
+		        this.domTopic.innerHTML = text;
+        	}
+        	else
+        	{
+		        this.domTopic.innerHTML = this.options.name;
+	        }
+        }
+            
         if( this.options.parentElement )
         {
             let par = document.createElement( 'div' );
@@ -422,7 +439,8 @@ class FUIChatlog extends FUIElement
     	if( type != 'jeanie' )
     	{
     		let p = this.domTopic.querySelector( '.ParentLink' );
-			this.domTopic.innerHTML = topic;
+    		
+    		this.domTopic.innerHTML = topic;
 			if( p ) this.domTopic.appendChild( p );
 		}
 		else
