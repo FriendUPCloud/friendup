@@ -287,6 +287,7 @@ class FUIContacts extends FUIElement
     }
     getContacts()
     {
+    	let self = this;
     	let out = [];
     	let contacts = this.domContacts.getElementsByClassName( self.getRowClass() );
         for( let a = 0; a < contacts.length; a++ )
