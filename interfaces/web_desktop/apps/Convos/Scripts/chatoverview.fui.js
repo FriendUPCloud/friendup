@@ -536,7 +536,8 @@ class FUIChatoverview extends FUIElement
 		let chlist = this.domElement.querySelector( '.Chatlist' );
 		if( label == 'jeanie' )
 		{
-		    chlist.innerHTML = '<fui-chatlog parentelement="convos" uniqueid="messages" name="' + label + '"></fui-chatlog>';
+			chlist.innerHTML = '<fui-topics parentelement="convos" uniqueid="topics" name="jeanie"></fui-topics>';
+		    //chlist.innerHTML = '<fui-chatlog parentelement="convos" uniqueid="messages" name="' + label + '"></fui-chatlog>';
 		    Application.holdConnection( { method: 'messages', roomType: 'jeanie' } );
 	    }
 	    else if( label == 'dm' )

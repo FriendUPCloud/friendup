@@ -259,6 +259,11 @@ body:not([mobile=mobile]) .FUIChatoverview > .HoverElement.Showing
 	margin: 0;
 }
 
+.FUIChatoverview .OverviewUpdates .Heading p 
+{
+    padding: 0 0 15px 0;
+}
+
 .FUIChatoverview .OverviewUpdates .Updates, 
 .FUIChatoverview .OverviewUpdates .Online, 
 .FUIChatoverview .OverviewUpdates .News 
