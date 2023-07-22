@@ -41,4 +41,7 @@ i18n_group_name                        : Name of chat room
 i18n_group_desc                        : Group description
 
 
+i18n_no_topics                         : No topics
+i18n_you_have_no_topics                : You have no chat topics. Add one to start a conversation with your jeanie!
+i18n_add_topic                         : Add a topic
 

@@ -34,6 +34,17 @@ class FUIContacts extends FUIElement
         	}
         }
     }
+    getBasicTemplate()
+    {
+    	let ex = this.options.groupid ? '<div class="Group"></div>' : '';
+        let add = this.options.groupid ? '<div class="Add"></div>' : '';
+        
+    	return '\
+        <div class="ContactSearch"><input type="text" value="' + ( typeof( self.contactFilter ) != 'undefined' ? self.contactFilter : '' ) + '" placeholder="Find a contact..."/></div>\
+        <div class="Contacts"><div class="ContactList"></div><div class="Settings"><div class="Avatar"></div><div class="Toolbar">' + ex + add + '<div class="Gearbox"></div></div></div></div>\
+        <div class="Chat"></div>\
+        ';
+    }
     attachDomElement()
     {
         super.attachDomElement();
@@ -42,14 +53,7 @@ class FUIContacts extends FUIElement
         
         this.domElement.className = 'FUIContacts';
         
-        let ex = this.options.groupid ? '<div class="Group"></div>' : '';
-        let add = this.options.groupid ? '<div class="Add"></div>' : '';
-        
-        let data = '\
-        <div class="ContactSearch"><input type="text" value="' + ( typeof( self.contactFilter ) != 'undefined' ? self.contactFilter : '' ) + '" placeholder="Find a contact..."/></div>\
-        <div class="Contacts"><div class="ContactList"></div><div class="Settings"><div class="Avatar"></div><div class="Toolbar">' + ex + add + '<div class="Gearbox"></div></div></div></div>\
-        <div class="Chat"></div>\
-        ';
+        let data = this.getBasicTemplate();
         
         this.domElement.innerHTML = data;
         
@@ -343,7 +347,7 @@ class FUIContacts extends FUIElement
                 if( self.queuedClick )
                     self.queuedClick();
             }
-            let opts = { method: 'contacts' };
+            let opts = { method: self.getListMethod() };
             if( this.options.groupid )
             {
             	opts.groupid = this.options.groupid;
@@ -351,6 +355,12 @@ class FUIContacts extends FUIElement
             m.execute( 'convos', opts );
         }
     }
+    
+    getListMethod()
+    {
+    	return 'contacts';
+    }
+    
     // Oh, no contacts, do something about it?
     showNoContactsMenu()
     {
