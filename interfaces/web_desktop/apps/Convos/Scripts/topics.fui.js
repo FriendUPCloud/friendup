@@ -18,11 +18,10 @@ class FUITopics extends FUIContacts
     getBasicTemplate()
     {
     	let ex = this.options.groupid ? '<div class="Group"></div>' : '';
-        let add = this.options.groupid ? '<div class="Add"></div>' : '';
         
     	return '\
         <div class="ContactSearch"><input type="text" value="' + ( typeof( self.contactFilter ) != 'undefined' ? self.contactFilter : '' ) + '" placeholder="Find a topic..."/></div>\
-        <div class="Contacts"><div class="ContactList"></div><div class="Settings"><div class="Avatar"></div><div class="Toolbar">' + ex + add + '<div class="Gearbox"></div></div></div></div>\
+        <div class="Contacts"><div class="ContactList"></div><div class="Settings"><div class="Avatar"></div><div class="Toolbar">' + ex + '<div class="AddConversation"></div><div class="Gearbox"></div></div></div></div>\
         <div class="Chat"></div>\
         ';
     }
@@ -55,7 +54,10 @@ class FUITopics extends FUIContacts
     {
     	return 'Topic';
     }
-    
+    getListKey()
+    {
+    	return 'ID';
+    }
     initChatTopic()
     {
     	let self = this;

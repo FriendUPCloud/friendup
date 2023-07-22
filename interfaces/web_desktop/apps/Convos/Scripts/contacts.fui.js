@@ -72,6 +72,16 @@ class FUIContacts extends FUIElement
         	}
         }
         
+        let cnvbtn = this.domSettings.querySelector( '.AddConversation' );
+        if( cnvbtn )
+        {
+        	cnvbtn.onclick = function()
+        	{
+        		if( self.initChatTopic )
+        			self.initChatTopic();
+        	}
+        }
+        
         let grp = this.domSettings.querySelector( '.Group' );
         if( grp )
         {
@@ -228,15 +238,23 @@ class FUIContacts extends FUIElement
         document.body.appendChild( i );
         
         // The slot does not exist?
-        if( !this.userList[ contact.Fullname ] )
+        
+        let listKey = this.getListKey();
+       
+       	console.log( 'What is the list: ', listKey, contact );
+        if( !this.userList[ contact[ listKey ] ] )
         {
-            this.userList[ contact.Fullname ] = document.createElement( 'div' );
-            this.userList[ contact.Fullname ].className = 'Slot';
-            parentEl.appendChild( this.userList[ contact.Fullname ] );
+            this.userList[ contact[ listKey ] ] = document.createElement( 'div' );
+            this.userList[ contact[ listKey ] ].className = 'Slot';
+            parentEl.appendChild( this.userList[ contact[ listKey ] ] );
             // Add to slot
-            this.userList[ contact.Fullname ].appendChild( d );
+            this.userList[ contact[ listKey ] ].appendChild( d );
         }
         setTimeout( function(){ d.classList.add( 'Showing' ); }, 2 );
+    }
+    getListKey()
+    {
+    	return 'Fullname';
     }
     contactsMode()
     {

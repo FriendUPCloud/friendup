@@ -119,7 +119,7 @@ if( isset( $args->args ) )
                             m.ID, m.Message, m.Date, u.Name, u.UniqueID FROM `Message` m, FUser u 
                         WHERE
                             m.RoomType = \'jeanie\' AND m.UniqueUserID=\'' . $User->UniqueID . '\' AND
-                            m.UniqueUserID = u.UniqueID' . $lastId . '
+                            m.ParentID = \'' . $args->args->targetId . '\' AND m.UniqueUserID = u.UniqueID' . $lastId . '
                         ORDER BY 
                             m.Date DESC, m.ID DESC LIMIT 50
                     ' );

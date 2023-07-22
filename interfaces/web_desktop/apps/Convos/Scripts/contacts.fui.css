@@ -99,6 +99,7 @@
 
 .FUIContacts .Contacts > .Settings .Gearbox,
 .FUIContacts .Contacts > .Settings .Add,
+.FUIContacts .Contacts > .Settings .AddConversation,
 .FUIContacts .Contacts > .Settings .Group
 {
 	content: " ";
@@ -118,6 +119,7 @@
 }
 .FUIContacts .Contacts > .Settings .Gearbox:hover,
 .FUIContacts .Contacts > .Settings .Add:hover,
+.FUIContacts .Contacts > .Settings .AddConversation:hover,
 .FUIContacts .Contacts > .Settings .Group:hover
 {
 	outline: 1px solid var(--fui-border-foreground);
@@ -133,6 +135,12 @@
 .FUIContacts .Contacts > .Settings .Add:before
 {
 	content: "\f234";
+	font-family: FontAwesome;
+}
+
+.FUIContacts .Contacts > .Settings .AddConversation:before
+{
+	content: "\f055";
 	font-family: FontAwesome;
 }
 
