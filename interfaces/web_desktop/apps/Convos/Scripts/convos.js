@@ -41,12 +41,21 @@ Application.receiveMessage = function( msg )
     		let overview = FUI.getElementByUniqueId( 'convos' );
     		Notify( {
     			title: i18n( 'i18n_you_got_an_invite' ),
-    			text: i18n( 'i18n_please_check_your_messages' ),
-    			clickcallback: function( e )
-    			{
-    				overview.pollInvites();
-    			}
-    		} );
+    			text: i18n( 'i18n_please_check_your_messages' )
+			}, false, function( e )
+			{
+				overview.initHome();
+			} );
+    	}
+    	else if( msg.type == 'accept-invite' )
+    	{
+    		Notify( {
+    			title: i18n( 'i18n_invite_accepted' ),
+    			text: msg.fullname + ' ' + i18n( msg.message )
+			}, false, function( e )
+			{
+				overview.initHome();
+			} );
     	}
     }
     if( msg.command == 'drop' )

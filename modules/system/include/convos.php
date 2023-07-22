@@ -15,9 +15,20 @@ ini_set( 'max_execution_time', '300' ); // Die after 5 minutes
 // Send a message
 function sendUserMsg( $msg )
 {
-	global $User;
-	FriendCall( '/system.library/user/session/sendmsg/?servertoken=' . $User->servertoken . '&args=' . urlencode( json_encode( $msg ) ), 
-		false, true );
+	global $User, $Config;
+	
+	$arr = []; $n = 0;
+	foreach( $msg as $k=>$m )
+	{
+		if( $k == 'msg' )
+		{
+			$m = addslashes( $m );
+		}
+		$arr[ $k ] = $m;
+	}
+	
+	FriendCall( ( $Config->SSLEnable ? 'https' : 'http' ) . '://localhost:' . $Config->FCPort . '/system.library/user/session/sendmsg/?servertoken=' . $User->ServerToken,
+		false, $arr );
 }
 
 $response = new stdClass();
@@ -466,9 +477,14 @@ if( isset( $args->args ) )
         		
         		// Notify user that we invited them!
         		$msg = new stdClass();
-        		$msg->type = 'accept-invite';
-        		$msg->recipientId = $uo->UniqueID;
-        		$msg->message = '{"groupId":"' . $o->TargetGroupID . '"}';
+        		$msg->appname = 'Convos';
+        		$msg->dstuniqueid = $uo->UniqueID;
+        		$sub = new stdClass();
+        		$sub->groupId = $o->TargetGroupID;
+        		$sub->type = 'accept-invite';
+        		$sub->message = 'i18n_accepted_invite';
+        		$sub->fullname = $User->FullName;
+        		$msg->msg = json_encode( $sub );
         		sendUserMsg( $msg );
         		
         		$SqlDatabase->query( 'INSERT INTO FUserToGroup ( UserID, UserGroupID ) VALUES ( \'' . $User->ID . '\', \'' . $o->TargetGroupID . '\' )' );

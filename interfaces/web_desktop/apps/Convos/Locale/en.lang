@@ -47,3 +47,5 @@ i18n_add_topic                         : Add a topic
 
 i18n_you_got_an_invite                 : Chat room invite
 i18n_please_check_your_messages        : Please go to the home screen and check events.
+i18n_invite_accepted                   : Invite accepted
+i18n_accepted_invite                   : accepted your invite.
