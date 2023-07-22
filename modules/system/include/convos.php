@@ -381,6 +381,7 @@ if( isset( $args->args ) )
 		    		$o->Fullname = substr( $row->Message, 0, 128 );
 		    		$o->Date = $row->Date;
 		    		$o->DateUpdated = $row->DateUpdated;
+		    		$o->RoomType = 'jeanie';
 		    		$out[] = $o;
 	    		}
 	    		die( 'ok<!--separate-->{"response":1,"topics":' . json_encode( $out ) . '}' );
