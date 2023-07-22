@@ -43,8 +43,18 @@ class FUITopics extends FUIContacts
     	cl.appendChild( b );
     	b.querySelector( '.AddButton' ).onclick = function()
     	{
-    		self.inviteDialog = new FUIInvitedialog( { channelName: self.record.Fullname, groupId: self.record.ID } );
+    		self.initChatTopic();
     	}
+    }
+    
+    initChatTopic()
+    {
+    	let m = new Module( 'system' );
+    	m.onExecuted = function( me, md )
+    	{
+    		console.log( me, md );
+    	}
+    	m.execute( 'convos', { method: 'createtopic' } );
     }
 }
 

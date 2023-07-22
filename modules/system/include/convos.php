@@ -346,6 +346,24 @@ if( isset( $args->args ) )
         	}
         	die( 'fail<!--separate-->' );
         }
+        else if( $args->args->method == 'createtopic' )
+        {
+        	$o = new dbIO( 'Message' );
+        	$o->RoomID = 0;
+        	$o->RoomType = 'jeanie';
+        	$o->ParentID = 0;
+        	$o->UniqueUserID = $User->UniqueID;
+        	$o->TargetID = 0;
+        	$o->Message = 'Start of history.';
+        	$o->Date = date( 'Y-m-d H:i:s' );
+        	$o->DateUpdated = $o->Date;
+        	$o->Save();
+        	if( $o->ID > 0 )
+        	{
+        		die( 'ok<!--separate-->{"message":"Successfully created topic.","topicid","' . $o->ID . '","response":1}' );
+        	}
+        	die( 'fail<!--separate-->{"message":"Failed to create topic.","response",-1}' );
+        }
         // Get the events for the user
         else if( $args->args->method == 'getevents' )
         {
