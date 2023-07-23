@@ -755,6 +755,7 @@ class FUIChatlog extends FUIElement
     }
     replaceUrls( string )
     {
+       	let self = this;
         let fnd = 0;
         while( 1 )
         {
@@ -776,7 +777,14 @@ class FUIChatlog extends FUIElement
         	let res = string.match( /[\s]{0,1}\<attachment\ type\=\"image\"\ image\=\"(.*?)\"\/\>/i );
         	if( res != null )
         	{
-        		string = string.split( res[ 0 ] ).join( '<img onerror="Application.handleImageError( this )" src="' + res[1] + '&authid=' + Application.authId + '" class="Attachment"/>' );
+        		if( !self.randArra )
+        			self.randArra = {};
+        		if( !self.randArra[ res[1] ] )
+        		{
+        			self.randArra[ res[ 1 ] ] = md5( ( Math.random() * 10 ) + res[ 1 ] );
+        		}
+        		let rand = self.randArra[ res[ 1 ] ];
+        		string = string.split( res[ 0 ] ).join( '<img onload="Application.handleImageLoad( this )" onerror="Application.handleImageError( this )" src="' + res[1] + '&authid=' + Application.authId + '&rand=' + rand + '" class="Attachment"/>' );
         		continue;
         	}
         	break;
@@ -832,5 +840,33 @@ Application.handleImageError = function( ele )
 	let newnode = document.createElement( 'div' );
 	newnode.className = 'ImageError';
 	ele.parentNode.replaceChild( newnode, ele );
+}
+
+Application.handleImageLoad = function( ele )
+{
+	let mes = document.querySelector( '.Messages' );
+	if( !mes ) return;
+	if( ele.naturalWidth < ele.parentNode.offsetWidth )
+		ele.style.width = ele.naturalWidth + 'px';
+	mes.style.scrollBehavior = 'initial';
+	mes.scrollTop = mes.scrollHeight;
+	setTimeout( function()
+	{
+		mes.style.scrollBehavior = '';
+	}, 10 );
+	// Open the image in image viewer
+	ele.onclick = function()
+	{
+		let ms = {
+			type: 'dos',
+			method: 'openWindowByFilename',
+			args: {
+				fileInfo: { Path: ele.src, Filename: 'Convos - Image' },
+				ext: 'jpg'
+			}
+		};
+		Application.sendMessage( ms );
+	}
+	
 }
 

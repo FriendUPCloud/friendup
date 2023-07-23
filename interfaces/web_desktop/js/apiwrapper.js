@@ -498,7 +498,7 @@ function apiWrapper( event, force )
 								{
 									fileInfo.MetaType = 'Directory';
 									fileInfo.Path = msg.path;
-									console.log( 'open path', fileInfo );
+									//console.log( 'open path', fileInfo );
 									OpenWindowByFileinfo( fileInfo );
 								}
 							})
@@ -507,7 +507,6 @@ function apiWrapper( event, force )
 					case 'openWindowByFilename':
 						if( msg.args )
 						{
-							console.log( 'openWindowByFilename', msg )
 						    let appId = false;
 						    if( currentMovable && currentMovable.windowObject && currentMovable.windowObject.applicationId )
 						    {
