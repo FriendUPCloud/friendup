@@ -160,6 +160,45 @@
 	box-sizing: border-box;
 	border-width: 3px;
     border-color: var(--fui-background);
+    box-shadow: inset 0px 0px 15px rgba(255,255,255,0.4);
+    position: relative;
+    overflow: hidden;
+    transition: filter,box-shadow 2.25s,0.15s;
+    filter: drop-shadow(0px 0px 0px rgba(255,255,255,0.0));
+    box-shadow: 0px 0px 0px 1px rgba(0,0,0,0.0);
+}
+
+.FUIChatoverview > .Channels > .Channel::after
+{
+	content: " ";
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	z-index: 11;
+	opacity: 0;
+	pointer-events: none;
+	background-color: rgba(255,255,255,0.2);
+	transition: opacity 0.15s;
+}
+
+.FUIChatoverview > .Channels > .Channel:hover::after
+{
+	opacity: 1;
+}
+
+.FUIChatoverview > .Channels > .Channel::before
+{
+	content: " ";
+	position: absolute;
+	top: 5px;
+	left: calc(50% - 15px);
+	pointer-events: none;
+	width: 30px;
+	height: 20px;
+	border-radius: 100%;
+	background: linear-gradient(0deg, transparent, rgba(255,255,255,0.4));
 }
 
 .FUIChatoverview > .Channels > .Channel.Home 
@@ -180,8 +219,15 @@
 	background-color: var(--fui-palette-chan03);
 	border-width: 3px; 
 	border-color: var(--fui-border-color-negative);
+	filter: drop-shadow(0px 0px 65px rgba(255,255,255,1));
+	box-shadow: 0px 0px 0px 4px rgba(0,0,0,0.5);	
 }
 
+
+.FUIChatoverview > .Channels > .Channel.Active::after
+{
+	opacity: 1;
+}
 
 body:not([mobile=mobile]) .FUIChatoverview > .HoverElement
 {
