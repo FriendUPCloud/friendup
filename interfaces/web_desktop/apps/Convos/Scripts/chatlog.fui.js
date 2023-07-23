@@ -217,18 +217,26 @@ class FUIChatlog extends FUIElement
     	}
     	this.domInput.querySelector( '.Upload' ).onclick = function()
     	{
+    	    let s = this;
     	    if( this.classList.contains( 'Active' ) )
     	    {
     	        this.classList.remove( 'Active' );
     	        if( this.popWidget )
     	            this.popWidget.destroy();
     	        this.popWidget = null;
+    	    }
+    	    else
+    	    {
+    	        clearActive( this );
+    	        this.classList.add( 'Active' );
     	        
     	        let flags = {
 					multiSelect: false,
 					suffix: [ 'jpg', 'jpeg', 'png', 'gif' ],
 					triggerFunction: function( arr )
 					{
+						s.classList.remove( 'Active' );
+						
 						if( arr && arr.length > 0 )
 						{
 							let m = new Module( 'system' );
@@ -240,7 +248,7 @@ class FUIChatlog extends FUIElement
 									self.queueMessage( '<attachment type="' + res.type + '" image="' + res.url + '"/>' );
 								}
 							}
-							m.execute( 'convos', { method: 'addupload', path: arr[ 0 ].Path, groupId: self.options.groupId } );
+							m.execute( 'convos', { method: 'addupload', path: arr[ 0 ].Path, groupId: self.options.cid } );
 						}
 					},
 					path: false,
@@ -249,11 +257,6 @@ class FUIChatlog extends FUIElement
 				};
 			
 				new Filedialog( flags );
-    	    }
-    	    else
-    	    {
-    	        clearActive( this );
-    	        this.classList.add( 'Active' );
     	    }
     	}
     	this.domInput.querySelector( '.Search' ).onclick = function()
@@ -371,7 +374,7 @@ class FUIChatlog extends FUIElement
                 text = dec;
             }
             catch( e ){};
-            
+             
             let replacements = {
                 message: self.replaceUrls( self.replaceEmojis( text ) ),
                 i18n_date: i18n( 'i18n_date' ),
@@ -768,6 +771,19 @@ class FUIChatlog extends FUIElement
         {
             string = string.split( 'fnds://' ).join( 'https://' ).split( 'fnd://' ).join( 'http://' );
         }
+        fnd = 0;
+        while( 1 )
+        {
+        	let res = string.match( /[\s]{0,1}\<attachment\ type\=\"image\"\ image\=\"(.*?)\"\/\>/i );
+        	if( res != null )
+        	{
+        		string = string.split( res[ 0 ] ).join( '<img src="' + res[1] + '&authid=' + Application.authId + '" class="Attachment"/>' );
+        		fnd++;
+        		continue;
+        	}
+        	break;
+        }
+        //<attachment type="image" image="/system.library/module/?module=system&command=convos&args=%7B%22method%22%3A%22getattachment%22%2C%22attachment%22%3A%2225%22%7D"/>
         return string;
     }
     replaceEmojis( string )

@@ -251,6 +251,94 @@ if( isset( $args->args ) )
             }
             die( 'fail<!--separate-->{"response":0,"message":"Failed to retrieve messages."}' );
         }
+        else if( $args->args->method == 'getattachment' )
+        {
+        	// Check share
+        	$o = new dbIO( 'FShared' );
+        	if( $o->Load( $args->args->attachment ) )
+        	{
+        		if( $o->Mode == 'attachment' )
+        		{
+		    		// Check we're in group
+		    		if( $g = $SqlDatabase->fetchObject( '
+		    			SELECT g.* FROM FUserToGroup ug, FUserGroup g
+		    			WHERE
+		    				ug.UserGroupID = \'' . $o->SharedID . '\' AND
+		    				ug.UserID = \'' . $User->ID . '\' AND
+		    				ug.UserGroupID = g.ID
+					' ) )
+					{
+						$u = new dbIO( 'FUser' );
+						if( $u->Load( $o->OwnerUserID ) )
+						{
+							$f = new File( $o->Data );
+							if( $f->Load( $o->Data ) )
+							{
+								$part = explode( '.', $o->Data );
+								$part = array_pop( $part );
+								switch( strtolower( $part ) )
+								{
+									case 'png':
+										$part = 'png';
+									case 'jpeg':
+									case 'jpg':
+										$part = 'jpg';
+										break;
+									case 'gif':
+										$part = 'gif';
+										break;
+									default:
+										$part = false;
+										break;
+								}
+								if( $part )
+								{
+									FriendHeader( 'image/' . $part );
+									die( $f->_content );
+								}
+							}
+						}
+					}
+				}
+    		}
+			die( 'fail<!--separate-->{"message":"Could not find attachment.","response":-1}' );
+        }
+        else if( $args->args->method == 'addupload' )
+        {
+        	$f = new File( $args->args->path );
+        	$f->Load( $args->args->path );
+        	
+        	// Set sharing on element
+        	if( isset( $args->args->groupId ) )
+        	{
+		    	$g = new dbIO( 'FUserGroup' );
+				$g->UniqueID = $args->args->groupId;
+				if( $g->Load() )
+				{
+					$o = new dbIO( 'FShared' );
+					$o->OwnerUserID = $User->ID;
+					$o->SharedType = 'chatroom';
+					$o->SharedID = $g->ID;
+					$o->Mode = 'attachment';
+					if( !$o->Load() )
+						$o->DateCreated = date( 'Y-m-d H:i:s' );
+					$o->Data = $args->args->path;
+					$o->DateTouched = date( 'Y-m-d H:i:s' );
+					$o->Save();
+					if( $o->ID > 0 )
+					{
+						$args = new stdClass();
+						$args->method = 'getattachment';
+						$args->attachment = $o->ID;
+						$args = json_encode( $args );
+						$url = '/system.library/module/?module=system&command=convos&args=' . urlencode( $args );
+						die( 'ok<!--separate-->{"message":"Attachment uploaded.","response":1,"type":"image","url":"' . $url . '"}' );
+					}
+				}
+			}
+        	
+        	die( 'fail<!--separate-->{"response":0,"message":"Failed to load attachment."}' );
+        }
         else if( $args->args->method == 'getrooms' )
         {
         	if( $rows = $SqlDatabase->fetchObjects( '
