@@ -42,7 +42,7 @@ class FUIContacts extends FUIElement
     	return '\
         <div class="ContactSearch"><input type="text" value="' + ( typeof( self.contactFilter ) != 'undefined' ? self.contactFilter : '' ) + '" placeholder="Find a contact..."/></div>\
         <div class="Contacts"><div class="ContactList"></div><div class="Settings"><div class="Avatar"></div><div class="Toolbar">' + ex + add + '<div class="Gearbox"></div></div></div></div>\
-        <div class="Chat"></div>\
+        <div class="Chat"><div class="Placeholder"><span>' + i18n( 'i18n_start_conversation' ) + '</span></div></div>\
         ';
     }
     attachDomElement()

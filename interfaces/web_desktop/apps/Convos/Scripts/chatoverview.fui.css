@@ -420,4 +420,36 @@ html body.activated .FUIChatoverview .Channels.Scroll::-webkit-scrollbar-track
 	width: 100px;
 }
 
+.FUIChatoverview .Placeholder
+{
+	position: absolute;
+    top: calc(50% - 100px);
+    left: calc(50% - 100px);
+    width: 200px;
+    height: 200px;
+}
+
+.FUIChatoverview .Placeholder:before 
+{
+    content: " ";
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    width: 200px;
+    background-image: url(/webclient/apps/Convos/Assets/bubble-gray.svg);
+    height: 200px;
+    background-repeat: no-repeat;
+    background-position: top center;
+}
+
+
+.FUIChatoverview .Placeholder span
+{
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	width: 100%;
+	text-align: center;
+	font-size: 30px;
+}
 
