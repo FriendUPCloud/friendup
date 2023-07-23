@@ -194,6 +194,7 @@ body:not([mobile=mobile]) .FUIChatoverview > .HoverElement
 	position: absolute;
 	min-width: 90px;
 	padding: 15px;
+	z-index: 11;
 }
 
 body:not([mobile=mobile]) .FUIChatoverview > .HoverElement:before
@@ -211,7 +212,6 @@ body:not([mobile=mobile]) .FUIChatoverview > .HoverElement:before
 body:not([mobile=mobile]) .FUIChatoverview > .HoverElement.Showing
 {
 	opacity: 0.85;
-	z-index: 11;
 }
 
 /* Chat list */
