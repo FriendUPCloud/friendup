@@ -339,8 +339,11 @@ class FUIContacts extends FUIElement
         
         Application.holdConnection( { method: 'messages', roomType: dm, cid: record.ID } );
         
-        let ta = document.querySelector( '.Textarea' );
-        if( ta ) ta.focus();
+        if( !isMobile )
+        {
+		    let ta = document.querySelector( '.Textarea' );
+		    if( ta ) ta.focus();
+	    }
     }
     getMemberAttribute()
     {
