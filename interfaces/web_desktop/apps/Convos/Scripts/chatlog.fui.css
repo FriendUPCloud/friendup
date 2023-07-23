@@ -376,8 +376,9 @@ span.Emoticon:hover
 
 .FUIChatlog .Messages div.OGImage > img
 {
-    width: 100%;
+    width: max-content;
     max-width: 100%;
+    margin: auto;
     height: auto;
     display: block;
     cursor: pointer;
@@ -407,6 +408,7 @@ span.Emoticon:hover
     display: block;
     width: 100%;
     cursor: pointer;
+    background-color: black;
 }
 
 
