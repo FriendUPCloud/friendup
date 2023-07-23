@@ -245,6 +245,18 @@
     height: 10px;
 }
 
+.FUIChatlog .Messages .ImageError 
+{
+    font-family: 'fontawesome';
+    display: inline-block;
+    color: red;
+}
+
+.FUIChatlog .Messages .ImageError:before 
+{
+    content: "\f00d";
+}
+
 .FUIChatlog .Message.ConceilOwner .Nickname
 {
     display: none;

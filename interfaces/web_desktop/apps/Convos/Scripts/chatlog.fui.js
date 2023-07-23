@@ -776,7 +776,7 @@ class FUIChatlog extends FUIElement
         	let res = string.match( /[\s]{0,1}\<attachment\ type\=\"image\"\ image\=\"(.*?)\"\/\>/i );
         	if( res != null )
         	{
-        		string = string.split( res[ 0 ] ).join( '<img src="' + res[1] + '&authid=' + Application.authId + '" class="Attachment"/>' );
+        		string = string.split( res[ 0 ] ).join( '<img onerror="Application.handleImageError( this )" src="' + res[1] + '&authid=' + Application.authId + '" class="Attachment"/>' );
         		continue;
         	}
         	break;
@@ -826,4 +826,11 @@ class FUIChatlog extends FUIElement
     }
 }
 FUI.registerClass( 'chatlog', FUIChatlog );
+
+Application.handleImageError = function( ele )
+{
+	let newnode = document.createElement( 'div' );
+	newnode.className = 'ImageError';
+	ele.parentNode.replaceChild( newnode, ele );
+}
 
