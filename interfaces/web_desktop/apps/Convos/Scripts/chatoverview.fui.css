@@ -211,6 +211,7 @@ body:not([mobile=mobile]) .FUIChatoverview > .HoverElement:before
 body:not([mobile=mobile]) .FUIChatoverview > .HoverElement.Showing
 {
 	opacity: 0.85;
+	z-index: 11;
 }
 
 /* Chat list */
