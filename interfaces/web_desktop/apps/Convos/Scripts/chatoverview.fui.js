@@ -545,6 +545,10 @@ class FUIChatoverview extends FUIElement
 	    {
 	    	chlist.innerHTML = '<fui-contacts parentelement="convos" uniqueid="contacts" group="' + groupId + '" name="' + groupName + '"></fui-contacts>';
 	    }
+	    else
+	    {
+	    	chlist.innerHTML = '<div class="Placeholder"><span>' + i18n( 'i18n_start_conversation' ) + '</span></div>';
+	    }
 		FUI.initialize();
 		
 		let messages = FUI.getElementByUniqueId( 'messages' );
