@@ -771,19 +771,16 @@ class FUIChatlog extends FUIElement
         {
             string = string.split( 'fnds://' ).join( 'https://' ).split( 'fnd://' ).join( 'http://' );
         }
-        fnd = 0;
         while( 1 )
         {
         	let res = string.match( /[\s]{0,1}\<attachment\ type\=\"image\"\ image\=\"(.*?)\"\/\>/i );
         	if( res != null )
         	{
         		string = string.split( res[ 0 ] ).join( '<img src="' + res[1] + '&authid=' + Application.authId + '" class="Attachment"/>' );
-        		fnd++;
         		continue;
         	}
         	break;
         }
-        //<attachment type="image" image="/system.library/module/?module=system&command=convos&args=%7B%22method%22%3A%22getattachment%22%2C%22attachment%22%3A%2225%22%7D"/>
         return string;
     }
     replaceEmojis( string )

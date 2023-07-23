@@ -251,6 +251,7 @@ if( isset( $args->args ) )
             }
             die( 'fail<!--separate-->{"response":0,"message":"Failed to retrieve messages."}' );
         }
+        // Get an attachment on ID
         else if( $args->args->method == 'getattachment' )
         {
         	// Check share
@@ -321,9 +322,9 @@ if( isset( $args->args ) )
 					$o->SharedType = 'chatroom';
 					$o->SharedID = $g->ID;
 					$o->Mode = 'attachment';
+					$o->Data = $args->args->path;
 					if( !$o->Load() )
 						$o->DateCreated = date( 'Y-m-d H:i:s' );
-					$o->Data = $args->args->path;
 					$o->DateTouched = date( 'Y-m-d H:i:s' );
 					$o->Save();
 					if( $o->ID > 0 )
@@ -407,13 +408,13 @@ if( isset( $args->args ) )
         else if( $args->args->method == 'getroomavatar' )
         {
         	// Check if the user is in the group
-        	if( $g = $SqlDatabase->fetchObject( '
+        	if( $g = $SqlDatabase->fetchObject( $q = ( '
         		SELECT g.* FROM FUserGroup g, FUserToGroup ug
         		WHERE 
         			ug.UserID = \'' . $User->ID . '\' AND
         			g.ID = ug.UserGroupID AND
         			g.UniqueID = \'' . $SqlDatabase->_link->real_escape_string( $args->args->groupid ) . '\'
-        	' ) )
+        	' )) )
         	{
 		    	$o = new dbIO( 'FShared' );
 				$o->SharedType = 'chatroom';
