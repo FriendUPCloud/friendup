@@ -7460,8 +7460,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			title: i18n( 'i18n_choose_file_to_upload' ),
 			width: 370,
 			'min-width': 370,
-			height: 160,
-			'min-height': 160,
+			height: 220,
+			'min-height': 220,
 			id: 'fileupload',
 			resize: true,
 			screen: Workspace.screen
