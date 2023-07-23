@@ -25,6 +25,7 @@ html > body:not(.Inside):not(.Loading)
     {
         left: 100%;
         width: 0%;
+        overflow: hidden;
     }
     
     .Chatlist .FUIContacts.Chat .Contacts,
