@@ -352,6 +352,22 @@ class FUIChatoverview extends FUIElement
     		self.domChannels.innerHTML += '<div class="Channel Add" uniqueid="add"></div>';
     	
 			let chans = self.domChannels.getElementsByClassName( 'Channel' );
+			for( let a = 0; a < chans.length / 2; a++ )
+			{
+				if( a >= chans.length / 2 ) break;
+				( function( f, b ){
+					setTimeout( function()
+					{ 
+						f.classList.add( 'Loaded' );
+					}, b * 105 );
+				} )( chans[ a ], a );
+				( function( f, b, c ){
+					setTimeout( function()
+					{ 
+						f.classList.add( 'Loaded' );
+					}, c * 105 );
+				} )( chans[ chans.length - a - 1 ], chans.length - a - 1, a );
+			}
 			for( let a = 0; a < chans.length; a++ )
 			{
 				let uniqueid = chans[ a ].getAttribute( 'uniqueid' );

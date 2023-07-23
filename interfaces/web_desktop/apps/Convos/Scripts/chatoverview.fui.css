@@ -163,9 +163,15 @@
     box-shadow: inset 0px 0px 15px rgba(255,255,255,0.4);
     position: relative;
     overflow: hidden;
-    transition: filter,box-shadow 2.25s,0.15s;
+    transition: opacity,filter,box-shadow 1.5s,2.25s,0.15s;
     filter: drop-shadow(0px 0px 0px rgba(255,255,255,0.0));
     box-shadow: 0px 0px 0px 1px rgba(0,0,0,0.0);
+    opacity: 0;
+}
+
+.FUIChatoverview > .Channels > .Channel.Loaded
+{
+	opacity: 1;
 }
 
 .FUIChatoverview > .Channels > .Channel::after
