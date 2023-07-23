@@ -248,7 +248,20 @@ class FUIChatlog extends FUIElement
 									self.queueMessage( '<attachment type="' + res.type + '" image="' + res.url + '"/>' );
 								}
 							}
-							m.execute( 'convos', { method: 'addupload', path: arr[ 0 ].Path, groupId: self.options.cid } );
+							let zmsg = { method: 'addupload', path: arr[ 0 ].Path };
+							if( self.options.type == 'dm-user' )
+							{
+								zmsg.userId = self.options.cid;
+							}
+							else if( self.options.type == 'jeanie' )
+							{
+								zmsg.context = 'jeanie';
+							}
+							else
+							{
+								zmsg.groupId = self.options.cid;
+							}
+							m.execute( 'convos', zmsg );
 						}
 					},
 					path: false,

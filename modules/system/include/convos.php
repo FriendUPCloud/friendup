@@ -260,44 +260,121 @@ if( isset( $args->args ) )
         	{
         		if( $o->Mode == 'attachment' )
         		{
-		    		// Check we're in group
-		    		if( $g = $SqlDatabase->fetchObject( '
-		    			SELECT g.* FROM FUserToGroup ug, FUserGroup g
-		    			WHERE
-		    				ug.UserGroupID = \'' . $o->SharedID . '\' AND
-		    				ug.UserID = \'' . $User->ID . '\' AND
-		    				ug.UserGroupID = g.ID
-					' ) )
-					{
-						$u = new dbIO( 'FUser' );
-						if( $u->Load( $o->OwnerUserID ) )
+        			if( $o->SharedType == 'chatroom' )
+        			{
+						// Check we're in group
+						if( $g = $SqlDatabase->fetchObject( '
+							SELECT g.* FROM FUserToGroup ug, FUserGroup g
+							WHERE
+								ug.UserGroupID = \'' . $o->SharedID . '\' AND
+								ug.UserID = \'' . $User->ID . '\' AND
+								ug.UserGroupID = g.ID
+						' ) )
 						{
-							$f = new File( $o->Data );
-							$f->SetAuthContext( 'servertoken', $u->ServerToken );
-							if( $f->Load( $o->Data ) )
+							$u = new dbIO( 'FUser' );
+							if( $u->Load( $o->OwnerUserID ) )
 							{
-								$part = explode( '.', $o->Data );
-								$part = array_pop( $part );
-								switch( strtolower( $part ) )
+								$f = new File( $o->Data );
+								$f->SetAuthContext( 'servertoken', $u->ServerToken );
+								if( $f->Load( $o->Data ) )
 								{
-									case 'png':
-										$part = 'png';
-									case 'jpeg':
-									case 'jpg':
-										$part = 'jpg';
-										break;
-									case 'gif':
-										$part = 'gif';
-										break;
-									default:
-										$part = false;
-										break;
+									$part = explode( '.', $o->Data );
+									$part = array_pop( $part );
+									switch( strtolower( $part ) )
+									{
+										case 'png':
+											$part = 'png';
+										case 'jpeg':
+										case 'jpg':
+											$part = 'jpg';
+											break;
+										case 'gif':
+											$part = 'gif';
+											break;
+										default:
+											$part = false;
+											break;
+									}
+									if( $part )
+									{
+										FriendHeader( 'image/' . $part );
+										die( $f->_content );
+									}
 								}
-								if( $part )
+							}
+						}
+					}
+					else if( $o->SharedType == 'dm-user' )
+					{
+						// Check we're in the same group
+						if( $g = $SqlDatabase->fetchObject( '
+							SELECT ug.* FROM FUserToGroup ug, FUserToGroup ug2
+							WHERE
+								ug.UserGroupID = ug2.UserGroupID AND
+								ug.UserID = \'' . $User->ID . '\' AND
+								ug2.UserID = \'' . $o->SharedID . '\'
+							LIMIT 1
+						' ) )
+						{
+							$u = new dbIO( 'FUser' );
+							if( $u->Load( $o->OwnerUserID ) )
+							{
+								$f = new File( $o->Data );
+								$f->SetAuthContext( 'servertoken', $u->ServerToken );
+								if( $f->Load( $o->Data ) )
 								{
-									FriendHeader( 'image/' . $part );
-									die( $f->_content );
+									$part = explode( '.', $o->Data );
+									$part = array_pop( $part );
+									switch( strtolower( $part ) )
+									{
+										case 'png':
+											$part = 'png';
+										case 'jpeg':
+										case 'jpg':
+											$part = 'jpg';
+											break;
+										case 'gif':
+											$part = 'gif';
+											break;
+										default:
+											$part = false;
+											break;
+									}
+									if( $part )
+									{
+										FriendHeader( 'image/' . $part );
+										die( $f->_content );
+									}
 								}
+							}
+						}
+					}
+					else if( $o->SharedType == 'jeanie' )
+					{
+						$f = new File( $o->Data );
+						if( $f->Load( $o->Data ) )
+						{
+							$part = explode( '.', $o->Data );
+							$part = array_pop( $part );
+							switch( strtolower( $part ) )
+							{
+								case 'png':
+									$part = 'png';
+								case 'jpeg':
+								case 'jpg':
+									$part = 'jpg';
+									break;
+								case 'gif':
+									$part = 'gif';
+									break;
+								default:
+									$part = false;
+									break;
+							}
+							if( $part )
+							{
+								FriendHeader( 'image/' . $part );
+								die( $f->_content );
 							}
 						}
 					}
@@ -310,7 +387,7 @@ if( isset( $args->args ) )
         	$f = new File( $args->args->path );
         	$f->Load( $args->args->path );
         	
-        	// Set sharing on element
+        	// Set sharing on group
         	if( isset( $args->args->groupId ) )
         	{
 		    	$g = new dbIO( 'FUserGroup' );
@@ -338,7 +415,57 @@ if( isset( $args->args ) )
 					}
 				}
 			}
-        	
+			// Set sharing on user
+			else if( isset( $args->args->userId ) )
+			{
+				$g = new dbIO( 'FUser' );
+				$g->UniqueID = $args->args->userId;
+				if( $g->Load() )
+				{
+					$o = new dbIO( 'FShared' );
+					$o->OwnerUserID = $User->ID;
+					$o->SharedType = 'dm-user';
+					$o->SharedID = $g->ID;
+					$o->Mode = 'attachment';
+					$o->Data = $args->args->path;
+					if( !$o->Load() )
+						$o->DateCreated = date( 'Y-m-d H:i:s' );
+					$o->DateTouched = date( 'Y-m-d H:i:s' );
+					$o->Save();
+					if( $o->ID > 0 )
+					{
+						$args = new stdClass();
+						$args->method = 'getattachment';
+						$args->attachment = $o->ID;
+						$args = json_encode( $args );
+						$url = '/system.library/module/?module=system&command=convos&args=' . urlencode( $args );
+						die( 'ok<!--separate-->{"message":"Attachment uploaded.","response":1,"type":"image","url":"' . $url . '"}' );
+					}
+				}
+			}
+			// Set sharing on AI
+			else if( isset( $args->args->context ) && $args->args->context == 'jeanie' )
+			{
+				$o = new dbIO( 'FShared' );
+				$o->OwnerUserID = $User->ID;
+				$o->SharedType = 'jeanie';
+				$o->SharedID = 0;
+				$o->Mode = 'attachment';
+				$o->Data = $args->args->path;
+				if( !$o->Load() )
+					$o->DateCreated = date( 'Y-m-d H:i:s' );
+				$o->DateTouched = date( 'Y-m-d H:i:s' );
+				$o->Save();
+				if( $o->ID > 0 )
+				{
+					$args = new stdClass();
+					$args->method = 'getattachment';
+					$args->attachment = $o->ID;
+					$args = json_encode( $args );
+					$url = '/system.library/module/?module=system&command=convos&args=' . urlencode( $args );
+					die( 'ok<!--separate-->{"message":"Attachment uploaded.","response":1,"type":"image","url":"' . $url . '"}' );
+				}
+			}
         	die( 'fail<!--separate-->{"response":0,"message":"Failed to load attachment."}' );
         }
         else if( $args->args->method == 'getrooms' )
