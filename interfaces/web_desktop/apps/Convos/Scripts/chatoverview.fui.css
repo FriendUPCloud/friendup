@@ -223,6 +223,11 @@
 	box-shadow: 0px 0px 0px 4px rgba(0,0,0,0.5);	
 }
 
+[mobile=mobile] .FUIChatoverview > .Channels > .Channel.Active
+{
+	filter: drop-shadow(0px 0px 8px rgba(255,255,255,0.5));
+}
+
 
 .FUIChatoverview > .Channels > .Channel.Active::after
 {
