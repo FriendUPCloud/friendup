@@ -271,6 +271,13 @@
     color: var(--fui-color);
 }
 
+.FUIChatlog .Message img.Attachment 
+{
+    max-width: 100%;
+    height: auto;
+    border-radius: 10px;
+}
+
 @keyframes glassanim
 {
     0% { transform: rotate(360deg); }

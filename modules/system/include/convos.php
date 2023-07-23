@@ -272,6 +272,7 @@ if( isset( $args->args ) )
 						if( $u->Load( $o->OwnerUserID ) )
 						{
 							$f = new File( $o->Data );
+							$f->SetAuthContext( 'servertoken', $u->ServerToken );
 							if( $f->Load( $o->Data ) )
 							{
 								$part = explode( '.', $o->Data );
