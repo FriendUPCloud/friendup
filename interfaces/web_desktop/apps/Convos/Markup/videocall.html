@@ -209,6 +209,12 @@
 			peer.on( 'disconnected', ( err ) => {
 				console.log( 'Peer disconnected: ', err );
 			} );
+			peer.on( 'peer-unavailable', ( err ) => {
+				console.log( 'Peer became unavailable: ', err );
+			} );
+			peer.on( 'close', ( err ) => {
+				console.log( 'Peer closed: ', err );
+			} );
 			peer.on( 'open', (peerId) => {
 				ge( 'peerId' ).value = peerId;
 			  
