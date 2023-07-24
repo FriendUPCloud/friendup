@@ -20,6 +20,16 @@ Application.run = function( msg )
 	this.sendMessage( { command: 'app-ready' } );
 } 
 
+function initVideoCall( peerId )
+{
+	let v = document.querySelector( '.Videocall' );
+	if( v )
+	{
+		window.currentPeerId = peerId;
+		v.onclick();
+	}
+}
+
 Application.receiveMessage = function( msg )
 {
     if( msg.sender )
@@ -33,6 +43,37 @@ Application.receiveMessage = function( msg )
         {
         	overview.activateDirectMessage( msg.sender, msg.message );
     	}
+    }
+    else if( msg.command == 'broadcast-call' )
+    {
+		let messages = FUI.getElementByUniqueId( 'messages' );
+		if( messages )
+		{
+			messages.queueMessage( '<videocall type="video" callid="' + msg.peerId + '"/>' );
+		}
+    }
+    else if( msg.command == 'broadcast-received' )
+    {
+    	let contacts = FUI.getElementByUniqueId( 'contacts' );
+    	if( contacts )
+    	{
+			Application.SendUserMsg( {
+				recipientId: contacts.record.ID,
+				message: {
+					command: 'broadcast-start',
+					peerId: msg.peerId,
+					remotePeerId: msg.remotePeerId
+				}
+			} );
+		}
+    }
+    else if( msg.command == 'broadcast-start' )
+    {
+    	let contacts = FUI.getElementByUniqueId( 'contacts' );
+    	if( contacts )
+    	{
+    		contacts.videoCall.sendMessage( { command: 'initcall', peerId: msg.peerId, remotePeerId: msg.remotePeerId } );
+		}
     }
     else if( msg.type )
     {

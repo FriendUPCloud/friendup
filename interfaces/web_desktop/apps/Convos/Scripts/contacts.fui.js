@@ -91,6 +91,36 @@ class FUIContacts extends FUIElement
         	}
         }
         
+        let vid = this.domSettings.querySelector( '.Videocall' );
+        if( vid )
+        {
+        	vid.onclick = function()
+        	{
+        		if( self.videoCall )
+        			return self.videoCall.activate();
+    			
+        		self.videoCall = new View( {
+        			title: i18n( 'i18n_video_call' ) + ' - ' + self.record.Fullname,
+        			width: 650,
+        			height: 512
+        		} );
+        		self.videoCall.record = self.record;
+        		self.videoCall.onClose = function()
+        		{
+        			window.currentPeerId = null;
+        			self.videoCall = null;
+        		}
+        		let f = new File( 'Progdir:Markup/videocall.html' );
+        		f.replacements = { 'peerId': window.currentPeerId ? window.currentPeerId : '' };
+        		f.i18n();
+        		f.onLoad = function( data )
+        		{
+        			self.videoCall.setContent( data );
+        		}
+        		f.load();
+        	}
+        }
+        
         // Cache this globally!
         if( window.myAvatar )
         {

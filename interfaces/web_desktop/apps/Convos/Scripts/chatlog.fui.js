@@ -785,6 +785,7 @@ class FUIChatlog extends FUIElement
         {
             string = string.split( 'fnds://' ).join( 'https://' ).split( 'fnd://' ).join( 'http://' );
         }
+        // Take attachments
         while( 1 )
         {
         	let res = string.match( /[\s]{0,1}\<attachment\ type\=\"image\"\ image\=\"(.*?)\"\/\>/i );
@@ -798,6 +799,18 @@ class FUIChatlog extends FUIElement
         		}
         		let rand = self.randArra[ res[ 1 ] ];
         		string = string.split( res[ 0 ] ).join( '<img onload="Application.handleImageLoad( this )" onerror="Application.handleImageError( this )" src="' + res[1] + '&authid=' + Application.authId + '&rand=' + rand + '" class="Attachment"/>' );
+        		continue;
+        	}
+        	break;
+        }
+        // Take video calls
+        while( 1 )
+        {
+        	let res = string.match( /[\s]{0,1}\<videocall\ type\=\"video\"\ callid\=\"(.*?)\"\/\>/i );
+        	if( res != null )
+        	{
+        		let button = '<div class="VideoCall" onclick="initVideoCall(\'' + res[1] + '\')"><span>' + i18n( 'i18n_video_call_button' ) + '</span></div>';
+        		string = string.split( res[ 0 ] ).join( button );
         		continue;
         	}
         	break;

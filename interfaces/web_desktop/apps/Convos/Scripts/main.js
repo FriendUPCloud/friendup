@@ -47,7 +47,6 @@ Application.receiveMessage = function( msg )
     {
         if( msg.command == 'servermessage' )
         {
-        	console.log( 'Hey: ', msg );
             this.view.sendMessage( msg.data );
         }
         else if( msg.command == 'app-ready' )
@@ -57,6 +56,19 @@ Application.receiveMessage = function( msg )
                 this.view.sendMessage( serverQueue[ a ] );
             }
             serverQueue = [];
+        }
+        // To app
+        else if( msg.command == 'broadcast-call' )
+        {
+        	this.view.sendMessage( msg );
+        }
+        else if( msg.command == 'broadcast-received' )
+        {
+        	this.view.sendMessage( msg );
+        }
+        else if( msg.command == 'broadcast-start' )
+        {
+        	this.view.sendMessage( msg );
         }
     }
 }
