@@ -70,7 +70,7 @@ Application.receiveMessage = function( msg )
 		const localVideoStream = ge( 'VideoStream' ).srcObject;
 		console.log( '[Host] Calling: ' + msg.remotePeerId );
 		
-		let retires = 10;
+		let retries = 10;
 		
 		function executeCall()
 		{
