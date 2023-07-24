@@ -123,12 +123,12 @@ Application.run = function()
 						console.log( '[Client] Streaming now.' );
 					} );
 					console.log( '[Client] We were called, doing stream' );
-					/*c.on( 'data', ( data ) => {
+					c.on( 'data', ( data ) => {
 						console.log( 'We got data after call stream: ', data );
-					} );
+					} ),
 					c.on( 'error', ( err ) => {
 						console.log( 'Call error...', err );
-					} );*/
+					} );
 				} );
 				/*peer.on( 'error', ( err ) => {
 					console.log( 'Error with calling remote.', err );
