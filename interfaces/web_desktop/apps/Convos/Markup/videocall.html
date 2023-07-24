@@ -6,6 +6,10 @@
 	<div id="Toolbar">
 		<input type="hidden" id="peerId"/>
 		<input type="hidden" id="currentPeerId" value="{peerId}"/>
+		<div class="Buttons">
+			<div class="NiceButton HangUp"></div>
+			<div class="NiceButton Mute"></div>
+		</div>
 	</div>
 	<script src="https://unpkg.com/peerjs@1.3.2/dist/peerjs.min.js"></script>
 	<style>
@@ -38,9 +42,75 @@
 			opacity: 0;
 			pointer-events: none;
 		}
+		#Toolbar
+		{
+			position: absolute;
+			bottom: 15px;
+			left: 0;
+			height: 50px;
+			width: 100%;
+		}
+		#Toolbar > .Buttons
+		{
+			position: absolute;
+			background-color: rgba(0,0,0,0.8);
+			border-radius: 50px;
+			left: calc(50% - 50px);
+			bottom: 0;
+			width: 100px;
+			overflow: hidden;
+			display: flex;
+		}
+		#Toolbar > .Buttons > .NiceButton
+		{
+			flex: 1;
+			width: 50px;
+			height: 50px;
+			line-height: 50px;
+			text-align: center;
+			color: white;
+			cursor: pointer;
+		}
+		#Toolbar > .Buttons > .NiceButton:hover
+		{
+			background-color: rgba(255,255,255,0.3);
+		}
+		#Toolbar > .Buttons > .NiceButton.HangUp:before
+		{
+			font-size: 30px;
+			content: "\f095";
+			transform: rotate(45deg);
+			font-family: fontawesome;
+		}
+		#Toolbar > .Buttons > .NiceButton.Mute:before
+		{
+			font-size: 30px;
+			content: "\f130";
+			font-family: fontawesome;
+		}
+		#Toolbar > .Buttons > .NiceButton.Mute.Muted:before
+		{
+			font-size: 30px;
+			content: "\f131";
+			font-family: fontawesome;
+		}
 	</style>
 	<script>
 		window.peer = false;
+		
+		document.querySelector( '.HangUp' ).onclick = function(){ CloseWindow(); }
+		document.querySelector( '.Mute' ).onclick = function(){
+			if( this.classList.contains( 'Muted' ) )
+			{
+				this.classList.remove( 'Muted' );
+				ge( 'VideoStream' ).removeAttribute( 'muted' );
+			}
+			else
+			{
+				this.classList.add( 'Muted' );
+				ge( 'VideoStream' ).addAttribute( 'muted' );
+			}
+		
 		Application.receiveMessage = function( msg )
 		{
 			if( msg.command == 'initcall' && msg.peerId == ge( 'peerId' ).value )
