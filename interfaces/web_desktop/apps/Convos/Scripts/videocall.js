@@ -265,13 +265,13 @@ function startScreenShare( el )
 	navigator.mediaDevices.getDisplayMedia( { video: true } )
 		.then((stream) => {
 			// Replace video track with screen sharing track
-			const localVideoTrack = localStream.getVideoTracks()[0];
+			const localVideoTrack = stream.getVideoTracks()[0];
 			localVideoTrack.stop();
 			localStream.removeTrack(localVideoTrack);
 			localStream.addTrack(stream.getVideoTracks()[0]);
 
-			const localVideo = document.getElementById('VideoStream');
-			localVideo.srcObject = localStream;
+			const localVideo = document.getElementById( 'VideoStream' );
+			localVideo.srcObject = stream;
 			
 			el.classList.add( 'On' );
 		})
@@ -286,13 +286,13 @@ function stopScreenShare( el )
 	navigator.mediaDevices.getUserMedia( { video: true, audio: true } )
 		.then((stream) => {
 			// Replace screen sharing track with video track
-			const screenShareTrack = localStream.getVideoTracks()[0];
+			const screenShareTrack = stream.getVideoTracks()[0];
 			screenShareTrack.stop();
 			localStream.removeTrack(screenShareTrack);
 			localStream.addTrack(stream.getVideoTracks()[0]);
 
-			const localVideo = document.getElementById('VideoStream');
-			localVideo.srcObject = localStream;
+			const localVideo = document.getElementById( 'VideoStream' );
+			localVideo.srcObject = stream;
 			
 			el.classList.remove( 'On' );
 		})
