@@ -58,6 +58,7 @@ Application.receiveMessage = function( msg )
 	// We were told it is safe to start calling the remote peer
 	if( msg.command == 'initcall' && msg.peerId == ge( 'peerId' ).value )
 	{
+		console.log( '[Host] Initializing call. ' );
 		if( !window.peer )
 		{
 			return setTimeout( function()
@@ -67,6 +68,8 @@ Application.receiveMessage = function( msg )
 		}
 		
 		const localVideoStream = ge( 'VideoStream' ).srcObject;
+		console.log( '[Host] Calling: ' + msg.remotePeerId );
+		
 		const c = peer.call( msg.remotePeerId, localVideoStream );
 		c.on( 'stream', ( remoteStream ) => {
 			// Prevent readding the same
