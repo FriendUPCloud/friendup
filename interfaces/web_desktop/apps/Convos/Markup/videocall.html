@@ -118,25 +118,24 @@
 		document.querySelector( '.Mute' ).onclick = function()
 		{
 			let s = this;
-			navigator.mediaDevices.getUserMedia( { video: true, audio: true } )
+			navigator.mediaDevices.getUserMedia( { audio: true } )
 			.then( ( stream ) => {
-				localStream = stream;
+				let localStream = stream;
 				const localVideo = document.getElementById( 'VideoStream' );
 				localVideo.srcObject = stream;
-				const localAudioTrack = localStream.getAudioTracks()[0];
-				if( localAudioTrack )
-				{
+				
+				localStream.getAudioTracks().forEach( ( track ) => {
 				  	if( s.classList.contains( 'Muted' ) )
 					{
 						s.classList.remove( 'Muted' );
-						localAudioTrack.enabled = true;
+						track.enabled = true;
 					}
 					else
 					{
 						s.classList.add( 'Muted' );
-						localAudioTrack.enabled = false;
+						track.enabled = false;
 					}
-				}
+				} );
 			} )
 			.catch( ( error ) => {
 				console.error( 'Error accessing media devices:', error );
@@ -145,25 +144,24 @@
 		document.querySelector( '.Vision' ).onclick = function()
 		{
 			let s = this;
-			navigator.mediaDevices.getUserMedia( { video: true, audio: true } )
+			navigator.mediaDevices.getUserMedia( { video: true } )
 			.then( ( stream ) => {
-				localStream = stream;
+				let localStream = stream;
 				const localVideo = document.getElementById( 'VideoStream' );
 				localVideo.srcObject = stream;
-				const localVideoTrack = localStream.getVideoTracks()[0];
-				if( localVideoTrack )
-				{
+				
+				localStream.getVideoTracks().forEach( ( track ) => {
 				  	if( s.classList.contains( 'Muted' ) )
 					{
 						s.classList.remove( 'Muted' );
-						localVideoTrack.enabled = true;
+						track.enabled = true;
 					}
 					else
 					{
 						s.classList.add( 'Muted' );
-						localVideoTrack.enabled = false;
+						track.enabled = false;
 					}
-				}
+				} );
 			} )
 			.catch( ( error ) => {
 				console.error( 'Error accessing media devices:', error );
@@ -181,6 +179,7 @@
 						Application.receiveMessage( msg );
 					}, 100 );
 				}
+				
 				const localVideoStream = ge( 'VideoStream' ).srcObject;
 				const c = peer.call( msg.remotePeerId, localVideoStream );
 				c.on( 'stream', ( remoteStream ) => {
@@ -203,7 +202,7 @@
 			let self = this;
 			
 			peer = new Peer();
-			peer.on( 'error', ( err ) => {
+			/*peer.on( 'error', ( err ) => {
 				console.log( 'Peer error: ', err );
 			} );
 			peer.on( 'disconnected', ( err ) => {
@@ -212,9 +211,12 @@
 			peer.on( 'peer-unavailable', ( err ) => {
 				console.log( 'Peer became unavailable: ', err );
 			} );
+			peer.on( 'connection', ( err ) => {
+				console.log( 'Peer connection info: ', err );
+			} );
 			peer.on( 'close', ( err ) => {
 				console.log( 'Peer closed: ', err );
-			} );
+			} );*/
 			peer.on( 'open', (peerId) => {
 				ge( 'peerId' ).value = peerId;
 			  
@@ -232,10 +234,16 @@
 								remoteVideo.srcObject = remoteStream;
 								initStreamEvents( remoteVideo );
 							} );
+							/*c.on( 'data', ( data ) => {
+								console.log( 'We got data after call stream: ', data );
+							} );
+							c.on( 'error', ( err ) => {
+								console.log( 'Call error...', err );
+							} );*/
 						} );
-						peer.on( 'error', ( err ) => {
+						/*peer.on( 'error', ( err ) => {
 							console.log( 'Error with calling remote.', err );
-						} );
+						} );*/
 					} )
 					.catch( ( error ) => {
 						console.error( 'Error accessing media devices:', error );
@@ -294,7 +302,10 @@
 			peer.on( 'ended', ( err ) => {
 				console.log( 'Ended - event with remote stream.', err );
 			} );*/
-			
+			obj.onerror = function( e )
+			{
+				console.log( 'Video Element Error: ', e );
+			}
 			obj.srcObject.getTracks().forEach( ( track ) => {
 			  track.onended = handleRemoteStreamEnded;
 			  track.onmute = handleRemoteStreamMuted;
