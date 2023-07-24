@@ -258,8 +258,6 @@ function initStreamEvents( obj )
 	  }
 	});
 }
-});
-}
 
 // Function to start screen sharing
 function startScreenShare( el ) 
