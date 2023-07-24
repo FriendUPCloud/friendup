@@ -72,6 +72,7 @@ Application.receiveMessage = function( msg )
     	let contacts = FUI.getElementByUniqueId( 'contacts' );
     	if( contacts )
     	{
+    		console.log( '[Host] Received broadcast-start from client.' );
     		contacts.videoCall.sendMessage( { command: 'initcall', peerId: msg.peerId, remotePeerId: msg.remotePeerId } );
 		}
     }
