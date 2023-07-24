@@ -336,6 +336,14 @@ class FUIContacts extends FUIElement
     	let self = this;
     	
     	this.record = record;
+    	if( this.record && this.record.Type && this.record.Type == 'User' )
+    	{
+    		this.domContacts.classList.add( 'User' );
+    	}
+    	else
+    	{
+    		this.domContacts.classList.remove( 'User' );
+    	}
     	
         let context = ' context="' + ( record.Type == 'User' ? 'user' : ( record.Type == 'chatroom' ? 'chatroom' : 'contact' ) ) + '"';
         context += ' cid="' + record.ID + '"';
