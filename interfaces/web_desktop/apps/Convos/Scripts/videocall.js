@@ -51,6 +51,8 @@ document.querySelector( '.Vision' ).onclick = function()
 	} );
 };
 
+let callList = [];
+
 Application.receiveMessage = function( msg )
 {
 	// We were told it is safe to start calling the remote peer
@@ -67,15 +69,22 @@ Application.receiveMessage = function( msg )
 		const localVideoStream = ge( 'VideoStream' ).srcObject;
 		const c = peer.call( msg.remotePeerId, localVideoStream );
 		c.on( 'stream', ( remoteStream ) => {
-			ge( 'VideoArea' ).classList.remove( 'Loading' );
-			ge( 'VideoArea' ).classList.add( 'Connected' );
-			const remoteVideo = ge( 'RemoteVideoStream' );
-			remoteVideo.srcObject = remoteStream;
-			initStreamEvents( remoteVideo );
-			
-			// In case of reconnects (this happens when remote goes away)
-			remoteVideo.classList.remove( 'Hidden' );
-			console.log( '[host] We have started the stream to client.' );
+			// Prevent readding the same
+			if( !callList[ c.peer ] )
+			{
+				console.log( 'What: ', remoteStream );
+				ge( 'VideoArea' ).classList.remove( 'Loading' );
+				ge( 'VideoArea' ).classList.add( 'Connected' );
+				const remoteVideo = ge( 'RemoteVideoStream' );
+				remoteVideo.srcObject = remoteStream;
+				initStreamEvents( remoteVideo );
+				
+				// In case of reconnects (this happens when remote goes away)
+				remoteVideo.classList.remove( 'Hidden' );
+				console.log( '[host] We have started the stream to client.' );
+				
+				callList[ c.peer ] = c;
+			}
 		} );
 		c.on( 'error', ( err ) => {
 			console.log( 'Error with connecting to remote stream.', err );
@@ -115,12 +124,17 @@ Application.run = function()
 					// Answer the call and display remote stream
 					c.answer( stream );
 					c.on( 'stream', ( remoteStream ) => {
-						ge( 'VideoArea' ).classList.remove( 'Loading' );
-						ge( 'VideoArea' ).classList.add( 'Connected' );
-						const remoteVideo = ge( 'RemoteVideoStream' );
-						remoteVideo.srcObject = remoteStream;
-						initStreamEvents( remoteVideo );
-						console.log( '[Client] Streaming now.' );
+						// Prevent readding the same
+						if( !callList[ c.peer ] )
+						{
+							ge( 'VideoArea' ).classList.remove( 'Loading' );
+							ge( 'VideoArea' ).classList.add( 'Connected' );
+							const remoteVideo = ge( 'RemoteVideoStream' );
+							remoteVideo.srcObject = remoteStream;
+							initStreamEvents( remoteVideo );
+							console.log( '[Client] Streaming now.' );
+							callList[ c.peer ] = c;
+						}
 					} );
 					console.log( '[Client] We were called, doing stream' );
 					c.on( 'data', ( data ) => {
