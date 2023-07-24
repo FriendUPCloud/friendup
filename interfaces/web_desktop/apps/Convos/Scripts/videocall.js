@@ -65,6 +65,7 @@ document.querySelector( '.ScreenShare' ).onclick = function()
 
 
 let callList = [];
+let currentVideoStream = null;
 
 Application.receiveMessage = function( msg )
 {
@@ -155,6 +156,8 @@ Application.run = function()
 		navigator.mediaDevices.getUserMedia( { video: true, audio: true } )
 			.then( ( stream ) => {
 				localVideo.srcObject = stream;
+				
+				currentVideoStream = stream;
 				
 				// Set up call event so we can be called
 				peer.on( 'call', ( c ) => {
@@ -263,15 +266,17 @@ function initStreamEvents( obj )
 function startScreenShare( el ) 
 {
 	navigator.mediaDevices.getDisplayMedia( { video: true } )
-		.then((stream) => {
+		.then( ( stream ) => {
 			// Replace video track with screen sharing track
-			const localVideoTrack = stream.getVideoTracks()[0];
+			const localVideoTrack = currentVideoStream.getVideoTracks()[0];
 			localVideoTrack.stop();
-			localStream.removeTrack(localVideoTrack);
-			localStream.addTrack(stream.getVideoTracks()[0]);
+			currentVideoStream.removeTrack(localVideoTrack);
+			currentVideoStream.addTrack( stream.getVideoTracks()[ 0 ] );
 
-			const localVideo = document.getElementById( 'VideoStream' );
+			const localVideo = document.getElementById('VideoStream');
 			localVideo.srcObject = stream;
+			
+			currentVideoStream = stream;
 			
 			el.classList.add( 'On' );
 		})
@@ -284,15 +289,17 @@ function startScreenShare( el )
 function stopScreenShare( el ) 
 {
 	navigator.mediaDevices.getUserMedia( { video: true, audio: true } )
-		.then((stream) => {
+		.then( ( stream ) => {
 			// Replace screen sharing track with video track
-			const screenShareTrack = stream.getVideoTracks()[0];
+			const screenShareTrack = currentVideoStream.getVideoTracks()[ 0 ];
 			screenShareTrack.stop();
-			localStream.removeTrack(screenShareTrack);
-			localStream.addTrack(stream.getVideoTracks()[0]);
+			currentVideoStream.removeTrack( screenShareTrack );
+			currentVideoStream.addTrack( stream.getVideoTracks()[ 0 ] );
 
-			const localVideo = document.getElementById( 'VideoStream' );
+			const localVideo = document.getElementById('VideoStream');
 			localVideo.srcObject = stream;
+			
+			currentVideoStream = stream;
 			
 			el.classList.remove( 'On' );
 		})
