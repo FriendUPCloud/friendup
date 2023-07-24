@@ -1,7 +1,7 @@
 
 	<div id="VideoArea">
 		<video id="VideoStream" autoplay muted></video>
-		<video id="RemoteVideoStream" autoplay muted></video>
+		<video id="RemoteVideoStream" autoplay></video>
 	</div>
 	<div id="Toolbar">
 		<input type="hidden" id="peerId"/>
@@ -78,7 +78,7 @@
 				console.log( 'Got peer: ' + peerId );
 				const localVideo = ge( 'VideoStream' );
 				navigator.mediaDevices.getUserMedia( { video: true, audio: true } )
-					.then((stream) => {
+					.then( ( stream ) => {
 						localVideo.srcObject = stream;
 						peer.on( 'call', ( c ) => {
 							// Answer the call and display remote stream
