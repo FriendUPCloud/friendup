@@ -290,7 +290,6 @@ class FUIContacts extends FUIElement
         
         let listKey = this.getListKey();
        
-       	console.log( 'What is the list: ', listKey, contact );
         if( !this.userList[ contact[ listKey ] ] )
         {
             this.userList[ contact[ listKey ] ] = document.createElement( 'div' );
