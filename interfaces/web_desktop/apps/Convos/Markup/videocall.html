@@ -27,7 +27,9 @@
 		{
 			object-fit: cover;
 		}
-		#VideoArea > #RemoteVideoStream
+		#VideoArea > #RemoteVideoStream,
+		#VideoArea > #RemoteVideoStream.Hidden,
+		#VideoArea.Connected > #RemoteVideoStream.Hidden
 		{
 			opacity: 0;
 			pointer-events: none;
@@ -186,6 +188,13 @@
 					ge( 'VideoArea' ).classList.add( 'Connected' );
 					const remoteVideo = ge( 'RemoteVideoStream' );
 					remoteVideo.srcObject = remoteStream;
+					initStreamEvents( remoteVideo );
+					
+					// In case of reconnects (this happens when remote goes away)
+					remoteVideo.classList.remove( 'Hidden' );
+				} );
+				c.on( 'error', ( err ) => {
+					console.log( 'Error with connecting to remote stream.', err );
 				} );
 			}
 		}
@@ -194,6 +203,9 @@
 			let self = this;
 			
 			peer = new Peer();
+			peer.on( 'error', ( err ) => {
+				Console.log( 'Peer error: ', err );
+			} );
 			peer.on( 'open', (peerId) => {
 				ge( 'peerId' ).value = peerId;
 			  
@@ -209,7 +221,11 @@
 								ge( 'VideoArea' ).classList.add( 'Connected' );
 								const remoteVideo = ge( 'RemoteVideoStream' );
 								remoteVideo.srcObject = remoteStream;
+								initStreamEvents( remoteVideo );
 							} );
+						} );
+						peer.on( 'error', ( err ) => {
+							console.log( 'Error with calling remote.', err );
 						} );
 					} )
 					.catch( ( error ) => {
@@ -233,6 +249,51 @@
 					} );
 				}
 			} );
+		}
+		function handleRemoteStreamEnded( e )
+		{
+			if( e.type == 'mute' )
+			{
+				const remoteVideo = ge( 'RemoteVideoStream' );
+				remoteVideo.classList.add( 'Hidden' );
+				console.log( 'mute: ', e );
+			}
+			else
+			{
+				console.log( 'End: ', e );
+			}
+			
+		}
+		function handleRemoteStreamMuted( e )
+		{
+			if( e.type == 'mute' )
+			{
+				const remoteVideo = ge( 'RemoteVideoStream' );
+				remoteVideo.classList.add( 'Hidden' );
+				console.log( 'mute 2: ', e );
+			}
+			else
+			{
+				console.log( 'End: ', e );
+			}
+		}
+		function initStreamEvents( obj )
+		{
+			/*peer.on( 'mute', ( err ) => {
+				console.log( 'Mute - event with remote stream.', err );
+			} );
+			peer.on( 'ended', ( err ) => {
+				console.log( 'Ended - event with remote stream.', err );
+			} );*/
+			
+			obj.srcObject.getTracks().forEach( ( track ) => {
+			  track.onended = handleRemoteStreamEnded;
+			  track.onmute = handleRemoteStreamMuted;
+			  track.onerror = function( e )
+			  {
+			  	console.log( 'What is it?', e );
+			  }
+			});
 		}
   </script>
 
