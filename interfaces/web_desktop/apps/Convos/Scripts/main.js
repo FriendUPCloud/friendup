@@ -70,6 +70,15 @@ Application.receiveMessage = function( msg )
         {
         	this.view.sendMessage( msg );
         }
+        else if( msg.command == 'broadcast-poll' )
+        {
+        	this.view.sendMessage( msg );
+        }
+        else if( msg.command == 'broadcast-poll-remote' )
+        {
+        	console.log( '[Client] Receiving broadcast poll function in main.js' );
+        	this.view.sendMessage( msg );
+        }
     }
 }
 

@@ -11,9 +11,7 @@
 {
 	object-fit: cover;
 }
-#VideoArea > #RemoteVideoStream,
-#VideoArea > #RemoteVideoStream.Hidden,
-#VideoArea.Connected > #RemoteVideoStream.Hidden
+#VideoArea > #RemoteVideoStream
 {
 	opacity: 0;
 	pointer-events: none;
@@ -34,7 +32,7 @@
     width: 128px;
     height: 128px;
     left: auto;
-    border-radius: 15px;
+    border-radius: 100%;
     box-shadow: 0px 2px 10px rgba(0,0,0,0.5);
 }
 
@@ -163,9 +161,9 @@
 
 @keyframes puls
 {
-    0% { color: #aa0000; }
-    50% { color: white; }
-    100% { color: #aa0000; }
+    0% { color: var(--fui-palette-chan01); }
+    50% { color: var(--fui-palette-chan03); }
+    100% { color: var(--fui-palette-chan01); }
 }
 
 

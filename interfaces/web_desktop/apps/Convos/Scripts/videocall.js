@@ -1,5 +1,6 @@
 // Just a global peer object
 window.peer = false;
+window.peerCall = false;
 
 document.querySelector( '.HangUp' ).onclick = function(){ CloseView(); }
 document.querySelector( '.Mute' ).onclick = function()
@@ -65,9 +66,11 @@ document.querySelector( '.ScreenShare' ).onclick = function()
 
 
 let callList = [];
-let currentVideoStream = null;
+let currentVideoStream = null; // Current local stream now
+let currentRemoteStream = null; // Current remote stream now
 let retryTimeo = null;
 let retrying = false;
+let remotePeerId = false;
 
 Application.receiveMessage = function( msg )
 {
@@ -85,6 +88,8 @@ Application.receiveMessage = function( msg )
 		const localVideoStream = ge( 'VideoStream' ).srcObject;
 		retrying = true;
 		
+		remotePeerId = msg.remotePeerId;
+		
 		function executeCall()
 		{
 			const c = peer.call( msg.remotePeerId, localVideoStream );
@@ -97,11 +102,9 @@ Application.receiveMessage = function( msg )
 					const remoteVideo = ge( 'RemoteVideoStream' );
 					remoteVideo.srcObject = remoteStream;
 					initStreamEvents( remoteVideo );
+					currentRemoteStream = remoteStream; // For safe keeping
 					
 					// In case of reconnects (this happens when remote goes away)
-					remoteVideo.classList.remove( 'Hidden' );
-					console.log( '[host] We have started the stream to client.' );
-					
 					callList[ c.peer ] = c;
 				}
 				retrying = false;
@@ -114,12 +117,15 @@ Application.receiveMessage = function( msg )
 			{
 				if( retrying )
 				{
-					console.log( '[Host] Retrying..' );
+					//console.log( '[Host] Retrying..' );
 					executeCall();
 				}
 			}, 250 );
 		}
 		executeCall();
+	}
+	else if( msg.command == 'poll' )
+	{
 	}
 }
 Application.run = function()
@@ -145,7 +151,7 @@ Application.run = function()
 	peer.on( 'open', (peerId) => {
 		ge( 'peerId' ).value = peerId;
 	  
-		console.log( '[All] We opened a peer.' );
+		//console.log( '[All] We opened a peer.' );
 		
 		const localVideo = ge( 'VideoStream' );
 		navigator.mediaDevices.getUserMedia( { video: true, audio: true } )
@@ -153,10 +159,12 @@ Application.run = function()
 				localVideo.srcObject = stream;
 				
 				currentVideoStream = stream;
+				const remoteVideo = ge( 'RemoteVideoStream' );
 				
 				// Set up call event so we can be called
 				peer.on( 'call', ( c ) => {
 					// Answer the call and display remote stream
+					callList = [];
 					c.answer( stream );
 					c.on( 'stream', ( remoteStream ) => {
 						// Prevent readding the same
@@ -164,14 +172,14 @@ Application.run = function()
 						{
 							ge( 'VideoArea' ).classList.remove( 'Loading' );
 							ge( 'VideoArea' ).classList.add( 'Connected' );
-							const remoteVideo = ge( 'RemoteVideoStream' );
 							remoteVideo.srcObject = remoteStream;
 							initStreamEvents( remoteVideo );
-							console.log( '[Client] Streaming now.' );
+							//console.log( '[Client] Streaming now.' );
 							callList[ c.peer ] = c;
+							currentRemoteStream = remoteStream; // For safe keeping
 						}
 					} );
-					console.log( '[Client] We were called, doing stream' );
+					//console.log( '[Client] We were called, doing stream' );
 					c.on( 'data', ( data ) => {
 						console.log( 'We got data after call stream: ', data );
 					} ),
@@ -189,7 +197,7 @@ Application.run = function()
 		// We are starting the stream, so broadcast call
 		if( !ge( 'currentPeerId' ).value )
 		{
-			console.log( '[Host] Broadcasting our peer id: ' + ge( 'peerId' ).value );
+			//console.log( '[Host] Broadcasting our peer id: ' + ge( 'peerId' ).value );
 			self.sendMessage( {
 				command: 'broadcast-call',
 				peerId: ge( 'peerId' ).value
@@ -198,7 +206,7 @@ Application.run = function()
 		// We have a currentPeerId from remote, so tell we got it
 		else
 		{
-			console.log( '[Client] Accepting remote peer id: ' + ge( 'currentPeerId' ).value );
+			//console.log( '[Client] Accepting remote peer id: ' + ge( 'currentPeerId' ).value );
 			ge( 'VideoStream' ).parentNode.classList.add( 'Loading' );
 			Application.sendMessage( {
 				command: 'broadcast-received',
@@ -213,12 +221,11 @@ function handleRemoteStreamEnded( e )
 	if( e.type == 'mute' )
 	{
 		const remoteVideo = ge( 'RemoteVideoStream' );
-		remoteVideo.classList.add( 'Hidden' );
-		console.log( 'mute: ', e );
+		//console.log( 'mute: ', e );
 	}
 	else
 	{
-		console.log( 'End: ', e );
+		//console.log( 'End: ', e );
 	}
 	
 }
@@ -227,12 +234,11 @@ function handleRemoteStreamMuted( e )
 	if( e.type == 'mute' )
 	{
 		const remoteVideo = ge( 'RemoteVideoStream' );
-		remoteVideo.classList.add( 'Hidden' );
-		console.log( 'mute 2: ', e );
+		//console.log( 'mute 2: ', e );
 	}
 	else
 	{
-		console.log( 'End: ', e );
+		//console.log( 'End: ', e );
 	}
 }
 function initStreamEvents( obj )
@@ -245,16 +251,34 @@ function initStreamEvents( obj )
 	} );*/
 	obj.onerror = function( e )
 	{
-		console.log( 'Video Element Error: ', e );
+		//console.log( 'Video Element Error: ', e );
 	}
 	obj.srcObject.getTracks().forEach( ( track ) => {
 	  track.onended = handleRemoteStreamEnded;
 	  track.onmute = handleRemoteStreamMuted;
 	  track.onerror = function( e )
 	  {
-	  	console.log( 'What is it?', e );
+	  	//console.log( 'What is it?', e );
 	  }
 	});
+}
+
+function videoPoll()
+{
+	// Call client
+	if( remotePeerId )
+	{
+		peer.call( remotePeerId, ge( 'VideoStream' ).srcObject );
+	}
+	// Call host
+	else
+	{
+		peer.call( ge( 'currentPeerId' ).value, ge( 'VideoStream' ).srcObject );
+	}
+	/*Application.sendMessage( {
+		command: 'broadcast-poll',
+		peerId: ge( 'peerId' ).value
+	} );*/
 }
 
 // Function to start screen sharing
@@ -276,8 +300,10 @@ function startScreenShare( el )
 			document.body.classList.add( 'ScreenShare' );
 			
 			el.classList.add( 'On' );
+			
+			videoPoll();
 		} )
-		.catch((error) => {
+		.catch( ( error ) => {
 			console.error( 'Error accessing screen share:', error );
 		});
 }
@@ -301,8 +327,10 @@ function stopScreenShare( el )
 			document.body.classList.remove( 'ScreenShare' );
 			
 			el.classList.remove( 'On' );
+			
+			videoPoll();
 		} )
-		.catch((error) => {
+		.catch( ( error ) => {
 			console.error( 'Error accessing user media:', error );
 		});
 }

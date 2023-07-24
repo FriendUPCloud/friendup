@@ -76,6 +76,31 @@ Application.receiveMessage = function( msg )
     		contacts.videoCall.sendMessage( { command: 'initcall', peerId: msg.peerId, remotePeerId: msg.remotePeerId } );
 		}
     }
+    else if( msg.command == 'broadcast-poll' )
+    {
+		let contacts = FUI.getElementByUniqueId( 'contacts' );
+    	if( contacts )
+    	{
+			Application.SendUserMsg( {
+				recipientId: contacts.record.ID,
+				message: {
+					command: 'broadcast-poll-remote',
+					peerId: msg.peerId
+				}
+			} );
+    		console.log( '[host] Broadcast poll to other user' );
+		}
+    }
+    // Comes from host
+    else if( msg.command == 'broadcase-poll-remote' )
+    {
+    	let contacts = FUI.getElementByUniqueId( 'contacts' );
+    	if( contacts )
+    	{
+    		console.log( '[Client] Receiving broadcast poll function in convos.js' );
+    		contacts.videoCall.sendMessage( { command: 'poll', peerId: msg.peerId } );
+		}
+    }
     else if( msg.type )
     {
     	if( msg.type == 'invite' )
