@@ -7,11 +7,9 @@ document.querySelector( '.Mute' ).onclick = function()
 	let s = this;
 	navigator.mediaDevices.getUserMedia( { audio: true } )
 	.then( ( stream ) => {
-		let localStream = stream;
 		const localVideo = document.getElementById( 'VideoStream' );
 		localVideo.srcObject = stream;
-		
-		localStream.getAudioTracks().forEach( ( track ) => {
+		stream.getAudioTracks().forEach( ( track ) => {
 		  	if( s.classList.contains( 'Muted' ) )
 			{
 				s.classList.remove( 'Muted' );
@@ -33,11 +31,9 @@ document.querySelector( '.Vision' ).onclick = function()
 	let s = this;
 	navigator.mediaDevices.getUserMedia( { video: true } )
 	.then( ( stream ) => {
-		let localStream = stream;
 		const localVideo = document.getElementById( 'VideoStream' );
 		localVideo.srcObject = stream;
-		
-		localStream.getVideoTracks().forEach( ( track ) => {
+		stream.getVideoTracks().forEach( ( track ) => {
 		  	if( s.classList.contains( 'Muted' ) )
 			{
 				s.classList.remove( 'Muted' );
@@ -57,6 +53,7 @@ document.querySelector( '.Vision' ).onclick = function()
 
 Application.receiveMessage = function( msg )
 {
+	// We were told it is safe to start calling the remote peer
 	if( msg.command == 'initcall' && msg.peerId == ge( 'peerId' ).value )
 	{
 		if( !window.peer )
@@ -78,6 +75,7 @@ Application.receiveMessage = function( msg )
 			
 			// In case of reconnects (this happens when remote goes away)
 			remoteVideo.classList.remove( 'Hidden' );
+			console.log( '[host] We have started the stream to client.' );
 		} );
 		c.on( 'error', ( err ) => {
 			console.log( 'Error with connecting to remote stream.', err );
@@ -111,6 +109,8 @@ Application.run = function()
 		navigator.mediaDevices.getUserMedia( { video: true, audio: true } )
 			.then( ( stream ) => {
 				localVideo.srcObject = stream;
+				
+				// Set up call event so we can be called
 				peer.on( 'call', ( c ) => {
 					// Answer the call and display remote stream
 					c.answer( stream );
@@ -120,7 +120,9 @@ Application.run = function()
 						const remoteVideo = ge( 'RemoteVideoStream' );
 						remoteVideo.srcObject = remoteStream;
 						initStreamEvents( remoteVideo );
+						console.log( '[Client] Streaming now.' );
 					} );
+					console.log( '[Client] We were called, doing stream' );
 					/*c.on( 'data', ( data ) => {
 						console.log( 'We got data after call stream: ', data );
 					} );
@@ -135,6 +137,7 @@ Application.run = function()
 			.catch( ( error ) => {
 				console.error( 'Error accessing media devices:', error );
 			} );
+		// We are starting the stream, so broadcast call
 		if( !ge( 'currentPeerId' ).value )
 		{
 			self.sendMessage( {
@@ -142,10 +145,10 @@ Application.run = function()
 				peerId: ge( 'peerId' ).value
 			} );
 		}
+		// We have a currentPeerId from remote, so tell we got it
 		else
 		{
 			ge( 'VideoStream' ).parentNode.classList.add( 'Loading' );
-			
 			Application.sendMessage( {
 				command: 'broadcast-received',
 				peerId: ge( 'currentPeerId' ).value,
