@@ -1,0 +1,124 @@
+
+	<div id="VideoArea">
+		<video id="VideoStream" autoplay muted></video>
+		<video id="RemoteVideoStream" autoplay muted></video>
+	</div>
+	<div id="Toolbar">
+		<input type="hidden" id="peerId"/>
+		<input type="hidden" id="currentPeerId" value="{peerId}"/>
+	</div>
+	<script src="https://unpkg.com/peerjs@1.3.2/dist/peerjs.min.js"></script>
+	<style>
+		#VideoArea, #VideoArea > video
+		{
+			position: absolute;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+			transition: opacity 0.2s;
+		}
+		#VideoArea > video
+		{
+			object-fit: cover;
+		}
+		#VideoArea > #RemoteVideoStream
+		{
+			opacity: 0;
+			pointer-events: none;
+		
+		}
+		#VideoArea.Connected > #RemoteVideoStream
+		{
+			opacity: 1;
+			pointer-events: all;
+		}
+		#VideoArea.Connected > #VideoStream
+		{
+			opacity: 0;
+			pointer-events: none;
+		}
+	</style>
+	<script>
+		window.peer = false;
+		Application.receiveMessage = function( msg )
+		{
+			if( msg.command == 'initcall' && msg.peerId == ge( 'peerId' ).value )
+			{
+				if( !window.peer )
+				{
+					return setTimeout( function()
+					{
+						Application.receiveMessage( msg );
+					}, 100 );
+				}
+				
+				console.log( 'We got message other user is read. Initializing ' + msg.peerId );
+				const localVideoStream = ge( 'VideoStream' ).srcObject;
+				console.log( 'Great, connecting to remote peer: ' + msg.remotePeerId );
+				const c = peer.call( msg.remotePeerId, localVideoStream );
+				c.on( 'stream', ( remoteStream ) => {
+					console.log( 'YES' );
+					ge( 'VideoArea' ).classList.remove( 'Loading' );
+					ge( 'VideoArea' ).classList.add( 'Connected' );
+					const remoteVideo = ge( 'RemoteVideoStream' );
+					remoteVideo.srcObject = remoteStream;
+				} );
+				console.log( 'Waiting for call.' );
+			}
+		}
+		Application.run = function()
+		{
+			let self = this;
+			
+			peer = new Peer();
+			peer.on( 'open', (peerId) => {
+				ge( 'peerId' ).value = peerId;
+			  
+				console.log( 'Got peer: ' + peerId );
+				const localVideo = ge( 'VideoStream' );
+				navigator.mediaDevices.getUserMedia( { video: true, audio: true } )
+					.then((stream) => {
+						localVideo.srcObject = stream;
+						peer.on( 'call', ( c ) => {
+							// Answer the call and display remote stream
+							console.log( 'Answer...' );
+							c.answer( stream );
+							c.on( 'stream', ( remoteStream ) => {
+								ge( 'VideoArea' ).classList.remove( 'Loading' );
+								ge( 'VideoArea' ).classList.add( 'Connected' );
+								console.log( 'Getting remote stream' );
+								const remoteVideo = ge( 'RemoteVideoStream' );
+								remoteVideo.srcObject = remoteStream;
+							} );
+						} );
+					} )
+					.catch( ( error ) => {
+						console.error( 'Error accessing media devices:', error );
+					} );
+				if( !ge( 'currentPeerId' ).value )
+				{
+					self.sendMessage( {
+						command: 'broadcast-call',
+						peerId: ge( 'peerId' ).value
+					} );
+				}
+				else
+				{
+					ge( 'VideoStream' ).parentNode.classList.add( 'Loading' );
+					
+					console.log( 'Ok, we are ready, broadcasting that: ' );
+					console.log( 'Remote peer: ' + ge( 'currentPeerId' ).value );
+					console.log( 'My peer: ' + ge( 'peerId' ).value );
+					
+					
+					Application.sendMessage( {
+						command: 'broadcast-received',
+						peerId: ge( 'currentPeerId' ).value,
+						remotePeerId: ge( 'peerId' ).value
+					} );
+				}
+			} );
+		}
+  </script>
+

@@ -1,0 +1,57 @@
+
+	<h1>Local Video</h1>
+	<video id="localVideo" width="320" height="240" autoplay muted></video>
+
+	<h1>Remote Video</h1>
+	<video id="remoteVideo" width="320" height="240" autoplay></video>
+	<p>Share this Peer ID with the other client:</p>
+	<textarea id="peerIdDisplay" rows="3" cols="40"></textarea>
+	<button onclick="callPeer()">Call Remote Peer</button>
+	<script src="https://unpkg.com/peerjs@1.3.2/dist/peerjs.min.js"></script>
+
+	<script>
+		window.peer = false;
+		Application.run = function()
+		{
+			peer = new Peer();
+			peer.on('open', (peerId) => {
+      console.log('My Peer ID:', peerId);
+      document.getElementById('peerIdDisplay').value = peerId;
+
+      const localVideo = document.getElementById('localVideo');
+      navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+        .then((stream) => {
+          localVideo.srcObject = stream;
+
+          peer.on('call', (call) => {
+            // Answer the call and display remote stream
+            call.answer(stream);
+            call.on('stream', (remoteStream) => {
+              const remoteVideo = document.getElementById('remoteVideo');
+              remoteVideo.srcObject = remoteStream;
+            });
+          });
+        })
+        .catch((error) => {
+          console.error('Error accessing media devices:', error);
+        });
+    });
+
+    function callPeer() {
+      const remotePeerId = document.getElementById('peerIdDisplay').value;
+      if (!remotePeerId) {
+        alert('Please enter the remote Peer ID.');
+        return;
+      }
+
+      const localVideoStream = document.getElementById('localVideo').srcObject;
+      const call = peer.call(remotePeerId, localVideoStream);
+
+      call.on('stream', (remoteStream) => {
+        const remoteVideo = document.getElementById('remoteVideo');
+        remoteVideo.srcObject = remoteStream;
+      });
+    }
+  </script> 
+  
+  
