@@ -114,6 +114,8 @@ Application.run = function()
 	peer.on( 'open', (peerId) => {
 		ge( 'peerId' ).value = peerId;
 	  
+		console.log( '[All] We opened a peer.' );
+		
 		const localVideo = ge( 'VideoStream' );
 		navigator.mediaDevices.getUserMedia( { video: true, audio: true } )
 			.then( ( stream ) => {
@@ -154,6 +156,7 @@ Application.run = function()
 		// We are starting the stream, so broadcast call
 		if( !ge( 'currentPeerId' ).value )
 		{
+			console.log( '[Host] Broadcasting our peer id: ' + ge( 'peerId' ).value );
 			self.sendMessage( {
 				command: 'broadcast-call',
 				peerId: ge( 'peerId' ).value
@@ -162,6 +165,7 @@ Application.run = function()
 		// We have a currentPeerId from remote, so tell we got it
 		else
 		{
+			console.log( '[Client] Accepting remote peer id: ' + ge( 'currentPeerId' ).value );
 			ge( 'VideoStream' ).parentNode.classList.add( 'Loading' );
 			Application.sendMessage( {
 				command: 'broadcast-received',
