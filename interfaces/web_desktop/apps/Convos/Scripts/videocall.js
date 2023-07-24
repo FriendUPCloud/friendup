@@ -109,6 +109,7 @@ Application.receiveMessage = function( msg )
 				}
 			}, 250 );
 		}
+		executeCall();
 	}
 }
 Application.run = function()
