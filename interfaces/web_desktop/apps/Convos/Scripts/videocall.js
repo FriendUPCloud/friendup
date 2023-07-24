@@ -66,13 +66,14 @@ document.querySelector( '.ScreenShare' ).onclick = function()
 
 let callList = [];
 let currentVideoStream = null;
+let retryTimeo = null;
+let retrying = false;
 
 Application.receiveMessage = function( msg )
 {
 	// We were told it is safe to start calling the remote peer
 	if( msg.command == 'initcall' && msg.peerId == ge( 'peerId' ).value )
 	{
-		console.log( '[Host] Initializing call. ' );
 		if( !window.peer )
 		{
 			return setTimeout( function()
@@ -82,9 +83,7 @@ Application.receiveMessage = function( msg )
 		}
 		
 		const localVideoStream = ge( 'VideoStream' ).srcObject;
-		console.log( '[Host] Calling: ' + msg.remotePeerId );
-		
-		let retries = 10;
+		retrying = true;
 		
 		function executeCall()
 		{
@@ -93,7 +92,6 @@ Application.receiveMessage = function( msg )
 				// Prevent readding the same
 				if( !callList[ c.peer ] )
 				{
-					console.log( 'What: ', remoteStream );
 					ge( 'VideoArea' ).classList.remove( 'Loading' );
 					ge( 'VideoArea' ).classList.add( 'Connected' );
 					const remoteVideo = ge( 'RemoteVideoStream' );
@@ -105,21 +103,18 @@ Application.receiveMessage = function( msg )
 					console.log( '[host] We have started the stream to client.' );
 					
 					callList[ c.peer ] = c;
-					retries = 0;
 				}
-				else
-				{
-					console.log( 'Already called steam...' );
-				}
+				retrying = false;
 			} );
 			c.on( 'error', ( err ) => {
 				console.log( 'Error with connecting to remote stream.', err );
 			} );
-			setTimeout( function()
+			clearTimeout( retryTimeo );
+			retryTimeo = setTimeout( function()
 			{
-				if( retries-- > 0 )
+				if( retrying )
 				{
-					console.log( '[Host] Retry (' + ( retries + 1 ) + ' retries left.).' );
+					console.log( '[Host] Retrying..' );
 					executeCall();
 				}
 			}, 250 );
@@ -279,9 +274,9 @@ function startScreenShare( el )
 			currentVideoStream = stream;
 			
 			el.classList.add( 'On' );
-		})
+		} )
 		.catch((error) => {
-			console.error('Error accessing screen share:', error);
+			console.error( 'Error accessing screen share:', error );
 		});
 }
 
@@ -302,9 +297,9 @@ function stopScreenShare( el )
 			currentVideoStream = stream;
 			
 			el.classList.remove( 'On' );
-		})
+		} )
 		.catch((error) => {
-			console.error('Error accessing user media:', error);
+			console.error( 'Error accessing user media:', error );
 		});
 }
 
