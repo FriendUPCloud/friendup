@@ -42,9 +42,9 @@
 	position: absolute;
 	background-color: rgba(0,0,0,0.8);
 	border-radius: 50px;
-	left: calc(50% - 75px);
+	left: calc(50% - 100px);
 	bottom: 0;
-	width: 150px;
+	width: 200px;
 	overflow: hidden;
 	display: flex;
 }
@@ -68,6 +68,23 @@
 	content: "\f095";
 	transform: rotate(45deg);
 	font-family: fontawesome;
+}
+#Toolbar > .Buttons > .NiceButton.ScreenShare:before
+{
+	font-size: 30px;
+	content: "\f26c";
+	font-family: fontawesome;
+}
+@keyframes pulse
+{
+	0% { transform: rotate(0deg); }
+	50% { transform: rotate(10deg); }
+	100% { transform: rotate(0deg); }
+}
+#Toolbar > .Buttons > .NiceButton.ScreenShare.On:before
+{
+	animation: pulse;
+	color: #cc0000;
 }
 #Toolbar > .Buttons > .NiceButton.Mute:before
 {

@@ -50,6 +50,19 @@ document.querySelector( '.Vision' ).onclick = function()
 		console.error( 'Error accessing media devices:', error );
 	} );
 };
+document.querySelector( '.ScreenShare' ).onclick = function()
+{
+	if( this.classList.contains( 'On' ) )
+	{
+		stopScreenShare( this );	
+	}
+	else
+	{
+		startScreenShare( this );	
+	}
+};
+
+
 
 let callList = [];
 
@@ -244,5 +257,47 @@ function initStreamEvents( obj )
 	  	console.log( 'What is it?', e );
 	  }
 	});
+}
+
+// Function to start screen sharing
+function startScreenShare( el ) 
+{
+	getScreenShareStream()
+		.then((stream) => {
+			// Replace video track with screen sharing track
+			const localVideoTrack = localStream.getVideoTracks()[0];
+			localVideoTrack.stop();
+			localStream.removeTrack(localVideoTrack);
+			localStream.addTrack(stream.getVideoTracks()[0]);
+
+			const localVideo = document.getElementById('VideoStream');
+			localVideo.srcObject = localStream;
+			
+			el.classList.add( 'On' );
+		})
+		.catch((error) => {
+			console.error('Error accessing screen share:', error);
+		});
+}
+
+// Function to stop screen sharing and return to video call
+function stopScreenShare( el ) 
+{
+	getUserMediaStream()
+		.then((stream) => {
+			// Replace screen sharing track with video track
+			const screenShareTrack = localStream.getVideoTracks()[0];
+			screenShareTrack.stop();
+			localStream.removeTrack(screenShareTrack);
+			localStream.addTrack(stream.getVideoTracks()[0]);
+
+			const localVideo = document.getElementById('VideoStream');
+			localVideo.srcObject = localStream;
+			
+			el.classList.remove( 'On' );
+		})
+		.catch((error) => {
+			console.error('Error accessing user media:', error);
+		});
 }
 
