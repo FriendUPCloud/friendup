@@ -2,15 +2,16 @@
 	<div id="VideoArea">
 		<video id="VideoStream" autoplay muted></video>
 		<video id="RemoteVideoStream" autoplay></video>
+		<div class="ScreenShareInfo"><span>{i18n_sharing_screen}</span></div>
 	</div>
 	<div id="Toolbar">
 		<input type="hidden" id="peerId"/>
 		<input type="hidden" id="currentPeerId" value="{peerId}"/>
 		<div class="Buttons">
-			<div class="NiceButton HangUp"></div>
-			<div class="NiceButton Vision"></div>
-			<div class="NiceButton Mute"></div>
-			<div class="NiceButton ScreenShare"></div>
+			<div class="NiceButton HangUp"><span></span></div>
+			<div class="NiceButton Vision"><span></span></div>
+			<div class="NiceButton Mute"><span></span></div>
+			<div class="NiceButton ScreenShare"><span></span></div>
 		</div>
 	</div>
 	<script src="https://unpkg.com/peerjs@1.3.2/dist/peerjs.min.js"></script>

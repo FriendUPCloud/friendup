@@ -273,6 +273,8 @@ function startScreenShare( el )
 			
 			currentVideoStream = stream;
 			
+			document.body.classList.add( 'ScreenShare' );
+			
 			el.classList.add( 'On' );
 		} )
 		.catch((error) => {
@@ -295,6 +297,8 @@ function stopScreenShare( el )
 			localVideo.srcObject = stream;
 			
 			currentVideoStream = stream;
+			
+			document.body.classList.remove( 'ScreenShare' );
 			
 			el.classList.remove( 'On' );
 		} )
