@@ -258,11 +258,13 @@ function initStreamEvents( obj )
 	  }
 	});
 }
+});
+}
 
 // Function to start screen sharing
 function startScreenShare( el ) 
 {
-	getScreenShareStream()
+	navigator.mediaDevices.getDisplayMedia( { video: true } )
 		.then((stream) => {
 			// Replace video track with screen sharing track
 			const localVideoTrack = localStream.getVideoTracks()[0];
@@ -283,7 +285,7 @@ function startScreenShare( el )
 // Function to stop screen sharing and return to video call
 function stopScreenShare( el ) 
 {
-	getUserMediaStream()
+	navigator.mediaDevices.getUserMedia( { video: true, audio: true } )
 		.then((stream) => {
 			// Replace screen sharing track with video track
 			const screenShareTrack = localStream.getVideoTracks()[0];
