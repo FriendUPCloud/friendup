@@ -36,12 +36,12 @@ class FUIContacts extends FUIElement
     }
     getBasicTemplate()
     {
-    	let ex = this.options.groupid ? '<div class="Group"></div>' : '';
+    	let ex = this.options.groupid ? '<div class="Group"></div>' : '<div class="Videocall"></div>';
         let add = this.options.groupid ? '<div class="Add"></div>' : '';
         
     	return '\
         <div class="ContactSearch"><input type="text" value="' + ( typeof( self.contactFilter ) != 'undefined' ? self.contactFilter : '' ) + '" placeholder="Find a contact..."/></div>\
-        <div class="Contacts"><div class="ContactList"></div><div class="Settings"><div class="Avatar"></div><div class="Toolbar">' + ex + add + '<div class="Videocall"></div><div class="Gearbox"></div></div></div></div>\
+        <div class="Contacts"><div class="ContactList"></div><div class="Settings"><div class="Avatar"></div><div class="Toolbar">' + ex + add + '<div class="Gearbox"></div></div></div></div>\
         <div class="Chat"><div class="Placeholder"><span>' + i18n( 'i18n_start_conversation' ) + '</span></div></div>\
         ';
     }
