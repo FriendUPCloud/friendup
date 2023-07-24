@@ -204,7 +204,10 @@
 			
 			peer = new Peer();
 			peer.on( 'error', ( err ) => {
-				Console.log( 'Peer error: ', err );
+				console.log( 'Peer error: ', err );
+			} );
+			peer.on( 'disconnected', ( err ) => {
+				console.log( 'Peer disconnected: ', err );
 			} );
 			peer.on( 'open', (peerId) => {
 				ge( 'peerId' ).value = peerId;
