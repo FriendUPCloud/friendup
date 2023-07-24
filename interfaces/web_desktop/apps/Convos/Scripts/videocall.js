@@ -91,6 +91,7 @@ Application.receiveMessage = function( msg )
 					console.log( '[host] We have started the stream to client.' );
 					
 					callList[ c.peer ] = c;
+					retries = 0;
 				}
 				else
 				{
