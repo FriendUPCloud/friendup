@@ -70,28 +70,45 @@ Application.receiveMessage = function( msg )
 		const localVideoStream = ge( 'VideoStream' ).srcObject;
 		console.log( '[Host] Calling: ' + msg.remotePeerId );
 		
-		const c = peer.call( msg.remotePeerId, localVideoStream );
-		c.on( 'stream', ( remoteStream ) => {
-			// Prevent readding the same
-			if( !callList[ c.peer ] )
+		let retires = 10;
+		
+		function executeCall()
+		{
+			const c = peer.call( msg.remotePeerId, localVideoStream );
+			c.on( 'stream', ( remoteStream ) => {
+				// Prevent readding the same
+				if( !callList[ c.peer ] )
+				{
+					console.log( 'What: ', remoteStream );
+					ge( 'VideoArea' ).classList.remove( 'Loading' );
+					ge( 'VideoArea' ).classList.add( 'Connected' );
+					const remoteVideo = ge( 'RemoteVideoStream' );
+					remoteVideo.srcObject = remoteStream;
+					initStreamEvents( remoteVideo );
+					
+					// In case of reconnects (this happens when remote goes away)
+					remoteVideo.classList.remove( 'Hidden' );
+					console.log( '[host] We have started the stream to client.' );
+					
+					callList[ c.peer ] = c;
+				}
+				else
+				{
+					console.log( 'Already called steam...' );
+				}
+			} );
+			c.on( 'error', ( err ) => {
+				console.log( 'Error with connecting to remote stream.', err );
+			} );
+			setTimeout( function()
 			{
-				console.log( 'What: ', remoteStream );
-				ge( 'VideoArea' ).classList.remove( 'Loading' );
-				ge( 'VideoArea' ).classList.add( 'Connected' );
-				const remoteVideo = ge( 'RemoteVideoStream' );
-				remoteVideo.srcObject = remoteStream;
-				initStreamEvents( remoteVideo );
-				
-				// In case of reconnects (this happens when remote goes away)
-				remoteVideo.classList.remove( 'Hidden' );
-				console.log( '[host] We have started the stream to client.' );
-				
-				callList[ c.peer ] = c;
-			}
-		} );
-		c.on( 'error', ( err ) => {
-			console.log( 'Error with connecting to remote stream.', err );
-		} );
+				if( retries-- > 0 )
+				{
+					console.log( '[Host] Retry (' + ( retries + 1 ) + ' retries left.).' );
+					executeCall();
+				}
+			}, 250 );
+		}
 	}
 }
 Application.run = function()
