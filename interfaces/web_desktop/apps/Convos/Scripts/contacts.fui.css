@@ -98,6 +98,7 @@
 }
 
 .FUIContacts .Contacts > .Settings .Gearbox,
+.FUIContacts .Contacts > .Settings .Videocall,
 .FUIContacts .Contacts > .Settings .Add,
 .FUIContacts .Contacts > .Settings .AddConversation,
 .FUIContacts .Contacts > .Settings .Group
@@ -118,12 +119,19 @@
     transition: outline,background-color 0.12s,0.2s;
 }
 .FUIContacts .Contacts > .Settings .Gearbox:hover,
+.FUIContacts .Contacts > .Settings .Videocall:hover,
 .FUIContacts .Contacts > .Settings .Add:hover,
 .FUIContacts .Contacts > .Settings .AddConversation:hover,
 .FUIContacts .Contacts > .Settings .Group:hover
 {
 	outline: 1px solid var(--fui-border-foreground);
     background-color: var(--fui-palette-chan04);
+}
+
+.FUIContacts .Contacts > .Settings .Videocall:before
+{
+	content: "\f03d";
+	font-family: FontAwesome;
 }
 
 .FUIContacts .Contacts > .Settings .Gearbox:before
