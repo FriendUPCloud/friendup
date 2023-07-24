@@ -98,7 +98,7 @@
 	<script>
 		window.peer = false;
 		
-		document.querySelector( '.HangUp' ).onclick = function(){ CloseWindow(); }
+		document.querySelector( '.HangUp' ).onclick = function(){ CloseView(); }
 		document.querySelector( '.Mute' ).onclick = function(){
 			if( this.classList.contains( 'Muted' ) )
 			{
@@ -108,8 +108,9 @@
 			else
 			{
 				this.classList.add( 'Muted' );
-				ge( 'VideoStream' ).addAttribute( 'muted' );
+				ge( 'VideoStream' ).setAttribute( 'muted', 'muted' );
 			}
+		};
 		
 		Application.receiveMessage = function( msg )
 		{
