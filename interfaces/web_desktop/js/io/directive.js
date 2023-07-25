@@ -511,13 +511,11 @@ function ExecuteApplication( app, args, callback, retries, flags )
 						let ws;
 						if( _applicationBasics && _applicationBasics.apiV1 )
 						{
-							console.log( '[directive] Using blob' );
 							ws = this.rawData.split( 'src="/webclient/js/apps/api.js"' ).join( 'src="' + _applicationBasics.apiV1 + '"' );
 						}
 						else
 						{
 							ws = this.rawData;
-							console.log( '[directive] Using raw data.' );
 						}
 						ifr.src = URL.createObjectURL(new Blob([ws],{type:'text/html'}));
 					}
@@ -1421,10 +1419,12 @@ function ExecuteJSX( data, app, args, path, callback, conf, flags )
 					if( _applicationBasics.apiV1 )
 					{
 						ws = this.rawData.split( 'src="/webclient/js/apps/api.js"' ).join( 'src="' + _applicationBasics.apiV1 + '"' );
+						console.log( '[directive] Using blob' );
 					}
 					else
 					{
 						ws = this.rawData;
+						console.log( '[directive] NOT Using blob' );
 					}
 					ifr.onload = ifronload;
 					ifr.src = URL.createObjectURL( new Blob([ ws ],{ type: 'text/html' } ) );
