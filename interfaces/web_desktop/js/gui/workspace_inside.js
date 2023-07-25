@@ -11908,11 +11908,14 @@ function loadApplicationBasics( callback )
 			return;
 		}
 		
+		let loadSteps = 0;
+		
 		// Preload basic scripts
 		let a_ = new File( '/webclient/js/apps/api.js' );
 		a_.onLoad = function( data )
 		{
 			_applicationBasics.apiV1 = URL.createObjectURL( new Blob( [ data ], { type: 'text/javascript' } ) );
+			loadSteps++;
 		}
 		a_.load();
 		
@@ -11926,6 +11929,7 @@ function loadApplicationBasics( callback )
 			if( _applicationBasics.css )
 				_applicationBasics.css += data;
 			else _applicationBasics.css = data;
+			loadSteps++;
 		}
 		sb_.load();
 		
@@ -11961,6 +11965,7 @@ function loadApplicationBasics( callback )
 			{
 				_applicationBasics.css = impOut.join( "\n" ) + "\n" + _applicationBasics.css;
 			}
+			loadSteps++;
 		}
 		c_.load();
 		
@@ -11982,18 +11987,24 @@ function loadApplicationBasics( callback )
 		{
 			//console.log( 'BASICS LOADED: ' + data );
 			_applicationBasics.js = data;
-			if( callback )
-			{
-				try
-				{
-					callback();
-				}
-				catch( e )
-				{
-				}
-			}
+			loadSteps++;
 		}
 		j_.load();
+		
+		let intr = setInterval( function()
+		{
+			if( loadSteps == 4 )
+			{
+				console.log( 'Basics loaded!' );
+				clearInterval( intr );
+				if( callback )
+					callback();
+			}
+			else
+			{
+				console.log( 'Waiting.' );
+			}
+		}, 25 );
 	}, 2 );
 };
 
