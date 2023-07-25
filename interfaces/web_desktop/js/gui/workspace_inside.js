@@ -11995,9 +11995,14 @@ function loadApplicationBasics( callback )
 		{
 			if( loadSteps == 4 )
 			{
+				console.log( 'Basics loaded!' );
 				clearInterval( intr );
 				if( callback )
 					callback();
+			}
+			else
+			{
+				console.log( 'Waiting.' );
 			}
 		}, 25 );
 	}, 2 );
