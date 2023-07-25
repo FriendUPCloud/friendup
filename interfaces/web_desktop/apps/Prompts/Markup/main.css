@@ -55,3 +55,34 @@
 	height: calc(100% - 35px);
 }
 
+.PButton
+{
+	display: inline-block;
+	vertical-align: middle;
+	text-align: center;
+	width: 18px;
+	height: 18px;
+	border-radius: 100%;
+	background-color: var(--terminal-background);
+	color: var(--terminal-color);
+	margin: 0 15px 0 0;
+	cursor: pointer;
+	transition: box-shadow 0.15s;
+	box-shadow: 0 0 0 0 rgba(0,0,0,0);
+}
+
+.PButton:hover
+{
+	box-shadow: 0 0 4px 1px rgba(0,0,0,0.3);
+}
+
+.PButton.NewPrompt:before
+{
+	vertical-align: top;
+	position: relative;
+	top: 1px;
+	margin: 0 0 0 0;
+	content: "\f055";
+	font-family: FontAwesome;
+}
+
