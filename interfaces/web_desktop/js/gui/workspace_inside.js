@@ -11897,9 +11897,9 @@ function loadApplicationBasics( callback )
 		if( _previousBasicsTheme == themeName )
 		{
 			if( callback ) callback();
+			console.log( ' < Exiting - we already set this theme.' );
 			return;
 		}
-		_previousBasicsTheme = themeName;
 		
 		console.log( ' > We set the basics loading in progress.' );
 		
@@ -11910,6 +11910,8 @@ function loadApplicationBasics( callback )
 			if( callback ) callback();
 			return;
 		}
+		
+		_previousBasicsTheme = themeName;
 		
 		console.log( ' > Setting load steps to 0.' );
 		
