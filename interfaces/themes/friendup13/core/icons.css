@@ -392,6 +392,11 @@ Just so that we can keep the outputted HTML smaller by using CSS classes :)
 	display: inline;
 }
 
+[mobile] .File .Title span
+{
+	white-space: nowrap;
+}
+
 /* Specific icons */
 
 .File > .Icon > div

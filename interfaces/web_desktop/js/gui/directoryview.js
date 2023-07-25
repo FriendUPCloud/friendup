@@ -951,6 +951,13 @@ DirectoryView.prototype.InitWindow = function( winobj )
 	// On scrolling, don't do the menu!
 	winobj.addEventListener( 'scroll', function(e)
 	{
+		winobj.scrolling = true;
+		if( this.scrollIndicatorTimeo )
+			clearTimeout( this.scrollIndicatorTimeo );
+		this.scrollIndicatorTimeo = setTimeout( function()
+		{
+			winobj.scrolling = false;
+		}, 100 );
 		clearTimeout( window.touchstartCounter );
 		window.touchstartCounter = null;
 		
@@ -2528,7 +2535,7 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 	// Handle scrolling
 	this.refreshScrollTimeout = false;
 	this.scroller.onscroll = function( e )
-	{	
+	{
 		if( self.refreshScrollTimeout )
 		{
 			clearTimeout( self.refreshScrollTimeout );
@@ -4137,6 +4144,12 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 	    {
 		    fil[ eventn ] = function( e )
 		    {
+		    	if( this.directoryView.window.scrolling ) 
+		    	{
+		    		console.log( 'Not clicking, scrolling' );
+		    		return;
+	    		}
+		    	
 		        // No case here!
 		        if( fileInfo.Type != 'Directory' )
 		        {
@@ -4204,7 +4217,6 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 		{
 			if( this.directoryView.filedialog )
 				return;
-				
 			// On mobile and tablet, don't click other icons when showing the context menu
 			if( ( isMobile || isTablet ) && Workspace.contextMenuShowing ) 
 			{
