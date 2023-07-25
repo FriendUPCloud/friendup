@@ -11901,12 +11901,17 @@ function loadApplicationBasics( callback )
 		}
 		_previousBasicsTheme = themeName;
 		
+		console.log( ' > We set the basics loading in progress.' );
+		
 		// Don't do in login
 		if( Workspace.loginPrompt )
 		{
+			console.log( ' < Exiting, login prompt.' );
 			if( callback ) callback();
 			return;
 		}
+		
+		console.log( ' > Setting load steps to 0.' );
 		
 		let loadSteps = 0;
 		
