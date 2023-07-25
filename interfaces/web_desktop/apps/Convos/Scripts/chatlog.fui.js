@@ -617,10 +617,13 @@ class FUIChatlog extends FUIElement
             }
             
             let owner = messages[ a ].getAttribute( 'owner' );
+            let powner = a > 0 ? messages[ a - 1 ].getAttribute( 'owner' ) : false;
+            let nowner = a + 1 < messages.length ? messages[ a + 1 ].getAttribute( 'owner' ) : false;
+            
             if( owner == lastOwner )
             {
                 messages[ a ].classList.add( 'ConceilOwner' );
-                if( a + 1 < messages.length && messages[ a + 1 ].getAttribute( 'owner' ) != owner )
+                if( a + 1 < messages.length && nowner != owner )
                 {
                     messages[ a ].classList.add( 'LastForOwner' );
                 }
@@ -629,9 +632,13 @@ class FUIChatlog extends FUIElement
                     messages[ a ].classList.remove( 'LastForOwner' );
                 }
             }
-            else if( a + 1 < messages.length && messages[ a + 1 ].getAttribute( 'owner' ) == owner )
+            else if( a + 1 < messages.length && nowner == owner )
             {
                 messages[ a ].classList.add( 'FirstForOwner' );
+            }
+            if( powner && powner != owner && nowner && nowner != owner )
+            {
+            	messages[ a ].classList.add( 'OnlyMessage' );
             }
             if( a + 1 >= messages.length && messages[ a ].classList.contains( 'ConceilOwner' ) )
             {

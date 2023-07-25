@@ -177,7 +177,7 @@
 {
 	background-color: var(--fui-background);
 	color: var(--fui-color);
-	padding: 15px;
+	padding: 5px 15px;
 	box-sizing: border-box;
 	border-radius: 10px;
 	margin: 10px 0 0 0;
@@ -208,12 +208,19 @@
 
 .Message.FirstForOwner
 {
+	padding-top: 15px;
     border-radius: 10px 10px 0 0;
 }
 
 .Message.ConceilOwner
 {
     border-radius: 0;
+}
+
+.Message.OnlyMessage 
+{
+    padding-top: 15px;
+    padding-bottom: 15px;
 }
 
 .Message.FirstForOwner .Date, .Message.ConceilOwner:not(.LastForOwner) .Date
@@ -223,6 +230,7 @@
 
 .Message.ConceilOwner.LastForOwner
 {
+	padding-bottom: 15px;
     border-radius: 0 0 10px 10px;
 }
 
