@@ -114,6 +114,7 @@ if( $app->ID )
 		    let Friend = window.Friend ? window.Friend : {};
 		    Friend.launch = function()
 		    {
+		    	if( !this.ready ) return setTimeout( function(){ Friend.launch(); }, 25 );
 			    ' . $scrp . '
 			    Application.checkAppPermission = function( key )
 			    {
@@ -124,9 +125,9 @@ if( $app->ID )
 			    }
 		    }
 		</script>
-		<script onload="Friend.launch()" src="/webclient/js/apps/api.js"></script>' . $scripts . '
+		<script onload="Friend.ready = true" src="/webclient/js/apps/api.js"></script>' . $scripts . '
 	</head>
-	<body>
+	<body onload="Friend.launch()">
 	</body>
 </html>';
 
