@@ -103,30 +103,30 @@ if( $app->ID )
 		}
 	}
 	
+	$port = $configfilesettings[ 'Core' ][ 'ProxyEnable' ] ? '' : ( ':' . $configfilesettings[ 'Core' ][ 'port' ] );
+	$href = ( $configfilesettings[ 'Core' ][ 'SSLEnable' ] ? 'https://' : 'http://' ) . $configfilesettings[ 'FriendCore' ][ 'fchost' ] . $port . '/';
+	
 	// TODO: Permissions?
 	$str = '<!DOCTYPE html>
 <html>
 	<head>
 		<title>' . $conf->Name . '</title>
-		<base href="https://intranet.friendup.cloud/"/>
+		<base href="' . $href . '"/>
 		<script>
 		    Friend = window.Friend ? window.Friend : {};
 		    {
 				let pause = 5;
 				Friend.launch = function()
 				{
-					console.log( "Trying to launch." );
 					if( this.launched ) return;
-					console.log( "We launched..!!!" );
-					if( !window.Application ){ console.log( "Waiting to load. No window application"  ); setTimeout( function(){ Friend.launch(); }, pause ); pause = pause == 5 ? 10 : 25; return; };
+					if( !window.Application ){ setTimeout( function(){ Friend.launch(); }, pause ); pause = pause == 5 ? 10 : 25; return; };
 					this.launched = true;
-					console.log( "LAUNCHED." );
 					' . $scrp . '
 					Application.checkAppPermission = function( key ){ let permissions = {}; if( permissions[ key ] ) return permissions[ key ]; return false; }
 				};
 			}
 		</script>
-		<script onerror="console.log( \'error loading:\', event );" onload="console.log( \'We loaded: \', window.Application ); Friend.launch()" src="/webclient/js/apps/api.js"></script>' . $scripts . '
+		<script onerror="" onload="Friend.launch()" src="/webclient/js/apps/api.js"></script>' . $scripts . '
 	</head>
 	<body onload="Friend.launch()"></body>
 </html>';
