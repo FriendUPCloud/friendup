@@ -201,10 +201,13 @@ class FUIChatlog extends FUIElement
                                     range.deleteContents();
                                     range.insertNode( node );
                                     range.collapse( true );
+                                    
+                                    self.domTextarea.focus();
                                     return;
                                 }
                             } 
                             self.domTextarea.appendChild( node );
+                            self.domTextarea.focus();
 	                    }
 	                    else
 	                    {
