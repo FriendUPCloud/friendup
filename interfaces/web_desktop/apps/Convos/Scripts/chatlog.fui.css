@@ -186,6 +186,16 @@
 	position: relative;
 }
 
+.FUIChatlog .Message > .Text
+{
+	user-select: text;
+}
+
+.FUIChatlog .Message > .Text .VideoCall
+{
+	user-select: none;
+}
+
 .FUIChatlog .Slot:first-child .Message
 {
     margin: 0;
