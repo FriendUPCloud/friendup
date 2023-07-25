@@ -224,7 +224,8 @@
     padding-bottom: 15px;
 }
 
-.Message.FirstForOwner .Date, .Message.ConceilOwner:not(.LastForOwner) .Date
+.Message.FirstForOwner .Date, .Message.ConceilOwner:not(.LastForOwner) .Date,
+.Message.FirstForOwner .Date, .Message.ConceilOwner:not(.LastForOwner) .Text::after
 {
     display: none;
 }
