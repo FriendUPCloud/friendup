@@ -11893,7 +11893,7 @@ function loadApplicationBasics( callback )
 		let themeName = Workspace.theme ? Workspace.theme : 'friendup13';
 		
 		// Do not reload the same stuff
-		if( _previousBasicsTheme == themeName )
+		if( _previousBasicsTheme == themeName && _applicationBasics.apiV1 )
 		{
 			if( callback )
 				callback();
