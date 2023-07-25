@@ -331,7 +331,14 @@ class FUIChatlog extends FUIElement
 			    self.domTextarea.innerHTML = '';	
     			cancelBubble( e );
     			
-    			self.queueMessage( val );
+    			// Check white space
+    			let candidate = val.split( /\<.*?\>/ ).join( '' );
+    			candidate = candidate.split( /[\s]/ ).join( '' ).split( '&nbsp;' ).join( '' );
+    			
+    			if( candidate.length )
+    			{
+    				self.queueMessage( val );
+				}
     		}
     		this.checkHeight();
     	} );
