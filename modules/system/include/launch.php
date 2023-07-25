@@ -116,19 +116,12 @@ if( $app->ID )
 		    {
 		    	if( !this.ready ) return setTimeout( function(){ Friend.launch(); }, 25 );
 			    ' . $scrp . '
-			    Application.checkAppPermission = function( key )
-			    {
-				    let permissions = {}; // <- inject user specific permissions here
-				    if( permissions[ key ] )
-					    return permissions[ key ];
-				    return false;
-			    }
-		    }
+			    Application.checkAppPermission = function( key ){ let permissions = {}; if( permissions[ key ] ) return permissions[ key ]; return false; }
+		    };
 		</script>
-		<script onload="Friend.ready = true" src="/webclient/js/apps/api.js"></script>' . $scripts . '
+		<script onload="Friend.ready=true" src="/webclient/js/apps/api.js"></script>' . $scripts . '
 	</head>
-	<body onload="Friend.launch()">
-	</body>
+	<body onload="Friend.launch()"></body>
 </html>';
 
 	$length = strlen( $str );	
