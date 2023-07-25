@@ -112,10 +112,10 @@ if( $app->ID )
 		<script>
 		    Friend = window.Friend ? window.Friend : {};
 		    {
-				let pause = 5;
+				let pause = 5, retries = 0;
 				Friend.launch = function()
 				{
-					if( !this.ready ){ setTimeout( function(){ Friend.launch(); }, pause ); pause = pause == 5 ? 10 : 25; console.log( "Waiting to load." ); return; };
+					if( !this.ready ){ setTimeout( function(){ Friend.launch(); }, pause ); pause = pause == 5 ? 10 : 25; if( retries++ > 100 ) document.location.reload(); console.log( "Waiting to load." + retries ); return; };
 					' . $scrp . '
 					Application.checkAppPermission = function( key ){ let permissions = {}; if( permissions[ key ] ) return permissions[ key ]; return false; }
 				};
