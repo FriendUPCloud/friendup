@@ -34,6 +34,7 @@ html > body.Charcoal.Inside,
 html > body.Charcoal .Content .Scroller:after
 {
 	background: #303030;
+	border-radius: 0;
 }
 
 body.Charcoal .AppsShowingTitle

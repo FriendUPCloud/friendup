@@ -10,6 +10,7 @@ html > body.Dark.Inside,
 html > body.Dark .Content .Scroller:after
 {
 	background: #34495E;
+	border-radius: 0;
 }
 
 body.Dark .AppsShowingTitle

@@ -52,6 +52,7 @@ html body
 	font-size: var(--FontSizeDefault);
 	color: #333333;
 	-webkit-font-smoothing:antialiased;
+	border-radius: 0 !important;
 }
 
 html body[mobile=mobile]
