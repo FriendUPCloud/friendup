@@ -10,5 +10,18 @@
 
 Application.run = function( msg )
 {
-    
+    let v = new View( {
+    	title: 'Software',
+    	width: 960,
+    	height: 768,
+    	quitOnClose: true,
+    	assets: [
+    		'Progdir:Markup/main.html',
+    		'Progdir:Markup/main.css',
+    		'Progdir:Scripts/toolbar.fui.css',
+    		'Progdir:Scripts/toolbar.fui.js',
+    		'Progdir:Scripts/software.fui.css',
+    		'Progdir:Scripts/software.fui.js'
+    	]
+    } );
 }
