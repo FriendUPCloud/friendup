@@ -109,9 +109,8 @@ if( $app->ID )
 <html>
 	<head>
 		<title>' . $conf->Name . '</title>
-		<base href="' . $path . '"/>
 		<script>
-		    let Friend = window.Friend ? window.Friend : {};
+		    Friend = window.Friend ? window.Friend : {};
 		    Friend.launch = function()
 		    {
 		    	if( !this.ready ) return setTimeout( function(){ Friend.launch(); }, 25 );
