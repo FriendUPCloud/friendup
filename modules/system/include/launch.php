@@ -115,7 +115,8 @@ if( $app->ID )
 		    let Friend = window.Friend ? window.Friend : {};
 		    Friend.launch = function()
 		    {
-		    	if( !window.Application ) return setTimeout( function(){ Friend.launch(); }, 25 );
+		    	if( !window.Application ) 
+		    		return document.location.reload();
 			    ' . $scrp . '
 			    Application.checkAppPermission = function( key )
 			    {
