@@ -640,6 +640,10 @@ class FUIChatlog extends FUIElement
             {
             	messages[ a ].classList.add( 'OnlyMessage' );
             }
+            if( powner && powner != owner && !nowner )
+            {
+            	messages[ a ].classList.add( 'OnlyMessage' );
+            }
             if( a + 1 >= messages.length && messages[ a ].classList.contains( 'ConceilOwner' ) )
             {
                 messages[ a ].classList.add( 'LastForOwner' );
