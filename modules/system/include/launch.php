@@ -115,13 +115,13 @@ if( $app->ID )
 				let pause = 5, retries = 0;
 				Friend.launch = function()
 				{
-					if( !this.ready ){ setTimeout( function(){ Friend.launch(); }, pause ); pause = pause == 5 ? 10 : 25; if( retries++ > 100 ) document.location.reload(); console.log( "Waiting to load." + retries ); return; };
+					if( !this.ready ){ if( retries++ > 50 ){ console.log( "Waiting to load." + retries ); return; } setTimeout( function(){ Friend.launch(); }, pause ); pause = pause == 5 ? 10 : 25; return; };
 					' . $scrp . '
 					Application.checkAppPermission = function( key ){ let permissions = {}; if( permissions[ key ] ) return permissions[ key ]; return false; }
 				};
 			}
 		</script>
-		<script onerror="console.log( \'error loading:\', event )" onload="console.log( \'We loaded: \', window.Application ); Friend.ready=true" src="/webclient/js/apps/api.js"></script>' . $scripts . '
+		<script onerror="console.log( \'error loading:\', event ); document.location.reload();" onload="console.log( \'We loaded: \', window.Application ); Friend.ready=true" src="/webclient/js/apps/api.js"></script>' . $scripts . '
 	</head>
 	<body onload="Friend.launch()"></body>
 </html>';
