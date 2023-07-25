@@ -2980,142 +2980,156 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 					convertIconsToMultiple();
 				}
 				
-				// Right mouse button
-				if( e.button == 2 )
-				{
-					// check icons
-					clearRegionIcons( { exception: this } );
-					this.classList.add( 'Selected' );
-					this.fileInfo.selected = true;
-					this.selected = true;
-					this.icon.selected = true;
-					found = this;
-			
-					if( !window.isMobile )
-					{
-						Workspace.showContextMenu( false, e );
-					}
-					cancelMouseEvents( e );
-					return cancelBubble( e );
-				}
-				else if( e.button == 0 || !e.button )
-				{
-					// Use override if possible
-					if( this.file.directoryView.filedialog && isMobile )
-					{
-						if( this.file.directoryView.doubleclickfiles )
-						{
-							if( this.fileInfo.Type == 'File' )
-							{
-								this.file.directoryView.doubleclickfiles( this, e );
-							}
-							else if( this.fileInfo.Type == 'Directory' )
-							{
-								launchIcon( e, this );
-							}
-							return cancelBubble( e );
-						}
-						return;
-					}
+				let selfb = this;
 					
-					let p = icnt;
+				// Right mouse button
+				function canDelayClick()
+				{
+					// Abort on scroll
+					if( selfb.file.directoryView.window.scrolling )
+						return;
+					
+					if( e.button == 2 )
+					{
+						// check icons
+						clearRegionIcons( { exception: selfb } );
+						selfb.classList.add( 'Selected' );
+						selfb.fileInfo.selected = true;
+						selfb.selected = true;
+						selfb.icon.selected = true;
+						found = selfb;
 				
-					// We have an external event
-					if( dv.clickfile )
-					{
-						dv.clickfile( this.file, e );
-					}
-				
-					// Range
-					if( dv.multiple && e.shiftKey )
-					{
-						let other = self = false;
-						let top = bottom = false;
-
-						// Find range from to
-						if( dv.lastListItem && dv.lastListItem.classList.contains( 'Selected' ) )
+						if( !window.isMobile )
 						{
-							for( let c = 0; c < p.childNodes.length; c++ )
-							{
-								if( p.childNodes[c] == dv.lastListItem )
-								{
-									other = c;
-								}
-								else if( p.childNodes[c] == this )
-								{
-									self = c;
-								}
-							}
+							Workspace.showContextMenu( false, e );
 						}
-						top = self > other ? other : self;
-						bottom = self > other ? self : other;
-
-						if( other >= 0 && self >= 0 )
-						{
-							for( let b = top; b <= bottom; b++ )
-							{
-								if( !p.childNodes[b] ) continue;
-								p.childNodes[b].classList.add( 'Selected' );
-								p.childNodes[b].selected = 'multiple';
-								p.childNodes[b].icon.selected = 'multiple';
-								p.childNodes[b].fileInfo.selected = 'multiple';
-							}
-						}
-						dv.lastListItem = this;
-					}
-					// Toggle only
-					else if( dv.multiple && e.ctrlKey )
-					{
-						if( this.classList.contains( 'Selected' ) )
-						{
-							this.classList.remove( 'Selected' );
-							this.selected = false;
-							this.icon.selected = false;
-							this.fileInfo.selected = false;
-							dv.lastListItem = false;
-						}
-						else
-						{
-							this.classList.add( 'Selected' );
-							this.selected = 'multiple';
-							this.icon.selected = 'multiple';
-							this.fileInfo.selected = 'multiple';
-							dv.lastListItem = this;
-						}
-					}
-					else
-					{
-						let sh = e.shiftKey || e.ctrlKey;
-						if( !sh ) 
-						{
-							if( !Workspace.contextMenuShowing || !Workspace.contextMenuShowing.shown )
-							{
-								clearRegionIcons( { exception: this } );
-							}
-						}
-						
-						if( this.classList.contains( 'Selected' ) )
-						{
-							this.classList.remove( 'Selected' );
-							this.selected = false;
-							this.icon.selected = false;
-							this.fileInfo.selected = false;
-						}
-						else
-						{
-							this.classList.add( 'Selected' );
-							this.selected = sh ? 'multiple' : true;
-							this.icon.selected = this.selected;
-							this.fileInfo.selected = this.selected;
-						}
-						dv.lastListItem = this;
-					}
-
-					if( window.isSettopBox )
-					{
+						cancelMouseEvents( e );
 						return cancelBubble( e );
 					}
+					else if( e.button == 0 || !e.button )
+					{
+											// Use override if possible
+						if( selfb.file.directoryView.filedialog && isMobile )
+						{
+							if( selfb.file.directoryView.doubleclickfiles )
+							{
+								if( selfb.fileInfo.Type == 'File' )
+								{
+									selfb.file.directoryView.doubleclickfiles( selfb, e );
+								}
+								else if( selfb.fileInfo.Type == 'Directory' )
+								{
+									launchIcon( e, selfb );
+								}
+								return cancelBubble( e );
+							}
+							return;
+						}
+						
+						let p = icnt;
+					
+						// We have an external event
+						if( dv.clickfile )
+						{
+							dv.clickfile( selfb.file, e );
+						}
+					
+						// Range
+						if( dv.multiple && e.shiftKey )
+						{
+							let other = self = false;
+							let top = bottom = false;
+
+							// Find range from to
+							if( dv.lastListItem && dv.lastListItem.classList.contains( 'Selected' ) )
+							{
+								for( let c = 0; c < p.childNodes.length; c++ )
+								{
+									if( p.childNodes[c] == dv.lastListItem )
+									{
+										other = c;
+									}
+									else if( p.childNodes[c] == selfb )
+									{
+										self = c;
+									}
+								}
+							}
+							top = self > other ? other : self;
+							bottom = self > other ? self : other;
+
+							if( other >= 0 && self >= 0 )
+							{
+								for( let b = top; b <= bottom; b++ )
+								{
+									if( !p.childNodes[b] ) continue;
+									p.childNodes[b].classList.add( 'Selected' );
+									p.childNodes[b].selected = 'multiple';
+									p.childNodes[b].icon.selected = 'multiple';
+									p.childNodes[b].fileInfo.selected = 'multiple';
+								}
+							}
+							dv.lastListItem = selfb;
+						}
+						// Toggle only
+						else if( dv.multiple && e.ctrlKey )
+						{
+							if( selfb.classList.contains( 'Selected' ) )
+							{
+								selfb.classList.remove( 'Selected' );
+								selfb.selected = false;
+								selfb.icon.selected = false;
+								selfb.fileInfo.selected = false;
+								dv.lastListItem = false;
+							}
+							else
+							{
+								selfb.classList.add( 'Selected' );
+								selfb.selected = 'multiple';
+								selfb.icon.selected = 'multiple';
+								selfb.fileInfo.selected = 'multiple';
+								dv.lastListItem = selfb;
+							}
+						}
+						else
+						{
+							let sh = e.shiftKey || e.ctrlKey;
+							if( !sh ) 
+							{
+								if( !Workspace.contextMenuShowing || !Workspace.contextMenuShowing.shown )
+								{
+									clearRegionIcons( { exception: selfb } );
+								}
+							}
+							
+							if( selfb.classList.contains( 'Selected' ) )
+							{
+								selfb.classList.remove( 'Selected' );
+								selfb.selected = false;
+								selfb.icon.selected = false;
+								selfb.fileInfo.selected = false;
+							}
+							else
+							{
+								selfb.classList.add( 'Selected' );
+								selfb.selected = sh ? 'multiple' : true;
+								selfb.icon.selected = selfb.selected;
+								selfb.fileInfo.selected = selfb.selected;
+							}
+							dv.lastListItem = selfb;
+						}
+
+						if( window.isSettopBox )
+						{
+							return cancelBubble( e );
+						}
+					}
 				}
+				if( isMobile )
+				{
+					return setTimeout( function(){ canDelayClick(); }, 125 );
+				}
+				canDelayClick();
 			}
 			r[ 'ontouchstart' ] = r[ 'onmousedown' ];
 
@@ -3572,206 +3586,220 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 	{
 		file[ 'onmousedown' ] = function( e )
 		{
-			if( !e ) e = window.event ? window.event : {};
-			if( e.target && e.target.nodeName == 'TEXTAREA' ) return;
-	
-			if( isTouchDevice() )
+			let seff = this;
+			
+			function delayedCl()
 			{
-				window.touchElementTime = ( new Date() ).getTime();
+				// Abort on scroll
+				if( seff.directoryView.window.scrolling )
+					return;
+						
+				if( !e ) e = window.event ? window.event : {};
+				if( e.target && e.target.nodeName == 'TEXTAREA' ) return;
 		
-				if( window.touchstartCounter )
-					clearTimeout( window.touchstartCounter );
-				window.touchstartCounter = setTimeout( function()
+				if( isTouchDevice() )
 				{
-					window.touchStartCounter = null;
-					Workspace.showContextMenu( false, e );
-				}, 800 );
-			}
-	
-			// Activate screen on click
-			if( this.window )
-			{
-				// when changing from one directoryview to another, clear region icons
-				if( e.button == 0 || !e.button )
-				{
-					if(
-						window.currentMovable && window.currentMovable.classList.contains( 'Active' ) &&
-						this.window.parentNode != window.currentMovable
-					)
+					window.touchElementTime = ( new Date() ).getTime();
+			
+					if( window.touchstartCounter )
+						clearTimeout( window.touchstartCounter );
+					window.touchstartCounter = setTimeout( function()
 					{
-						clearRegionIcons();
+						window.touchStartCounter = null;
+						Workspace.showContextMenu( false, e );
+					}, 800 );
+				}
+		
+				// Activate screen on click
+				if( seff.window )
+				{
+					// when changing from one directoryview to another, clear region icons
+					if( e.button == 0 || !e.button )
+					{
+						if(
+							window.currentMovable && window.currentMovable.classList.contains( 'Active' ) &&
+							seff.window.parentNode != window.currentMovable
+						)
+						{
+							clearRegionIcons();
+						}
+					}
+					if( seff.window.parentNode.classList.contains( 'View' ) )
+					{
+						if( !seff.window.parentNode.classList.contains( 'Active' ) )
+							_ActivateWindow( seff.window.parentNode );
 					}
 				}
-				if( this.window.parentNode.classList.contains( 'View' ) )
+			
+				// For screen icons
+				if( seff.window.classList.contains( 'ScreenContent' ) )
 				{
-					if( !this.window.parentNode.classList.contains( 'Active' ) )
-						_ActivateWindow( this.window.parentNode );
-				}
-			}
-		
-			// For screen icons
-			if( this.window.classList.contains( 'ScreenContent' ) )
-			{
-				if( currentMovable )
-				{
-					_DeactivateWindow( currentMovable );
-					currentMovable = null;
-				}
-			}
-
-			// This means we are adding
-			if( e.shiftKey || e.ctrlKey )
-			{
-				convertIconsToMultiple();
-			}
-
-			if( !e ) e = window.event;
-			if( !e ) e = {};
-		
-			if( this.window )
-			{
-				let rc = 0;
-				if( e.which ) rc = ( e.which == 3 );
-				else if( e.button ) rc = ( e.button == 2 );
-				if( !rc )
-				{
-					if( e.button === 0 || e.button === 3 || e.button === 2 )
+					if( currentMovable )
 					{
-						window.mouseDown = this;
+						_DeactivateWindow( currentMovable );
+						currentMovable = null;
 					}
 				}
-			}
 
-			// Right mouse button
-			if( e.button == 2 )
-			{
-				// check icons
-				if( !Workspace.contextMenuShowing && !this.classList.contains( 'Selected' ) )
+				// seff means we are adding
+				if( e.shiftKey || e.ctrlKey )
 				{
-					clearRegionIcons( { force: true } );
+					convertIconsToMultiple();
 				}
-				else if( Workspace.contextMenuShowing && !this.classList.contains( 'Selected' ) )
+
+				if( !e ) e = window.event;
+				if( !e ) e = {};
+			
+				if( seff.window )
 				{
-					clearRegionIcons( { force: true } );
+					let rc = 0;
+					if( e.which ) rc = ( e.which == 3 );
+					else if( e.button ) rc = ( e.button == 2 );
+					if( !rc )
+					{
+						if( e.button === 0 || e.button === 3 || e.button === 2 )
+						{
+							window.mouseDown = seff;
+						}
+					}
 				}
+
+				// Right mouse button
+				if( e.button == 2 )
+				{
+					// check icons
+					if( !Workspace.contextMenuShowing && !seff.classList.contains( 'Selected' ) )
+					{
+						clearRegionIcons( { force: true } );
+					}
+					else if( Workspace.contextMenuShowing && !seff.classList.contains( 'Selected' ) )
+					{
+						clearRegionIcons( { force: true } );
+					}
+					
+					seff.classList.add( 'Selected' );
+					found = seff;
+					seff.selected = true;
+					seff.icon.selected = true;
+					seff.fileInfo.selected = true;
 				
-				this.classList.add( 'Selected' );
-				found = this;
-				this.selected = true;
-				this.icon.selected = true;
-				this.fileInfo.selected = true;
-			
-				// Count selected icons
-				this.directoryView.windowObject.checkSelected();
-			
-				if( !window.isMobile )
-				{
-					if( this.fileInfo.MetaType == 'Shortcut' )
+					// Count selected icons
+					seff.directoryView.windowObject.checkSelected();
+				
+					if( !window.isMobile )
 					{
-						Workspace.showContextMenu( [ {
-							name: i18n( 'i18n_delete_shortcut' ),
-							command: function( e )
+						if( seff.fileInfo.MetaType == 'Shortcut' )
+						{
+							Workspace.showContextMenu( [ {
+								name: i18n( 'i18n_delete_shortcut' ),
+								command: function( e )
+								{
+									let files = [];
+									let eles = found.fileInfo.directoryview.window.getElementsByTagName( 'div' );
+									let selectedCount = 0;
+									for( let a = 0; a < eles.length; a++ )
+									{
+										if( !eles[a].classList.contains( 'File' ) )
+											continue;
+										if( !eles[a].classList || !eles[a].classList.contains( 'Selected' ) )
+											continue;
+										if( eles[a].fileInfo.MetaType != 'Shortcut' )
+											continue;
+										files.push( eles[a].fileInfo.Path );
+									}
+									
+									let m = new Module( 'system' );
+									m.onExecuted = function( e, d )
+									{
+										Workspace.refreshDesktop( false, true );
+									}
+									m.execute( 'removedesktopshortcut', { shortcuts: files } );
+									found.parentNode.removeChild( found );
+								}
+							} ], e );
+						}
+						else
+						{
+							Workspace.showContextMenu( false, e );
+						}
+					}
+					return cancelBubble( e );
+				}
+				else if( e.button == 0 || !e.button )
+				{
+					// Use override if possible
+					if( seff.directoryView.filedialog )
+					{
+						if( seff.directoryView.doubleclickfiles )
+						{
+							if( seff.fileInfo.Type == 'File' )
 							{
-								let files = [];
-								let eles = found.fileInfo.directoryview.window.getElementsByTagName( 'div' );
-								let selectedCount = 0;
-								for( let a = 0; a < eles.length; a++ )
-								{
-									if( !eles[a].classList.contains( 'File' ) )
-										continue;
-									if( !eles[a].classList || !eles[a].classList.contains( 'Selected' ) )
-										continue;
-									if( eles[a].fileInfo.MetaType != 'Shortcut' )
-										continue;
-									files.push( eles[a].fileInfo.Path );
-								}
-								
-								let m = new Module( 'system' );
-								m.onExecuted = function( e, d )
-								{
-									Workspace.refreshDesktop( false, true );
-								}
-								m.execute( 'removedesktopshortcut', { shortcuts: files } );
-								found.parentNode.removeChild( found );
+								seff.directoryView.doubleclickfiles( seff, e );
 							}
-						} ], e );
+							else if( seff.fileInfo.Type == 'Directory' )
+							{
+								launchIcon( e, seff );
+							}
+							return cancelBubble( e );
+						}
+						return;
+					}
+			
+					if( window.isSettopBox && seff.selected )
+					{
+						launchIcon( e, seff );
+						seff.classList.remove( 'Selected' );
+						seff.selected = false;
+						seff.icon.selected = false;
+						seff.fileInfo.selected = false;
+						return cancelBubble( e );
+					}
+
+					let sh = e.shiftKey || e.ctrlKey;
+					if( !sh ) 
+					{
+						if( !Workspace.contextMenuShowing || !Workspace.contextMenuShowing.shown )
+						{
+							if( !isTouchDevice() )
+							{
+								clearRegionIcons( { exception: seff } );
+							}
+						}
+					}
+
+					// Toggle
+					if( seff.classList.contains( 'Selected' ) && !( !sh && seff.selected == 'multiple' ) )
+					{
+						seff.classList.remove( 'Selected' );
+						seff.selected = false;
+						seff.icon.selected = false;
+						seff.fileInfo.selected = false;
 					}
 					else
 					{
-						Workspace.showContextMenu( false, e );
+						seff.classList.add( 'Selected' );
+						seff.selected = sh ? 'multiple' : true;
+						seff.icon.selected = seff.selected;
+						seff.fileInfo.selected = sh ? 'multiple' : true;
 					}
-				}
-				return cancelBubble( e );
-			}
-			else if( e.button == 0 || !e.button )
-			{
-				// Use override if possible
-				if( this.directoryView.filedialog )
-				{
-					if( this.directoryView.doubleclickfiles )
+
+					// Refresh the menu based on selected icons
+					WorkspaceMenu.show();
+					CheckScreenTitle();
+					if( window.isSettopBox )
 					{
-						if( this.fileInfo.Type == 'File' )
-						{
-							this.directoryView.doubleclickfiles( this, e );
-						}
-						else if( this.fileInfo.Type == 'Directory' )
-						{
-							launchIcon( e, this );
-						}
 						return cancelBubble( e );
 					}
-					return;
-				}
-		
-				if( window.isSettopBox && this.selected )
-				{
-					launchIcon( e, this );
-					this.classList.remove( 'Selected' );
-					this.selected = false;
-					this.icon.selected = false;
-					this.fileInfo.selected = false;
-					return cancelBubble( e );
 				}
 
-				let sh = e.shiftKey || e.ctrlKey;
-				if( !sh ) 
-				{
-					if( !Workspace.contextMenuShowing || !Workspace.contextMenuShowing.shown )
-					{
-						if( !isTouchDevice() )
-						{
-							clearRegionIcons( { exception: this } );
-						}
-					}
-				}
-
-				// Toggle
-				if( this.classList.contains( 'Selected' ) && !( !sh && this.selected == 'multiple' ) )
-				{
-					this.classList.remove( 'Selected' );
-					this.selected = false;
-					this.icon.selected = false;
-					this.fileInfo.selected = false;
-				}
-				else
-				{
-					this.classList.add( 'Selected' );
-					this.selected = sh ? 'multiple' : true;
-					this.icon.selected = this.selected;
-					this.fileInfo.selected = sh ? 'multiple' : true;
-				}
-
-				// Refresh the menu based on selected icons
-				WorkspaceMenu.show();
-				CheckScreenTitle();
-				if( window.isSettopBox )
-				{
-					return cancelBubble( e );
-				}
+				if( e && e.stopPropagation )
+					e.stopPropagation();
 			}
-
-			if( e && e.stopPropagation )
-				e.stopPropagation();
+			if( isMobile )
+			{
+				return setTimeout( function(){ delayedCl(); }, 125 );
+			}
+			delayedCl();
 		}
 		// Also enable for touch
 		file[ 'ontouchstart' ] = file[ 'onmousedown' ];
