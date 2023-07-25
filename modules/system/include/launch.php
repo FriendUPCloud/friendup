@@ -110,13 +110,11 @@ if( $app->ID )
 	<head>
 		<title>' . $conf->Name . '</title>
 		<base href="' . $path . '"/>
-		<script onload="console.log(\'loaded....\')" src="/webclient/js/apps/api.js"></script>' . $scripts . '
+		<script onload="Friend.launch()" src="/webclient/js/apps/api.js"></script>' . $scripts . '
 		<script>
 		    let Friend = window.Friend ? window.Friend : {};
 		    Friend.launch = function()
 		    {
-		    	if( !window.Application ) 
-		    		return document.location.reload();
 			    ' . $scrp . '
 			    Application.checkAppPermission = function( key )
 			    {
@@ -128,7 +126,7 @@ if( $app->ID )
 		    }
 		</script>
 	</head>
-	<body onload="Friend.launch()">
+	<body>
 	</body>
 </html>';
 
