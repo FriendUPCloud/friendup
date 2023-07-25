@@ -10,5 +10,14 @@
 
 Application.run = function( msg )
 {
-    
+    let v = new View( {
+    	title: 'Prompts',
+    	width: 800,
+    	height: 440,
+    	quitOnClose: true,
+    	assets: [ 
+    		'Progdir:Scripts/inside.js', 
+    		'Progdir:Markup/main.html' 
+		]
+    } );
 }

@@ -2409,6 +2409,7 @@ function View( flags )
 	            if( templateSrc )
                 {
                     let f = new File( templateSrc );
+                    f.i18n(); // Always perform translations
                     f.onLoad = function( data )
                     {
                         self.setContent( data + templateStr );
