@@ -120,6 +120,7 @@ if( $app->ID )
 					console.log( "We launched..!!!" );
 					if( !window.Application ){ console.log( "Waiting to load. No window application"  ); setTimeout( function(){ Friend.launch(); }, pause ); pause = pause == 5 ? 10 : 25; return; };
 					this.launched = true;
+					console.log( "LAUNCHED." );
 					' . $scrp . '
 					Application.checkAppPermission = function( key ){ let permissions = {}; if( permissions[ key ] ) return permissions[ key ]; return false; }
 				};
