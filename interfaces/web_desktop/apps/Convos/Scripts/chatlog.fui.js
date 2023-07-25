@@ -651,14 +651,23 @@ class FUIChatlog extends FUIElement
             {
                 messages[ a ].classList.add( 'FirstForOwner' );
             }
+            
+            // First message
+            if( !powner && !nowner )
+            {
+            	messages[ a ].classList.add( 'OnlyMessage' );
+            }
+            // Prev message has different owner and next message has different owner
             if( powner && powner != owner && nowner && nowner != owner )
             {
             	messages[ a ].classList.add( 'OnlyMessage' );
             }
+            // Prev owner is different, and it's the last message
             if( powner && powner != owner && !nowner )
             {
             	messages[ a ].classList.add( 'OnlyMessage' );
             }
+            
             if( a + 1 >= messages.length && messages[ a ].classList.contains( 'ConceilOwner' ) )
             {
                 messages[ a ].classList.add( 'LastForOwner' );
