@@ -285,7 +285,7 @@
 
 .FUIChatlog .Message img.Attachment 
 {
-    max-width: 480px;
+    max-width: 100%;
     height: auto;
     border-radius: 10px;
     display: block;
