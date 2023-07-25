@@ -11877,8 +11877,8 @@ function mobileDebug( str, clear )
 // TODO: Test loading different themes
 
 _applicationBasics = {};
-var _applicationBasicsLoading = false;
-var _previousBasicsTheme = false;
+let _applicationBasicsLoading = false;
+let _previousBasicsTheme = false;
 function loadApplicationBasics( callback )
 {
 	if( _applicationBasicsLoading ) 
@@ -11888,15 +11888,15 @@ function loadApplicationBasics( callback )
 	_applicationBasicsLoading = setTimeout( function()
 	{
 		_applicationBasicsLoading = null;
-		console.log( 'Doing the load of basics.' );
 		
 		let themeName = Workspace.theme ? Workspace.theme : 'friendup13';
 		
+		console.log( 'Doing the load of basics. (' + themeName + ')' );
+		
 		// Do not reload the same stuff
-		if( _previousBasicsTheme == themeName && _applicationBasics.apiV1 )
+		if( _previousBasicsTheme == themeName )
 		{
-			if( callback )
-				callback();
+			if( callback ) callback();
 			return;
 		}
 		_previousBasicsTheme = themeName;
@@ -11904,8 +11904,7 @@ function loadApplicationBasics( callback )
 		// Don't do in login
 		if( Workspace.loginPrompt )
 		{
-			if( callback )
-				callback();
+			if( callback ) callback();
 			return;
 		}
 		
@@ -11992,18 +11991,19 @@ function loadApplicationBasics( callback )
 		}
 		j_.load();
 		
+		let waitCount = 0;
 		let intr = setInterval( function()
 		{
 			if( loadSteps == 4 )
 			{
-				console.log( 'Basics loaded!' );
+				console.log( '------------- Basics loaded! ------------' );
 				clearInterval( intr );
 				if( callback )
 					callback();
 			}
 			else
 			{
-				console.log( 'Waiting.' );
+				console.log( 'Waiting (' + ( waitCount++ ) + ')...' );
 			}
 		}, 25 );
 	}, 2 );
