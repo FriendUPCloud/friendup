@@ -177,7 +177,7 @@
 {
 	background-color: var(--fui-background);
 	color: var(--fui-color);
-	padding: 5px 15px;
+	padding: 0 15px;
 	box-sizing: border-box;
 	border-radius: 10px;
 	margin: 10px 0 0 0;
