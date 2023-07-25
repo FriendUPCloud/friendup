@@ -11888,6 +11888,7 @@ function loadApplicationBasics( callback )
 	_applicationBasicsLoading = setTimeout( function()
 	{
 		_applicationBasicsLoading = null;
+		console.log( 'Doing the load of basics.' );
 		
 		let themeName = Workspace.theme ? Workspace.theme : 'friendup13';
 		
