@@ -2615,7 +2615,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								ScreenOverlay.hide();
 								PollTray();
 								PollTaskbar();					
-								//console.log( 'refreshUserSettings: Running callback...' );
 								if( callback ) callback();
 								return;
 							}
@@ -2743,11 +2742,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				}
 				
 				// Load application cache's and then init workspace
-				loadApplicationBasics(
-					initFriendWorkspace
-				);
+				loadApplicationBasics( initFriendWorkspace );
 			}
-			
 			m.forceHTTP = true;
 			m.execute( 'getsetting', { settings: [ 
 				'avatar', 'workspacemode', 'wallpaperdoors', 'wallpaperwindows', 'language', 
@@ -4081,7 +4077,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			    Workspace.themeRefreshed = true;
 			    Workspace.refreshUserSettings( function() 
 			    {
-				    //console.log( '[Login phase] Done refreshing user settings.' );
+				    console.log( '[Login phase] Done refreshing user settings.' );
 				    CheckScreenTitle();
 
 				    let h = document.getElementsByTagName( 'head' );
