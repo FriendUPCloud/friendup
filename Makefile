@@ -172,6 +172,7 @@ install:
 
 	rsync -ravl interfaces/web_desktop/* $(FRIEND_PATH)/resources/webclient/
 	rsync -ravl interfaces/web_desktop/favicon.ico $(FRIEND_PATH)/resources/
+	rsync -ravl interfaces/web_desktop/manifest.json $(FRIEND_PATH)/resources/
 	rsync -ravl interfaces/themes $(FRIEND_PATH)/resources/
 	rsync -ravl interfaces/iconthemes/* $(FRIEND_PATH)/resources/iconthemes/
 	rsync -ravl interfaces/graphics/* $(FRIEND_PATH)/resources/graphics/
