@@ -111,13 +111,15 @@ if( $app->ID )
 		<title>' . $conf->Name . '</title>
 		<script>
 		    Friend = window.Friend ? window.Friend : {};
-		    let pause = 5;
-		    Friend.launch = function()
 		    {
-		    	if( !this.ready ){ setTimeout( function(){ Friend.launch(); }, pause ); pause = pause == 5 ? 10 : 25; };
-			    ' . $scrp . '
-			    Application.checkAppPermission = function( key ){ let permissions = {}; if( permissions[ key ] ) return permissions[ key ]; return false; }
-		    };
+				let pause = 5;
+				Friend.launch = function()
+				{
+					if( !this.ready ){ setTimeout( function(){ Friend.launch(); }, pause ); pause = pause == 5 ? 10 : 25; };
+					' . $scrp . '
+					Application.checkAppPermission = function( key ){ let permissions = {}; if( permissions[ key ] ) return permissions[ key ]; return false; }
+				};
+			}
 		</script>
 		<script onload="Friend.ready=true" src="/webclient/js/apps/api.js"></script>' . $scripts . '
 	</head>
