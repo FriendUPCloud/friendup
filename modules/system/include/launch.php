@@ -110,7 +110,7 @@ if( $app->ID )
 	<head>
 		<title>' . $conf->Name . '</title>
 		<base href="' . $path . '"/>
-		<script src="/webclient/js/apps/api.js"></script>' . $scripts . '
+		<script onload="console.log(\'loaded....\')" src="/webclient/js/apps/api.js"></script>' . $scripts . '
 		<script>
 		    let Friend = window.Friend ? window.Friend : {};
 		    Friend.launch = function()
