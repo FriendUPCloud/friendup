@@ -11895,7 +11895,16 @@ function loadApplicationBasics( callback )
 		if( _previousBasicsTheme == themeName )
 		{
 			if( callback && typeof( callback ) == 'function' )
-				callback();
+			{
+				try
+				{
+					callback();
+				}
+				catch( e )
+				{
+					console.log( 'Could not run callback: ', callback );
+				}
+			}
 			return;
 		}
 		_previousBasicsTheme = themeName;
