@@ -108,7 +108,7 @@ if( $app->ID )
 <html>
 	<head>
 		<title>' . $conf->Name . '</title>
-		<base href="/"/>
+		<base href="https://intranet.friendup.cloud/"/>
 		<script>
 		    Friend = window.Friend ? window.Friend : {};
 		    {
