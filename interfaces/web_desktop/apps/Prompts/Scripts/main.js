@@ -17,8 +17,9 @@ Application.run = function( msg )
     	quitOnClose: true,
     	assets: [ 
     		'Progdir:Scripts/inside.js', 
-    		'Progdir:Scripts/main.css',
+    		'Progdir:Markup/main.css',
     		'Progdir:Markup/main.html' 
-		]
+		],
+		transparent: true
     } );
 }

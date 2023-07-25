@@ -15,7 +15,10 @@
    version="1.1"
    id="svg8"
    inkscape:version="0.92.5 (2060ec1f9f, 2020-04-08)"
-   sodipodi:docname="Icon.svg">
+   sodipodi:docname="Icon.svg"
+   inkscape:export-filename="/home/hogne/Projects/friendup/interfaces/web_desktop/apps/Prompts/icon.png"
+   inkscape:export-xdpi="67.733093"
+   inkscape:export-ydpi="67.733093">
   <defs
      id="defs2">
     <filter
@@ -76,16 +79,22 @@
        d="M 219,432.51953 V 613.9375 H 400.41797 V 432.51953 Z"
        transform="scale(0.26458333)"
        id="rect815"
-       inkscape:connector-curvature="0" />
+       inkscape:connector-curvature="0"
+       inkscape:export-xdpi="67.733093"
+       inkscape:export-ydpi="67.733093" />
     <path
        style="opacity:0.5;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.2;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;filter:url(#filter927)"
        d="m 64.943821,120.77551 v 33.99999 c 11.333324,1.46653 22.666648,2.0411 33.999972,0 v -33.99999 c -11.333324,3.53625 -22.666648,2.79542 -33.999972,0 z"
        id="rect818-2"
        inkscape:connector-curvature="0"
-       sodipodi:nodetypes="ccccc" />
+       sodipodi:nodetypes="ccccc"
+       inkscape:export-xdpi="67.733093"
+       inkscape:export-ydpi="67.733093" />
     <g
        id="g886"
-       transform="translate(-4.1777994e-7,-65.099447)">
+       transform="translate(-4.1777994e-7,-65.099447)"
+       inkscape:export-xdpi="67.733093"
+       inkscape:export-ydpi="67.733093">
       <path
          sodipodi:nodetypes="ccccc"
          inkscape:connector-curvature="0"
