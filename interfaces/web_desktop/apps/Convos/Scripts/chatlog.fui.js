@@ -331,6 +331,11 @@ class FUIChatlog extends FUIElement
 			    self.domTextarea.innerHTML = '';	
     			cancelBubble( e );
     			
+    			// Strip scripts and such
+    			val = val.split( /<script.*?\>[\w\W]*?\<\/script\>/i ).join( '' );
+    			val = val.split( /<style.*?\>[\w\W]*?\<\/style\>/i ).join( '' );
+    			val = val.split( /<link.*?\>/i ).join( '' );
+    			
     			// Check white space
     			let candidate = val.split( /\<.*?\>/ ).join( '' );
     			candidate = candidate.split( /[\s]/ ).join( '' ).split( '&nbsp;' ).join( '' );
