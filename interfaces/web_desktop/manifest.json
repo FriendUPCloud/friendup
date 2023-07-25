@@ -2,7 +2,7 @@
 	"name": "Friend OS",
 	"short_name": "Friend",
 	"start_url": ".",
-	"display": "fullscreen",
+	"display": "standalone",
 	"background_color": "#335675",
 	"description": "A web OS for everyone.",
 	"icons": [
