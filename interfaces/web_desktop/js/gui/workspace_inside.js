@@ -2403,7 +2403,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				userSettingsFetched = true;
 				
 				function initFriendWorkspace()
-				{
+				{	
 					// Make sure we have loaded
 					if( !Workspace.dashboard && Workspace.mode != 'vr' && ( Workspace.screen && Workspace.screen.contentDiv ) )
 					{
@@ -2744,7 +2744,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				
 				// Load application cache's and then init workspace
 				loadApplicationBasics(
-					initFriendWorkspace()
+					initFriendWorkspace
 				);
 			}
 			
@@ -11894,17 +11894,8 @@ function loadApplicationBasics( callback )
 		// Do not reload the same stuff
 		if( _previousBasicsTheme == themeName )
 		{
-			if( callback && typeof( callback ) == 'function' )
-			{
-				try
-				{
-					callback();
-				}
-				catch( e )
-				{
-					console.log( 'Could not run callback: ', callback );
-				}
-			}
+			if( callback )
+				callback();
 			return;
 		}
 		_previousBasicsTheme = themeName;

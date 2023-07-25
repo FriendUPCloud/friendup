@@ -341,6 +341,11 @@ html body.Login .View > .Content
 
 /* Screen overlay ----------------------------------------------------------- */
 
+#DoorsScreen
+{
+	min-height: 100%;
+}
+
 html body.Loading #FriendScreenOverlay
 {
 	visibility: visible !important;
