@@ -121,7 +121,7 @@ if( $app->ID )
 				};
 			}
 		</script>
-		<script onerror="console.log( \'error loading:\', event ); document.location.reload();" onload="console.log( \'We loaded: \', window.Application ); Friend.ready=true" src="/webclient/js/apps/api.js"></script>' . $scripts . '
+		<script onerror="console.log( \'error loading:\', event );" onload="console.log( \'We loaded: \', window.Application ); Friend.ready=true" src="/webclient/js/apps/api.js"></script>' . $scripts . '
 	</head>
 	<body onload="Friend.launch()"></body>
 </html>';
