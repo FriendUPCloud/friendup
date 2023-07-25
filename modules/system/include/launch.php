@@ -57,7 +57,6 @@ else
 if( $app->ID )
 {
 	$path = findBaseHref( $app->Name ? $app->Name : $args->app );
-	$Logger->log( $path );
 	$conf = json_decode( $app->Config );
 	
 	friendHeader( 'Content-Type: text/html' );
@@ -109,6 +108,7 @@ if( $app->ID )
 <html>
 	<head>
 		<title>' . $conf->Name . '</title>
+		<base href="/"/>
 		<script>
 		    Friend = window.Friend ? window.Friend : {};
 		    {
