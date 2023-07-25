@@ -258,7 +258,7 @@
     left: 10px;
     width: 35px;
     height: 35px;
-    background-color: var(--fui-list-background);
+    background-color: var(--fui-palette-chan03);
     border-radius: 35px;
     border: 2px solid var(--fui-border-foreground);
     box-sizing: border-box;
