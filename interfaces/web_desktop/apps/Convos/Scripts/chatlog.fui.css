@@ -195,6 +195,7 @@
 .FUIChatlog .Message > .Text .VideoCall
 {
 	user-select: none;
+	margin: 0 0 10px 0;
 }
 
 .FUIChatlog .Slot:first-child .Message
