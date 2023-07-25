@@ -112,14 +112,14 @@ if( $app->ID )
 		<script>
 		    Friend = window.Friend ? window.Friend : {};
 		    {
-				let pause = 5, retries = 0;
+				let pause = 5;
 				Friend.launch = function()
 				{
 					console.log( "Trying to launch." );
 					if( this.launched ) return;
-					this.launched = true;
 					console.log( "We launched..!!!" );
-					if( !window.Application ){ if( retries++ > 50 ){ console.log( "Waiting to load." + retries ); return; } setTimeout( function(){ Friend.launch(); }, pause ); pause = pause == 5 ? 10 : 25; return; };
+					if( !window.Application ){ console.log( "Waiting to load. No window application"  ); setTimeout( function(){ Friend.launch(); }, pause ); pause = pause == 5 ? 10 : 25; return; };
+					this.launched = true;
 					' . $scrp . '
 					Application.checkAppPermission = function( key ){ let permissions = {}; if( permissions[ key ] ) return permissions[ key ]; return false; }
 				};
