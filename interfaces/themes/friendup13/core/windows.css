@@ -764,7 +764,7 @@ body.ViewMaximized .ScreenContent > .View:not(.Active)
 	background-repeat: no-repeat;
 	background-position: center center;
 	cursor: resize;
-	cursor: nwse-resize;
+	cursor: nwse-resize !important;
 	right: 0px;
 	bottom: 0px;
 }
