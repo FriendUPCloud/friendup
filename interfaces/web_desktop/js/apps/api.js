@@ -3727,11 +3727,15 @@ function getImageUrl( path, mode )
 		return path;
 	}
 
-	if( path.indexOf( ':' ) > 0 )
+	if( path.substr( 0, ( 'resources/webclient/' ).length ) == 'resources/webclient/' )
+	{
+		let r = '/webclient/' + path.substr( ( 'resources/webclient/' ).length, path.length - ( 'resources/webclient/' ).length );
+		return r;
+	}
+	else if( path.indexOf( ':' ) > 0 )
 	{
 		path = encodeURIComponent( path );
-	}
-	
+	}	
 
 	let prt = 'authid=' + ( Application.authId ? Application.authId : '' );
 	if( Application.sessionId ) prt = 'sessionid=' + Application.sessionId;
