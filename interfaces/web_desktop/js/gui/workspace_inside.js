@@ -11891,29 +11891,21 @@ function loadApplicationBasics( callback )
 		
 		let themeName = Workspace.theme ? Workspace.theme : 'friendup13';
 		
-		console.log( 'Doing the load of basics. (' + themeName + ')' );
+		// Don't do in login
+		if( Workspace.loginPrompt )
+		{
+			if( callback ) callback();
+			return;
+		}
 		
 		// Do not reload the same stuff
 		if( _previousBasicsTheme == themeName )
 		{
 			if( callback ) callback();
-			console.log( ' < Exiting - we already set this theme.' );
-			return;
-		}
-		
-		console.log( ' > We set the basics loading in progress.' );
-		
-		// Don't do in login
-		if( Workspace.loginPrompt )
-		{
-			console.log( ' < Exiting, login prompt.' );
-			if( callback ) callback();
 			return;
 		}
 		
 		_previousBasicsTheme = themeName;
-		
-		console.log( ' > Setting load steps to 0.' );
 		
 		let loadSteps = 0;
 		
@@ -12003,14 +11995,14 @@ function loadApplicationBasics( callback )
 		{
 			if( loadSteps == 4 )
 			{
-				console.log( '------------- Basics loaded! ------------' );
+				//console.log( '------------- Basics loaded! ------------' );
 				clearInterval( intr );
 				if( callback )
 					callback();
 			}
 			else
 			{
-				console.log( 'Waiting (' + ( waitCount++ ) + ')...' );
+				//console.log( 'Waiting (' + ( waitCount++ ) + ')...' );
 			}
 		}, 25 );
 	}, 2 );
