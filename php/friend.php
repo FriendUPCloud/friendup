@@ -469,7 +469,6 @@ if( file_exists( 'cfg/cfg.ini' ) )
 	}
 
 	$sudm = false;
-	
 	// Use UserAccount object to authenticate directly into the database
 	if( $UserAccount )
 	{
@@ -500,22 +499,28 @@ if( file_exists( 'cfg/cfg.ini' ) )
 		}
 	}
 	// Try with server token
-	else if( isset( $GLOBALS[ 'args' ]->servertoken ) )
+	if( !isset( $UserSession->ID ) && isset( $GLOBALS[ 'args' ]->servertoken ) )
 	{
+		// Call Friend Core (wake up session)
+		FriendCall( '/system.library/validate/?servertoken=' . $GLOBALS[ 'args' ]->servertoken );
+		
+		$User = new dbIO( 'FUser' );
 		$User->ServerToken = $GLOBALS[ 'args' ]->servertoken;
 		$User->Load();
+		
+		
 
 		if( $mus = $SqlDatabase->FetchObject( '
             SELECT * FROM FUserSession WHERE UserID = \'' . $User->ID . '\' LIMIT 1
         ' ) )
         {
-			$Logger->log( 'UserSession found -> servertoken' );
 			$UserSession = $mus;
         }
 	}
 	// Load by session id
-	else if( isset( $GLOBALS[ 'args' ]->sessionid ) )
+	if( !isset( $UserSession->ID ) && isset( $GLOBALS[ 'args' ]->sessionid ) )
 	{
+		$User = new dbIO( 'FUser' );
 	    $UserSession->SessionID = $GLOBALS['args']->sessionid;
 	    if( $UserSession->Load() )
 	    {
