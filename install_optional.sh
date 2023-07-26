@@ -8,7 +8,7 @@ download_package() {
 }
 
 unpack() {
-	cd optional && $1
+	cd optional && $1 && cd ..
 }
 
 # Function to check and install jq if it's missing
@@ -111,6 +111,8 @@ while true; do
 		echo "Package '$selected_title' downloaded to ./optional/"
 		echo "What is unpack: $selected_unpack"
 		unpack "$selected_unpack"
+		echo "Trying: $selected_install"
+		rsync -ravl $selected_install
 		exit
 	else
 		echo "Invalid input. Please try again."

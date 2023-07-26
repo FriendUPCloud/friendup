@@ -5,7 +5,7 @@
     "package_url": "https://github.com/web-push-libs/web-push-php/archive/refs/tags/v7.0.0.tar.gz",
     "package": "webpush.tar.gz",
     "unpack": "tar --one-top-level -xzvf webpush.tar.gz",
-    "install_location": "build/php/3rdparty/"
+    "install": "optional/webpush build/php/3rdparty/"
   },
   {
     "title": "SSH client support module",
@@ -13,6 +13,6 @@
     "package_url": "https://github.com/stuicey/SSHy/archive/refs/heads/master.zip",
     "package": "ssh.zip",
     "unpack": "unzip ssh.zip -d ssh",
-    "install_location": "build/php/3rdparty/"
+    "install": "optional/ssh build/php/3rdparty/"
   }
 ]
