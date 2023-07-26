@@ -8,10 +8,8 @@ download_package() {
 }
 
 unpack() {
-	local path="$1"
-	local method="$2"
-	echo "Extracting: $2 ./$1"
-	cd optional && $2 ./$1
+	local unpack="$1"
+	cd optional && $1
 }
 
 # Function to check and install jq if it's missing
@@ -68,14 +66,14 @@ while true; do
 	echo -e "\033[1m\033[4mAvailable Packages:\033[0m"
 	echo ""
 	
-	for (( i = 0; i < ${#menu_options[@]}; i+=5 )); do
+	for (( i = 0; i < ${#menu_options[@]}; i+=6 )); do
 		title="${menu_options[i]}"
 		description="${menu_options[i+1]}"
 		installed=""
 		if [ -f "optional/${menu_options[i+3]}" ]; then
 			installed=" (Installed)"
 		fi
-		echo -e "\e[1m$((i/5 + 1))) $title$installed\e[0m"
+		echo -e "\e[1m$((i/6 + 1))) $title$installed\e[0m"
 		echo "   $description"
 	done
 
@@ -93,12 +91,13 @@ while true; do
 
 	# Validate user input
 	if [[ "$choice" =~ ^[0-9]+$ ]]; then
-		for (( i = 0; i < ${#menu_options[@]}; i+=5 )); do
-			t=$((i/5+1))
+		for (( i = 0; i < ${#menu_options[@]}; i+=6 )); do
+			t=$((i/6+1))
 			if [[ "$t" == "$choice" ]]; then
 				selected_package="${menu_options[i+2]}"
 				selected_title="${menu_options[i+3]}"
 				selected_unpack="${menu_options[i+4]}"
+				selected_install="${menu_options[i+5]}"
 				break;
 			fi
 		done
@@ -111,7 +110,7 @@ while true; do
 		# Download the selected package
 		download_package "$selected_package" "$selected_title"
 		echo "Package '$selected_title' downloaded to ./optional/"
-		unpack "$selected_title" "$selected_unpack"
+		unpack "$selected_unpack"
 		exit
 	else
 		echo "Invalid input. Please try again."
