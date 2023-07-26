@@ -12,7 +12,7 @@
     "description": "In order to use Prompts with SSH support, you need SSHy.",
     "package_url": "https://github.com/stuicey/SSHy/archive/refs/heads/master.zip",
     "package": "ssh.zip",
-    "unpack": "unzip -d \"ssh\" ssh.zip",
+    "unpack": "unzip ssh.zip -d ssh",
     "install_location": "build/php/3rdparty/"
   }
 ]

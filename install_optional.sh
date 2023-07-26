@@ -8,7 +8,6 @@ download_package() {
 }
 
 unpack() {
-	local unpack="$1"
 	cd optional && $1
 }
 
@@ -53,7 +52,7 @@ check_and_install_jq
 mkdir -p "./optional"
 
 # Read packages and generate the menu using jq
-menu=$(jq -r '.[] | "\(.title)\n\(.description)\n\(.package_url)\n\(.package)\n\(.unpack)"' "$json_file")
+menu=$(jq -r '.[] | "\(.title)\n\(.description)\n\(.package_url)\n\(.package)\n\(.unpack)\n\(.install)"' "$json_file")
 
 # Create an array of menu options
 IFS=$'\n' read -d '' -ra menu_options <<< "$menu"
@@ -110,6 +109,7 @@ while true; do
 		# Download the selected package
 		download_package "$selected_package" "$selected_title"
 		echo "Package '$selected_title' downloaded to ./optional/"
+		echo "What is unpack: $selected_unpack"
 		unpack "$selected_unpack"
 		exit
 	else
