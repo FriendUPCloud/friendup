@@ -41,7 +41,8 @@ body:not([mobile]) .ViewContainer
 	-webkit-user-select: none;
 	user-select: none;
 	pointer-events: all;
-	background-color: transparent;
+	background: black;
+	
 }
 body:not([mobile]) .View
 {
@@ -59,9 +60,6 @@ html body[singletask] .View > .Title
 	border-radius: 0;
 	box-shadow: none;
 }
-
-.ViewContainer > .ViewTitle { display: none; }
-
 html body[singletask] .View > .Title
 {
 	border-top: 1px solid rgba(255,255,255,0.05);

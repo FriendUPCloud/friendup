@@ -217,8 +217,6 @@ void hand(int s )
 int WebsocketThread( FThread *data )
 {
 	pthread_detach( pthread_self() );
-	signal(SIGPIPE, SIG_IGN);
-	
 	int cnt = 0;
 	WebSocket *ws = (WebSocket *)data->t_Data;
 	if( ws == NULL || ws->ws_Context == NULL )
@@ -230,6 +228,7 @@ int WebsocketThread( FThread *data )
 	
 	DEBUG1("[WS] Websocket thread started\n");
 	
+	//signal( SIGPIPE, SIG_IGN );
 	//signal( SIGPIPE, hand );
 
 	if( ws->ws_ExtendedDebug )
@@ -242,6 +241,8 @@ int WebsocketThread( FThread *data )
 	while( TRUE )
 	{
 		int n = lws_service( ws->ws_Context, -1 );
+		usleep( 2500 );
+		
 		if( ws->ws_Quit == TRUE && ws->ws_NumberCalls <= 0 )
 		{
 			FINFO("WS Quit!\n");
@@ -258,7 +259,6 @@ int WebsocketThread( FThread *data )
 				cnt = 0;
 			}
 		}
-		usleep( 25 );
 	}
 	Log( FLOG_INFO, "[WS] Service stopped\n" );
 
@@ -491,6 +491,10 @@ void WebSocketDelete( WebSocket* ws )
 			ws->ws_Context = NULL;
 			DEBUG( "[WS] context destroyed\n");
 		}
+		
+		if( ws->ws_CertPath != NULL )
+		{
+		}
 			
 		FFree( ws );
 	}
@@ -650,16 +654,6 @@ int AttachWebsocketToSession( void *locsb, struct lws *wsi, const char *sessioni
 		return -1;
 	}
 	
-	/*
-	while( TRUE )
-	{
-		if( actUserSess->us_Wsi == NULL && actUserSess->us_WSD == NULL )
-		{
-			break;
-		}
-		usleep( 200 );
-	}*/
-	
 	if( FRIEND_MUTEX_LOCK( &(actUserSess->us_Mutex) ) == 0 )
 	{
 		actUserSess->us_Wsi = wsi;
@@ -708,12 +702,9 @@ int DetachWebsocketFromSession( void *d, void *wsi )
 {
 	WSCData *data = (WSCData *)d;
 	
-	DEBUG("[DetachWebsocketFromSession] start\n");
-	
     SystemBase *l = (SystemBase *)SLIB;
 	if( data->wsc_UserSession == NULL )
 	{
-		DEBUG("[DetachWebsocketFromSession] session is empty!\n");
 		return 1;
 	}
 	
@@ -756,7 +747,5 @@ int DetachWebsocketFromSession( void *d, void *wsi )
 		data->wsc_UserSession = NULL;
 		FRIEND_MUTEX_UNLOCK( &(data->wsc_Mutex) );
 	}
-	
-	DEBUG("[DetachWebsocketFromSession] end\n");
     return 0;
 }

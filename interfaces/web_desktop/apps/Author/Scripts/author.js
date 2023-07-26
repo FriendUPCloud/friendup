@@ -29,33 +29,6 @@ Application.run = function( msg, iface )
 		return false;
 	}
 	
-	// Set up the quick menu items ---------------------------------------------
-	w.setQuickMenu( [ {
-	    name: i18n( 'menu_file' ),
-	    icon: 'caret-down',
-	    items: [ {
-	        name: i18n( 'menu_new' ),
-	        icon: 'file',
-	        command: 'new'
-	    }, {
-	        name: i18n( 'menu_load' ),
-	        icon: 'folder-open',
-	        command: 'load'
-	    }, {
-	        name: i18n( 'menu_save' ),
-	        icon: 'save',
-	        command: 'save'
-	    }, {
-	        name: i18n( 'menu_save_as' ),
-	        icon: 'list-alt',
-	        command: 'save_as'
-	    } ]
-	}, {
-	    name: i18n( 'i18n_close' ),
-	    icon: 'remove',
-	    command: 'quit'
-	} ] );
-	
 	// Set up the main menu items ----------------------------------------------
 	w.setMenuItems( [
 		{
@@ -265,7 +238,7 @@ Application.load = function()
 	
 	var flags = {
 		multiSelect: false,
-		suffix: 'memo',
+		suffix: 'html',
 		triggerFunction: function( arr )
 		{
 			if( arr )
@@ -283,7 +256,7 @@ Application.load = function()
 		rememberPath: true,
 		mainView: this.mainView,
 		type: 'load',
-		suffix: [ 'memo', 'html', 'htm' ]	
+		suffix: [ 'html', 'htm' ]	
 	};
 	
 	var f = new Filedialog( flags );
@@ -324,7 +297,7 @@ Application.save = function( mode )
 				}
 				
 				if( fname.indexOf( '.' ) < 0 )
-					fname += '.memo';
+					fname += '.html';
 				Application.mainView.sendMessage( {
 					command: 'savefile',
 					path: fname
@@ -334,7 +307,7 @@ Application.save = function( mode )
 			},
 			mainView: this.mainView,
 			title: mode == 'saveas' ? i18n( 'i18n_save_as' ) : i18n( 'i18n_save' ),
-			suffix: [ 'memo', 'html', 'htm' ]
+			suffix: [ 'html', 'htm' ]
 		};
 	
 		var f = new Filedialog( flags );

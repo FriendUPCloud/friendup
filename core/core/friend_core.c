@@ -72,6 +72,14 @@
 //#define USE_WORKERS
 //#define USE_PTHREAD_ACCEPT
 
+
+typedef struct AcceptStruct
+{
+	int fd;
+	MinNode node;
+}AcceptStruct;
+
+
 extern void *FCM;			// FriendCoreManager
 
 void FriendCoreProcess( void *fcv );
@@ -101,7 +109,7 @@ int nothreads = 0;					/// threads coutner @todo to rewrite
 
 FriendCoreInstance *FriendCoreNew( void *sb, int id, FBOOL ssl, int port, int maxp, int bufsiz, char *hostname )
 {
-	LOG( FLOG_INFO, "[FriendCoreNew] Starting friendcore\n" );
+	LOG( FLOG_INFO, "[FriendCoreNew] Starting friend core\n" );
 	
 	// FOR DEBUG PURPOSES! -ht
 	//_reads = 0;
@@ -132,7 +140,7 @@ FriendCoreInstance *FriendCoreNew( void *sb, int id, FBOOL ssl, int port, int ma
 		return NULL;
 	}
 	
-	LOG( FLOG_INFO,"[FriendCoreNew] Starting friendcore end\n");
+	LOG( FLOG_INFO,"[FriendCoreNew] WorkerManager started\n");
 	
 	return fc;
 }
@@ -207,7 +215,7 @@ struct fcThreadInstance
 	Socket					*sock;
 	// HT - Added for new implementation
 	//List                     *fds;
-	AcceptSocketStruct			*afd;
+	AcceptStruct			*afd;
 	// Incoming from accept
 	struct AcceptPair		*acceptPair;
 };
@@ -492,6 +500,7 @@ void *FriendCoreAcceptPhase2( void *data )
 						{
 							break;
 						}
+						usleep( 0 );
 				
 						if( fc->fci_Shutdown == TRUE )
 						{
@@ -605,6 +614,7 @@ void *FriendCoreAcceptPhase2( void *data )
 				}
 			}
 			//DEBUG("[FriendCoreAcceptPhase2] in accept loop\n");
+			usleep( 0 );
 		}	// while accept
 
 		FBOOL ok = TRUE;
@@ -1089,6 +1099,7 @@ static inline int FriendCoreAcceptPhase3( int fd, FriendCoreInstance *fc )
 			{
 				break;
 			}
+			usleep( 0 );
 	
 			if( fc->fci_Shutdown == TRUE )
 			{
@@ -1207,9 +1218,8 @@ void *FriendCoreAcceptPhase2( void *d )
 	//DEBUG("[FriendCoreAcceptPhase2] detached\n");
 #ifdef USE_PTHREAD
 	pthread_detach( pthread_self() );		// using workers atm
-    signal(SIGPIPE, SIG_IGN);
 #endif
-    
+
 	struct fcThreadInstance *pre = (struct fcThreadInstance *)d;
 	FriendCoreInstance *fc = (FriendCoreInstance *)pre->fc;
 
@@ -1218,12 +1228,12 @@ void *FriendCoreAcceptPhase2( void *d )
 	
 	DEBUG("[FriendCoreAcceptPhase2] before accept4\n");
 	
-	AcceptSocketStruct *act = pre->afd;
-	AcceptSocketStruct *rem = pre->afd;
+	AcceptStruct *act = pre->afd;
+	AcceptStruct *rem = pre->afd;
 	while( act != NULL )
 	{
 		rem = act;
-		act = (AcceptSocketStruct *)act->node.mln_Succ;
+		act = (AcceptStruct *)act->node.mln_Succ;
 		
 		FriendCoreAcceptPhase3( rem->fd, fc );
 		
@@ -1257,7 +1267,6 @@ void *FriendCoreProcessSockBlock( void *fcv )
 {
 #ifdef USE_PTHREAD
 	pthread_detach( pthread_self() );
-    signal(SIGPIPE, SIG_IGN);
 #endif 
 
 	if( fcv == NULL )
@@ -1268,7 +1277,7 @@ void *FriendCoreProcessSockBlock( void *fcv )
 		return NULL;
 	}
 
-    struct fcThreadInstance *th = ( struct fcThreadInstance *)fcv;
+	struct fcThreadInstance *th = ( struct fcThreadInstance *)fcv;
 
 	BufStringDisk *resultString = NULL;
 
@@ -1399,6 +1408,7 @@ void *FriendCoreProcessSockBlock( void *fcv )
 						}
 						else
 						{
+							usleep( 10 );
 							DEBUG("[FriendCoreProcessSockBlock] Continue, resultString->bsd_Size %ld expectedLength %ld\n", resultString->bsd_Size, expectedLength );
 							// buffer is not equal to what should come
 							continue;
@@ -1483,7 +1493,6 @@ void *FriendCoreProcessSockNonBlock( void *fcv )
 {
 #ifdef USE_PTHREAD
 	pthread_detach( pthread_self() );
-	signal(SIGPIPE, SIG_IGN);
 #endif 
 
 	if( fcv == NULL )
@@ -1817,8 +1826,6 @@ static inline void FriendCoreSelect( FriendCoreInstance* fc )
 */
 static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 {
-	signal(SIGPIPE, SIG_IGN);
-	
 	int eventCount = 0;
 	int i;
 	struct epoll_event *currentEvent;
@@ -1829,8 +1836,6 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 		return;
 	}
 	SystemBase *sb = (SystemBase *)fc->fci_SB;
-	
-	DEBUG("[FriendCoreEpoll] start\n");
 
 	// Track fds.
 	fc->FDCount = 0;
@@ -1877,12 +1882,6 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 	}
 #endif
 
-	#ifdef SINGLE_SHOT
-	struct epoll_event *pollMask = EPOLLIN | EPOLLET | EPOLLRDHUP | EPOLLHUP | EPOLLERR | EPOLLONESHOT;
-	#else
-	struct epoll_event *pollMask = EPOLLIN | EPOLLET | EPOLLRDHUP | EPOLLHUP | EPOLLERR;
-	#endif
-
 	// All incoming network events go through here
 	while( !fc->fci_Shutdown )
 	{
@@ -1892,7 +1891,7 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 		
 		// Wait for something to happen on any of the sockets we're listening on
 		//DEBUG("[FriendCoreEpoll] Before epollwait\n");
-		eventCount = epoll_pwait( fc->fci_Epollfd, events, fc->fci_MaxPoll, 150, &curmask );
+		eventCount = epoll_pwait( fc->fci_Epollfd, events, fc->fci_MaxPoll, 250, &curmask );
 		//DEBUG("[FriendCoreEpoll] Epollwait, eventcount: %d\n", eventCount );
 
 		// Something strange happened - handle closing listening socket!
@@ -1906,7 +1905,7 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 					{
 						DEBUG( "[FriendCoreEpoll] Waiting, current fds: %d\n", fc->FDCount );
 						FRIEND_MUTEX_UNLOCK( &(fc->fci_AcceptMutex) );
-						usleep( 5 );
+						usleep( 200 );
 						FRIEND_MUTEX_LOCK( &(fc->fci_AcceptMutex) );
 					}
 					FRIEND_MUTEX_UNLOCK( &(fc->fci_AcceptMutex) );
@@ -1963,8 +1962,11 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 
 				memset( &(fc->fci_EpollEvent), 0, sizeof( fc->fci_EpollEvent ) );
 				fc->fci_EpollEvent.data.ptr = fc->fci_Sockets;
-
-				fc->fci_EpollEvent.events = pollMask;// all flags are necessary, otherwise epoll may not deliver disconnect events and socket descriptors will leak
+	#ifdef SINGLE_SHOT
+				fc->fci_EpollEvent.events = EPOLLIN | EPOLLET | EPOLLRDHUP | EPOLLHUP | EPOLLERR | EPOLLONESHOT ;// | EPOLLEXCLUSIVE ; //all flags are necessary, otherwise epoll may not deliver disconnect events and socket descriptors will leak
+	#else
+				fc->fci_EpollEvent.events = EPOLLIN | EPOLLET | EPOLLRDHUP | EPOLLHUP | EPOLLERR;// | EPOLLEXCLUSIVE ; //all flags are necessary, otherwise epoll may not deliver disconnect events and socket descriptors will leak
+	#endif
 			
 				if( epoll_ctl( fc->fci_Epollfd, EPOLL_CTL_ADD, fc->fci_Sockets->fd, &(fc->fci_EpollEvent) ) == -1 )
 				{
@@ -2071,7 +2073,7 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 					{
 						DEBUG( "[FriendCoreEpoll] Adding the damned thing %d.\n", fd );
 						
-						AcceptSocketStruct *as = FCalloc( 1, sizeof( AcceptSocketStruct ) );
+						AcceptStruct *as = FCalloc( 1, sizeof( AcceptStruct ) );
 						if( as != NULL )
 						{
 							as->fd = fd;
@@ -2095,12 +2097,12 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 						//if( pre->fds )
 						if( pre->afd )
 						{
-							AcceptSocketStruct *act = pre->afd;
-							AcceptSocketStruct *rem = pre->afd;
+							AcceptStruct *act = pre->afd;
+							AcceptStruct *rem = pre->afd;
 							while( act != NULL )
 							{
 								rem = act;
-								act = (AcceptSocketStruct *)act->node.mln_Succ;
+								act = (AcceptStruct *)act->node.mln_Succ;
 								
 								shutdown( rem->fd, SHUT_RDWR );
 								close( rem->fd );
@@ -2129,6 +2131,8 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 	}
 	
 	//DEBUG("End main loop\n");
+	
+	usleep( 1 );
 
 	int counter = 15;
 	// check number of working threads

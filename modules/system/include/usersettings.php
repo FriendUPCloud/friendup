@@ -89,12 +89,6 @@ else
 	$s->Theme = $o->ID > 0 ? $o->Data : 'friendup'; // default theme set to friendup
 }
 
-// Check if we have a theme override
-if( ( $theme = getDefaultTheme() ) )
-{
-	$s->Theme = $theme;
-}
-
 // Get all mimetypes!
 $types = [];
 if( $rows = $SqlDatabase->FetchObjects( '

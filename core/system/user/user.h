@@ -87,7 +87,7 @@ static FULONG UserLoginDesc[] = {
 };
 
 //
-// Link user to group
+//
 //
 
 typedef struct UserGroupLink
@@ -155,7 +155,7 @@ typedef struct User
 	File						*u_WebDAVDevs;					// shared webdav resources 
 	int							u_WebDAVDevsNr;					// number of mounted webdav drives
 	
-	UserGroupLink				*u_UserGroupLinks;				// user groups which have drives
+	UserGroupLink				*u_UserGroupLinks;				// user groups
 	//UserGroup					**u_Groups;						// pointer to groups to which user is assigned (table of pointers)
 	//int							u_GroupsNr;					// number of assigned groups
 	UserApplication				*u_Applications;				// pointer to application settings
@@ -181,7 +181,6 @@ typedef struct User
 	char						*u_Timezone;					// timezone
 	int							u_InUse;						// usage counter
 	FBOOL						u_ChangeState;					// if user session list is in change state
-	FBOOL						u_MountDriveInProgress;			// if something is trying to mount device on user
 } User;
 
 //
@@ -299,19 +298,7 @@ File *UserGetDeviceByName( User *usr, const char *name );
 //
 //
 
-File *UserGetDeviceByPath( User *usr, char **dstpath, const char *path );
-
-//
-//
-//
-
-int UserAddToGroup( User *usr, UserGroup *ug );
-
-//
-//
-//
-
-int UserRemoveFromGroup( User *usr, FUQUAD groupid );
+int UserRegenerateSessionID( User *usr, char *newsess );
 
 //
 //
@@ -329,19 +316,13 @@ void UserDeleteGroupLinkAll( UserGroupLink *ugl );
 //
 //
 
-//void UserRemoveFromGroups( User *u );
+void UserRemoveFromGroups( User *u );
 
 //
 //
 //
 
-void UserRemoveFromGroupsDB( void *sb, User *u );
-
-//
-//
-//
-
-FBOOL UserIsInGroupDB( void *sb, User *usr, FULONG gid );
+FBOOL UserIsInGroup( User *usr, FULONG gid );
 
 //
 //

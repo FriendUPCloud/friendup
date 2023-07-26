@@ -53,11 +53,4 @@ optional arguments:
   -pc PC      Process count - number of processes launched in same time by
               user
   -mi MI      Message interval - interval between test calls
-  -hp HP      Check http POST parameters call
-
-
-Example:
-python3 master.py -l stefkos -p stefkos -ho localhost -po 650 -s true -hp true
-Run http POST test
-
 

@@ -652,7 +652,7 @@ int NotificationManagerSendEventToConnections( NotificationManager *nm, Http *re
 		}
 	}
 	
-	if( req != NULL && req->http_RequestSource == HTTP_SOURCE_NODE_SERVER )
+	if( req != NULL && req->http_RequestSource == HTTP_SOURCE_EXTERNAL_SERVER )
 	{
 		INFO( "Request comes from external server\n");
 		return 0;
@@ -848,7 +848,7 @@ BufString *NotificationManagerSendRequestToConnections(
 	//char *retMessage = NULL;
 	BufString *retMsg = BufStringNew();
 	
-	if( req != NULL && req->http_RequestSource == HTTP_SOURCE_NODE_SERVER )
+	if( req != NULL && req->http_RequestSource == HTTP_SOURCE_EXTERNAL_SERVER )
 	{
 		INFO( "Request comes from external server\n");
 		return NULL;
@@ -1270,7 +1270,6 @@ void NotificationSendThread( FThread *data )
 void NotificationManagerTimeoutThread( FThread *data )
 {
 	pthread_detach( pthread_self() );
-	signal(SIGPIPE, SIG_IGN);
 	
 	data->t_Launched = TRUE;
 	NotificationManager *nm = (NotificationManager *)data->t_Data;

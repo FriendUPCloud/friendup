@@ -1062,7 +1062,6 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 void ProcessMobileRegister( void *locd )
 {
 	pthread_detach( pthread_self() );
-	signal(SIGPIPE, SIG_IGN);
 
 	NotifRegMsg *notregmsg = (NotifRegMsg *)locd;
 	if( notregmsg == NULL )

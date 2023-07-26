@@ -102,7 +102,6 @@ File = function( filename )
 
 		let t = this;
 		let jax = new cAjax ();
-		jax.type = this.type ? this.type : 'dos';
 		jax.forceHTTP = true;
 		if( this.cancelId )
 			jax.cancelId = this.cancelId;
@@ -151,7 +150,6 @@ File = function( filename )
 	{
 		let t = this;
 		let jax = new cAjax ();
-		jax.type = this.type ? this.type : 'dos';
 		jax.forceHTTP = true;
 		
 		if( t.ondestroy ) jax.ondestroy = t.ondestroy;
@@ -328,9 +326,7 @@ File = function( filename )
 			let w = new View( {
 				title:  i18n( 'i18n_copying_files' ),
 				width:  320,
-				height: 100,
-				dialog: true,
-				dockable: true
+				height: 100
 			} );
 
 			let uprogress = new File( 'templates/file_operation.html' );
@@ -442,12 +438,6 @@ File = function( filename )
 			{
 				uprogress.info.innerHTML = '<div style="color:#F00; padding-top:10px; font-weight:700;">'+ msg +'</div>';
 				uprogress.myview.setFlag("height",140);
-				if( Workspace.dashboard )
-				{
-					Notify( { title: 'File transfer error', text: msg } );
-					uworker.terminate(); // End the copying process
-					w.close();
-				}
 			}
 
 			uworker.onerror = function( err )
@@ -544,7 +534,6 @@ File = function( filename )
 		else
 		{
 			let jax = new cAjax();
-			jax.type = t.type ? t.type : 'dos';
 			jax.forceHTTP = true;
 			if( this.cancelId )
 				jax.cancelId = this.cancelId;

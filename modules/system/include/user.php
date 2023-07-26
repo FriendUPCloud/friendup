@@ -197,6 +197,7 @@ if( $args->command )
 							{
 								if( isset( $res->data->id ) && $res->data->id )
 								{
+									
 									// TODO: Look into why you need to run user/update after user/create to create a user in Friend Core ...
 									
 									$data['id'] = $res->data->id;
@@ -396,11 +397,6 @@ if( $args->command )
 			
 			if( isset( $data['id'] ) && $data['id'] )
 			{
-				// Check if the user is in quarantine
-				if( $quar = $SqlDatabase->fetchObject( 'SELECT q.* FROM UserQuarantine q, FUser u WHERE u.ID = q.UserID AND u.LoginTime=0 AND q.Verified=\'0\' AND q.UserID=\'' . intval( $data['id'], 10 ) . '\'' ) )
-				{
-					die( 'fail<!--separate-->{"message":"Can not update a quarantined user.","response":-1}' );
-				}
 				
 				if( $perm = Permissions( 'write', 'application', "'System','Admin'", [ 
 					'PERM_USER_UPDATE_GLOBAL', 'PERM_USER_UPDATE_IN_WORKGROUP', 
@@ -720,8 +716,7 @@ function _fcquery( $command = '', $args = false, $method = 'POST', $headers = fa
 		$debug = ( isset( $conf['options']['debugmodules'] ) && strstr( $conf['options']['debugmodules'], 'system/user' ) ? $conf['options']['debugmodules'] : false );
 		
 		$usePort = ( $Config->FCHost == 'localhost' || $Config->FCOnLocalhost ) && $Config->FCPort;
-		$host = $Config->FCOnLocalhost ? 'localhost' : $Config->FCHost;
-        $server = ( $Config->SSLEnable ? 'https://' : 'http://' ) . $host . ( $usePort ? ( ':' . $Config->FCPort ) : '' );
+		$server = ( $Config->SSLEnable ? 'https://' : 'http://' ) . $Config->FCHost . ( $usePort ? ( ':' . $Config->FCPort ) : '' );
 		
 		$url = ( $server . $command );
 	
@@ -1073,29 +1068,26 @@ function _firstLogin( $userid )
 				}' );
 				
 				// 4. Wallpaper images directory
-				if( isset( $Config->copydefaultwallpapers ) )
+				$f2 = new dbIO( 'FSFolder' );
+				$f2->FilesystemID = $o->ID;
+				$f2->UserID = $userid;
+				$f2->Name = 'Wallpaper';
+				if( !$f2->Load() )
 				{
-					$f2 = new dbIO( 'FSFolder' );
-					$f2->FilesystemID = $o->ID;
-					$f2->UserID = $userid;
-					$f2->Name = 'Wallpaper';
-					if( !$f2->Load() )
-					{
-						$f2->DateCreated = date( 'Y-m-d H:i:s' );
-						$f2->DateModified = $f2->DateCreated;
-						$f2->Save();
-					}
-					
-					$debug[$userid]->WallpaperFolder = json_decode( '{
-						"DbName"       : "FSFolder",
-						"ID"           : "'.$f2->ID.'",
-						"FilesystemID" : "'.$f2->FilesystemID.'",
-						"UserID"       : "'.$f2->UserID.'",
-						"Name"         : "'.$f2->Name.'",
-						"DateCreated"  : "'.$f2->DateCreated.'",
-						"DateModified" : "'.$f2->DateModified.'"
-					}' );
+					$f2->DateCreated = date( 'Y-m-d H:i:s' );
+					$f2->DateModified = $f2->DateCreated;
+					$f2->Save();
 				}
+				
+				$debug[$userid]->WallpaperFolder = json_decode( '{
+					"DbName"       : "FSFolder",
+					"ID"           : "'.$f2->ID.'",
+					"FilesystemID" : "'.$f2->FilesystemID.'",
+					"UserID"       : "'.$f2->UserID.'",
+					"Name"         : "'.$f2->Name.'",
+					"DateCreated"  : "'.$f2->DateCreated.'",
+					"DateModified" : "'.$f2->DateModified.'"
+				}' );
 				
 				// 5. Some example documents
 				$f = new dbIO( 'FSFolder' );

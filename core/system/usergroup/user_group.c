@@ -82,9 +82,8 @@ int UserGroupDelete( void *sb, UserGroup *ug )
 {
 	if( ug != NULL )
 	{
-		DEBUG("[UserGroupDelete] pointer to sb: %p\n", sb );
 		// remove connection to users
-		/*
+		
 		if( FRIEND_MUTEX_LOCK( &(ug->ug_Mutex) ) == 0 )
 		{
 			GroupUserLink *au = ug->ug_UserList;
@@ -98,9 +97,9 @@ int UserGroupDelete( void *sb, UserGroup *ug )
 			}
 			FRIEND_MUTEX_UNLOCK( &(ug->ug_Mutex) );
 		}
-		*/
 		
 		SystemBase *lsb = (SystemBase *)sb;
+		
 		// Remove all mounted devices
 		File *lf = ug->ug_MountedDevs;
 		File *remdev = lf;
@@ -111,7 +110,7 @@ int UserGroupDelete( void *sb, UserGroup *ug )
 			
 			if( remdev != NULL )
 			{
-				DeviceRelease( lsb->sl_DeviceManager, remdev );	// this could be our bug
+				DeviceRelease( lsb->sl_DeviceManager, remdev );
 
 				FileDelete( remdev );
 				remdev = NULL;
@@ -180,7 +179,6 @@ File *UserGroupRemDeviceByName( UserGroup *ugrlist, const char *name, int *error
 {
 	if( name != NULL )
 	{
-		DEBUG("[UserGroupRemDeviceByName] trying start\n");
 		while( ugrlist != NULL )
 		{
 			File *lf = ugrlist->ug_MountedDevs;
@@ -189,7 +187,6 @@ File *UserGroupRemDeviceByName( UserGroup *ugrlist, const char *name, int *error
 			if( lf == NULL )
 			{
 				FERROR( "[UserGroupRemDeviceByName] Seems we have NO mounted devs for usergroup %s!\n", ugrlist->ug_Name );
-				ugrlist = (UserGroup *)ugrlist->node.mln_Succ;
 				continue;
 			}
 
@@ -208,8 +205,6 @@ File *UserGroupRemDeviceByName( UserGroup *ugrlist, const char *name, int *error
 		
 			if( remdev != NULL )
 			{
-				DEBUG("[UserGroupRemDeviceByName] device found: %s will be removed. Pending operations: %d\n", name, remdev->f_Operations );
-				
 				if( remdev->f_Operations <= 0 )
 				{
 					//DEBUG("[UserGroupRemDeviceByName] Remove device from list\n");
@@ -232,7 +227,6 @@ File *UserGroupRemDeviceByName( UserGroup *ugrlist, const char *name, int *error
 							lastone->node.mln_Succ = (struct MinNode *)next;
 						}
 					}
-					DEBUG("[UserGroupRemDeviceByName] Entry removed from list\n");
 					return remdev;
 				}
 				else
@@ -240,8 +234,9 @@ File *UserGroupRemDeviceByName( UserGroup *ugrlist, const char *name, int *error
 					*error = FSys_Error_OpsInProgress;
 					return remdev;
 				}
+			
+				ugrlist = (UserGroup *)ugrlist->node.mln_Succ;
 			}
-			ugrlist = (UserGroup *)ugrlist->node.mln_Succ;
 		}
 	}
 	else
@@ -249,9 +244,6 @@ File *UserGroupRemDeviceByName( UserGroup *ugrlist, const char *name, int *error
 		DEBUG("[UserGroupRemDeviceByName] User paramter is equal to NULL\n");
 		return NULL;
 	}
-	
-	DEBUG("[UserGroupRemDeviceByName] end\n");
-	
 	return NULL;
 }
 
@@ -264,7 +256,6 @@ File *UserGroupRemDeviceByName( UserGroup *ugrlist, const char *name, int *error
  */
 int UserGroupAddUser( UserGroup *ug, void *u )
 {
-	/*
 	if( ug == NULL || u == NULL )
 	{
 		DEBUG("One value is equal to NULL. ug %p u %p\n", ug, u );
@@ -273,7 +264,6 @@ int UserGroupAddUser( UserGroup *ug, void *u )
 	User *locu = (User *)u;
 	
 	//DEBUG("[UserGroupAddUser] User: %s will be added to group: %s\n", locu->u_Name, ug->ug_Name );
-
 	USER_LOCK( locu );
 	
 	GroupUserLink *au = ug->ug_UserList;
@@ -324,8 +314,12 @@ int UserGroupAddUser( UserGroup *ug, void *u )
 			FFree( au );
 		}
 	}
+	else
+	{
+		return 2;
+	}
 	//DEBUG("[UserGroupAddUser] end\n");
-	*/
+	
 	return 0;
 }
 
@@ -338,7 +332,6 @@ int UserGroupAddUser( UserGroup *ug, void *u )
  */
 int UserGroupRemoveUser( UserGroup *ug, void *u )
 {
-	/*
 	if( ug == NULL || u == NULL )
 	{
 		DEBUG("One value is equal to NULL. ug %p u %p\n", ug, u );
@@ -398,9 +391,9 @@ int UserGroupRemoveUser( UserGroup *ug, void *u )
 		ullprev = ull;
 		ull = (UserGroupLink *)ull->node.mln_Succ;
 	}
+	//locu->u_UserGroupLinks = NULL;
+	
 	USER_CHANGE_OFF( locu );
-	*/
-
 	//DEBUG("[UserGroupRemoveUser] end\n");
 	return 0;
 }
@@ -422,24 +415,14 @@ int UserGroupRemoveUserFromAll( UserGroup *ug, void *u )
 	User *locu = (User *)u;
 	
 	// remove user->group link
-	/*
+	
 	USER_LOCK( locu );
 	
 	// go through all groups connected to user
 	// and remove user from them
-
-		// go through all groups connected to user
-		// and remove user from them
-		UserGroupLink *ull = locu->u_UserGroupLinks;
-		while( ull != NULL )
-		{
-			UserGroupLink *rem = ull;
-			ull = (UserGroupLink *)ull->node.mln_Succ;
-			FFree( rem );
-		}
-		locu->u_UserGroupLinks = NULL;
-		
-		FRIEND_MUTEX_UNLOCK( &locu->u_Mutex );
+	UserGroupLink *ull = locu->u_UserGroupLinks;
+	while( ull != NULL )
+	{
 		UserGroupLink *rem = ull;
 		ull = (UserGroupLink *)ull->node.mln_Succ;
 		FFree( rem );
@@ -481,9 +464,11 @@ int UserGroupRemoveUserFromAll( UserGroup *ug, void *u )
 				FFree( rem );
 			}
 		}
+		ug->ug_UserList = newListEntryRoot;
 		
+		FRIEND_MUTEX_UNLOCK( &ug->ug_Mutex );
 	}
-	*/
+	
 	//DEBUG("[UserGroupRemoveUser] end\n");
 	return 0;
 }

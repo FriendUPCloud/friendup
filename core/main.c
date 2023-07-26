@@ -94,7 +94,6 @@ int main( int argc, char *argv[])
 {
 	int i;
 	int mcheckOption = 0;
-	FBOOL skipDBUpdate = FALSE;
 	
 	for( i=0 ; i < argc ; i++ )
 	{
@@ -113,10 +112,6 @@ int main( int argc, char *argv[])
 		else if( strcmp( argv[i], "--mcheck_trace" ) == 0 )
 		{
 			mtrace();
-		}
-		else if ( strcmp( argv[i], "--no-sql-update" ) == 0 )
-		{
-			skipDBUpdate = TRUE;
 		}
 	}
 	
@@ -213,7 +208,7 @@ int main( int argc, char *argv[])
 	LOG( FLOG_INFO, "Core started log\n" );
 	
 	// initialize System.library
-	if( ( SLIB =  SystemInit( skipDBUpdate ) ) != NULL ) // (struct SystemLibrary *)LibraryOpen( "system.library", 0 ) ) != NULL )
+	if( ( SLIB =  SystemInit() ) != NULL ) // (struct SystemLibrary *)LibraryOpen( "system.library", 0 ) ) != NULL )
 	{
 		SLIB->SystemInitExternal( SLIB );
 

@@ -379,9 +379,9 @@ FBYTE *DataFormFind( DataForm *df, ID id )
 
 typedef struct DFList
 {
-	char *df_Data;
-	int df_Size;
-	struct DFList *next;
+	char *t;
+	int s;
+	struct DFList *n;
 }DFList;
 
 DFList *CreateListEntry( char *key, char *value )
@@ -396,8 +396,8 @@ DFList *CreateListEntry( char *key, char *value )
 		ne = FCalloc( 1, sizeof(DFList) );
 		if( ne != NULL )
 		{
-			ne->df_Data = tmp;
-			ne->df_Size = size+1;
+			ne->t = tmp;
+			ne->s = size+1;
 		}
 	}
 	
@@ -405,13 +405,13 @@ DFList *CreateListEntry( char *key, char *value )
 }
 
 /**
- * Convert Http request to DataForm (remote commands)
+ * Convert Http request to DataForm
  *
  * @param http pointer to Http message
  * @return DataForm which represents http request
  */
 
-DataForm *DataFormFromHttpRemoteCommand( Http *http )
+DataForm *DataFormFromHttp( Http *http )
 {
 	DataForm *df = NULL;
 	unsigned int i;
@@ -422,9 +422,9 @@ DataForm *DataFormFromHttpRemoteCommand( Http *http )
 	DFList *re = NULL;	// root entry
 	DFList *le = NULL;	// last entry
 	
-	DEBUG("[DataFormFromHttpRemoteCommand] start\n");
+	DEBUG("[DataFormFromHttp] start\n");
 	
-	DEBUG("[DataFormFromHttpRemoteCommand] headers parsed\n");
+	DEBUG("[DataFormFromHttp] headers parsed\n");
 	
 	if( http->http_ParsedPostContent != NULL )
 	{
@@ -444,7 +444,7 @@ DataForm *DataFormFromHttpRemoteCommand( Http *http )
 				}
 				else if( strcmp( e.hme_Key, "remotecommand" ) == 0 )
 				{
-					DEBUG("[DataFormFromHttpRemoteCommand] remote command : %s\n", (char *)e.hme_Data );
+					DEBUG("[DataFormFromHttp] remote command : %s\n", (char *)e.hme_Data );
 					char *data = UrlDecodeToMem( e.hme_Data );
 					if( data != NULL )
 					{
@@ -474,7 +474,7 @@ DataForm *DataFormFromHttpRemoteCommand( Http *http )
 										}
 										else
 										{
-											le->next = ne;
+											le->n = ne;
 											le = ne;
 										}
 									} // ne != NULL
@@ -518,7 +518,7 @@ DataForm *DataFormFromHttpRemoteCommand( Http *http )
 								}
 								else
 								{
-									le->next = ne;
+									le->n = ne;
 									le = ne;
 								}
 							} // ne != NULL
@@ -531,11 +531,11 @@ DataForm *DataFormFromHttpRemoteCommand( Http *http )
 		}
 	}
 
-	DEBUG("[DataFormFromHttpRemoteCommand] RemoteURL %s RemoteHost %s\n", remoteurl, remotehost );
+	DEBUG("[DataFormFromHttp] RemoteURL %s RemoteHost %s\n", remoteurl, remotehost );
 	
 	if( remoteurl != NULL && remotehost != NULL && ( items = FCalloc( numberTags, sizeof(MsgItem) ) ) != NULL )
 	{
-		DEBUG("[DataFormFromHttpRemoteCommand] memory allocated in size %d\n", numberTags );
+		DEBUG("[DataFormFromHttp] memory allocated in size %d\n", numberTags );
 		
 		items[ 0 ].mi_Tag = ID_FCRE;
 		items[ 0 ].mi_Size = 0;
@@ -570,11 +570,11 @@ DataForm *DataFormFromHttpRemoteCommand( Http *http )
 		while( pentry != NULL )
 		{
 			items[ pos ].mi_Tag = ID_PRMT;
-			items[ pos ].mi_Size = pentry->df_Size;
-			items[ pos ].mi_Data = (FULONG)pentry->df_Data;
+			items[ pos ].mi_Size = pentry->s;
+			items[ pos ].mi_Data = (FULONG)pentry->t;
 			
 			pos++;
-			pentry = pentry->next;
+			pentry = pentry->n;
 		}
 		
 		// custom
@@ -592,9 +592,9 @@ DataForm *DataFormFromHttpRemoteCommand( Http *http )
 		items[ pos ].mi_Size = MSG_END;
 		items[ pos++ ].mi_Data = MSG_END;
 		
-		DEBUG("[DataFormFromHttpRemoteCommand] generate DataForm\n");
+		DEBUG("[DataFormFromHttp] generate DataForm\n");
 		df = DataFormNew( items );
-		DEBUG("[DataFormFromHttpRemoteCommand] release memory\n");
+		DEBUG("[DataFormFromHttp] release memory\n");
 	}
 	
 	/*
@@ -623,12 +623,12 @@ DataForm *DataFormFromHttpRemoteCommand( Http *http )
 	while( pentry != NULL )
 	{
 		dentr = pentry;
-		pentry = pentry->next;
+		pentry = pentry->n;
 		if( dentr != NULL )
 		{
-			if( dentr->df_Data != NULL )
+			if( dentr->t != NULL )
 			{
-				FFree( dentr->df_Data );
+				FFree( dentr->t );
 			}
 			FFree( dentr );
 		}
@@ -644,211 +644,6 @@ DataForm *DataFormFromHttpRemoteCommand( Http *http )
 		FFree( remoteurl );
 	}
 	
-	return df;
-}
-
-
-/**
- * Convert Http request to DataForm
- *
- * @param fcim FriendCore ID
- * @param http pointer to Http message
- * @param sessionid ID of user session which will be used on remote server
- * @return DataForm which represents http request
- */
-
-DataForm *DataFormFromHttpToSync( char *fcid, Http *http, char *sessionid )
-{
-	DataForm *df = NULL;
-	unsigned int i;
-	int numberTags = 10;
-	MsgItem *items = NULL;
-	DFList *re = NULL;	// root entry
-	DFList *le = NULL;	// last entry
-	
-	DEBUG("[DataFormFromHttpToSync] start\n");
-	
-	if( http->http_ParsedPostContent != NULL )
-	{
-		for( i = 0 ; i < http->http_ParsedPostContent->hm_TableSize; i++ )
-		{
-			HashmapElement e = http->http_ParsedPostContent->hm_Data[i];
-			
-			if( e.hme_Key != NULL && e.hme_InUse == TRUE )
-			{
-				if( e.hme_Data != NULL )
-				{
-					char *data = UrlDecodeToMem( (char *)e.hme_Data );
-					if( data != NULL )
-					{
-						DFList *ne = NULL;
-					
-						if( strcmp( "sessionid", e.hme_Key ) == 0 )
-						{
-							ne = CreateListEntry( e.hme_Key, sessionid );
-						}
-						else
-						{
-							ne = CreateListEntry( e.hme_Key, data );
-						}
-						
-						if( ne != NULL )
-						{
-							DEBUG("[DataFormFromHttpToSync] PARAM to structure: %s\n", ne->df_Data );
-							
-							if( re == NULL )
-							{
-								re = ne;
-								le = ne;
-							}
-							else
-							{
-								le->next = ne;
-								le = ne;
-							}
-						} // ne != NULL
-						FFree( data );
-					} // data != NULL 
-				} // sessionid
-				//e.data != NULL
-				numberTags++;
-			}
-		}
-	}
-
-	DEBUG("[DataFormFromHttp] sessionid %s\n", sessionid );
-	
-	if( /*sessionid != NULL &&*/ ( items = FCalloc( numberTags, sizeof(MsgItem) ) ) != NULL )
-	{
-		char temp[ 256 ];
-		DEBUG("[DataFormFromHttp] memory allocated in size %d\n", numberTags );
-		
-		/*
-		MsgItem tags[] = {
-					{ ID_FCRE, (FULONG)0, (FULONG)MSG_GROUP_START },
-					{ ID_FCID, (FULONG)FRIEND_CORE_MANAGER_ID_SIZE,  (FULONG)sb->fcm->fcm_ID },
-					{ ID_FRID, (FULONG)0, MSG_INTEGER_VALUE },
-					{ ID_CMMD, (FULONG)0, MSG_INTEGER_VALUE },
-					{ ID_QUER, (FULONG)FC_QUERY_FRIENDCORE_SYNC , MSG_INTEGER_VALUE },
-					{ ID_SESS, (FULONG)rootEntry->SessionID, rootEntry->sessionIDLen },
-					{ MSG_GROUP_END, 0,  0 },
-					{ TAG_DONE, TAG_DONE, TAG_DONE }
-				};
-		 */
-		
-		items[ 0 ].mi_Tag = ID_FCRE;
-		items[ 0 ].mi_Size = 0;
-		items[ 0 ].mi_Data = MSG_GROUP_START;
-		
-		items[ 1 ].mi_Tag = ID_FCID;
-		items[ 1 ].mi_Size = FRIEND_CORE_MANAGER_ID_SIZE;
-		items[ 1 ].mi_Data = (FULONG)fcid;
-		
-		items[ 2 ].mi_Tag = ID_FRID;
-		items[ 2 ].mi_Size = 0;
-		items[ 2 ].mi_Data = MSG_INTEGER_VALUE;
-		
-		items[ 3 ].mi_Tag = ID_CMMD;
-		items[ 3 ].mi_Size = 0;
-		items[ 3 ].mi_Data = MSG_INTEGER_VALUE;
-		
-		items[ 4 ].mi_Tag = ID_QUER;
-		items[ 4 ].mi_Size = FC_QUERY_FRIENDCORE_SYNC;
-		items[ 4 ].mi_Data = MSG_INTEGER_VALUE;
-		
-		//items[ 5 ].mi_Tag = ID_SESS;
-		//items[ 5 ].mi_Size = strlen(sessionid)+1;
-		//items[ 5 ].mi_Data = (FULONG)sessionid;
-		
-		items[ 5 ].mi_Tag = ID_PARM;
-		items[ 5 ].mi_Size = 0;
-		items[ 5 ].mi_Data = MSG_GROUP_START;
-		
-		int pos = 7;
-		
-		if( http->http_Uri->uri_QueryRaw != NULL )
-		{
-			int tempLen = snprintf( temp, sizeof(temp), "uri=%s", http->http_Uri->uri_QueryRaw );
-			
-			items[ 6 ].mi_Tag = ID_PRMT;
-			items[ 6 ].mi_Size = tempLen + 1;
-			items[ 6 ].mi_Data = (FULONG)temp;
-		}
-		else
-		{
-			pos = 6;
-		}
-
-		DFList *pentry = re;
-		while( pentry != NULL )
-		{
-			items[ pos ].mi_Tag = ID_PRMT;
-			items[ pos ].mi_Size = pentry->df_Size;
-			items[ pos ].mi_Data = (FULONG)pentry->df_Data;
-			
-			pos++;
-			pentry = pentry->next;
-		}
-		
-		// custom
-		pos = numberTags-3;
-		
-		items[ pos ].mi_Tag = MSG_GROUP_END;
-		items[ pos ].mi_Size = 0;
-		items[ pos++ ].mi_Data = 0;
-		
-		items[ pos ].mi_Tag = MSG_GROUP_END;
-		items[ pos ].mi_Size = 0;
-		items[ pos++ ].mi_Data = 0;
-
-		items[ pos ].mi_Tag = MSG_END;
-		items[ pos ].mi_Size = MSG_END;
-		items[ pos++ ].mi_Data = MSG_END;
-		
-		DEBUG("[DataFormFromHttp] generate DataForm\n");
-		df = DataFormNew( items );
-		DEBUG("[DataFormFromHttp] release memory\n");
-		
-		FFree( items );
-	}
-	
-	/*
-	 M sgI*tem tags[] = {
-	 { ID_FCRE, (FULONG)0, MSG_GROUP_START },
-	 { ID_FRID, (FULONG)0 , MSG_INTEGER_VALUE },
-	 { ID_QUER, (FULONG)sd->hosti, (FULONG)sd->host  },
-	 { ID_SLIB, (FULONG)0, (FULONG)NULL },
-	 { ID_HTTP, (FULONG)0, MSG_GROUP_START },
-	 { ID_PATH, (FULONG)30, (FULONG)"system.library/login" },
-	 { ID_PARM, (FULONG)0, MSG_GROUP_START },
-	 { ID_PRMT, (FULONG) sd->logini, (FULONG)usernamec },
-	 { ID_PRMT, (FULONG) sd->passwdi,  (FULONG)passwordc },
-	 { ID_PRMT, (FULONG) sd->idi,  (FULONG)sessionidc },
-	 { ID_PRMT, (FULONG) sd->devidi, (FULONG)sd->devid },
-	 { ID_PRMT, (FULONG) enci, (FULONG) enc },
-	 { ID_PRMT, (FULONG) 18, (FULONG)"appname=Mountlist" },
-	 { MSG_GROUP_END, 0,  0 },
-	 { MSG_GROUP_END, 0,  0 },
-	 { MSG_END, MSG_END, MSG_END }
-};
-	 */
-	
-	DFList *pentry = re;
-	DFList *dentr = re;
-	while( pentry != NULL )
-	{
-		dentr = pentry;
-		pentry = pentry->next;
-		if( dentr != NULL )
-		{
-			if( dentr->df_Data != NULL )
-			{
-				FFree( dentr->df_Data );
-			}
-			FFree( dentr );
-		}
-	}
-
 	return df;
 }
 

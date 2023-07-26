@@ -71,7 +71,7 @@ int UpdateFilesystemActivityDB( void *sb, FilesystemActivity *act );
 
 static inline FQUAD FileSystemActivityCheckAndUpdate( void *sb, FilesystemActivity *fsa, FQUAD bytes )
 {
-	//DEBUG("[FileSystemActivityCheckAndUpdate] store %ld left %lu ID %lu\n", bytes, fsa->fsa_StoredBytesLeft, fsa->fsa_ID );
+	DEBUG("[FileSystemActivityCheckAndUpdate] store %ld left %lu ID %lu\n", bytes, fsa->fsa_StoredBytesLeft, fsa->fsa_ID );
 	if( fsa->fsa_StoredBytesLeft != 0 )	// 0 == unlimited bytes to store
 	{
 		FQUAD left = fsa->fsa_StoredBytesLeft;

@@ -1,9 +1,9 @@
 -include ../../Config.defs
 
-CC		=	gcc
+CC			=	gcc
 OUTPUT		=	bin/mysql.library
 CFLAGS		=	$(GLOBAL_CFLAGS) -I../../$(LIBWS_INCLUDE_DIR) -I../../core/ -fPIC -I../../libs/ -I../../libs/properties/ -I../../libs/application/ -I../../core/system/ -I../../
-LFLAGS		=	-shared -fPIC -Wl,--export-dynamic  -L/usr/lib/x86_64-linux-gnu/ `mysql_config --libs` -lz -lpthread -lrt -lcrypt
+LFLAGS		=	-shared -fPIC -L/usr/lib/x86_64-linux-gnu/ `mysql_config --libs` -lz -lpthread -lrt -lcrypt
 FPATH		=	$(shell pwd)
 
 #CFLAGS	=	--std=c99 -Wall  -W -D_FILE_OFFSET_BITS=64 -g -Ofast -funroll-loops -I. -Wno-unused-parameter -Wno-unused-variable -I../../core/ -I/usr/include/mysql/ -I../ -fPIC -I../properties/  -I../../libs-ext/libwebsockets/build/include/  
@@ -33,17 +33,14 @@ CFLAGS  +=      -DCYGWIN_BUILD
 endif
 
 C_FILES := $(wildcard mysqllibrary.c)
-#OBJ_FILES := obj/mysqllibrary.o
-OBJ_FILES = $(addprefix obj/,$(notdir $(C_FILES:.c=.o)))
+OBJ_FILES := $(addprefix obj/,$(notdir $(C_FILES:.c=.o)))
 
-ALL: $(OBJ_FILES) $(OUTPUT)
+ALL:	$(OBJ_FILES) $(OUTPUT)
 
-#$(LFLAGS)
-$(OUTPUT):
+
+$(OUTPUT): $(OBJ_FILES)
 	@echo "\033[34mLinking ...\033[0m"
-	$(CC) $(CFLAGS) -shared -fPIC -Wl,--export-dynamic  $(OBJ_FILES) ../../core/obj/buffered_string.o ../../core/obj/list_string.o `mysql_config --libs` -lz -lpthread -lrt -lcrypt -o $(OUTPUT) 
-#../../core/obj/library.o 
-#
+	$(CC) -o $(OUTPUT) $(OBJ_FILES) $(LFLAGS) $(CFLAGS) ../../core/obj/library.o ../../core/obj/list_string.o 
 
 obj/%.o: %.c %.d
 	@echo "\033[34mCompile ...\033[0m"
