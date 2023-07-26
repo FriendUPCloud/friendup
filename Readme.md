@@ -1,8 +1,6 @@
 Friend OS v1.3.0, "Helium"
 ==========================
 
-*NB*: For extended functionality and related Friend projects such as the Android app refer [here](https://github.com/FriendSoftwareLabs).
-
 ---
 **Release notes**
 
@@ -19,6 +17,8 @@ Across devices
 --------------
 
 With its responsive desktop environment and client-side, javascript based technologies, Friend OS offers a new reality where you work and play online, independently from your local web enabled hardware. By supporting all screen formats, from mobile phones to laptops and VR, Friend OS is a single target through which you can reach the entire user market.
+
+To install Friend OS on your device, chose "Install Friend OS" from your browser on mobile/tablet or desktop.
 
 Distributed and powerful
 ------------------------
