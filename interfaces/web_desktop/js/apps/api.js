@@ -3697,13 +3697,10 @@ function getImageUrl( path, mode )
 		let r = '/webclient/' + path.substr( ( 'resources/webclient/' ).length, path.length - ( 'resources/webclient/' ).length );
 		return r;
 	}
-<<<<<<< HEAD
-=======
 	else if( path.indexOf( ':' ) > 0 )
 	{
 		path = encodeURIComponent( path );
-	}	
->>>>>>> release/1.3.0
+	}
 
 	let prt = 'authid=' + ( Application.authId ? Application.authId : '' );
 	if( Application.sessionId ) prt = 'sessionid=' + Application.sessionId;
