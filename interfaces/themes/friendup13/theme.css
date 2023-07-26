@@ -1256,6 +1256,7 @@ html .Desklet[position=top_right] .Launcher.Running:after
 html #DockWindowList.Size32 .Task
 {
 	height: 28px;
+	line-height: 28px;
 }
 
 html body.InputParadigmTablet .Desklet
@@ -1994,15 +1995,9 @@ html #DockWindowList .Task
 html > body #DockWindowList .Task.Active,
 html > body #Statusbar .Task.Active
 {
-	border-radius: 10px;
+	border-radius: 15px;
 	background-color: #20374D;
-}
-
-html #DockWindowList .Task.Active:hover, html #DockWindowList .Task:hover,
-html #Statusbar .Task, html #DockWindowList .Task
-{
-	filter: none !important;
-	box-shadow: none;
+	box-shadow: inset 0px 3px 8px #97b6d324;
 }
 
 html .Page
