@@ -3447,7 +3447,7 @@ body.Offline #OfflineMessage
     height: 26px;
     overflow: hidden;
     width: 100%;
-    background: linear-gradient(90deg, #e0e0e0, transparent);
+    background: linear-gradient(90deg, #e0e0e0ff, #e0e0e04a, #e0e0e07f);
     color: #303030;
 }
 
@@ -3467,6 +3467,7 @@ body.Offline #OfflineMessage
 #OfflineMessage > div:before 
 {
     content: " ";
+    box-shadow: 0px 0px 15px 5px white;
     font-size: 1.5em;
     height: 20px;
     position: relative;
@@ -3482,13 +3483,16 @@ body.Offline #OfflineMessage
     border-radius: 100%;
 }
 
-#OfflineMessage > div h1 {
+#OfflineMessage > div h1 
+{
     padding: 0;
     margin: 4px 0 0px 16px;
     display: inline-block;
     font-size: 16px;
     font-weight: bold;
     display: inline-block;
+    position: relative;
+    z-index: 2;
 }
 
 
