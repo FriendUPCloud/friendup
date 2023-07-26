@@ -1,4 +1,4 @@
-Friend OS v1.3.0, "Helium"
+![image](https://github.com/FriendUPCloud/friendup/assets/17009357/7fb48b7a-18d9-43f9-91c4-12cbdb7471b6)Friend OS v1.3.0, "Helium"
 ==========================
 
 *NB*: For extended functionality and related Friend projects such as the Android app refer [here](https://github.com/FriendSoftwareLabs).
@@ -13,7 +13,7 @@ The Friend OS leverages the computing power of the Internet to offer many of the
 
 The FriendOS liberates you from Big Tech:  It gives you control to create, collaborate, store and share information, data and content across all your devices in a secure private environment and access it anywhere on any device.
 
-![Friend OS Hydrogen](https://friendos.com/Hydrogen.jpg)
+![Friend OS Helium](https://friendos.com/upload/images-master/lappy2.jpg)
 
 Across devices
 --------------
