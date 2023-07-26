@@ -231,6 +231,9 @@ if( isset( $args->command ) )
 {
 	switch( $args->command )
 	{
+		case 'init':
+			require( 'modules/system/include/init.php' );
+			break;
 		case 'help':
 			$commands = array(
 				'ping', 'theme', 'systempath', 'software', 'save_external_file', 'proxycheck', 'proxyget',
