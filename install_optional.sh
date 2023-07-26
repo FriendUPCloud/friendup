@@ -109,9 +109,7 @@ while true; do
 		# Download the selected package
 		download_package "$selected_package" "$selected_title"
 		echo "Package '$selected_title' downloaded to ./optional/"
-		echo "What is unpack: $selected_unpack"
 		unpack "$selected_unpack"
-		echo "Trying: $selected_install"
 		rsync -ravl $selected_install
 		exit
 	else
