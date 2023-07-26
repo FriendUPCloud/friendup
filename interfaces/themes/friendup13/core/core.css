@@ -3430,6 +3430,7 @@ body #OfflineMessage
 	width: 100%;
 	background: rgba(150,150,150,0.25);
 	color: white;
+	visibility: visible;
 }
 
 body.Offline #OfflineMessage
