@@ -4298,7 +4298,7 @@ html #Statusbar .Task.Directory,
 html #DockWindowList .Task.Directory
 {
 	background-image: url(/iconthemes/friendup15/Folder.svg);
-	background-position: 8px center;
+	background-position: 9px center;
 }
 
 .Horizontal #DockWindowList
@@ -4336,7 +4336,7 @@ html #DockWindowList .Task.Directory
 	height: 30px;
     line-height: 15px;
     font-size: 14px;
-    background-position: 8px 5px;
+    background-position: 9px 5px;
     background-size: 17px;
 }
 #DockWindowList.Size32.Rows .Task
