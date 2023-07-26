@@ -401,7 +401,7 @@ SystemBase *SystemInit( FBOOL skipDBupdParam )
 			
 			l->l_EnableHTTPChecker = plib->ReadIntNCS( prop, "Options:HttpChecker", 0 );
 			
-			l->sl_MasterServer = StringDuplicate( plib->ReadStringNCS( prop, "core:masterserveraddress", "pal.ideverket.no") );
+			l->sl_MasterServer = StringDuplicate( plib->ReadStringNCS( prop, "core:masterserveraddress", "home.friendos.com") );
 			
 			char *tptr  = plib->ReadStringNCS( prop, "core:ClientCert", NULL );
 			if( tptr != NULL )

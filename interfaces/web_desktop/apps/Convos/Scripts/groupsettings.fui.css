@@ -1,0 +1,67 @@
+
+.FUIInvitedialog.FUIGroupsettings > .Dia
+{
+	left: calc(50% - 400px);
+	width: 800px;
+}
+
+.FUIInvitedialog.FUIGroupsettings > .Dia .TheForm > .Form
+{
+	position: absolute;
+    top: 0;
+    left: 15px;
+    width: calc(100% - 30px);
+    height: 100%;
+    overflow: auto;
+}
+
+.FUIInvitedialog.FUIGroupsettings > .Dia .TheForm > .Form > .Flow
+{
+	position: relative;
+    gap: 15px;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-content: flex-start;
+    justify-content: center;
+    align-items: flex-start;
+}
+
+.FUIInvitedialog.FUIGroupsettings > .Dia .TheForm > .Form input,
+.FUIInvitedialog.FUIGroupsettings > .Dia .TheForm > .Form textarea
+{
+	width: 100%;
+}
+
+.FUIInvitedialog.FUIGroupsettings > .Dia .TheForm > .Form .AvatarBox
+{
+	width: 128px;
+	text-align: center;
+}
+
+.FUIInvitedialog.FUIGroupsettings > .Dia .TheForm > .Form .AvatarPreview
+{
+	display: inline-block;
+	background-size: cover;
+	background-position: center;
+	border-radius: 100%;
+	width: 128px;
+	height: 128px;
+	border: 2px solid var(--fui-border-foreground);
+}
+
+.FUIInvitedialog.FUIGroupsettings > .Dia .TheForm > .Form .Upload
+{
+	display: inline-block;
+}
+
+.FUIInvitedialog.FUIGroupsettings > .Dia .TheForm > .Form .Upload:before
+{
+	content: "\f0ee";
+	font-family: FontAwesome;
+}
+
+.FUIInvitedialog.FUIGroupsettings > .Dia .TheForm > .Form .Section 
+{
+    flex: 1;
+}

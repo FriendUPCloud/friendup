@@ -63,6 +63,7 @@ html
 	overflow: hidden;
 	transform: translate3d(0,0,0);
 	perspective: 1px;
+	border-radius: 0;
 }
 
 body
@@ -84,6 +85,7 @@ body
  	transform: rotateZ(0deg);*/
 	overflow: hidden;
     touch-action: none;
+    border-radius: 0;
 }
 
 
@@ -3428,6 +3430,7 @@ body #OfflineMessage
 	width: 100%;
 	background: rgba(150,150,150,0.25);
 	color: white;
+	visibility: visible;
 }
 
 body.Offline #OfflineMessage
@@ -3444,7 +3447,7 @@ body.Offline #OfflineMessage
     height: 26px;
     overflow: hidden;
     width: 100%;
-    background: linear-gradient(90deg, #e0e0e0, transparent);
+    background: linear-gradient(90deg, #e0e0e0ff, #e0e0e04a, #e0e0e07f);
     color: #303030;
 }
 
@@ -3464,6 +3467,7 @@ body.Offline #OfflineMessage
 #OfflineMessage > div:before 
 {
     content: " ";
+    box-shadow: 0px 0px 15px 5px white;
     font-size: 1.5em;
     height: 20px;
     position: relative;
@@ -3479,13 +3483,16 @@ body.Offline #OfflineMessage
     border-radius: 100%;
 }
 
-#OfflineMessage > div h1 {
+#OfflineMessage > div h1 
+{
     padding: 0;
     margin: 4px 0 0px 16px;
     display: inline-block;
     font-size: 16px;
     font-weight: bold;
     display: inline-block;
+    position: relative;
+    z-index: 2;
 }
 
 
@@ -4291,7 +4298,7 @@ html #Statusbar .Task.Directory,
 html #DockWindowList .Task.Directory
 {
 	background-image: url(/iconthemes/friendup15/Folder.svg);
-	background-position: 5px center;
+	background-position: 9px center;
 }
 
 .Horizontal #DockWindowList
@@ -4321,16 +4328,16 @@ html #DockWindowList .Task.Directory
     margin-bottom: 4px;
 	background-size: 18px;
 	background-position: 5px 2px;
-	padding: 7px 8px 7px 25px;
+	padding: 0 10px 0 30px;
 }
 
 #DockWindowList.Size32 .Task
 {
 	height: 30px;
-	line-height: 15px;
-	font-size: 14px;
-	background-position: 5px 5px;
-	background-size: 16px;
+    line-height: 15px;
+    font-size: 14px;
+    background-position: 9px 5px;
+    background-size: 17px;
 }
 #DockWindowList.Size32.Rows .Task
 {
@@ -4526,7 +4533,6 @@ html #Tray > div
 
 #Statusbar .Task:hover, #DockWindowList .Task:hover
 {
-	box-shadow: 0px 0px 10px 0px rgba(255,245,100,0.5);
 	opacity: 1;
 }
 

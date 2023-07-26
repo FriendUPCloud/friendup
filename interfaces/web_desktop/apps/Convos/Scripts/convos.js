@@ -20,12 +20,145 @@ Application.run = function( msg )
 	this.sendMessage( { command: 'app-ready' } );
 } 
 
+function initVideoCall( peerId )
+{
+	let v = document.querySelector( '.Videocall' );
+	if( v )
+	{
+		window.currentPeerId = peerId;
+		v.onclick();
+	}
+}
+
 Application.receiveMessage = function( msg )
 {
     if( msg.sender )
     {
         let overview = FUI.getElementByUniqueId( 'convos' );
-        overview.activateDirectMessage( msg.sender, msg.message );
+        if( msg.type && msg.type == 'chatroom' && msg.uniqueId )
+        {
+        	overview.pollChatroom( msg.sender, msg.uniqueId );
+        }
+        else
+        {
+        	overview.activateDirectMessage( msg.sender, msg.message );
+    	}
+    }
+    else if( msg.command == 'broadcast-call' )
+    {
+		let messages = FUI.getElementByUniqueId( 'messages' );
+		if( messages )
+		{
+			messages.queueMessage( '<videocall type="video" callid="' + msg.peerId + '"/>' );
+		}
+    }
+    else if( msg.command == 'broadcast-received' )
+    {
+    	let contacts = FUI.getElementByUniqueId( 'contacts' );
+    	if( contacts )
+    	{
+			Application.SendUserMsg( {
+				recipientId: contacts.record.ID,
+				message: {
+					command: 'broadcast-start',
+					peerId: msg.peerId,
+					remotePeerId: msg.remotePeerId
+				}
+			} );
+		}
+    }
+    else if( msg.command == 'broadcast-start' )
+    {
+    	let contacts = FUI.getElementByUniqueId( 'contacts' );
+    	if( contacts )
+    	{
+    		console.log( '[Host] Received broadcast-start from client.' );
+    		contacts.videoCall.sendMessage( { command: 'initcall', peerId: msg.peerId, remotePeerId: msg.remotePeerId } );
+		}
+    }
+    else if( msg.command == 'broadcast-poll' )
+    {
+		let contacts = FUI.getElementByUniqueId( 'contacts' );
+    	if( contacts )
+    	{
+			Application.SendUserMsg( {
+				recipientId: contacts.record.ID,
+				message: {
+					command: 'broadcast-poll-remote',
+					peerId: msg.peerId
+				}
+			} );
+    		console.log( '[host] Broadcast poll to other user' );
+		}
+    }
+    // Comes from host
+    else if( msg.command == 'broadcase-poll-remote' )
+    {
+    	let contacts = FUI.getElementByUniqueId( 'contacts' );
+    	if( contacts )
+    	{
+    		console.log( '[Client] Receiving broadcast poll function in convos.js' );
+    		contacts.videoCall.sendMessage( { command: 'poll', peerId: msg.peerId } );
+		}
+    }
+    else if( msg.type )
+    {
+    	if( msg.type == 'invite' )
+    	{
+    		let overview = FUI.getElementByUniqueId( 'convos' );
+    		Notify( {
+    			title: i18n( 'i18n_you_got_an_invite' ),
+    			text: i18n( 'i18n_please_check_your_messages' )
+			}, false, function( e )
+			{
+				overview.initHome();
+			} );
+    	}
+    	else if( msg.type == 'accept-invite' )
+    	{
+    		Notify( {
+    			title: i18n( 'i18n_invite_accepted' ),
+    			text: msg.fullname + ' ' + i18n( msg.message )
+			}, false, function( e )
+			{
+				overview.pollChatroom( false, msg.groupId );
+			} );
+    	}
+    }
+    if( msg.command == 'drop' )
+    {
+    	// Check what we dropped
+    	// TODO: Fix support for multiple files...
+    	if( !msg.data ) return;
+		let m = FUI.getElementByUniqueId( 'messages' );
+		if( !m ) return;
+    	for( let a = 0; a < msg.data.length; a++ )
+    	{
+    		try
+    		{
+				switch( msg.data[a].Filename.split( '.' ).pop().toLowerCase() )
+				{
+					case 'jpg':
+					case 'jpeg':
+					case 'gif':
+					case 'png':
+						// Check if we can handle this file
+						Confirm( i18n( 'i18n_share_image_with_group' ), i18n( 'i18n_share_image_desc' ), function( d )
+						{
+							if( d.data == true )
+							{
+								m = FUI.getElementByUniqueId( 'messages' );
+								if( m )
+								{
+									m.shareImageAndPost( msg.data[ a ].Path );
+								}
+							}
+						} );
+						return;
+				}
+			}
+			catch( e ){};
+		}
     }
 }
 
@@ -42,6 +175,26 @@ Application.playSound = function( snd )
     {
         Convos.sounds[ snd ].play();
     }
+}
+
+Application.SendUserMsg = function( opts )
+{
+	if( !opts.recipientId ) return;
+	
+	let amsg = {
+        'appname': 'Convos',
+        'dstuniqueid': opts.recipientId
+    };
+    if( opts.message )
+    {
+    	amsg.msg = JSON.stringify( opts.message );
+    }
+    if( opts.callback )
+    {
+    	amsg.callback = 'yes';
+	}
+    let m = new Library( 'system.library' );
+    m.execute( 'user/session/sendmsg', amsg );
 }
 
 // Start polling
@@ -99,6 +252,7 @@ Application.holdConnection = function( flags )
 	        // Alert the other user
             let musers = [];
             let messages = [];
+            let types = [];
             for( let b = 0; b < args.outgoing.length; b++ )
             {
                 let found = false;
@@ -114,6 +268,7 @@ Application.holdConnection = function( flags )
                 {
                     musers.push( args.outgoing[ b ].targetId );
                     messages.push( args.outgoing[ b ].message );
+                    types.push( args.outgoing[ b ].type );
                 }
             }
             
@@ -123,13 +278,39 @@ Application.holdConnection = function( flags )
                 {
                     if( typeof( musers[ b ] ) != 'undefined' )
                     {
-                        let amsg = {
-                            'appname': 'Convos',
-                            'dstuniqueid': musers[ b ],
-                            'msg': '{"sender":"' + Application.fullName + '","message":"' + messages[ b ] + '"}'
-                        };
-                        let m = new Library( 'system.library' );
-                        m.execute( 'user/session/sendmsg', amsg );
+                    	if( types[ b ] == 'chatroom' )
+                    	{
+                    		let cn = FUI.getElementByUniqueId( 'contacts' );
+                    		if( cn )
+                    		{
+                    			let contacts = cn.getContacts();
+                    			for( let c = 0; c < contacts.length; c++ )
+                    			{
+                    				let amsg = {
+						                'appname': 'Convos',
+						                'dstuniqueid': contacts[ c ].uniqueId,
+						                'msg': '{"sender":"' + Application.fullName + '","message":"' + messages[ b ] + '","type":"chatroom","uniqueId":"' + musers[ b ] + '"}'
+						            };
+						            if( c == 0 )
+						            {
+						            	amsg.callback = 'yes';
+					            	}
+						            let m = new Library( 'system.library' );
+						            m.execute( 'user/session/sendmsg', amsg );
+                    			}
+                			}
+                    	}
+                    	else
+                    	{
+		                    let amsg = {
+		                        'appname': 'Convos',
+		                        'dstuniqueid': musers[ b ],
+		                        'callback': 'yes',
+		                        'msg': '{"sender":"' + Application.fullName + '","message":"' + messages[ b ] + '"}'
+		                    };
+		                    let m = new Library( 'system.library' );
+		                    m.execute( 'user/session/sendmsg', amsg );
+	                    }
                     }
                 }
             }

@@ -514,7 +514,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 					}
 					else
 					{
-					    DEBUG( "[UMebRequest] Seems we have no user..\n" );
+					    //DEBUG( "[UMebRequest] Seems we have no user..\n" );
 					}
 
 					if( u && loggedSession->us_User != NULL )
@@ -554,15 +554,64 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			
 								msgsndsize += WebSocketSendMessageInt( uses, tmpmsg, lenmsg );
 			
-								DEBUG("[UMWebRequest] messagee sent. Bytes: %d\n", msgsndsize );
+								//DEBUG("[UMWebRequest] messagee sent. Bytes: %d\n", msgsndsize );
 							}
 							ses = (UserSessListEntry *)ses->node.mln_Succ;
 						}
 						
 						USER_UNLOCK( u );
 					}	// if user != NULL
+					
+					// Try to alert other sessions of source user that we have an update!
+					USER_LOCK( loggedSession->us_User );	
+					
+					//DEBUG( "Trying to send to self.\n" );
+					
+					if( 1 )
+					{
+						int lenmsg = 0;	
+						
+						if( appname != NULL )
+						{
+							lenmsg = snprintf( tmpmsg, msgsize, "{\"type\":\"msg\",\"data\":{\"type\":\"server-msg\",\"session\":{\"message\":%s,\"appname\":\"%s\"}}}", msg, appname );
+						}
+						else
+						{
+							lenmsg = snprintf( tmpmsg, msgsize, "{\"type\":\"msg\",\"data\":{\"type\":\"server-msg\",\"session\":{\"message\":%s}}}", msg );
+						}
+						
+						UserSessListEntry *ses = loggedSession->us_User->u_SessionsList;
+						
+						// Rewind session list
+						while( 1 )
+						{
+							UserSessListEntry *s = ( UserSessListEntry *)ses->node.mln_Pred;
+							if( s != NULL )
+								ses = s;
+							else break;
+						}
+						
+						// Find all user sessions other than self
+						while( ses != NULL && ses->us != NULL )
+						{
+							UserSession *uses = ( UserSession *)ses->us;
+							if( uses != NULL && uses != loggedSession && uses->us_UserID == loggedSession->us_UserID )
+							{
+								//DEBUG( "Sending to other self: %p != %p, %s\n", loggedSession, uses, msg );
+								int sendLen = WebSocketSendMessageInt( uses, tmpmsg, lenmsg );
+								
+								//DEBUG("[UMWebRequest] Other self sent size. Bytes: %d\n", sendLen );
+							}
+			
+							ses = (UserSessListEntry *)ses->node.mln_Succ;
+						}
+					}
+					
+					USER_UNLOCK( loggedSession->us_User );
+					
 					FFree( tmpmsg );
 				}
+				
 
 				if( msgsndsize >= 0 )
 				{

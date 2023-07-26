@@ -163,6 +163,10 @@ $friendHeaders = [];
 function FriendHeader( $header )
 {
 	global $friendHeaders;
+	if( !is_array( $header ) )
+	{
+		$GLOBALS[ 'friendHeaders' ] = [];
+	}
 	
 	// Get content type and content
 	$headerA = explode( ':', $header );
@@ -205,11 +209,6 @@ register_shutdown_function( function()
 			foreach( $friendHeaders as $k=>$v )
 				$out .= "$k: $v\n";
 			$out .= "---http-headers-end---\n";
-			
-			/*$f = fopen( '/tmp/test.jpg', 'w+' );
-			fwrite( $f, $out . $string );
-			fclose( $f );*/
-			
 			die( $out . $string );
 		}
 	}

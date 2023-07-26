@@ -12,3 +12,48 @@ i18n_create_your_own_group             : Create group
 i18n_name                              : Name
 i18n_group_description                 : Group description
 i18n_create_group                      : Save group
+i18n_add_a_new_chatroom                : Add a new chatroom.
+i18n_direct_messages                   : Direct messages.
+i18n_jeanie_ai_assistant               : Jeanie AI assistant.
+i18n_close                             : Close
+i18n_nobody_here                       : Nobody's here!
+i18n_you_have_no_contacts              : You have no contacts in this chat room. Perhaps you should add some? Use the search field to find contacts.
+i18n_add_contacts                      : Add contacts
+i18n_find_and_add_contacts             : Find and add contacts...
+i18n_invite_contacts                   : Invite contacts to your chat room
+i18n_invite_contact                    : Invite contact
+i18n_updates                           : Updates
+i18n_events                            : Events
+i18n_no_new_events                     : No new events.
+i18n_history                           : History
+i18n_invite_to_chatroom                : Invited to chat room
+i18n_invite_to_chatroom_desc           : You were invited to a chat room {groupname} by {username}.
+i18n_news_and_events                   : News and events
+
+i18n_share_image_with_group            : Share image with chat room?
+i18n_share_image_desc                  : If you add the image to the chat room, everyone can see it. Do you want that?
+
+i18n_group_settings                    : Group settings
+i18n_group_avatar                      : Chat room avatar
+i18n_upload                            : Upload
+i18n_chatroom_name                     : Chat room name
+i18n_group_name                        : Name of chat room
+i18n_group_desc                        : Group description
+
+
+i18n_no_topics                         : No topics
+i18n_you_have_no_topics                : You have no chat topics. Add one to start a conversation with your jeanie!
+i18n_add_topic                         : Add a topic
+
+i18n_you_got_an_invite                 : Chat room invite
+i18n_please_check_your_messages        : Please go to the home screen and check events.
+i18n_invite_accepted                   : Invite accepted
+i18n_accepted_invite                   : accepted your invite.
+
+i18n_start_conversation                : Start a conversation.
+
+i18n_video_call                        : Video call
+i18n_video_call_button                 : Click to join video call.
+i18n_sharing_screen                    : You are sharing your screen.
+
+

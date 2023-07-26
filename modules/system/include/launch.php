@@ -57,7 +57,6 @@ else
 if( $app->ID )
 {
 	$path = findBaseHref( $app->Name ? $app->Name : $args->app );
-	$Logger->log( $path );
 	$conf = json_decode( $app->Config );
 	
 	friendHeader( 'Content-Type: text/html' );
@@ -102,30 +101,32 @@ if( $app->ID )
 		}
 	}
 	
+	$port = $configfilesettings[ 'Core' ][ 'ProxyEnable' ] ? '' : ( ':' . $configfilesettings[ 'Core' ][ 'port' ] );
+	$href = ( $configfilesettings[ 'Core' ][ 'SSLEnable' ] ? 'https://' : 'http://' ) . $configfilesettings[ 'FriendCore' ][ 'fchost' ] . $port . '/';
+	
 	// TODO: Permissions?
 	$str = '<!DOCTYPE html>
 <html>
 	<head>
 		<title>' . $conf->Name . '</title>
-		<base href="' . $path . '"/>
-		<script src="/webclient/js/apps/api.js"></script>' . $scripts . '
+		<base href="' . $href . '"/>
 		<script>
-		    let Friend = window.Friend ? window.Friend : {};
-		    Friend.launch = function()
+		    Friend = window.Friend ? window.Friend : {};
 		    {
-			    ' . $scrp . '
-			    Application.checkAppPermission = function( key )
-			    {
-				    let permissions = {}; // <- inject user specific permissions here
-				    if( permissions[ key ] )
-					    return permissions[ key ];
-				    return false;
-			    }
-		    }
+				let pause = 5;
+				Friend.launch = function()
+				{
+					if( this.launched ) return;
+					if( !window.Application ){ setTimeout( function(){ Friend.launch(); }, pause ); pause = pause == 5 ? 10 : 25; return; };
+					this.launched = true;
+					' . $scrp . '
+					Application.checkAppPermission = function( key ){ let permissions = {}; if( permissions[ key ] ) return permissions[ key ]; return false; }
+				};
+			}
 		</script>
+		<script onerror="" onload="Friend.launch()" src="/webclient/js/apps/api.js"></script>' . $scripts . '
 	</head>
-	<body onload="Friend.launch()">
-	</body>
+	<body onload="Friend.launch()"></body>
 </html>';
 
 	$length = strlen( $str );	

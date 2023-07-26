@@ -70,6 +70,20 @@ Password: securefassword
 ```
 The first thing you may want to do, is add a new user : run the 'users' application that can be found in the 'System:Software/System' directory.
 
+Optional packages
+=================
+
+Optional features and modules
+-----------------------------
+
+From of Friend OS 1.3.x you can use the install_optional.sh script to install 
+special features for Friend OS that are not enabled by default, or uses 3rd
+party projects in order to work. Current modules are:
+
+ * SSHy for SSH functionality in Prompts (terminal application)
+ * Web push (Minishlink) to enable web push notifications (in Convos)
+
+
 Friend Network
 -------------
 
@@ -99,6 +113,7 @@ stun Server: ice.friendup.cloud
 Friend Network server will be automatically launched when you run Friend Core after a successful installation.
 
 In order to **kill Friend Core and all the associated servers**, we suggest you use the **'killfriend.sh' script**.
+
 
 Friend Chat
 -----------

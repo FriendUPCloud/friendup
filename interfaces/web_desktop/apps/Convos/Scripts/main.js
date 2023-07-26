@@ -11,18 +11,20 @@
 serverQueue = [];
 
 Application.run = function( msg ){
+	
+	this.setSingleInstance( true );
+
 	let v = new View( {
 		title: 'Convos',
 		assets: [
 			'Progdir:Markup/main.html'
 		],
 		background: 'transparent',
-		width: 800,
-		height: 600,
+		width: 1100,
+		height: 720,
 		'min-width': 360,
 		'min-height': 360,
-		quitOnClose: true,
-		singleInstance: true
+		quitOnClose: true
 	} );
 	v.onClose = function()
 	{
@@ -54,6 +56,28 @@ Application.receiveMessage = function( msg )
                 this.view.sendMessage( serverQueue[ a ] );
             }
             serverQueue = [];
+        }
+        // To app
+        else if( msg.command == 'broadcast-call' )
+        {
+        	this.view.sendMessage( msg );
+        }
+        else if( msg.command == 'broadcast-received' )
+        {
+        	this.view.sendMessage( msg );
+        }
+        else if( msg.command == 'broadcast-start' )
+        {
+        	this.view.sendMessage( msg );
+        }
+        else if( msg.command == 'broadcast-poll' )
+        {
+        	this.view.sendMessage( msg );
+        }
+        else if( msg.command == 'broadcast-poll-remote' )
+        {
+        	console.log( '[Client] Receiving broadcast poll function in main.js' );
+        	this.view.sendMessage( msg );
         }
     }
 }

@@ -5,6 +5,7 @@
 @import url(/themes/friendup13/core/icons.css);
 @import url(/themes/friendup13/core/tabs.css);
 @import url(/themes/friendup13/core/workspace.css);
+@import url(/themes/friendup13/scrollbars.css);
 @import url(/themes/friendup13/core/font-awesome.min.css);
 @import url(/webclient/css/FUI.css);
 @import url(/themes/friendup13/flavors_charcoal.css);
@@ -52,6 +53,7 @@ html body
 	font-size: var(--FontSizeDefault);
 	color: #333333;
 	-webkit-font-smoothing:antialiased;
+	border-radius: 0 !important;
 }
 
 html body[mobile=mobile]
@@ -85,8 +87,8 @@ html body #DoorsScreen .Left > .VirtualWorkspaces
 {
 	border-left: 1px solid rgba(0,0,0,0.05);
 	border-right: 1px solid rgba(0,0,0,0.05);
-	padding-left: 0;
-	padding-right: 0;
+	padding-left: 3px;
+    padding-right: 3px;
 }
 
 html #DoorsScreen .Left > .VirtualWorkspaces > div
@@ -870,8 +872,8 @@ html .View.Active > .Title
 html .View > .Title
 {
 	border-top: none;
-	border-bottom: 1px solid rgba(0,0,0,0);
-	height: 29px;
+	border-bottom: 0;
+	height: 26px;
 	background-image: none;
 	border-radius: 10px 10px 0 0;
 	/* --- old color --- */
@@ -1255,6 +1257,7 @@ html .Desklet[position=top_right] .Launcher.Running:after
 html #DockWindowList.Size32 .Task
 {
 	height: 28px;
+	line-height: 28px;
 }
 
 html body.InputParadigmTablet .Desklet
@@ -1453,9 +1456,15 @@ html .Screen > .TitleBar > .Left .Extra:hover .Time
 	color: white;
 }
 
+html .Screen > .TitleBar > .Left .Time 
+{
+    padding: 0 0 0 8px;
+    border-left: 1px solid rgba(0,0,0,0.05);
+}
+
 html .Screen > .TitleBar > .Left > .Extra > span 
 {
-    margin: 0 5px 0 0;
+    margin: 0 8px 0 0;
 }
 
 html .Screen > .TitleBar > .Left > .Extra > div:last-child
@@ -1987,15 +1996,9 @@ html #DockWindowList .Task
 html > body #DockWindowList .Task.Active,
 html > body #Statusbar .Task.Active
 {
-	border-radius: 10px;
+	border-radius: 15px;
 	background-color: #20374D;
-}
-
-html #DockWindowList .Task.Active:hover, html #DockWindowList .Task:hover,
-html #Statusbar .Task, html #DockWindowList .Task
-{
-	filter: none !important;
-	box-shadow: none;
+	box-shadow: inset 0px 3px 8px #97b6d324;
 }
 
 html .Page

@@ -30,6 +30,10 @@ Friend.User = {
     // Log into Friend Core
     Login: function( username, password, remember, callback, event, flags )
     {
+    	if( this.State == 'login' ) return;
+    	
+    	if( !username ) return Workspace.showLoginPrompt();
+    	
     	this.State = 'login';
     	
     	if( !event ) event = window.event;

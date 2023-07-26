@@ -24,8 +24,9 @@ Application.run = function( packet )
 	var w = new View( { 
 		title:  'New Shell', 
 		width:  650,
-		height: 240,
-		scrollable: true
+		height: 340,
+		scrollable: true,
+		transparent: true
 	} );
 	this.view = w;
 	w.onClose = function(){ Application.quit(); }

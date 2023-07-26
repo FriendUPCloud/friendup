@@ -10,6 +10,7 @@ html > body.Synthwave.Inside,
 html > body.Synthwave .Content .Scroller:after
 {
 	background: #461C64;
+	border-radius: 0;
 }
 
 body.Synthwave .AppsShowingTitle,

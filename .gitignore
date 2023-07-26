@@ -2,4 +2,5 @@
 *.d
 *.o
 build/*
+optional/*
 

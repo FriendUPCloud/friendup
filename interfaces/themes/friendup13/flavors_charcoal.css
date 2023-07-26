@@ -34,6 +34,7 @@ html > body.Charcoal.Inside,
 html > body.Charcoal .Content .Scroller:after
 {
 	background: #303030;
+	border-radius: 0;
 }
 
 body.Charcoal .AppsShowingTitle
@@ -169,6 +170,12 @@ html > body.Charcoal > div button, html > body.Charcoal > div .Button
 	background-color: #3c3c3c;
     border: 1px solid #3c3c3c;
     color: #e0e0e0;
+}
+
+html > body.Charcoal > div button:hover, 
+html > body.Charcoal > div .Button:hover
+{
+    border: 1px solid var(--ColorBgButtonHover);
 }
 
 html body.Charcoal .View .DirectoryToolbar,

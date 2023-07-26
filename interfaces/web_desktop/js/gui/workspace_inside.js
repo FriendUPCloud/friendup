@@ -1904,14 +1904,31 @@ let WorkspaceInside = {
 		    		if( !list ) return;
 		    		for( let a = 0; a < list.length; a++ )
 		    		{
-		    			AddNotificationEvent( {
-		    				title: list[a].Title,
-		    				text: list[a].Message,
+		    			let tit = list[a].Title;
+		    			let mes = list[a].Message;
+		    			if( tit.substr( 0, 5 ) == 'i18n_' )
+		    				tit = i18n( tit );
+		    			if( mes.substr( 0, 5 ) == 'i18n_' )
+		    				mes = i18n( mes );
+		    			
+		    			let msg = {
+		    				title: tit,
+		    				text: mes,
 		    				time: list[a].Date,
 		    				type: list[a].Type,
 		    				eventId: list[a].ID,
 		    				seen: false
-		    			} );
+		    			};
+		    			
+		    			if( list[a].Type == 'chatroom-invite' )
+		    			{
+		    				msg.clickCallback = function()
+		    				{
+		    					ExecuteApplication( 'Convos' );
+		    				}
+		    			}
+		    			
+		    			AddNotificationEvent( msg );
 		    		}
 		    	}
 		    }
@@ -2386,7 +2403,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				userSettingsFetched = true;
 				
 				function initFriendWorkspace()
-				{
+				{	
 					// Make sure we have loaded
 					if( !Workspace.dashboard && Workspace.mode != 'vr' && ( Workspace.screen && Workspace.screen.contentDiv ) )
 					{
@@ -2598,7 +2615,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								ScreenOverlay.hide();
 								PollTray();
 								PollTaskbar();					
-								//console.log( 'refreshUserSettings: Running callback...' );
 								if( callback ) callback();
 								return;
 							}
@@ -2726,11 +2742,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				}
 				
 				// Load application cache's and then init workspace
-				loadApplicationBasics(
-					initFriendWorkspace()
-				);
+				loadApplicationBasics( initFriendWorkspace );
 			}
-			
 			m.forceHTTP = true;
 			m.execute( 'getsetting', { settings: [ 
 				'avatar', 'workspacemode', 'wallpaperdoors', 'wallpaperwindows', 'language', 
@@ -4064,7 +4077,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			    Workspace.themeRefreshed = true;
 			    Workspace.refreshUserSettings( function() 
 			    {
-				    //console.log( '[Login phase] Done refreshing user settings.' );
+				    console.log( '[Login phase] Done refreshing user settings.' );
 				    CheckScreenTitle();
 
 				    let h = document.getElementsByTagName( 'head' );
@@ -7443,8 +7456,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			title: i18n( 'i18n_choose_file_to_upload' ),
 			width: 370,
 			'min-width': 370,
-			height: 160,
-			'min-height': 160,
+			height: 220,
+			'min-height': 220,
 			id: 'fileupload',
 			resize: true,
 			screen: Workspace.screen
@@ -11369,12 +11382,12 @@ function handleSASRequest( e )
 
 function handleServerMessage( e )
 {
-    function base64ToBytes( base64 )
+	function base64ToBytes( base64 )
     {
         const binString = atob( base64 );
         return Uint8Array.from( binString, ( m ) => m.codePointAt( 0 ) );
     }
-
+    
 	if( e.message && e.appname )
 	{	    
 		let found = false;
@@ -11860,8 +11873,8 @@ function mobileDebug( str, clear )
 // TODO: Test loading different themes
 
 _applicationBasics = {};
-var _applicationBasicsLoading = false;
-var _previousBasicsTheme = false;
+let _applicationBasicsLoading = false;
+let _previousBasicsTheme = false;
 function loadApplicationBasics( callback )
 {
 	if( _applicationBasicsLoading ) 
@@ -11874,28 +11887,30 @@ function loadApplicationBasics( callback )
 		
 		let themeName = Workspace.theme ? Workspace.theme : 'friendup13';
 		
-		// Do not reload the same stuff
-		if( _previousBasicsTheme == themeName )
-		{
-			if( callback )
-				callback();
-			return;
-		}
-		_previousBasicsTheme = themeName;
-		
 		// Don't do in login
 		if( Workspace.loginPrompt )
 		{
-			if( callback )
-				callback();
+			if( callback ) callback();
 			return;
 		}
+		
+		// Do not reload the same stuff
+		if( _previousBasicsTheme == themeName )
+		{
+			if( callback ) callback();
+			return;
+		}
+		
+		_previousBasicsTheme = themeName;
+		
+		let loadSteps = 0;
 		
 		// Preload basic scripts
 		let a_ = new File( '/webclient/js/apps/api.js' );
 		a_.onLoad = function( data )
 		{
 			_applicationBasics.apiV1 = URL.createObjectURL( new Blob( [ data ], { type: 'text/javascript' } ) );
+			loadSteps++;
 		}
 		a_.load();
 		
@@ -11909,6 +11924,7 @@ function loadApplicationBasics( callback )
 			if( _applicationBasics.css )
 				_applicationBasics.css += data;
 			else _applicationBasics.css = data;
+			loadSteps++;
 		}
 		sb_.load();
 		
@@ -11944,6 +11960,7 @@ function loadApplicationBasics( callback )
 			{
 				_applicationBasics.css = impOut.join( "\n" ) + "\n" + _applicationBasics.css;
 			}
+			loadSteps++;
 		}
 		c_.load();
 		
@@ -11965,18 +11982,25 @@ function loadApplicationBasics( callback )
 		{
 			//console.log( 'BASICS LOADED: ' + data );
 			_applicationBasics.js = data;
-			if( callback )
-			{
-				try
-				{
-					callback();
-				}
-				catch( e )
-				{
-				}
-			}
+			loadSteps++;
 		}
 		j_.load();
+		
+		let waitCount = 0;
+		let intr = setInterval( function()
+		{
+			if( loadSteps == 4 )
+			{
+				//console.log( '------------- Basics loaded! ------------' );
+				clearInterval( intr );
+				if( callback )
+					callback();
+			}
+			else
+			{
+				//console.log( 'Waiting (' + ( waitCount++ ) + ')...' );
+			}
+		}, 25 );
 	}, 2 );
 };
 

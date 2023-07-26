@@ -5,7 +5,7 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: var(--fui-background-foreground);
+    background-color: var(--fui-module-background);
 }
 
 .FUIContacts .ContactSearch
@@ -24,6 +24,8 @@
     position: absolute;
     top: 5px;
     left: 5px;
+    padding-left: 10px;
+    padding-right: 10px;
     width: calc(100% - 10px);
     height: calc(100% - 10px);
 }
@@ -36,7 +38,154 @@
     left: 0;
     width: 300px;
     height: calc(100% - 35px);
-    overflow: auto;
+    overflow: hidden;
+    border-radius: 15px 0 0 0;
+}
+
+.FUIContacts .Contacts > .ContactList
+{
+	position: absolute;
+	left: 0;
+	top: 0;
+	width: 100%;
+	height: calc(100% - 85px);
+	overflow: auto;
+}
+
+.FUIContacts .Contacts > .Settings
+{
+	position: absolute;
+	left: 0;
+	box-sizing: border-box;
+	top: calc(100% - 80px);
+	width: 100%;
+	height: 80px;
+	padding: 15px 10px;
+	background-color: var(--BackgroundHeavier);
+	overflow: hidden;
+	display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: nowrap;
+}
+
+.FUIContacts .Contacts > .Settings > .Avatar
+{
+	content: " ";
+    display: block;
+    width: 45px;
+    height: 45px;
+    background: black;
+    border-radius: 100%;
+    border: 2px solid var(--fui-border-foreground);
+    margin: 0 15px 0 0;
+    opacity: 0;
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+    transition: opacity 0.25s;
+}
+
+.FUIContacts .Contacts > .Settings > .Avatar.Loaded
+{
+	opacity: 1;
+}
+
+.FUIContacts .Contacts > .Settings .Toolbar
+{
+	display: flex;
+	gap: 10px;
+}
+
+.FUIContacts .Contacts > .Settings .Gearbox,
+.FUIContacts .Contacts > .Settings .Videocall,
+.FUIContacts .Contacts > .Settings .Add,
+.FUIContacts .Contacts > .Settings .AddConversation,
+.FUIContacts .Contacts > .Settings .Group
+{
+	content: " ";
+    display: inline-block;
+    width: 30px;
+    height: 30px;
+    background-color: black;
+    border-radius: 100%;
+    border: 2px solid var(--fui-border-foreground);
+    text-align: center;
+    color: var(--fui-border-foreground);
+    box-sizing: border-box;
+    line-height: 26px;
+    cursor: pointer;
+    outline: 0px solid transparent;
+    transition: outline,background-color 0.12s,0.2s;
+}
+.FUIContacts .Contacts > .Settings .Gearbox:hover,
+.FUIContacts .Contacts > .Settings .Videocall:hover,
+.FUIContacts .Contacts > .Settings .Add:hover,
+.FUIContacts .Contacts > .Settings .AddConversation:hover,
+.FUIContacts .Contacts > .Settings .Group:hover
+{
+	outline: 1px solid var(--fui-border-foreground);
+    background-color: var(--fui-palette-chan04);
+}
+
+.FUIContacts .Contacts:not(.User) > .Settings .Videocall
+{
+	display: none;
+}
+
+.FUIContacts .Contacts > .Settings .Videocall:before
+{
+	content: "\f03d";
+	font-family: FontAwesome;
+}
+
+.FUIContacts .Contacts > .Settings .Gearbox:before
+{
+	content: "\f013";
+	font-family: FontAwesome;
+}
+
+.FUIContacts .Contacts > .Settings .Add:before
+{
+	content: "\f234";
+	font-family: FontAwesome;
+}
+
+.FUIContacts .Contacts > .Settings .AddConversation:before
+{
+	content: "\f055";
+	font-family: FontAwesome;
+}
+
+.FUIContacts .Contacts > .Settings .Group:before
+{
+	content: "\f0c0";
+	font-family: FontAwesome;
+}
+
+.Channels.Scroll + .Chatlist .FUIContacts .Contacts
+{
+	border-radius: 0;
+}
+
+.FUIContacts .Contacts .NoContacts:first-child
+{
+	margin-top: 10px;
+}
+
+.FUIContacts .Contacts .NoContacts
+{
+	padding: 5px 15px;
+}
+
+.FUIContacts .Contacts .NoContacts > p
+{
+	margin: 15px 0 15px 0;
+}
+
+.FUIContacts .Contacts .NoContacts + .NoContacts > p
+{
+	margin-top: 0;
 }
 
 .FUIContacts .Contacts .Contact
@@ -46,8 +195,6 @@
     position: relative;
     cursor: pointer;
     transition: background-color 0.25s;
-    background-color: var(--fui-list-item-background);
-    color: var(--fui-list-item-color);
     height: 55px;
     padding: 5px;
     box-sizing: border-box;
@@ -65,12 +212,6 @@
     background-color: var(--ColorLEDOn);
     border-radius: 100%;
     border: 2px solid white;
-}
-
-.FUIContacts .Contacts .Slot:nth-child(even) .Contact
-{
-    background-color: var(--fui-list-item-background-alternate);
-    color: var(--fui-list-item-color-alternate);
 }
 
 .FUIContacts .Contacts .Contact.Active, 
@@ -117,9 +258,9 @@
     left: 10px;
     width: 35px;
     height: 35px;
-    background-color: var(--fui-list-background);
+    background-color: var(--fui-palette-chan03);
     border-radius: 35px;
-    border: 3px solid white;
+    border: 2px solid var(--fui-border-foreground);
     box-sizing: border-box;
 }
 

@@ -63,6 +63,7 @@ body.ViewMaximized.AppsShowing #Screens > div.Screen > .TitleBar > .Left
 	left: 10px;
 	line-height: 42px;
 	font-size: 1em;
+	border-top: 2px solid rgba(0,0,0,0.1);
 }
 
 body:not(.ViewMaximized) #Screens > div.Screen > .TitleBar > .Left > .Info:before
@@ -84,6 +85,7 @@ body:not(.ViewMaximized) #Screens > div.Screen > .TitleBar > .Left > .Info
 {
 	margin-left: 10px;
 	color: white;
+	margin-top: -2px;
 }
 
 body #Screens > div.Screen > .TitleBar > .Right
@@ -458,6 +460,7 @@ html #WorkspaceMenu .Menu
 	line-height: 40px;
 	top: 0;
 	right: 0;
+	border-top: 2px solid rgba(0,0,0,0.1);
 }
 
 [mobile] #WorkspaceMenu.Open:before

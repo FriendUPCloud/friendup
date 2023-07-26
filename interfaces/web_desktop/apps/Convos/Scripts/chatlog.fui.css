@@ -177,13 +177,25 @@
 {
 	background-color: var(--fui-background);
 	color: var(--fui-color);
-	padding: 15px;
+	padding: 0 15px;
 	box-sizing: border-box;
 	border-radius: 10px;
 	margin: 10px 0 0 0;
 	opacity: 0;
 	transition: opacity 0.15s;
 	position: relative;
+}
+
+.FUIChatlog .Message > .Text
+{
+	user-select: text;
+	line-height: 22px;
+}
+
+.FUIChatlog .Message > .Text .VideoCall
+{
+	user-select: none;
+	margin-bottom: 0 0 10px 0;
 }
 
 .FUIChatlog .Slot:first-child .Message
@@ -198,6 +210,7 @@
 
 .Message.FirstForOwner
 {
+	padding-top: 15px;
     border-radius: 10px 10px 0 0;
 }
 
@@ -206,13 +219,21 @@
     border-radius: 0;
 }
 
-.Message.FirstForOwner .Date, .Message.ConceilOwner:not(.LastForOwner) .Date
+.Message.OnlyMessage 
+{
+    padding-top: 15px;
+    padding-bottom: 15px;
+}
+
+.Message.FirstForOwner .Date, .Message.ConceilOwner:not(.LastForOwner) .Date,
+.Message.FirstForOwner .Date, .Message.ConceilOwner:not(.LastForOwner) .Text::after
 {
     display: none;
 }
 
 .Message.ConceilOwner.LastForOwner
 {
+	padding-bottom: 15px;
     border-radius: 0 0 10px 10px;
 }
 
@@ -245,6 +266,18 @@
     height: 10px;
 }
 
+.FUIChatlog .Messages .ImageError 
+{
+    font-family: 'fontawesome';
+    display: inline-block;
+    color: red;
+}
+
+.FUIChatlog .Messages .ImageError:before 
+{
+    content: "\f00d";
+}
+
 .FUIChatlog .Message.ConceilOwner .Nickname
 {
     display: none;
@@ -269,6 +302,50 @@
 {
 	background-color: var(--fui-palette-chan01-dimmer);
     color: var(--fui-color);
+}
+
+.FUIChatlog .Message img.Attachment 
+{
+    max-width: 100%;
+    height: auto;
+    border-radius: 10px;
+    display: block;
+    margin: 0 auto 15px auto;
+    cursor: pointer;
+}
+
+.FUIChatlog .Message .VideoCall
+{
+	display: block;
+	border-radius: 10px;
+	max-width: 100%;
+	width: fit-content;
+	color: var(--fui-menu-color);
+	background-color: var(--fui-palette-chan02);
+    padding: 10px;
+    border-radius: 15px;
+    cursor: pointer;
+    transition: box-shadow 0.1s;
+    box-shadow: 0px 0px 0px rgba(0,0,0,0);
+    margin: auto;
+}
+
+.FUIChatlog .Message .VideoCall:hover
+{
+	box-shadow: 0px 0px 2px 1px rgba(255,255,255,255);
+}
+
+.FUIChatlog .Message .VideoCall:before
+{
+	content: "\f03d";
+	font-family: FontAwesome;
+	padding: 10px;
+	display: inline-block;
+	background: white;
+	color: black;
+	border-radius: 100%;
+	vertical-align: middle;
+	margin: 0 10px 0 0;
 }
 
 @keyframes glassanim
@@ -296,8 +373,8 @@
 {
     font-family: Apple Color Emoji,Segoe UI Emoji,Noto Color Emoji,Android Emoji,EmojiSymbols,EmojiOne Mozilla,Twemoji Mozilla,Segoe UI Symbol,Noto Color Emoji Compat,emoji,noto-emojipedia-fallback;
     font-weight: 400;
-    font-size: 24px;
-    vertical-align: baseline;
+    font-size: 18px;
+    vertical-align: bottom;
     filter: drop-shadow(0px 2px 6px rgba(0,0,0,0.2));
 }
 
@@ -318,7 +395,7 @@ span.Emoticon
 {
     font-family: Apple Color Emoji,Segoe UI Emoji,Noto Color Emoji,Android Emoji,EmojiSymbols,EmojiOne Mozilla,Twemoji Mozilla,Segoe UI Symbol,Noto Color Emoji Compat,emoji,noto-emojipedia-fallback;
     font-weight: 400;
-    font-size: 24px;
+    font-size: 18px;
     cursor: pointer;
 }
 
@@ -330,15 +407,6 @@ span.Emoticon:hover
 .FUIChatlog .Messages .WebLinkPreview 
 {
     display: block;
-    border: 1px solid rgba(0,0,0,0.2);
-    border-radius: 10px;
-    overflow: hidden;
-}
-
-.FUIChatlog .Messages .WebLinkPreview 
-{
-    display: block;
-    border: 1px solid rgba(0,0,0,0.2);
     border-radius: 10px;
     overflow: hidden;
     opacity: 0;
@@ -349,29 +417,40 @@ span.Emoticon:hover
 .FUIChatlog .Messages .WebLinkPreview p.OGSite
 {
     display: block;
-    padding: 5px;
-    background-color: var(--fui-menu-background);
-    color: var(--fui-menu-color);
+    padding: 10px 15px;
+    background-color: var(--fui-module-background);
+    color: var(--fui-module-color);
     margin: 0;
 }
 .FUIChatlog .Messages .WebLinkPreview p.OGSite
 {
     font-weight: bold;
     cursor: pointer;
+    text-align: center;
 }
 
 .FUIChatlog .Messages div.OGImage > img
 {
-    width: 100%;
+    width: max-content;
     max-width: 100%;
+    margin: auto;
     height: auto;
     display: block;
     cursor: pointer;
 }
 
+.FUIChatlog .Messages .WebLinkPreview p.WebLinkP
+{
+    text-align: center;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
 .FUIChatlog .Messages .WebLinkPreview p.WebLinkP a
 {
-    color: var(--fui-menu-color);
+    color: var(--fui-module-color);
+    text-decoration: underline;
 }
 
 .FUIChatlog .Messages .WebLinkPreview.Showing
@@ -384,6 +463,7 @@ span.Emoticon:hover
     display: block;
     width: 100%;
     cursor: pointer;
+    background-color: black;
 }
 
 

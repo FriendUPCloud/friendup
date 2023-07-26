@@ -70,7 +70,24 @@ class FUIChatlog extends FUIElement
         this.domInput = this.domElement.querySelector( '.Input' );
         
         if( this.options.name )
-            this.domTopic.innerHTML = this.options.name;
+        {
+        	if( this.options.type == 'jeanie' )
+        	{
+        		let text = this.options.name;
+		        try
+		        {
+		            let dec = new TextDecoder().decode( self.base64ToBytes( text ) );
+		            text = dec;
+		        }
+		        catch( e ){};
+		        this.domTopic.innerHTML = text;
+        	}
+        	else
+        	{
+		        this.domTopic.innerHTML = this.options.name;
+	        }
+        }
+            
         if( this.options.parentElement )
         {
             let par = document.createElement( 'div' );
@@ -184,10 +201,13 @@ class FUIChatlog extends FUIElement
                                     range.deleteContents();
                                     range.insertNode( node );
                                     range.collapse( true );
+                                    
+                                    self.domTextarea.focus();
                                     return;
                                 }
                             } 
                             self.domTextarea.appendChild( node );
+                            self.domTextarea.focus();
 	                    }
 	                    else
 	                    {
@@ -200,6 +220,7 @@ class FUIChatlog extends FUIElement
     	}
     	this.domInput.querySelector( '.Upload' ).onclick = function()
     	{
+    	    let s = this;
     	    if( this.classList.contains( 'Active' ) )
     	    {
     	        this.classList.remove( 'Active' );
@@ -211,6 +232,47 @@ class FUIChatlog extends FUIElement
     	    {
     	        clearActive( this );
     	        this.classList.add( 'Active' );
+    	        
+    	        let flags = {
+					multiSelect: false,
+					suffix: [ 'jpg', 'jpeg', 'png', 'gif' ],
+					triggerFunction: function( arr )
+					{
+						s.classList.remove( 'Active' );
+						
+						if( arr && arr.length > 0 )
+						{
+							let m = new Module( 'system' );
+							m.onExecuted = function( me, md )
+							{
+								if( me == 'ok' )
+								{
+									let res = JSON.parse( md );
+									self.queueMessage( '<attachment type="' + res.type + '" image="' + res.url + '"/>' );
+								}
+							}
+							let zmsg = { method: 'addupload', path: arr[ 0 ].Path };
+							if( self.options.type == 'dm-user' )
+							{
+								zmsg.userId = self.options.cid;
+							}
+							else if( self.options.type == 'jeanie' )
+							{
+								zmsg.context = 'jeanie';
+							}
+							else
+							{
+								zmsg.groupId = self.options.cid;
+							}
+							m.execute( 'convos', zmsg );
+						}
+					},
+					path: false,
+					rememberPath: true,
+					type: 'load'
+				};
+			
+				new Filedialog( flags );
     	    }
     	}
     	this.domInput.querySelector( '.Search' ).onclick = function()
@@ -269,7 +331,19 @@ class FUIChatlog extends FUIElement
 			    self.domTextarea.innerHTML = '';	
     			cancelBubble( e );
     			
-    			self.queueMessage( val );
+    			// Strip scripts and such
+    			val = val.split( /<script.*?\>[\w\W]*?\<\/script\>/i ).join( '' );
+    			val = val.split( /<style.*?\>[\w\W]*?\<\/style\>/i ).join( '' );
+    			val = val.split( /<link.*?\>/i ).join( '' );
+    			
+    			// Check white space
+    			let candidate = val.split( /\<.*?\>/ ).join( '' );
+    			candidate = candidate.split( /[\s]/ ).join( '' ).split( '&nbsp;' ).join( '' );
+    			
+    			if( candidate.length )
+    			{
+    				self.queueMessage( val );
+				}
     		}
     		this.checkHeight();
     	} );
@@ -328,7 +402,7 @@ class FUIChatlog extends FUIElement
                 text = dec;
             }
             catch( e ){};
-            
+             
             let replacements = {
                 message: self.replaceUrls( self.replaceEmojis( text ) ),
                 i18n_date: i18n( 'i18n_date' ),
@@ -413,6 +487,23 @@ class FUIChatlog extends FUIElement
         }
         this.toBottom();
         this.refreshDom();
+    }
+    setTopic( topic, type = false )
+    {
+    	// Jeanie is a top level chat
+    	// TODO: Figure out if we are showing contacts or not while running 
+    	//       this topic
+    	if( type != 'jeanie' )
+    	{
+    		let p = this.domTopic.querySelector( '.ParentLink' );
+    		
+    		this.domTopic.innerHTML = topic;
+			if( p ) this.domTopic.appendChild( p );
+		}
+		else
+		{
+			this.domTopic.innerHTML = topic;
+		}
     }
     toBottom( way )
     {
@@ -541,10 +632,13 @@ class FUIChatlog extends FUIElement
             }
             
             let owner = messages[ a ].getAttribute( 'owner' );
+            let powner = a > 0 ? messages[ a - 1 ].getAttribute( 'owner' ) : false;
+            let nowner = a + 1 < messages.length ? messages[ a + 1 ].getAttribute( 'owner' ) : false;
+            
             if( owner == lastOwner )
             {
                 messages[ a ].classList.add( 'ConceilOwner' );
-                if( a + 1 < messages.length && messages[ a + 1 ].getAttribute( 'owner' ) != owner )
+                if( a + 1 < messages.length && nowner != owner )
                 {
                     messages[ a ].classList.add( 'LastForOwner' );
                 }
@@ -553,10 +647,27 @@ class FUIChatlog extends FUIElement
                     messages[ a ].classList.remove( 'LastForOwner' );
                 }
             }
-            else if( a + 1 < messages.length && messages[ a + 1 ].getAttribute( 'owner' ) == owner )
+            else if( a + 1 < messages.length && nowner == owner )
             {
                 messages[ a ].classList.add( 'FirstForOwner' );
             }
+            
+            // First message
+            if( !powner && !nowner )
+            {
+            	messages[ a ].classList.add( 'OnlyMessage' );
+            }
+            // Prev message has different owner and next message has different owner
+            if( powner && powner != owner && nowner && nowner != owner )
+            {
+            	messages[ a ].classList.add( 'OnlyMessage' );
+            }
+            // Prev owner is different, and it's the last message
+            if( powner && powner != owner && !nowner )
+            {
+            	messages[ a ].classList.add( 'OnlyMessage' );
+            }
+            
             if( a + 1 >= messages.length && messages[ a ].classList.contains( 'ConceilOwner' ) )
             {
                 messages[ a ].classList.add( 'LastForOwner' );
@@ -692,6 +803,7 @@ class FUIChatlog extends FUIElement
     }
     replaceUrls( string )
     {
+       	let self = this;
         let fnd = 0;
         while( 1 )
         {
@@ -708,10 +820,48 @@ class FUIChatlog extends FUIElement
         {
             string = string.split( 'fnds://' ).join( 'https://' ).split( 'fnd://' ).join( 'http://' );
         }
+        // Take attachments
+        while( 1 )
+        {
+        	let res = string.match( /[\s]{0,1}\<attachment\ type\=\"image\"\ image\=\"(.*?)\"\/\>/i );
+        	if( res != null )
+        	{
+        		if( !self.randArra )
+        			self.randArra = {};
+        		if( !self.randArra[ res[1] ] )
+        		{
+        			self.randArra[ res[ 1 ] ] = md5( ( Math.random() * 10 ) + res[ 1 ] );
+        		}
+        		let rand = self.randArra[ res[ 1 ] ];
+        		string = string.split( res[ 0 ] ).join( '<img onload="Application.handleImageLoad( this )" onerror="Application.handleImageError( this )" src="' + res[1] + '&authid=' + Application.authId + '&rand=' + rand + '" class="Attachment"/>' );
+        		continue;
+        	}
+        	break;
+        }
+        // Take video calls
+        while( 1 )
+        {
+        	let res = string.match( /[\s]{0,1}\<videocall\ type\=\"video\"\ callid\=\"(.*?)\"\/\>/i );
+        	if( res != null )
+        	{
+        		let button = '<div class="VideoCall" onclick="initVideoCall(\'' + res[1] + '\')"><span>' + i18n( 'i18n_video_call_button' ) + '</span></div>';
+        		string = string.split( res[ 0 ] ).join( button );
+        		continue;
+        	}
+        	break;
+        }
         return string;
     }
     replaceEmojis( string )
     {
+        let smilies = [ '8)', '8-)', ':-)', ':)', ':-D', ':D', 'X)', 'B)', 'B-)', 'X-)', ':|', ':-|', ':-o', ':o', ':O', ':O', ':(', ':-(',  ';)', ';-)' ];
+        let emotes  = [ '🤓', '🤓', '🙂',  '🙂', '😀', '😀', '😆', '😎', '😎', '😆', '😐', '😐', '😮', '😮', '😮', '😮', '😒', '😒', '😏', '😏' ];
+        
+        for( let a = 0; a < smilies.length; a++ )
+        {
+            string = string.split( smilies[a] ).join( '<span class="Emoji">' + emotes[a] + '</span>' );
+        }
+        
         while( 1 )
         {
             let res = string.match( /\:(.*?)\:/i );
@@ -720,14 +870,6 @@ class FUIChatlog extends FUIElement
                 string = string.split( res[0] ).join( this.emoji( res[1] ) );
             }
             else break;
-        }
-        
-        let smilies = [ ':-)', ':)', ':-D', ':D', 'X)', 'B)', 'B-)', 'X-)', ':|', ':-|', ':-o', ':o', ':O', ':O', ':(', ':-(',  ';)', ';-)' ];
-        let emotes  = [ '🙂',  '🙂', '😀', '😀', '😆', '😎', '😎', '😆', '😐', '😐', '😮', '😮', '😮', '😮', '😒', '😒', '😏', '😏' ];
-        
-        for( let a = 0; a < smilies.length; a++ )
-        {
-            string = string.split( smilies[a] ).join( '<span class="Emoji">' + emotes[a] + '</span>' );
         }
         
         return string;
@@ -753,4 +895,39 @@ class FUIChatlog extends FUIElement
     }
 }
 FUI.registerClass( 'chatlog', FUIChatlog );
+
+Application.handleImageError = function( ele )
+{
+	let newnode = document.createElement( 'div' );
+	newnode.className = 'ImageError';
+	ele.parentNode.replaceChild( newnode, ele );
+}
+
+Application.handleImageLoad = function( ele )
+{
+	let mes = document.querySelector( '.Messages' );
+	if( !mes ) return;
+	if( ele.naturalWidth < ele.parentNode.offsetWidth )
+		ele.style.width = ele.naturalWidth + 'px';
+	mes.style.scrollBehavior = 'initial';
+	mes.scrollTop = mes.scrollHeight;
+	setTimeout( function()
+	{
+		mes.style.scrollBehavior = '';
+	}, 10 );
+	// Open the image in image viewer
+	ele.onclick = function()
+	{
+		let ms = {
+			type: 'dos',
+			method: 'openWindowByFilename',
+			args: {
+				fileInfo: { Path: ele.src, Filename: 'Convos - Image' },
+				ext: 'jpg'
+			}
+		};
+		Application.sendMessage( ms );
+	}
+	
+}
 

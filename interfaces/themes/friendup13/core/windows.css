@@ -43,6 +43,12 @@ body:not([mobile]) .ViewContainer
 	pointer-events: all;
 	background-color: transparent;
 }
+
+html .View, html .View.Active
+{
+	border: 0 !important;
+}
+
 body:not([mobile]) .View
 {
 	transition-property: top, left, opacity, transform;
@@ -542,6 +548,11 @@ body:not([mobile]) #Screens .View.Opening
 	z-index: 2147483646 !important;
 }
 
+html body:not([mobile]) .View[maximized=true] > .Content
+{
+	border-radius: 0;
+}
+
 /* Don't animate moving of windows! */
 .View:active, .View[moving=moving]
 {
@@ -689,22 +700,8 @@ html .View .Title > div > div
 
 .View > .BottomBar
 {
-	position: absolute;
-	bottom: 0;
-	height: var(--WinBottomBarHeight);
-	left: var(--MarginWindowLeft);
-	right: var(--MarginWindowRight);
-	z-index: 9;
-	background-color: var(--WinFrameBgBlur);
-	border-top: var(--WinBorderTopBlur);
-	box-sizing: border-box;
+	display: none;
 }
-.View.Active > .BottomBar
-{
-	background-color: var(--WinFrameBgActive);
-	border-top: var(--WinBorderTopActive);
-}
-_:-ms-fullscreen, :root .View.Active > .BottomBar { border-top-width: 1px; } /* IE11 */
 
 .View > .LeftBar
 {
@@ -759,7 +756,7 @@ body.ViewMaximized .ScreenContent > .View:not(.Active)
 	background-repeat: no-repeat;
 	background-position: center center;
 	cursor: resize;
-	cursor: nwse-resize;
+	cursor: nwse-resize !important;
 	right: 0px;
 	bottom: 0px;
 }

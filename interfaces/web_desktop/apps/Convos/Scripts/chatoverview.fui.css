@@ -1,5 +1,14 @@
 /* Channels */
 
+.FUIChatoverview
+{
+	position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
 .FUIChatoverview > .Channels
 {
 	position: absolute;
@@ -12,6 +21,36 @@
 	background-color: var(--fui-module-background);
 	transition: width,padding 0.25s,0.25s;
 	overflow-x: hidden;
+}
+
+@media (max-width: 512px)
+{
+	html .FUIChatoverview .SlidingMenu
+	{
+		top: 0;
+		height: 100%;
+		left: 0;
+		width: 0px;
+		border: 0px;
+		border-radius: 0;
+		border-top: 2px solid var(--BackgroundHeavier); 
+		border-bottom: 2px solid var(--BackgroundHeavier);
+	}
+	html .FUIChatoverview .SlidingMenu.Showing
+	{
+		width: 100%;
+	}
+	
+	html .FUIChatoverview .SlidingMenu label
+	{
+		display: block;
+		margin: 0 0 10px 0;
+	}
+}
+
+.FUIChatoverview .SlidingMenu > div
+{
+	min-width: calc(100vw - 80px);
 }
 
 .FUIChatoverview .SlidingMenu
@@ -87,7 +126,7 @@
 
 .FUIChatoverview > .Chatlist:before
 {
-    background-color: var(--fui-background);
+    background-color: var(--fui-palette-chan01-dim);
 }
 
 .FUIChatoverview > .Channels.Inactivated:before,
@@ -115,11 +154,65 @@
 	margin: 0 0 20px 0;
 	cursor: pointer;
 	background-position: center;
+	background-size: cover;
 	background-repeat: no-repeat;
-	border-width: 0px;
-	border-color: none;
 	border-style: solid;
 	box-sizing: border-box;
+	border-width: 3px;
+    border-color: var(--fui-background);
+    box-shadow: inset 0px 0px 15px rgba(255,255,255,0.4);
+    position: relative;
+    overflow: hidden;
+    transition: opacity,filter,box-shadow 1.5s,2.25s,0.15s;
+    filter: drop-shadow(0px 0px 0px rgba(255,255,255,0.0));
+    box-shadow: 0px 0px 0px 1px rgba(0,0,0,0.0);
+    opacity: 0;
+}
+
+.FUIChatoverview > .Channels > .Channel.Loaded
+{
+	opacity: 1;
+}
+
+.FUIChatoverview > .Channels > .Channel::after
+{
+	content: " ";
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	z-index: 11;
+	opacity: 0;
+	pointer-events: none;
+	background-color: rgba(255,255,255,0.2);
+	transition: opacity 0.15s;
+}
+
+.FUIChatoverview > .Channels > .Channel:hover::after
+{
+	opacity: 1;
+}
+
+.FUIChatoverview > .Channels > .Channel::before
+{
+	content: " ";
+	position: absolute;
+	top: 5px;
+	left: calc(50% - 15px);
+	pointer-events: none;
+	width: 30px;
+	height: 20px;
+	border-radius: 100%;
+	background: linear-gradient(0deg, transparent, rgba(255,255,255,0.4));
+}
+
+.FUIChatoverview > .Channels > .Channel.Home 
+{
+    color: #000000;
+    font-size: 30px;
+    text-align: center;
+    line-height: 54px;
 }
 
 .FUIChatoverview > .Channels > .Channel:not(.Active) 
@@ -132,6 +225,50 @@
 	background-color: var(--fui-palette-chan03);
 	border-width: 3px; 
 	border-color: var(--fui-border-color-negative);
+	filter: drop-shadow(0px 0px 65px rgba(255,255,255,1));
+	box-shadow: 0px 0px 0px 4px rgba(0,0,0,0.5);	
+}
+
+[mobile=mobile] .FUIChatoverview > .Channels > .Channel.Active
+{
+	filter: drop-shadow(0px 0px 8px rgba(255,255,255,0.5));
+}
+
+
+.FUIChatoverview > .Channels > .Channel.Active::after
+{
+	opacity: 1;
+}
+
+body:not([mobile=mobile]) .FUIChatoverview > .HoverElement
+{
+	opacity: 0;
+	transition: opacity 0.2s;
+	pointer-events: none;
+	background-color: black;
+	color: white;
+	border-radius: 15px;
+	position: absolute;
+	min-width: 90px;
+	padding: 15px;
+	z-index: 11;
+}
+
+body:not([mobile=mobile]) .FUIChatoverview > .HoverElement:before
+{
+	position: absolute;
+	top: calc(50% - 4px);
+	left: -4px;
+	height: 8px;
+	width: 8px;
+	transform: rotate(45deg);
+	content: " ";
+	background-color: black;
+}
+
+body:not([mobile=mobile]) .FUIChatoverview > .HoverElement.Showing
+{
+	opacity: 0.85;
 }
 
 /* Chat list */
@@ -144,6 +281,7 @@
 	width: calc(100% - 100px);
 	height: 100%;
 	transition: width,left 0.25s,0.25s;
+	background-color: var(--fui-list-background);
 }
 
 @media(max-width: 768px)
@@ -154,3 +292,175 @@
         width: 100%;
     }
 }
+
+/* Overview */
+
+.FUIChatoverview .OverviewUpdates 
+{
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    background: var(--fui-module-background);
+    color: var(--fui-module-color);
+    overflow: auto;
+}
+
+.FUIChatoverview .OverviewUpdates p
+{
+	margin: 0 0 10px 0;
+}
+
+.FUIChatoverview .OverviewUpdates p:last-child
+{
+	margin: 0;
+}
+
+.FUIChatoverview .OverviewUpdates .Heading p 
+{
+    padding: 0 0 15px 0;
+}
+
+.FUIChatoverview .OverviewUpdates .Updates, 
+.FUIChatoverview .OverviewUpdates .Online, 
+.FUIChatoverview .OverviewUpdates .News 
+{
+    position: absolute;
+    width: 50%;
+    height: 50%;
+    top: 15px;
+    left: 0px;
+    background-color: var(--ColorBackground);
+    color: var(--ColorText);
+    box-sizing: border-box;
+    overflow: auto;
+    padding: 15px;
+}
+
+@media (max-width: 640px)
+{
+	html .FUIChatoverview .OverviewUpdates .Updates, 
+	html .FUIChatoverview .OverviewUpdates .Online, 
+	html .FUIChatoverview .OverviewUpdates .News 
+	{
+		position: relative;
+		width: calc(100% - 30px);
+		height: 45px;
+		left: auto;
+		top: auto;
+		margin: 15px;
+		transition: height 0.2s;
+		overflow: hidden;
+	}
+}
+
+.FUIChatoverview .OverviewUpdates .News
+{
+	height: calc(100% - 30px);
+    border-radius: 15px;
+    left: 15px;
+    width: calc(50% - 15px);
+}
+
+.FUIChatoverview .OverviewUpdates .Updates 
+{
+    height: calc(50% - 15px);
+    left: calc(50% + 15px);
+    width: calc(50% - 30px);
+    border-radius: 15px;
+}
+
+.FUIChatoverview .OverviewUpdates .Online
+{
+    height: calc(50% - 30px);
+    top: calc(50% + 15px);
+    width: calc(50% - 30px);
+    left: calc(50% + 15px);
+    border-radius: 15px;
+}
+
+
+.FUIChatoverview .OverviewUpdates .UserEvent 
+{
+    background-color: var(--fui-list-background);
+    color: var(--fui-list-item-color);
+    padding: 10px;
+    border-radius: 10px;
+    margin: 0 0 15px 0;
+}
+
+.FUIChatoverview .OverviewUpdates .UserEvent .Title
+{
+    border-bottom: 1px solid rgba(0,0,0,0.1);
+    margin: 0 0 10px 0;
+    padding: 0 0 10px 0;
+    font-weight: 600;
+	display: flex;
+	justify-content: space-between;
+}
+
+.FUIChatoverview .OverviewUpdates .UserEvent .Title > .Buttons
+{
+	width: 40px;
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    align-items: center;
+    flex-direction: row;
+}
+
+.FUIChatoverview .OverviewUpdates .UserEvent .Title > .Buttons > div
+{
+	cursor: pointer;
+}
+
+/* Scrolling */
+
+.FUIChatoverview .Channels.Scroll::-webkit-scrollbar, 
+html body .FUIChatoverview .Channels.Scroll::-webkit-scrollbar-track,
+html body.activated .FUIChatoverview .Channels.Scroll::-webkit-scrollbar-track
+{
+	width: 2px;
+}
+
+.FUIChatoverview .Channels.Scroll
+{
+	padding-left: 19px;
+	padding-right: 19px;
+	width: 100px;
+}
+
+.FUIChatoverview .Placeholder
+{
+	position: absolute;
+    top: calc(50% - 100px);
+    left: calc(50% - 100px);
+    width: 200px;
+    height: 200px;
+}
+
+.FUIChatoverview .Placeholder:before 
+{
+    content: " ";
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    width: 200px;
+    background-image: url(/webclient/apps/Convos/Assets/bubble-gray.svg);
+    height: 200px;
+    background-repeat: no-repeat;
+    background-position: top center;
+}
+
+
+.FUIChatoverview .Placeholder span
+{
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	width: 100%;
+	text-align: center;
+	font-size: 30px;
+}
+

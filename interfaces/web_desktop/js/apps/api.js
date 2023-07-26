@@ -2367,6 +2367,66 @@ function View( flags )
 			viewId: viewId,
 			data:    { flag: flag, value: value }
 		} );
+	
+	    // Handle flag actions	
+	    this._checkFlagActions( [ { flag: flag, value: value } ] );
+	}
+	// Checks flag actions
+	this._checkFlagActions = function( flags )
+	{
+	    let self = this;
+	    
+	    // Check all flags
+	    for( let a in flags )
+	    {
+	        let fl = flags[ a ];
+	        if( a == 'assets' && fl && fl.length )
+	        {
+	            let templateStr = '';
+        	    let templateSrc = false;
+        	    
+	            // Check for markup to add as template source
+	            for( let b = 0; b < fl.length; b++ )
+	            {
+	                let val = fl[ b ];
+	                let templateTest = (
+	                    val.substr( -5, 5 ).toLowerCase() == '.html' ||
+	                    val.substr( -4, 4 ).toLowerCase() == '.htm'
+	                );
+	                if( templateTest ) 
+	                {
+	                    templateSrc = val;
+	                    continue;
+	                }
+	                // Add scripts to template string
+	                if( val.substr( -3, 3 ).toLowerCase() == '.js' )
+	                {
+	                    templateStr += "\n" + '<script src="' + getWebUrl( val ) + '"></script>';
+	                }
+	                // Add css to template string
+	                if( val.substr( -4, 4 ).toLowerCase() == '.css' )
+	                {
+	                    templateStr += "\n" + '<link rel="stylesheet" href="' + getWebUrl( val ) + '"/>';
+	                }
+	            }
+	            // With a template source, load that before setting content
+	            if( templateSrc )
+                {
+                    let f = new File( templateSrc );
+                    f.i18n(); // Always perform translations
+                    f.onLoad = function( data )
+                    {
+                        self.setContent( data + templateStr );
+                    }
+                    f.load();
+                }
+                // Just set content
+                else
+                {
+                    this.setContent( templateStr );
+                }
+	        }
+	    }
 	}
 	this.getWindowElement = function( callback )
 	{
@@ -3632,10 +3692,18 @@ function getImageUrl( path, mode )
 		return path;
 	}
 
-	if( path.indexOf( ':' ) > 0 )
+	if( path.substr( 0, ( 'resources/webclient/' ).length ) == 'resources/webclient/' )
+	{
+		let r = '/webclient/' + path.substr( ( 'resources/webclient/' ).length, path.length - ( 'resources/webclient/' ).length );
+		return r;
+	}
+<<<<<<< HEAD
+=======
+	else if( path.indexOf( ':' ) > 0 )
 	{
 		path = encodeURIComponent( path );
-	}
+	}	
+>>>>>>> release/1.3.0
 
 	let prt = 'authid=' + ( Application.authId ? Application.authId : '' );
 	if( Application.sessionId ) prt = 'sessionid=' + Application.sessionId;
