@@ -854,6 +854,14 @@ class FUIChatlog extends FUIElement
     }
     replaceEmojis( string )
     {
+        let smilies = [ '8)', '8-)', ':-)', ':)', ':-D', ':D', 'X)', 'B)', 'B-)', 'X-)', ':|', ':-|', ':-o', ':o', ':O', ':O', ':(', ':-(',  ';)', ';-)' ];
+        let emotes  = [ '🤓', '🤓', '🙂',  '🙂', '😀', '😀', '😆', '😎', '😎', '😆', '😐', '😐', '😮', '😮', '😮', '😮', '😒', '😒', '😏', '😏' ];
+        
+        for( let a = 0; a < smilies.length; a++ )
+        {
+            string = string.split( smilies[a] ).join( '<span class="Emoji">' + emotes[a] + '</span>' );
+        }
+        
         while( 1 )
         {
             let res = string.match( /\:(.*?)\:/i );
@@ -862,14 +870,6 @@ class FUIChatlog extends FUIElement
                 string = string.split( res[0] ).join( this.emoji( res[1] ) );
             }
             else break;
-        }
-        
-        let smilies = [ '8)', '8-)', ':-)', ':)', ':-D', ':D', 'X)', 'B)', 'B-)', 'X-)', ':|', ':-|', ':-o', ':o', ':O', ':O', ':(', ':-(',  ';)', ';-)' ];
-        let emotes  = [ '🤓', '🤓', '🙂',  '🙂', '😀', '😀', '😆', '😎', '😎', '😆', '😐', '😐', '😮', '😮', '😮', '😮', '😒', '😒', '😏', '😏' ];
-        
-        for( let a = 0; a < smilies.length; a++ )
-        {
-            string = string.split( smilies[a] ).join( '<span class="Emoji">' + emotes[a] + '</span>' );
         }
         
         return string;
