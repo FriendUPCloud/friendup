@@ -31,8 +31,8 @@ function generateVAPIDKeys()
 	$publicKeyPEM = $publicKeyData[ 'key' ];
 
 	$obj = new stdClass();
-	$obj->privateKey = $privateKeyPEM;
-	$obj->publicKey  = $publicKeyPEM;
+	$obj->privateKey = addslashes( $privateKeyPEM );
+	$obj->publicKey  = addslashes( $publicKeyPEM );
 	return $obj;
 }
 
@@ -44,7 +44,7 @@ $s->Key = 'VAPID-Keys';
 if( !$s->Load() )
 {	
 	// Generate VAPID keys
-	$s->Data = addslashes( json_encode( generateVAPIDKeys() ) );
+	$s->Data = json_encode( generateVAPIDKeys() );
 	$s->Save();
 }
 
