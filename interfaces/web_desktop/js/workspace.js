@@ -135,7 +135,7 @@ Workspace = {
 										let noPadding = dd.split( '+' ).join( '-' ).split( '/' ).join( '_' ).split( '=' ).join( '' );
 										function urlBase64ToUint8Array( base64String )
 										{
-											let binary_string = window.atob( base64 );
+											let binary_string = window.atob( base64String );
 											let len = binary_string.length;
 											let bytes = new Uint8Array( len );
 											for( let i = 0; i < len; i++ )
