@@ -28,14 +28,16 @@ function generateVAPIDKeys()
 
 
 	// Convert the DER private key to raw binary format
-    $privateKeyRaw = substr( $privateKey, 26 );
+    $privateKeyRaw = openssl_pkey_get_private( $privateKey );
 
-    // Trim leading zero bytes
-    $vapidPrivateKey = ltrim( $privateKeyRaw, "\x00" );
+    // Extract the raw binary EC key
+    $ecKey = openssl_pkey_get_details( $privateKeyRaw )[ 'ec' ];
+
+    // Get the private key as a 32-byte binary string
+    $vapidPrivateKey = str_pad( $ecKey[ 'd' ], 32, "\x00", STR_PAD_LEFT );
 
     // Base64 encode the VAPID private key
     $vapidPrivateKey = base64_encode( $vapidPrivateKey );
-
 
     // Extract the public key from the key pair
     $keyDetails = openssl_pkey_get_details( $keyPair );
