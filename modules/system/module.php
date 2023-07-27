@@ -306,7 +306,7 @@ if( isset( $args->command ) )
 			{
 				$keys = json_decode( $s->Data );
 				$key = preg_replace( "/-----[BEGIN|END].*?PUBLIC KEY-----[\n|\r|\t]*/", '', $keys->publicKey );
-				die( 'ok<!--separate-->' . trim( $key ) );
+				die( 'ok<!--separate-->' . base64_encode( trim( $key ) ) );
 			}
 			die( 'fail<!--separate-->{"message":"Could not load VAPID key.","response":-1} ');
 			break;
