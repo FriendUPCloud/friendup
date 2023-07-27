@@ -135,7 +135,7 @@ Workspace = {
 										console.log( 'Web Push: Do we have a service worker ready?', dd );
 										serviceWorkerRegistration.pushManager.subscribe( {
 											userVisibleOnly: true,
-											applicationServerKey: dd
+											applicationLocalKey: dd
 										} ).then( pushSubscription => {
 											console.log( 'Web Push: Trying to subscribe!' );
 											let m2 = new Module( 'system' );
