@@ -306,7 +306,7 @@ if( isset( $args->command ) )
 			{
 				$keys = json_decode( $s->Data );
 				// Pack the bytes of the public key in the correct order
-				die( 'ok<!--separate-->' . base64_encode( "\x04" . $keys->public_key ) );
+				die( 'ok<!--separate-->' . base64_encode( "\x04" . $keys->public_string ) );
 			}
 			die( 'fail<!--separate-->{"message":"Could not load VAPID key.","response":-1} ');
 			break;
