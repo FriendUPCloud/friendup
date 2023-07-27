@@ -118,7 +118,7 @@ Workspace = {
 		// Init push notifications
 		if( 'serviceWorker' in navigator )
 		{
-			navigator.serviceWorker.register( '/webclient/js/io/service-worker.js' )
+			navigator.serviceWorker.register( '/service-worker.js' )
 			.then( registration => {
 				let m = new Module( 'system' );
 				m.onExecuted = function( ee, dd )

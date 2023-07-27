@@ -92,6 +92,7 @@ updatefiles:
 	rsync -ravl devices/* $(FRIEND_PATH)/devices/
 	rsync -ravl repository/* $(FRIEND_PATH)/resources/repository/
 	rsync -ravl services/* $(FRIEND_PATH)/services/
+	cp interfaces/web_desktop/js/io/service-worker.js $(FRIEND_PATH)/resources/
 
 libs: $(FRIEND_CORE_BIN)
 	@echo "Generate libraries."
@@ -189,6 +190,7 @@ install:
 	make -C authmods install CYGWIN_BUILD=$(CYGWIN_BUILD) FRIEND_PATH=$(FRIEND_PATH)
 	cp scripts/*.sh $(FRIEND_PATH)/
 	cp scripts/bash-ini-parser $(FRIEND_PATH)/
+	cp interfaces/web_desktop/js/io/service-worker.js $(FRIEND_PATH)/resources/
 
 goinstall: install
 	rm -f build/resources/webclient/index.html
