@@ -134,6 +134,7 @@ Workspace = {
 									.then( serviceWorkerRegistration => {
 										function urlBase64ToUint8Array( base64String )
 										{
+											console.log( 'Raw format: ' + base64String );
 											let binary_string = window.atob( base64String );
 											let len = binary_string.length;
 											console.log( 'This is what we got: ', binary_string );
