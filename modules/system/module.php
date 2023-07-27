@@ -307,7 +307,7 @@ if( isset( $args->command ) )
 				$keys = json_decode( $s->Data );
 				
 				// Get an encoded string
-				$rawContent = base64_decode( $pemContent );*/
+				$rawContent = base64_decode( $pemContent );
 				$rawContent = $keys->public_string;
 				
 				// Make it URL-safe

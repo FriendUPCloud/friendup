@@ -42,6 +42,17 @@ function generateVAPIDKeys()
     // Extract the private key from the key pair
     openssl_pkey_export( $keyPair, $privateKey );
 
+
+	// Convert the DER private key to raw binary format
+    $privateKeyRaw = substr( $privateKey, 26 );
+
+    // Trim leading zero bytes
+    $vapidPrivateKey = ltrim( $privateKeyRaw, "\x00" );
+
+    // Base64 encode the VAPID private key
+    $vapidPrivateKey = base64_encode( $vapidPrivateKey );
+
+
     // Extract the public key from the key pair
     $keyDetails = openssl_pkey_get_details( $keyPair );
     $publicKey = $keyDetails[ 'key' ];
@@ -53,7 +64,7 @@ function generateVAPIDKeys()
     return [
         'private_key' => base64_encode( $privateKey ),
         'public_key' => base64_encode( $publicKey ),
-        'private_string' => convertRawToVapidPrivateKey( $privateKey ),
+        'private_string' => $vapidPrivateKey,
         'public_string' => rtrim( strtr( base64_encode( $publicString ), '+/', '-_' ), '=' ),
     ];
 }
