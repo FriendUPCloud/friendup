@@ -132,12 +132,8 @@ Workspace = {
 								// User granted permission, now subscribe to push notifications
 								navigator.serviceWorker.ready
 									.then( serviceWorkerRegistration => {
-										function urlBase64ToUint8Array( base64 )
+										function urlBase64ToUint8Array( rawData )
 										{
-											console.log( 'Where are we now?', base64 );
-											const rawData = window.atob( base64 );
-											console.log( 'Raw: ', rawData );
-											console.log( 'Length: ', rawData.length );
 											const outputArray = new Uint8Array( rawData.length );
 
 											for( let i = 0; i < rawData.length; ++i )
