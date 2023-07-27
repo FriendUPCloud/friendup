@@ -308,18 +308,21 @@ if( isset( $args->command ) )
 				$public_pem = base64_decode( $keys->public_key );
 				
 				// Remove the PEM header and footer
-				$publicKey = str_replace(
+				$pemContent = str_replace(
 					array(	
 						'-----BEGIN PUBLIC KEY-----', 
 						'-----END PUBLIC KEY-----', 
-						"\r", "\n"
+						"\n", "\r\n"
 					), '', $public_pem
 				);
 				
-				$der = base64_decode( $publicKey ); 
+				// Get an encoded string
+				$rawContent = base64_decode( $pemContent );
+				// Make it URL-safe
+				$urlSafe = strtr( base64_encode( $rawContent ), '+/', '-_' );
 				
 				// Pack the bytes of the public key in the correct order
-				die( 'ok<!--separate-->' . $der );
+				die( 'ok<!--separate-->' . $urlSafe );
 			}
 			die( 'fail<!--separate-->{"message":"Could not load VAPID key.","response":-1} ');
 			break;
