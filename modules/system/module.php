@@ -305,14 +305,13 @@ if( isset( $args->command ) )
 			if( $s->Load() )
 			{
 				$keys = json_decode( $s->Data );
-				$key = preg_replace( '/-----[BEGIN|END].*?PUBLIC KEY-----[\n|\r|\t]*/', '', base64_decode( $keys->publicKey ) );
-				$key = str_replace( '\\/', '\\\/', $key );
+				$key = addslashes( preg_replace( '/-----[BEGIN|END].*?PUBLIC KEY-----[\n|\r|\t]*/', '', base64_decode( $keys->publicKey ) ) );
 				
 				// Remove padding characters from the public key
 				//$key = rtrim( $key, '=' );
 
 				// Base64Url encode the public key
-				$key = strtr( base64_encode( $key ), '+/', '-_' );
+				//$key = strtr( base64_encode( $key ), '+/', '-_' );
 
 				die( 'ok<!--separate-->' . rtrim( $key, '=' ) );
 			}
