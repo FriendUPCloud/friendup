@@ -129,7 +129,6 @@ Workspace = {
 						Notification.requestPermission().then( permission => {
 							if( permission === 'granted' ) 
 							{
-								console.log( 'Web Push: Got push permissions :)' );
 								// User granted permission, now subscribe to push notifications
 								navigator.serviceWorker.ready
 									.then( serviceWorkerRegistration => {
@@ -153,9 +152,6 @@ Workspace = {
 										} ).catch( error => {
 											console.error( 'Error subscribing to push notifications:', error );
 										} );
-									} )
-									.catch( error => {
-										console.log( 'Web Push: Error while registering the service worker:', error );
 									} );
 							}
 							else
