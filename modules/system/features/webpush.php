@@ -38,14 +38,16 @@
 
 function generateVAPIDKeys()
 {
-    // Define the key configuration parameters
-    $config = array(
-        'private_key_type' => OPENSSL_KEYTYPE_EC,
-        'curve_name' => "prime256v1",
-    );
+    $keyPair = openssl_pkey_new( [
+		//'private_key_bits' => 2048,
+		'private_key_type' => OPENSSL_KEYTYPE_EC,
+		'curve_name' => 'prime256v1', // Specifying "elliptic curve"
+	] );
 
-    // Generate the key pair
-    $keyPair = openssl_pkey_new( $config );
+	if( !$keyPair )
+	{
+		throw new Exception( 'Failed to generate private key.' );
+	}
 
     // Extract the private key from the key pair
     openssl_pkey_export( $keyPair, $privateKey );
