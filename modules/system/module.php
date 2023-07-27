@@ -321,7 +321,7 @@ if( isset( $args->command ) )
 				$rawContent = $keys->public_string;
 				
 				// Make it URL-safe
-				$urlSafe = rtrim( strtr( base64_encode( "\x04" . $rawContent ), '+/', '-_' ), '=' );
+				$urlSafe = rtrim( strtr( base64_encode( $rawContent ), '+/', '-_' ), '=' );
 				
 				// Pack the bytes of the public key in the correct order
 				die( 'ok<!--separate-->' . $urlSafe );
