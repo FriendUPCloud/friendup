@@ -53,6 +53,7 @@ function generateVAPIDKeys()
     // Extract the public key from the key pair
     $keyDetails = openssl_pkey_get_details( $keyPair );
     $publicKey = $keyDetails[ 'key' ];
+    $publicString = $keyDetails[ 'ec' ][ 'x' ] . $keyDetails[ 'ec' ][ 'y' ];
 
     // Free the key pair from memory
     openssl_pkey_free( $keyPair );
@@ -60,6 +61,7 @@ function generateVAPIDKeys()
     return array(
         'private_key' => base64_encode( $privateKey ),
         'public_key' => base64_encode( $publicKey ),
+        'public_string' => base64_encode( $publicString )
     );
 }
 
