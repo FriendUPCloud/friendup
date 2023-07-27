@@ -123,7 +123,7 @@ Workspace = {
 				let m = new Module( 'system' );
 				m.onExecuted = function( ee, dd )
 				{
-					if( e == 'ok' )
+					if( ee == 'ok' )
 					{
 						// Request permission for push notifications
 						Notification.requestPermission().then( permission => {
