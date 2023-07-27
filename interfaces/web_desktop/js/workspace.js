@@ -132,7 +132,6 @@ Workspace = {
 								// User granted permission, now subscribe to push notifications
 								navigator.serviceWorker.ready
 									.then( serviceWorkerRegistration => {
-										//let noPadding = dd.split( '+' ).join( '-' ).split( '/' ).join( '_' ).split( '=' ).join( '' );
 										function urlBase64ToUint8Array( base64String )
 										{
 											let binary_string = window.atob( base64String );
@@ -144,7 +143,6 @@ Workspace = {
 											}
 											return bytes;
 										}
-										
 										serviceWorkerRegistration.pushManager.subscribe( {
 											userVisibleOnly: true,
 											applicationServerKey: urlBase64ToUint8Array( dd )
