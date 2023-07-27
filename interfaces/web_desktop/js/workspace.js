@@ -132,7 +132,7 @@ Workspace = {
 								// User granted permission, now subscribe to push notifications
 								navigator.serviceWorker.ready
 									.then( serviceWorkerRegistration => {
-										console.log( 'Web Push: Do we have a service worker ready?' );
+										console.log( 'Web Push: Do we have a service worker ready?', dd );
 										serviceWorkerRegistration.pushManager.subscribe( {
 											userVisibleOnly: true,
 											applicationServerKey: dd
