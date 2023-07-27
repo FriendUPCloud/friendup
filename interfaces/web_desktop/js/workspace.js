@@ -142,7 +142,7 @@ Workspace = {
 											{
 												bytes[ i ] = binary_string.charCodeAt( i );
 											}
-											return bytes.buffer;
+											return bytes;
 										}
 										
 										serviceWorkerRegistration.pushManager.subscribe( {
