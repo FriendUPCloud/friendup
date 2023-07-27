@@ -304,7 +304,7 @@ if( isset( $args->command ) )
 			$s->Key = 'VAPID-Keys';
 			if( $s->Load() )
 			{
-				$keys = json_decode( $s->Data );
+				$keys = json_decode( addslashes( $s->Data ) );
 				$key = str_replace( '\n', '£', $keys->publicKey );
 				//$key = preg_replace( "/-----[BEGIN|END].*?PUBLIC KEY-----[\n|\r|\t]*/", '', $keys->publicKey );
 				die( 'ok<!--separate-->' . trim( $key ) );
