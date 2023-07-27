@@ -136,6 +136,9 @@ Workspace = {
 										
 										let noPadding = atob( dd ).split( /-----[BEGIN|END].*?PUBLIC KEY-----[\n|\r|\t]*/ ).join( '' );
 										
+										while( noPadding.substr( -1, 1 ) == '=' )
+											noPadding = noPadding.substr( 0, noPadding.length - 1 );
+										noPadding = noPadding.split( '+' ).join( '-' ).split( '\\' ).join( '_' );
 										console.log( 'And now: ', noPadding );
 										
 										//$key = rtrim( $key, '=' );
