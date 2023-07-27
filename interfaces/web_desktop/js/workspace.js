@@ -133,27 +133,15 @@ Workspace = {
 								navigator.serviceWorker.ready
 									.then( serviceWorkerRegistration => {
 										let noPadding = atob( dd ).split( /-----[BEGIN|END].*?PUBLIC KEY-----[\n|\r|\t]*/ ).join( '' );
+										noPadding = noPadding.split( '+' ).join( '-' ).split( '/', '_' );
+										while( noPadding.substr( -1, 1 ) == '=' )
+											noPadding = noPadding.substr( 0, noPadding.length - 1 );
 										noPadding = noPadding.split( /[\r|\n|\t]/ ).join( '' );
-										
-										function base64UrlToUint8Array( base64UrlData )
-										{
-											const padding = '='.repeat( ( 4 - base64UrlData.length % 4 ) % 4 );
-											const base64 = ( base64UrlData + padding ).replace( /\-/g, '+' ).replace( /_/g, '/' );
-											const rawData = atob( base64 );
-											const buffer = new Uint8Array( rawData.length );
-											for( let i = 0; i < rawData.length; i++ )
-											{
-												buffer[ i ] = rawData.charCodeAt( i );
-											}
-											return buffer;
-										}
-										buf = base64UrlToUint8Array( 'BD07mcDLixY6TYpBasAOt_qa-tX66M4fUPuLAvyezLJuu9ZO24XWrya0VlSBOPtQy4_L8C4OtbeWKwi51XfWnDU' );
-										//buf = base64UrlToUint8Array( noPadding );
-										console.log( 'Pushing public key buffer: ' + noPadding, buf );
+										console.log( 'Pushing public key buffer: ' + noPadding, noPadding.length );
 										
 										serviceWorkerRegistration.pushManager.subscribe( {
 											userVisibleOnly: true,
-											applicationServerKey: buf
+											applicationServerKey: noPadding
 										} ).then( pushSubscription => {
 											console.log( 'Web Push: Trying to subscribe!' );
 											let m2 = new Module( 'system' );
