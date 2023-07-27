@@ -305,7 +305,7 @@ if( isset( $args->command ) )
 			if( $s->Load() )
 			{
 				$keys = json_decode( $s->Data );
-				$public_pem = base64_decode( $keys[ 'public_key' ] );
+				$public_pem = base64_decode( $keys->public_key );
 				
 				// Remove the PEM header and footer
 				$pemContent = str_replace(
