@@ -306,6 +306,12 @@ if( isset( $args->command ) )
 			{
 				$keys = json_decode( $s->Data );
 				//$key = preg_replace( '/-----[BEGIN|END].*?PUBLIC KEY-----[\n|\r|\t]*/', '', str_replace( '\\/', 'GARGAMEL', base64_decode( $keys->publicKey ) ) );
+				$str = '';
+				for( $a = 0; $a < strlen( $keys->publicKey ); $a++ )
+				{
+					$str .= $keys->publicKey[$a] . '|';
+				}
+				die( 'ok<!--separate-->' . $str );
 				
 				$key = base64_decode( $keys->publicKey );
 				// Remove padding characters from the public key
