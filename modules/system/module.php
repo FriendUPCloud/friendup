@@ -306,9 +306,14 @@ if( isset( $args->command ) )
 			{
 				$keys = json_decode( $s->Data );
 				$key = preg_replace( '/-----[BEGIN|END].*?PUBLIC KEY-----[\n|\r|\t]*/', '', base64_decode( $keys->publicKey ) );
-				$key = base64_encode( trim( $key ) );
-				$url = strtr( $key, '+/', '-_' );
-				die( 'ok<!--separate-->' . rtrim( $url, '=' ) );
+				
+				// Remove padding characters from the public key
+				$key = rtrim( $key, '=' );
+
+				// Base64Url encode the public key
+				$key = strtr( base64_encode( $key ), '+/', '-_' );
+
+				die( 'ok<!--separate-->' . rtrim( $key, '=' ) );
 			}
 			die( 'fail<!--separate-->{"message":"Could not load VAPID key.","response":-1} ');
 			break;
