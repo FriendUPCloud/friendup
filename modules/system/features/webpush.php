@@ -10,6 +10,22 @@
 *                                                                              *
 *****************************************************************************©*/
 
+function convertRawToVapidPrivateKey( $rawPrivateKey )
+{
+	$rawPrivateKey = str_replace( [ '-----BEGIN PRIVATE KEY-----', '-----END PRIVATE KEY-----', "\r\n", "\n" ], '', $rawPrivateKey );
+	
+    // Trim leading zero bytes
+    $trimmedPrivateKey = ltrim( $rawPrivateKey, "\x00" );
+
+    // Pad the trimmed private key to ensure it's 32 bytes long
+    $paddedPrivateKey = str_pad( $trimmedPrivateKey, 32, "\x00", STR_PAD_LEFT );
+
+    // Base64 encode the padded private key
+    $vapidPrivateKey = base64_encode( $paddedPrivateKey );
+
+    return $vapidPrivateKey;
+}
+
 function generateVAPIDKeys()
 {
     $keyPair = openssl_pkey_new( [
@@ -37,7 +53,7 @@ function generateVAPIDKeys()
     return [
         'private_key' => base64_encode( $privateKey ),
         'public_key' => base64_encode( $publicKey ),
-        'private_string' => sodium_crypto_box_publickey_from_secretkey( $privateKey ),
+        'private_string' => convertRawToVapidPrivateKey( $privateKey ),
         'public_string' => rtrim( strtr( base64_encode( $publicString ), '+/', '-_' ), '=' ),
     ];
 }
