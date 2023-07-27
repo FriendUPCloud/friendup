@@ -449,7 +449,7 @@ if( file_exists( 'cfg/cfg.ini' ) )
 	$UserApplication = false;
 	
 	// Get user information, trying first on FUserSession SessionID ------------
-	$User = new dbIO( 'FUser' );
+	$User = new dbUser();
 	$UserSession = new dbIO( 'FUserSession' );
 
 	// Match sessionid by authid
@@ -474,7 +474,7 @@ if( file_exists( 'cfg/cfg.ini' ) )
 				u.Password = \'' . '{S6}' . hash( 'sha256', 'HASHED' . hash( 'sha256', $UserAccount->Password ) ) . '\'
 		' ) )
 		{
-			$User = $mu;
+			$User->setFromObject( $mu );
 			if( $mus = $SqlDatabase->fetchObject( '
 				SELECT * FROM FUserSession WHERE UserID = \'' . $mu->ID . '\' LIMIT 1
 			' ) )
@@ -501,7 +501,7 @@ if( file_exists( 'cfg/cfg.ini' ) )
 	// Load by session id
 	if( !isset( $UserSession->ID ) && isset( $GLOBALS[ 'args' ]->sessionid ) )
 	{
-		$User = new dbIO( 'FUser' );
+		$User = new dbUser();
 	    $UserSession->SessionID = $GLOBALS[ 'args' ]->sessionid;
 	    if( $UserSession->Load() )
 	    {
@@ -540,7 +540,7 @@ if( file_exists( 'cfg/cfg.ini' ) )
 			{
 				$User->Load( $row->ID );
 
-				if( $User->ID > 0 )
+				if( isset( $User->ID ) && $User->ID > 0 )
 				{
 					$GLOBALS[ 'User' ] =& $User;
 

@@ -81,6 +81,20 @@ if( isset( $args->args ) )
                 if( $o->RoomType == 'dm-user' )
                 {
                     $SqlDatabase->query( 'UPDATE MessageSession SET ActivityDate=\'' . date( 'Y-m-d H:i:s' ) . '\', PrevDate=\'1970-01-01 12:00:00\' WHERE UniqueUserID=\'' . $SqlDatabase->_link->real_escape_string( $o->TargetID ) . '\'' );
+                    
+                    // Check if user haven't been online for a while
+                    error_log( '[convos] Starting DBUser!' );
+                    $targetUser = new dbUser();
+                    if( $targetUser->Load( $o->TargetID ) )
+                    {
+		                $options = new stdClass();
+		                $options->Condition = 'activity';
+		                $options->Seconds = 300; // Five minutes since last activity
+		                $message = new stdClass();
+		                $message->Title = 'You got a message from ' . $User->FullName;
+		                $message->Message = $out->message;
+		                $User->WebPush( $targetUser, $options, $message );
+	                }
                 }
             }
             $o->DateUpdated = date( 'Y-m-d H:i:s' );

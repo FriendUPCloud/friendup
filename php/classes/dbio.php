@@ -427,12 +427,22 @@ class DbIO extends DbTable
 	}
 
 	// Loads with vararg(primary keys)
-	function Load()
+	function Load( $id = false )
 	{
 		global $Logger;
 		
 		if( !$this->_primarykeys )
 			return false;
+		
+		// Assume first primary key
+		if( $id )
+		{
+			foreach( $this->_primarykeys as $k )
+			{
+				$this->{$k} = $id;
+				break;
+			}
+		}
 		
 		if( method_exists( $this, 'OnLoad' ) ) $this->OnLoad();
 			
@@ -792,6 +802,42 @@ class DbIO extends DbTable
 				if( isset( $o->$k ) ) $this->$k = $o->$k;
 			}
 			return true;
+		}
+		return false;
+	}
+}
+
+class dbUser extends dbIO
+{
+	function __construct( $id = false, $database = false )
+	{
+		if( $database )
+			$this->_database = $database;
+		else $this->_database = false;
+		parent::__construct( 'FUser', $this->_database );
+		if( $id )
+		{
+			$this->Load( $id );
+		}
+		$this->_debug = false;
+	}
+	// Push notifications on condition
+	function WebPush( $targetUser, $options, $message )
+	{
+		global $SqlDatabase;
+		
+		if( $options->Condition == 'activity' && isset( $options->Seconds ) )
+		{
+			list( $time, ) = $SqlDatabase->FetchRow( '
+				SELECT (UNIX_TIMESTAMP(NOW()) - LastActionTime) `DIFF` FROM FUser WHERE ID=\'' . $targetUser->ID . '\'
+			' );
+			// Inactivity detected
+			if( intval( $time, 10 ) > $options->Seconds )
+			{
+				error_log( '[dbUser] Inactivity detected.' );
+				return;
+			}
+			error_log( '[dbUser] User isn\'t inactive.' );
 		}
 		return false;
 	}
