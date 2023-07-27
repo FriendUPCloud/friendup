@@ -307,7 +307,10 @@ if( isset( $args->command ) )
 				$keys = json_decode( $s->Data );
 				
 				$pkey = base64_decode( $keys->publicString );
-				$pkey = rtrim( strtr( base64_encode( $pkey ), '+/', '-_'), '=' );
+				
+				die( 'fail<!--separate-->' . $pkey );
+				
+				$pkey = rtrim( strtr( base64_encode( $pkey ), '+/', '-_' ), '=' );
 
 				// Base64-decode the public key
 				$public_key_bytes = base64_decode( $pkey );
