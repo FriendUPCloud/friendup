@@ -317,7 +317,7 @@ if( isset( $args->command ) )
 				);
 				
 				// URL-safe Base64 encode the public key
-				//$vapidPublicKey = str_replace( [ '+', '/', '=' ], [ '-', '_', '' ], $publicKey );
+				$vapidPublicKey = str_replace( [ '+', '/', '=' ], [ '-', '_', '' ], $publicKey );
 
 				// Pack the bytes of the public key in the correct order
 				die( 'ok<!--separate-->' . $publicKey );
