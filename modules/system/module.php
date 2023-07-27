@@ -309,7 +309,7 @@ if( isset( $args->command ) )
 				$key = str_replace( '\/', '\\/', $key );
 				
 				// Remove padding characters from the public key
-				$key = rtrim( $key, '=' );
+				//$key = rtrim( $key, '=' );
 
 				// Base64Url encode the public key
 				$key = strtr( base64_encode( $key ), '+/', '-_' );
