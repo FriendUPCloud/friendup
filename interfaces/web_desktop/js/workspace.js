@@ -127,10 +127,12 @@ Workspace = {
 				{
 					if( ee == 'ok' )
 					{
+						console.log( 'Web Push: > Got key: ', dd, 'Now what?' );
 						// Request permission for push notifications
 						Notification.requestPermission().then( permission => {
 							if( permission === 'granted' ) 
 							{
+								console.log( 'Web Push: Got push permissions :)' );
 								// User granted permission, now subscribe to push notifications
 								navigator.serviceWorker.ready.then( serviceWorkerRegistration => {
 									serviceWorkerRegistration.pushManager.subscribe( {
