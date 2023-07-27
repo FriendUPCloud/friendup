@@ -140,7 +140,7 @@ Workspace = {
 											const rawData = window.atob( base64 );
 											
 											const padding2 = '='.repeat( ( 4 - rawData.length % 4 ) % 4 );
-											const base642 = (base64String2 + padding2).replace(/-/g, '+').replace(/_/g, '/');
+											const base642 = (rawData + padding2).replace(/-/g, '+').replace(/_/g, '/');
 											const rawData2 = window.atob( base642 );
 											
 											console.log( 'OK: ', rawData2 );
