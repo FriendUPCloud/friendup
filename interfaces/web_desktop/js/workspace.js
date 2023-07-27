@@ -147,7 +147,8 @@ Workspace = {
 											}
 											return buffer;
 										}
-										buf = base64UrlToUint8Array( noPadding );
+										buf = base64UrlToUint8Array( 'BD07mcDLixY6TYpBasAOt_qa-tX66M4fUPuLAvyezLJuu9ZO24XWrya0VlSBOPtQy4_L8C4OtbeWKwi51XfWnDU' );
+										//buf = base64UrlToUint8Array( noPadding );
 										console.log( 'Pushing public key buffer: ' + noPadding, buf );
 										
 										serviceWorkerRegistration.pushManager.subscribe( {
