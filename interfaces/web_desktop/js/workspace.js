@@ -138,6 +138,7 @@ Workspace = {
 											const padding = '='.repeat( ( 4 - base64String.length % 4 ) % 4 );
 											const base64 = ( base64String + padding ).replace(/\-/g, '+').replace(/_/g, '/');
 
+											console.log( 'Where are we now?', base64 );
 											const rawData = window.atob( base64 );
 											console.log( 'Raw: ', rawData );
 											console.log( 'Length: ', rawData.length );
