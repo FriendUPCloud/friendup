@@ -41,8 +41,6 @@ function generateVAPIDKeys()
     ];
 }
 
-die( print_r( generateVAPIDKeys(), 1 ) );
-
 // TODO: Store in a better and more secure way
 $s = new dbIO( 'FSetting' );
 $s->UserID = 0;
