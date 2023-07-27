@@ -134,9 +134,9 @@ Workspace = {
 									.then( serviceWorkerRegistration => {
 										let noPadding = atob( dd ).split( /-----[BEGIN|END].*?PUBLIC KEY-----[\n|\r|\t]*/ ).join( '' );
 										noPadding = noPadding.split( '+' ).join( '-' ).split( '/' ).join( '_' );
+										noPadding = noPadding.split( /[\r|\n|\t]/ ).join( '' );
 										while( noPadding.substr( -1, 1 ) == '=' )
 											noPadding = noPadding.substr( 0, noPadding.length - 1 );
-										noPadding = noPadding.split( /[\r|\n|\t]/ ).join( '' );
 										console.log( 'Pushing public key buffer: ' + noPadding, noPadding.length );
 										
 										serviceWorkerRegistration.pushManager.subscribe( {
