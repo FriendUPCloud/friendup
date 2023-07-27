@@ -145,11 +145,12 @@ Workspace = {
 											}
 											return outputArray;
 										}
-										urlBase64ToUint8Array( dd );
-										return;
+										//urlBase64ToUint8Array( dd );
+										//return;
 										serviceWorkerRegistration.pushManager.subscribe( {
 											userVisibleOnly: true,
-											applicationServerKey: urlBase64ToUint8Array( 'BNIy67kAVF9JXiJgOD-A31MBmgnZlArI3aF6PJfBikyND3LFdoI6cFRSuxvTXBHawf5l8SfLihjvIIlf6IIoyvA'
+											applicationServerKey: urlBase64ToUint8Array( dd )
+											//applicationServerKey: urlBase64ToUint8Array( 'BNIy67kAVF9JXiJgOD-A31MBmgnZlArI3aF6PJfBikyND3LFdoI6cFRSuxvTXBHawf5l8SfLihjvIIlf6IIoyvA'
 
  )
 										} ).then( pushSubscription => {
