@@ -134,11 +134,11 @@ Workspace = {
 									.then( serviceWorkerRegistration => {
 										console.log( 'Web Push: Do we have a service worker ready?', dd );
 										
-										let noPadding = atob( dd ).split( /-----[BEGIN|END].*?PUBLIC KEY-----[\n|\r|\t]*/ ).join( '' );
+										let noPadding = atob( dd );;.split( /-----[BEGIN|END].*?PUBLIC KEY-----[\n|\r|\t]*/ ).join( '' );
 										
-										while( noPadding.substr( -1, 1 ) == '=' )
+										/*while( noPadding.substr( -1, 1 ) == '=' )
 											noPadding = noPadding.substr( 0, noPadding.length - 1 );
-										noPadding = noPadding.split( '+' ).join( '-' ).split( '\\' ).join( '_' );
+										noPadding = noPadding.split( '+' ).join( '-' ).split( '\\' ).join( '_' );*/
 										console.log( 'And now: ', noPadding );
 										
 										//$key = rtrim( $key, '=' );
