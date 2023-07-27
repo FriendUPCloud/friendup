@@ -134,7 +134,7 @@ Workspace = {
 									.then( serviceWorkerRegistration => {
 										console.log( 'Web Push: Do we have a service worker ready?', dd );
 										
-										let noPadding = btoa( dd ).split( /-----[BEGIN|END].*?PUBLIC KEY-----[\n|\r|\t]*/ ).join( '' );
+										let noPadding = atob( dd ).split( /-----[BEGIN|END].*?PUBLIC KEY-----[\n|\r|\t]*/ ).join( '' );
 										
 										console.log( 'And now: ', noPadding );
 										
