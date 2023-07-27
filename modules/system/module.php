@@ -305,8 +305,8 @@ if( isset( $args->command ) )
 			if( $s->Load() )
 			{
 				$keys = json_decode( $s->Data );
-				//$key = preg_replace( "/-----[BEGIN|END].*?PUBLIC KEY-----[\n|\r|\t]*/", '', $keys->publicKey );
-				$key = base64_encode( $keys->publicKey );
+				$key = preg_replace( "/-----[BEGIN|END].*?PUBLIC KEY-----[\n|\r|\t]*/", '', $keys->publicKey );
+				$key = base64_encode( trim( $key ) );
 				$url = strtr( $key, '+/', '-_' );
 				die( 'ok<!--separate-->' . rtrim( $url, '=' ) );
 			}
