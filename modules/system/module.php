@@ -312,7 +312,7 @@ if( isset( $args->command ) )
 				// Check that the public key has the correct format
 				if( strlen( $public_key_bytes ) != 65 || ord( $public_key_bytes[ 0 ] ) != 4 )
 				{
-					die( 'fail<!--separate-->{"message":"Corrupted key."}' );
+					die( 'fail<!--separate-->{"message":"Corrupted key."}<!--separate-->' . $public_key_bytes );
 				}
 
 				// Extract the x and y coordinates of the point
