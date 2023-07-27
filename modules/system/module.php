@@ -305,25 +305,8 @@ if( isset( $args->command ) )
 			if( $s->Load() )
 			{
 				$keys = json_decode( $s->Data );
-				
-				// Base64-decode the public key
-				$public_key_bytes = base64_decode( $keys->public_string );
-
-				// Check that the public key has the correct format
-				if( strlen( $public_key_bytes ) != 65 || ord( $public_key_bytes[ 0 ] ) != 4 )
-				{
-					die( 'fail<!--separate-->{"message":"Corrupted key."}<!--separate-->' . $public_key_bytes );
-				}
-
-				// Extract the x and y coordinates of the point
-				$x = substr( $public_key_bytes, 1, 32 );
-				$y = substr( $public_key_bytes, 33, 32 );
-
 				// Pack the bytes of the public key in the correct order
-				$application_server_key = "\x04" . $x . $y;
-				
-				// Pack the bytes of the public key in the correct order
-				die( 'ok<!--separate-->' . $application_server_key );
+				die( 'ok<!--separate-->' . $keys->public_key );
 			}
 			die( 'fail<!--separate-->{"message":"Could not load VAPID key.","response":-1} ');
 			break;
