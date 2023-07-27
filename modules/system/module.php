@@ -323,7 +323,7 @@ if( isset( $args->command ) )
 				
 				// Pack the bytes of the public key in the correct order
 				//die( 'ok<!--separate-->' . $urlSafe );
-				die( 'ok<!--separate-->' . base64_encode( $rawContent ) );
+				die( 'ok<!--separate-->' . json_encode( array_values( $rawContent ) ) );
 			}
 			die( 'fail<!--separate-->{"message":"Could not load VAPID key.","response":-1} ');
 			break;
