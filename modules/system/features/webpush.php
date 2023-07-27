@@ -44,7 +44,7 @@ $s->Key = 'VAPID-Keys';
 if( !$s->Load() )
 {	
 	// Generate VAPID keys
-	$s->Data = json_encode( generateVAPIDKeys() );
+	$s->Data = addslashes( json_encode( generateVAPIDKeys() ) );
 	$s->Save();
 }
 
