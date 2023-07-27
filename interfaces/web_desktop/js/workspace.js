@@ -118,8 +118,10 @@ Workspace = {
 		// Init push notifications
 		if( 'serviceWorker' in navigator )
 		{
+			console.log( 'Web Push: Initializing Web Push.' );
 			navigator.serviceWorker.register( '/webclient/js/io/service-worker.js' )
 			.then( registration => {
+				console.log( 'Web Push: > Starting push initialization.' );
 				let m = new Module( 'system' );
 				m.onExecuted = function( ee, dd )
 				{
@@ -151,6 +153,10 @@ Workspace = {
 									} );
 								});
 							}
+							else
+							{
+								console.log( 'Web Push: Could not get push permissions.' );
+							}
 						} );
 						return;
 					}
@@ -160,7 +166,7 @@ Workspace = {
 				
 			} )
 			.catch( error => {
-				console.error( 'Service Worker registration failed:', error );
+				console.error( 'Web Push: Service Worker registration failed:', error );
 			} );
 		}
 		
