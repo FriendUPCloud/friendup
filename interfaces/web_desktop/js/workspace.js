@@ -134,16 +134,15 @@ Workspace = {
 									.then( serviceWorkerRegistration => {
 										function urlBase64ToUint8Array( base64String )
 										{
+											// TODO: Remove double encoding issue
 											// Fix string
 											const padding = '='.repeat( ( 4 - base64String.length % 4 ) % 4 );
 											const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
 											const rawData = window.atob( base64 );
-											
+											// It is double encoded
 											const padding2 = '='.repeat( ( 4 - rawData.length % 4 ) % 4 );
 											const base642 = (rawData + padding2).replace(/-/g, '+').replace(/_/g, '/');
 											const rawData2 = window.atob( base642 );
-											
-											console.log( 'OK: ', rawData2 );
 											
 											const outputArray = new Uint8Array( rawData2.length );
 											for( let i = 0; i < rawData2.length; ++i )
@@ -152,14 +151,10 @@ Workspace = {
 											}
 											return outputArray;
 										}
-										//urlBase64ToUint8Array( dd );
-										//return;
 										serviceWorkerRegistration.pushManager.subscribe( {
 											userVisibleOnly: true,
 											applicationServerKey: urlBase64ToUint8Array( dd )
-											//applicationServerKey: urlBase64ToUint8Array( 'BNIy67kAVF9JXiJgOD-A31MBmgnZlArI3aF6PJfBikyND3LFdoI6cFRSuxvTXBHawf5l8SfLihjvIIlf6IIoyvA' )
 										} ).then( pushSubscription => {
-											console.log( 'Web Push: Trying to subscribe!' );
 											let m2 = new Module( 'system' );
 											m2.onExecuted = function( eee, ddd )
 											{
@@ -168,7 +163,6 @@ Workspace = {
 													console.log( 'Web Push: System for web push initialized.' );
 													return;
 												}
-												console.log( 'Web Push: Failed to register subscription.' );
 											}
 											m2.execute( 'webpush-subscribe', { endpoint: pushSubscription.endpoint } );
 										} ).catch( error => {
