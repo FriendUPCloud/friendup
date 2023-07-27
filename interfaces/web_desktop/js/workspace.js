@@ -131,28 +131,32 @@ Workspace = {
 							{
 								console.log( 'Web Push: Got push permissions :)' );
 								// User granted permission, now subscribe to push notifications
-								navigator.serviceWorker.ready.then( serviceWorkerRegistration => {
-									console.log( 'Web Push: Do we have a service worker ready?' );
-									serviceWorkerRegistration.pushManager.subscribe( {
-									userVisibleOnly: true,
-									applicationServerKey: dd
-									} ).then( pushSubscription => {
-										console.log( 'Web Push: Trying to subscribe!' );
-										let m2 = new Module( 'system' );
-										m2.onExecuted = function( eee, ddd )
-										{
-											if( eee == 'ok' )
+								navigator.serviceWorker.ready
+									.then( serviceWorkerRegistration => {
+										console.log( 'Web Push: Do we have a service worker ready?' );
+										serviceWorkerRegistration.pushManager.subscribe( {
+											userVisibleOnly: true,
+											applicationServerKey: dd
+										} ).then( pushSubscription => {
+											console.log( 'Web Push: Trying to subscribe!' );
+											let m2 = new Module( 'system' );
+											m2.onExecuted = function( eee, ddd )
 											{
-												console.log( 'Web Push: System for web push initialized.' );
-												return;
+												if( eee == 'ok' )
+												{
+													console.log( 'Web Push: System for web push initialized.' );
+													return;
+												}
+												console.log( 'Web Push: Failed to register subscription.' );
 											}
-											console.log( 'Web Push: Failed to register subscription.' );
-										}
-										m2.execute( 'webpush-subscribe', { endpoint: pushSubscription.endpoint } );
-									} ).catch( error => {
-										console.error( 'Error subscribing to push notifications:', error );
+											m2.execute( 'webpush-subscribe', { endpoint: pushSubscription.endpoint } );
+										} ).catch( error => {
+											console.error( 'Error subscribing to push notifications:', error );
+										} );
+									} )
+									.catch( error => {
+										console.log( 'Web Push: Error while registering the service worker:', error );
 									} );
-								});
 							}
 							else
 							{
