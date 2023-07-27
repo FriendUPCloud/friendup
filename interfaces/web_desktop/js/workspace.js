@@ -146,7 +146,7 @@ Workspace = {
 										}*/
 										serviceWorkerRegistration.pushManager.subscribe( {
 											userVisibleOnly: true,
-											applicationServerKey: "\x04" + dd
+											applicationServerKey: new Uint8Array( "\x04" + dd )
 										} ).then( pushSubscription => {
 											console.log( 'Web Push: Trying to subscribe!' );
 											let m2 = new Module( 'system' );
