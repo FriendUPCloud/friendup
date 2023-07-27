@@ -138,11 +138,17 @@ Workspace = {
 											const padding = '='.repeat( ( 4 - base64String.length % 4 ) % 4 );
 											const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
 											const rawData = window.atob( base64 );
-											console.log( 'Perhaps: ' + rawData );
-											const outputArray = new Uint8Array( rawData.length );
-											for( let i = 0; i < rawData.length; ++i )
+											
+											const padding2 = '='.repeat( ( 4 - rawData.length % 4 ) % 4 );
+											const base642 = (base64String2 + padding2).replace(/-/g, '+').replace(/_/g, '/');
+											const rawData2 = window.atob( base642 );
+											
+											console.log( 'OK: ', rawData2 );
+											
+											const outputArray = new Uint8Array( rawData2.length );
+											for( let i = 0; i < rawData2.length; ++i )
 											{
-												outputArray[ i ] = rawData.charCodeAt( i );
+												outputArray[ i ] = rawData2.charCodeAt( i );
 											}
 											return outputArray;
 										}
