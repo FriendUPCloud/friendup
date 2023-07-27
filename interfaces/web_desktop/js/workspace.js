@@ -118,16 +118,13 @@ Workspace = {
 		// Init push notifications
 		if( 'serviceWorker' in navigator )
 		{
-			console.log( 'Web Push: Initializing Web Push.' );
 			navigator.serviceWorker.register( '/webclient/js/io/service-worker.js' )
 			.then( registration => {
-				console.log( 'Web Push: > Starting push initialization.' );
 				let m = new Module( 'system' );
 				m.onExecuted = function( ee, dd )
 				{
 					if( ee == 'ok' )
 					{
-						console.log( 'Web Push: > Got key: ', dd, 'Now what?' );
 						// Request permission for push notifications
 						Notification.requestPermission().then( permission => {
 							if( permission === 'granted' ) 
@@ -135,10 +132,12 @@ Workspace = {
 								console.log( 'Web Push: Got push permissions :)' );
 								// User granted permission, now subscribe to push notifications
 								navigator.serviceWorker.ready.then( serviceWorkerRegistration => {
+									console.log( 'Web Push: Do we have a service worker ready?' );
 									serviceWorkerRegistration.pushManager.subscribe( {
 									userVisibleOnly: true,
 									applicationServerKey: dd
 									} ).then( pushSubscription => {
+										console.log( 'Web Push: Trying to subscribe!' );
 										let m2 = new Module( 'system' );
 										m2.onExecuted = function( eee, ddd )
 										{
