@@ -144,6 +144,8 @@ Workspace = {
 											}
 											return outputArray;
 										}
+										console.log( 'What: ' + dd );
+										return;
 										serviceWorkerRegistration.pushManager.subscribe( {
 											userVisibleOnly: true,
 											applicationServerKey: urlBase64ToUint8Array( 'BNIy67kAVF9JXiJgOD-A31MBmgnZlArI3aF6PJfBikyND3LFdoI6cFRSuxvTXBHawf5l8SfLihjvIIlf6IIoyvA'
