@@ -132,7 +132,7 @@ Workspace = {
 								// User granted permission, now subscribe to push notifications
 								navigator.serviceWorker.ready
 									.then( serviceWorkerRegistration => {
-										/*function urlBase64ToUint8Array( base64 )
+										function urlBase64ToUint8Array( base64 )
 										{
 											console.log( 'Where are we now?', base64 );
 											const rawData = window.atob( base64 );
@@ -143,10 +143,10 @@ Workspace = {
 											for( let i = 0; i < rawData.length; ++i )
 												outputArray[ i ] = rawData.charCodeAt( i );
 											return outputArray;
-										}*/
+										}
 										serviceWorkerRegistration.pushManager.subscribe( {
 											userVisibleOnly: true,
-											applicationServerKey: new Uint8Array( "\x04" + dd )
+											applicationServerKey: urlBase64ToUint8Array( dd )
 										} ).then( pushSubscription => {
 											console.log( 'Web Push: Trying to subscribe!' );
 											let m2 = new Module( 'system' );
