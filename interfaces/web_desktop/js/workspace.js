@@ -136,9 +136,7 @@ Workspace = {
 										
 										let noPadding = atob( dd ).split( /-----[BEGIN|END].*?PUBLIC KEY-----[\n|\r|\t]*/ ).join( '' );
 										noPadding = noPadding.split( /[\r|\n|\t]/ ).join( '' );
-										
-										while( noPadding.substr( -1, 1 ) == '=' )
-											noPadding = noPadding.substr( 0, noPadding.length - 1 );
+										while( noPadding.substr( -1, 1 ) == '=' ) noPadding = noPadding.substr( 0, noPadding.length - 1 );
 										noPadding = noPadding.split( '+' ).join( '-' ).split( '\\' ).join( '_' );
 										console.log( 'And now: ', noPadding );
 										
@@ -147,7 +145,7 @@ Workspace = {
 										
 										serviceWorkerRegistration.pushManager.subscribe( {
 											userVisibleOnly: true,
-											applicationServerKey: dd
+											applicationServerKey: noPadding
 										} ).then( pushSubscription => {
 											console.log( 'Web Push: Trying to subscribe!' );
 											let m2 = new Module( 'system' );
