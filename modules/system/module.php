@@ -296,6 +296,34 @@ if( isset( $args->command ) )
 			}
 			die( 'fail<!--separate-->{"response":"ping failed"}'  );
 			break;
+		// Web push
+		case 'getvapidkey':
+			$s = new dbIO( 'FSetting' );
+			$s->UserID = 0;
+			$s->Type = 'System';
+			$s->Key = 'VAPID-Keys';
+			if( $s->Load() )
+			{
+				$keys = json_decode( $s->Data );
+				die( 'ok<!--separate-->' . $keys->publicKey );
+			}
+			die( 'fail<!--separate-->{"message":"Could not load VAPID key.","response":-1} ');
+			break;
+		case 'webpush-subscribe':
+			$s = new dbIO( 'FSetting' );
+			$s->UserID = $User->ID;
+			$s->Type = 'WebPush';
+			$s->Key = $UserSession->SessionID;
+			$s->Load();
+			$s->Data = $args->args->endpoint;
+			$s->Save();
+			if( $s->ID > 1 )
+			{
+				die( 'ok<!--separate-->{"message":"Successfully registered endpoint.","response":1}' );
+			}
+			die( 'fail<!--separate-->{"message":"Registering endpoint failed.","response":-1}' );
+			break;
+		// End web push
 		// Create a thumbnail of any kind of file
 		case 'thumbnail':
 			require( 'modules/system/include/thumbnail.php' );
