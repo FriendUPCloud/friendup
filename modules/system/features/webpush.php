@@ -37,7 +37,8 @@ function generateVAPIDKeys()
     return [
         'private_key' => base64_encode( $privateKey ),
         'public_key' => base64_encode( $publicKey ),
-        'public_string' => rtrim( strtr( base64_encode( $publicString ), '+/', '-_' ), '=' )
+        'private_string' => sodium_crypto_box_publickey_from_secretkey( $privateKey ),
+        'public_string' => rtrim( strtr( base64_encode( $publicString ), '+/', '-_' ), '=' ),
     ];
 }
 
