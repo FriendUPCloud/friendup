@@ -305,7 +305,7 @@ if( isset( $args->command ) )
 			if( $s->Load() )
 			{
 				$keys = json_decode( $s->Data );
-				$key = str_replace( '\\/', '\\\/', ( preg_replace( '/-----[BEGIN|END].*?PUBLIC KEY-----[\n|\r|\t]*/', '', base64_decode( $keys->publicKey ) ) ) );
+				$key = preg_replace( '/-----[BEGIN|END].*?PUBLIC KEY-----[\n|\r|\t]*/', '', str_replace( '\\/', 'GARGAMEL', base64_decode( $keys->publicKey ) ) );
 				
 				// Remove padding characters from the public key
 				//$key = rtrim( $key, '=' );
