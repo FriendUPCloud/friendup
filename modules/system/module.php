@@ -319,7 +319,7 @@ if( isset( $args->command ) )
 				$der = base64_decode( $publicKey ); 
 				
 				// Pack the bytes of the public key in the correct order
-				die( 'ok<!--separate-->' . $publicKey );
+				die( 'ok<!--separate-->' . $der );
 			}
 			die( 'fail<!--separate-->{"message":"Could not load VAPID key.","response":-1} ');
 			break;
