@@ -134,16 +134,19 @@ Workspace = {
 									.then( serviceWorkerRegistration => {
 										function urlBase64ToUint8Array( base64String )
 										{
-											console.log( 'Raw format: ' + base64String );
-											let binary_string = window.atob( base64String );
-											let len = binary_string.length;
-											console.log( 'This is what we got: ', binary_string );
-											let bytes = new Uint8Array( len );
-											for( let i = 0; i < len; i++ )
+											const padding = '='.repeat( ( 4 - base64String.length % 4 ) % 4 );
+											const base64 = ( base64String + padding )
+												.replace(/\-/g, '+')
+												.replace(/_/g, '/');
+
+											const rawData = window.atob( base64 );
+											const outputArray = new Uint8Array( rawData.length );
+
+											for( let i = 0; i < rawData.length; ++i )
 											{
-												bytes[ i ] = binary_string.charCodeAt( i );
+												outputArray[ i ] = rawData.charCodeAt( i );
 											}
-											return bytes;
+											return outputArray;
 										}
 										serviceWorkerRegistration.pushManager.subscribe( {
 											userVisibleOnly: true,
