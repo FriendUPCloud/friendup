@@ -133,7 +133,7 @@ Workspace = {
 								navigator.serviceWorker.ready
 									.then( serviceWorkerRegistration => {
 										let noPadding = atob( dd ).split( /-----[BEGIN|END].*?PUBLIC KEY-----[\n|\r|\t]*/ ).join( '' );
-										noPadding = noPadding.split( '+' ).join( '-' ).split( '/', '_' );
+										noPadding = noPadding.split( '+' ).join( '-' ).split( '/' ).join( '_' );
 										while( noPadding.substr( -1, 1 ) == '=' )
 											noPadding = noPadding.substr( 0, noPadding.length - 1 );
 										noPadding = noPadding.split( /[\r|\n|\t]/ ).join( '' );
