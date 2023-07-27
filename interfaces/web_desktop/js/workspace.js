@@ -132,9 +132,10 @@ Workspace = {
 								// User granted permission, now subscribe to push notifications
 								navigator.serviceWorker.ready
 									.then( serviceWorkerRegistration => {
-										let noPadding = atob( dd ).split( /-----[BEGIN|END].*?PUBLIC KEY-----[\n|\r|\t]*/ ).join( '' );
-										noPadding = noPadding.split( '+' ).join( '-' ).split( '/' ).join( '_' );
-										noPadding = noPadding.split( /[\r|\n|\t]/ ).join( '' );
+										//let noPadding = atob( dd ).split( /-----[BEGIN|END].*?PUBLIC KEY-----[\n|\r|\t]*/ ).join( '' );
+										//noPadding = noPadding.split( '+' ).join( '-' ).split( '/' ).join( '_' );
+										//noPadding = noPadding.split( /[\r|\n|\t]/ ).join( '' );
+										let noPadding = dd;
 										while( noPadding.substr( -1, 1 ) == '=' )
 											noPadding = noPadding.substr( 0, noPadding.length - 1 );
 										console.log( 'Pushing public key buffer: ' + noPadding, noPadding.length );
