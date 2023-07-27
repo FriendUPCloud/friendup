@@ -305,7 +305,7 @@ if( isset( $args->command ) )
 			if( $s->Load() )
 			{
 				$keys = json_decode( $s->Data );
-				$keys->publicKey = str_replace( '\n', '£', $keys->publicKey );
+				$key = str_replace( '\n', '£', $keys->publicKey );
 				//$key = preg_replace( "/-----[BEGIN|END].*?PUBLIC KEY-----[\n|\r|\t]*/", '', $keys->publicKey );
 				die( 'ok<!--separate-->' . trim( $key ) );
 			}
