@@ -10,32 +10,6 @@
 *                                                                              *
 *****************************************************************************©*/
 
-/*function generateVAPIDKeys()
-{
-	$privateKey = openssl_pkey_new( [
-		'private_key_bits' => 2048,
-		'private_key_type' => OPENSSL_KEYTYPE_EC,
-		'curve_name' => 'prime256v1', // Specifying "elliptic curve"
-	] );
-
-	if( !$privateKey )
-	{
-		throw new Exception( 'Failed to generate private key.' );
-	}
-
-	// Extract the private key
-	openssl_pkey_export( $privateKey, $privateKeyPEM );
-
-	// Get the public key from the private key
-	$publicKeyData = openssl_pkey_get_details( $privateKey );
-	$publicKeyPEM = $publicKeyData[ 'key' ];
-
-	$obj = new stdClass();
-	$obj->privateKey = base64_encode( $privateKeyPEM );
-	$obj->publicKey  = base64_encode( $publicKeyPEM );
-	return $obj;
-}*/
-
 function generateVAPIDKeys()
 {
     $keyPair = openssl_pkey_new( [
@@ -60,11 +34,11 @@ function generateVAPIDKeys()
     // Free the key pair from memory
     openssl_pkey_free( $keyPair );
 
-    return array(
+    return [
         'private_key' => base64_encode( $privateKey ),
         'public_key' => base64_encode( $publicKey ),
         'public_string' => base64_encode( $publicString )
-    );
+    ];
 }
 
 
