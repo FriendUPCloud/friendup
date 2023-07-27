@@ -305,7 +305,7 @@ if( isset( $args->command ) )
 			if( $s->Load() )
 			{
 				$keys = json_decode( $s->Data );
-				$public_pem = base64_decode( $keys->public_key );
+				/*$public_pem = base64_decode( $keys->public_key );
 				
 				// Remove the PEM header and footer
 				$pemContent = str_replace(
@@ -317,7 +317,8 @@ if( isset( $args->command ) )
 				);
 				
 				// Get an encoded string
-				$rawContent = base64_decode( $pemContent );
+				$rawContent = base64_decode( $pemContent );*/
+				$rawContent = $keys->public_string;
 				
 				// Make it URL-safe
 				$urlSafe = rtrim( strtr( base64_encode( $rawContent ), '+/', '-_' ), '=' );

@@ -36,7 +36,8 @@ function generateVAPIDKeys()
 
     return [
         'private_key' => base64_encode( $privateKey ),
-        'public_key' => base64_encode( $publicKey )
+        'public_key' => base64_encode( $publicKey ),
+        'public_string' => rtrim( strtr( $publicString, '+/', '-_' ), '=' )
     ];
 }
 
