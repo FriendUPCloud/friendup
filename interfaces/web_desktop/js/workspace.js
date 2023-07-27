@@ -139,7 +139,7 @@ Workspace = {
 										while( noPadding.substr( -1, 1 ) == '=' ) noPadding = noPadding.substr( 0, noPadding.length - 1 );
 										noPadding = noPadding.split( '+' ).join( '-' ).split( '\\' ).join( '_' );
 										console.log( 'And now: ', noPadding );
-										ler buf = new Uint8Array(noPadding.length);
+										let buf = new Uint8Array( noPadding.length );
 										for( let a = 0; a < noPadding.length; a++ )
 											buf[ a ] = noPadding.charCodeAt( i );
 										
