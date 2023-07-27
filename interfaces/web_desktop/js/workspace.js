@@ -136,15 +136,21 @@ Workspace = {
 										
 										let noPadding = atob( dd ).split( /-----[BEGIN|END].*?PUBLIC KEY-----[\n|\r|\t]*/ ).join( '' );
 										noPadding = noPadding.split( /[\r|\n|\t]/ ).join( '' );
-										while( noPadding.substr( -1, 1 ) == '=' ) noPadding = noPadding.substr( 0, noPadding.length - 1 );
-										noPadding = noPadding.split( '+' ).join( '-' ).split( '\\' ).join( '_' );
-										console.log( 'And now: ', noPadding );
-										let buf = new Uint8Array( noPadding.length );
-										for( let a = 0; a < noPadding.length; a++ )
-											buf[ a ] = noPadding.charCodeAt( i );
 										
-										//$key = rtrim( $key, '=' );
-										//$key = strtr( base64_encode( $key ), '+/', '-_' );
+										function base64UrlToUint8Array( base64UrlData )
+										{
+											const padding = '='.repeat( ( 4 - base64UrlData.length % 4 ) % 4 );
+											const base64 = ( base64UrlData + padding ).replace( /\-/g, '+' ).replace( /_/g, '/' );
+											const rawData = atob( base64 );
+											const buffer = new Uint8Array( rawData.length );
+											for( let i = 0; i < rawData.length; i++ )
+											{
+												buffer[ i ] = rawData.charCodeAt( i );
+											}
+											return buffer;
+										}
+										
+										buf = base64UrlToUint8Array( noPadding );
 										
 										serviceWorkerRegistration.pushManager.subscribe( {
 											userVisibleOnly: true,
