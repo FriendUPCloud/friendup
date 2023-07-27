@@ -140,7 +140,7 @@ Workspace = {
 
 											const rawData = window.atob( base64 );
 											console.log( 'Raw: ', rawData );
-											console.log( 'Length: ' . rawData.length );
+											console.log( 'Length: ', rawData.length );
 											const outputArray = new Uint8Array( rawData.length );
 
 											for( let i = 0; i < rawData.length; ++i )
