@@ -305,6 +305,8 @@ if( isset( $args->command ) )
 			if( $s->Load() )
 			{
 				$keys = json_decode( $s->Data );
+				$public = base64_decode( $keys->public_string );
+				die( 'WHAT: ' . strlen( $public ) . '...' . $public );
 				// Pack the bytes of the public key in the correct order
 				die( 'ok<!--separate-->' . base64_encode( "\x04" . $keys->public_string ) );
 			}
