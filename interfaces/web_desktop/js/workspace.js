@@ -132,8 +132,6 @@ Workspace = {
 								// User granted permission, now subscribe to push notifications
 								navigator.serviceWorker.ready
 									.then( serviceWorkerRegistration => {
-										console.log( 'Web Push: Do we have a service worker ready?', dd );
-										
 										let noPadding = atob( dd ).split( /-----[BEGIN|END].*?PUBLIC KEY-----[\n|\r|\t]*/ ).join( '' );
 										noPadding = noPadding.split( /[\r|\n|\t]/ ).join( '' );
 										
@@ -149,8 +147,8 @@ Workspace = {
 											}
 											return buffer;
 										}
-										
 										buf = base64UrlToUint8Array( noPadding );
+										console.log( 'Pushing public key buffer: ' + noPadding, buf );
 										
 										serviceWorkerRegistration.pushManager.subscribe( {
 											userVisibleOnly: true,
