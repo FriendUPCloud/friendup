@@ -137,6 +137,7 @@ Workspace = {
 											const padding = '='.repeat( ( 4 - base64String.length % 4 ) % 4 );
 											const base64 = ( base64String + padding ).replace( /-/g, '+' ).replace( /_/g, '/' );
 											const rawData = window.atob( base64 );
+											console.log( 'Perhaps: ' + rawData );
 											const outputArray = new Uint8Array( rawData.length );
 											for( let i = 0; i < rawData.length; ++i )
 											{
@@ -144,7 +145,7 @@ Workspace = {
 											}
 											return outputArray;
 										}
-										console.log( 'What: ' + dd );
+										urlBase64ToUint8Array( dd );
 										return;
 										serviceWorkerRegistration.pushManager.subscribe( {
 											userVisibleOnly: true,
