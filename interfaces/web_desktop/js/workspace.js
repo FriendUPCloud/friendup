@@ -132,17 +132,27 @@ Workspace = {
 								// User granted permission, now subscribe to push notifications
 								navigator.serviceWorker.ready
 									.then( serviceWorkerRegistration => {
-										//let noPadding = atob( dd ).split( /-----[BEGIN|END].*?PUBLIC KEY-----[\n|\r|\t]*/ ).join( '' );
-										//noPadding = noPadding.split( '+' ).join( '-' ).split( '/' ).join( '_' );
-										//noPadding = noPadding.split( /[\r|\n|\t]/ ).join( '' );
-										let noPadding = dd;
-										while( noPadding.substr( -1, 1 ) == '=' )
-											noPadding = noPadding.substr( 0, noPadding.length - 1 );
-										console.log( 'Pushing public key buffer: ' + noPadding, noPadding.length );
+										//let noPadding = dd.split( '+' ).join( '-' ).split( '/' ).join( '_' ).split( '=' ).join( '' );
+										//console.log( 'Pushing public key buffer: ' + noPadding, noPadding.length );
+										
+										function urlBase64ToUint8Array( base64String )
+										{
+											const padding = '='.repeat( ( 4 - base64String.length % 4 ) % 4 );
+											const base64 = ( base64String + padding )
+												.replace( /\-/g, '+' )
+												.replace( /_/g, '/' );
+
+											const rawData = window.atob( base64 );
+											const outputArray = new Uint8Array( rawData.length );
+
+											for( let i = 0; i < rawData.length; ++i )
+												outputArray[ i ] = rawData.charCodeAt( i );
+											return outputArray;
+										}
 										
 										serviceWorkerRegistration.pushManager.subscribe( {
 											userVisibleOnly: true,
-											applicationServerKey: noPadding
+											applicationServerKey: urlBase64ToUint8Array( dd )
 										} ).then( pushSubscription => {
 											console.log( 'Web Push: Trying to subscribe!' );
 											let m2 = new Module( 'system' );
