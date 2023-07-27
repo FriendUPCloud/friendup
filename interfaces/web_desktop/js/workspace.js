@@ -136,6 +136,7 @@ Workspace = {
 										{
 											let binary_string = window.atob( base64String );
 											let len = binary_string.length;
+											console.log( 'This is what we got: ', binary_string );
 											let bytes = new Uint8Array( len );
 											for( let i = 0; i < len; i++ )
 											{
