@@ -305,7 +305,7 @@ if( isset( $args->command ) )
 			if( $s->Load() )
 			{
 				$keys = json_decode( $s->Data );
-				$keys->public_key = base64_decode( $keys->public_key );
+				$public_pem = base64_decode( $keys->public_key );
 				
 				// Remove the PEM header and footer
 				$publicKey = str_replace(
@@ -313,14 +313,14 @@ if( isset( $args->command ) )
 						'-----BEGIN PUBLIC KEY-----', 
 						'-----END PUBLIC KEY-----', 
 						"\r", "\n"
-					), '', $keys->public_key
+					), '', $public_pem
 				);
 				
 				// URL-safe Base64 encode the public key
-				$vapidPublicKey = str_replace( [ '+', '/', '=' ], [ '-', '_', '' ], base64_encode( $publicKey ) );
+				//$vapidPublicKey = str_replace( [ '+', '/', '=' ], [ '-', '_', '' ], $publicKey );
 
 				// Pack the bytes of the public key in the correct order
-				die( 'ok<!--separate-->' . $vapidPublicKey );
+				die( 'ok<!--separate-->' . $publicKey );
 			}
 			die( 'fail<!--separate-->{"message":"Could not load VAPID key.","response":-1} ');
 			break;

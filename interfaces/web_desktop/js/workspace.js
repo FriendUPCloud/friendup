@@ -132,12 +132,8 @@ Workspace = {
 								// User granted permission, now subscribe to push notifications
 								navigator.serviceWorker.ready
 									.then( serviceWorkerRegistration => {
-										function urlBase64ToUint8Array( base64String )
+										function urlBase64ToUint8Array( base64 )
 										{
-											// Put it back again..
-											const padding = '='.repeat( ( 4 - base64String.length % 4 ) % 4 );
-											const base64 = ( base64String + padding ).replace(/\-/g, '+').replace(/_/g, '/');
-
 											console.log( 'Where are we now?', base64 );
 											const rawData = window.atob( base64 );
 											console.log( 'Raw: ', rawData );
