@@ -151,7 +151,7 @@ if( $o->Load() )
 		$ct = curl_multi_getcontent( $ch );
 		$Logger->log( curl_error( $ch ) );
 		curl_close( $ch );
-		$Logger->log( echo $ct );
+		$Logger->log( $ct );
 		
 		
 		/*$Logger->log( '[dbIO] VAPID loaded!' );
