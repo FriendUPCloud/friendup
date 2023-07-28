@@ -273,29 +273,7 @@ class FUIChatlog extends FUIElement
 						
 						if( arr && arr.length > 0 )
 						{
-							let m = new Module( 'system' );
-							m.onExecuted = function( me, md )
-							{
-								if( me == 'ok' )
-								{
-									let res = JSON.parse( md );
-									self.queueMessage( '<attachment type="' + res.type + '" image="' + res.url + '"/>' );
-								}
-							}
-							let zmsg = { method: 'addupload', path: arr[ 0 ].Path };
-							if( self.options.type == 'dm-user' )
-							{
-								zmsg.userId = self.options.cid;
-							}
-							else if( self.options.type == 'jeanie' )
-							{
-								zmsg.context = 'jeanie';
-							}
-							else
-							{
-								zmsg.groupId = self.options.cid;
-							}
-							m.execute( 'convos', zmsg );
+							self.shareImageAndPost( arr[ 0 ].Path );
 						}
 					},
 					path: false,
@@ -405,6 +383,34 @@ class FUIChatlog extends FUIElement
         if( test == instr.substr( 0, test.length ) )
             return instr.substr( test.length, instr.length - test.length );
         return instr;
+    }
+    // Share an image and post it
+    shareImageAndPost( path )
+    {
+    	let self = this;
+    	let m = new Module( 'system' );
+		m.onExecuted = function( me, md )
+		{
+			if( me == 'ok' )
+			{
+				let res = JSON.parse( md );
+				self.queueMessage( '<attachment type="' + res.type + '" image="' + res.url + '"/>' );
+			}
+		}
+		let zmsg = { method: 'addupload', path: path };
+		if( self.options.type == 'dm-user' )
+		{
+			zmsg.userId = self.options.cid;
+		}
+		else if( self.options.type == 'jeanie' )
+		{
+			zmsg.context = 'jeanie';
+		}
+		else
+		{
+			zmsg.groupId = self.options.cid;
+		}
+		m.execute( 'convos', zmsg );
     }
     // Adds messages to a list locked by sorted timestamps
     addMessages( messageList )

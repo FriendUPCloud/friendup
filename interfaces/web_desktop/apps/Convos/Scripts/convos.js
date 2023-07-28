@@ -172,6 +172,9 @@ Application.receiveMessage = function( msg )
 								{
 									m.shareImageAndPost( msg.data[ a ].Path );
 								}
+								else
+								{
+								}
 							}
 						} );
 						return;
