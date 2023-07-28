@@ -56,7 +56,7 @@ if( $o->Load() )
 		function decodeBER( $data )
 		{
 			global $Logger;
-			$Logger->log( '[dbIO] Check. 2: ' . $data );
+			$Logger->log( '[dbIO] Check. 2' );
 			
 			$typeByte = ord( $data[ 0 ] );
 			$lengthByte = ord( $data[ 1 ] );
@@ -117,7 +117,7 @@ if( $o->Load() )
 
 		$xx = decodeBER( $signature );
 		
-		$Logger->log( '[dbIO] Check. 3.5; ' . print_r( $xx, 1 ) );
+		$Logger->log( '[dbIO] Check. 3.5' . print_r( $xx ) );
 		
 		/** @var \phpseclib\Math\BigInteger $a */
 		/** @var \phpseclib\Math\BigInteger $b */
@@ -141,7 +141,7 @@ if( $o->Load() )
 		$xx = $pubk;
 		$xx = str_replace( ['-----BEGIN PUBLIC KEY-----', '-----END PUBLIC KEY-----', "\n" ], '', $xx );
 		$xx = base64_decode( $xx );
-		$xx = $asn->decodeBER( $xx );
+		$xx = decodeBER( $xx );
 		$xx = $xx[ 0 ][ 'content' ][ 1 ][ 'content' ];
 		$xx = substr( $xx, 1 ); // need to strip the first char, which is not part of the key
 		$xx = base64web_encode( $xx );
