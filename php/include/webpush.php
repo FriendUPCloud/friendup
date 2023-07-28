@@ -107,7 +107,7 @@ if( $o->Load() )
 			trigger_error( 'sign failed: '. openssl_error_string() );
 		}
 
-		$Logger->log( '[dbIO] Check. 3' );
+		$Logger->log( '[dbIO] Check. 3: ' . $signature );
 
 		$xx = decodeBER( $signature );
 		
