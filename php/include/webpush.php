@@ -1,12 +1,14 @@
 <?php
 
+global $Logger;
+
 $o = new dbIO( 'FSetting' );
 $o->Type = 'WebPush';
 $o->Key = $row->SessionID;
 $o->UserID = $targetUser->ID;
 if( $o->Load() )
 {
-	error_log( '[dbIO] Found user session for push!' );
+	$Logger->log( '[dbIO] Found user session for push!' );
 	
 	$vapid = new dbIO( 'FSetting' );
 	$vapid->UserID = '0';
@@ -15,7 +17,7 @@ if( $o->Load() )
 	if( $vapid->Load() )
 	{
 		
-		error_log( '[dbIO] VAPID loaded!' );
+		$Logger->log( '[dbIO] VAPID loaded!' );
 		
 		$endpoint = $o->Data;
 		
@@ -74,7 +76,7 @@ if( $o->Load() )
 		curl_setopt( $ch, CURLOPT_POSTFIELDS, $payload );
 		$response = curl_exec( $ch );
 		curl_close( $ch );
-		error_log( '[dbIO] From end point, ' . $response );
+		$Logger->log( '[dbIO] From end point, ' . $response );
 		return;
 	}
 }

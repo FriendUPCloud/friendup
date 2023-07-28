@@ -95,12 +95,7 @@ if( isset( $args->args ) )
 		                $message = new stdClass();
 		                $message->Title = 'You got a message from ' . $User->FullName;
 		                $message->Message = $out->message;
-		                $Logger->log( '[convos] Trying to find stuff.' );
 		                $User->WebPush( $targetUser, $options, $message );
-	                }
-	                else
-	                {
-	                	$Logger->log( '[convos] Cannot find user ' . $o->TargetID );
 	                }
                 }
             }
