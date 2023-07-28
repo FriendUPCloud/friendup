@@ -93,6 +93,7 @@ if( isset( $args->args ) )
 		                $message = new stdClass();
 		                $message->Title = 'You got a message from ' . $User->FullName;
 		                $message->Message = $out->message;
+		                error_log( '[convos] Trying to find stuff.' );
 		                $User->WebPush( $targetUser, $options, $message );
 	                }
                 }
