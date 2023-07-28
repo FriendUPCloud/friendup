@@ -13,9 +13,9 @@ window.Convos = {
 	sounds: {}
 };
 
-window.Audio = {};
-Audio.newMessage = new Audio('/themes/friendup13/sound/new_message.ogg');
-Audio.sendMessage = new Audio( getImageUrl( 'Progdir:Assets/send.ogg' ) );
+window.Sounds = {};
+Sounds.newMessage = new Audio('/themes/friendup13/sound/new_message.ogg');
+Sounds.sendMessage = new Audio( getImageUrl( 'Progdir:Assets/send.ogg' ) );
 
 Application.run = function( msg )
 {
