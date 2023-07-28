@@ -553,7 +553,7 @@ class FUIChatlog extends FUIElement
     	}
     	
     	// Play a sound when sending
-    	Audio.sendMessage.play();
+    	Sounds.sendMessage.play();
     	
     	setTimeout( function()
     	{
