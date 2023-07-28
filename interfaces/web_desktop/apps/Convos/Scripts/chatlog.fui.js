@@ -411,6 +411,9 @@ class FUIChatlog extends FUIElement
                 text = dec;
             }
             catch( e ){};
+            
+            let mess = md5( m.Message );
+            d.setAttribute( 'message-hash', mess );
              
             let replacements = {
                 message: self.replaceUrls( self.replaceEmojis( text ) ),
@@ -421,6 +424,7 @@ class FUIChatlog extends FUIElement
                 fullname: m.Own ? i18n( 'i18n_you' ) : m.Name
             };
             d.innerHTML = FUI.getFragment( 'chat-message-head', replacements );
+            
             let timestamp = Math.floor( ( new Date( m.Date ) ).getTime() / 1000 );
             if( m.Own ) d.classList.add( 'Own' );
             
@@ -445,7 +449,12 @@ class FUIChatlog extends FUIElement
                 // Replace existing node
                 if( found )
                 {
-                    this.messageList[ slot ].replaceChild( d, found );
+                	// Only update content that changed
+                	if( found.getAttribute( 'message-hash' ) != mess )
+                	{
+		            	console.log( 'Replacing because ' + mess + ' != ' + found.getAttribute( 'message-hash' ) );
+		                this.messageList[ slot ].replaceChild( d, found );
+	                }
                 }
                 // Add a new node to this group slot
                 else
@@ -564,7 +573,7 @@ class FUIChatlog extends FUIElement
     	
     	// Play a sound when sending
     	Sounds.sendMessage.play();
-    	self.domTextArea.focus();
+    	self.domTextarea.focus();
     	
     	setTimeout( function()
     	{

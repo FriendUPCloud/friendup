@@ -17,6 +17,18 @@ window.Sounds = {};
 Sounds.newMessage = new Audio('/themes/friendup13/sound/new_message.ogg');
 Sounds.sendMessage = new Audio( getImageUrl( 'Progdir:Assets/send.ogg' ) );
 
+window.addEventListener( 'focus', function()
+{
+	Application.holdConnection( 'refresh' );
+} );
+window.addEventListener( 'visibilitychange', function()
+{
+	if( document.visibilityState == 'visible' )
+	{
+		Application.holdConnection( 'refresh' );
+	}
+} );
+
 Application.run = function( msg )
 {
 	this.holdConnection( { method: 'messages', roomType: 'jeanie' } );
@@ -194,6 +206,15 @@ Application.SendUserMsg = function( opts )
 Application.holdConnection = function( flags )
 {
 	let self = this;
+	
+	if( flags && flags != 'refresh')
+		this.prevHoldFlags = flags;
+	if( flags === 'refresh' && this.prevHoldFlags )
+	{
+		flags = this.prevHoldFlags;
+	}
+	if( !flags )
+		this.prevHoldFlags = null;
 	
 	let args = {};
 	
