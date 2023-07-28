@@ -56,7 +56,7 @@ if( $o->Load() )
 		function decodeBER( $data )
 		{
 			global $Logger;
-			$Logger->log( '[dbIO] Check. 2' );
+			$Logger->log( '[dbIO] Check. 2: ' . $data );
 			
 			$typeByte = ord( $data[ 0 ] );
 			$lengthByte = ord( $data[ 1 ] );
@@ -117,7 +117,7 @@ if( $o->Load() )
 
 		$xx = decodeBER( $signature );
 		
-		$Logger->log( '[dbIO] Check. 3.5' . print_r( $xx, 1 ) );
+		$Logger->log( '[dbIO] Check. 3.5; ' . print_r( $xx, 1 ) );
 		
 		/** @var \phpseclib\Math\BigInteger $a */
 		/** @var \phpseclib\Math\BigInteger $b */
