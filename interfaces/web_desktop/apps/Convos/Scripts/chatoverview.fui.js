@@ -481,16 +481,15 @@ class FUIChatoverview extends FUIElement
 					// It is already active
 				    if( tabs[ a ].classList.contains( 'Active' ) )
 				    {
-				    	console.log( 'Already active! Just refresh.' );
 				        let chat = FUI.getElementByUniqueId( 'messages' );
 				    	chat.refreshMessages();
 				        return;
 				    }
 				    // Activity in an inactive tab - add some info
-				    // TODO: Add a flash or bubble
 				    else
 				    {
-				    	// There will be notifications
+				    	// Play a sound when sending
+				    	Application.playSound( '/themes/friendup13/sound/new_message.wav' );
 				    }
 			    }
     		}

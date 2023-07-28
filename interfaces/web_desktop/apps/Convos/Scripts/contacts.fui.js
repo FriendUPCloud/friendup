@@ -216,6 +216,9 @@ class FUIContacts extends FUIElement
                 {
                 	ele.click();                	
                 } );
+                
+                // Play a sound when sending
+		    	Application.playSound( '/themes/friendup13/sound/new_message.wav' );
             }
         }
     }

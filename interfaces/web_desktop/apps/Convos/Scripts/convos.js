@@ -329,8 +329,11 @@ Application.holdConnection = function( flags )
 		            if( js.messages && js.messages.length > 0 )
 		            {
 		                let mess = FUI.getElementByUniqueId( 'messages' );
-		                mess.addMessages( js.messages );
-		                if( mess.clearQueue ) mess.clearQueue();
+		                if( mess )
+		                {
+				            mess.addMessages( js.messages );
+				            if( mess.clearQueue ) mess.clearQueue();
+			            }
 		            }
 		        }
 		        // Response from longpolling
