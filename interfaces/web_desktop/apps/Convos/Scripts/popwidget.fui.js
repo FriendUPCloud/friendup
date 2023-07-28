@@ -103,6 +103,10 @@ class FUIPopwidget extends FUIElement
     destroy()
     {
         let self = this;
+        if( this.onDestroy )
+        {
+        	this.onDestroy();
+        }
         this.domElement.classList.remove( 'Showing' );
         if( this.blocker )
         {

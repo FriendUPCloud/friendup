@@ -243,6 +243,10 @@ class FUIChatlog extends FUIElement
                         }
     	            }
 	            } );
+	            this.popWidget.onDestroy = function()
+	            {
+	            	s.classList.remove( 'Active' );
+	            }
     	    }
     	}
     	this.domInput.querySelector( '.Upload' ).onclick = function()
