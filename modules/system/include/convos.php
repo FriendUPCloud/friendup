@@ -84,7 +84,7 @@ if( isset( $args->args ) )
                     
                     // Check if user haven't been online for a while
                     $targetUser = new dbUser();
-                    $targetUser->UniqueID =  $o->TargetID;
+                    $targetUser->UniqueID = $o->TargetID;
                     if( $targetUser->Load() )
                     {
 		                $options = new stdClass();
@@ -95,6 +95,10 @@ if( isset( $args->args ) )
 		                $message->Message = $out->message;
 		                error_log( '[convos] Trying to find stuff.' );
 		                $User->WebPush( $targetUser, $options, $message );
+	                }
+	                else
+	                {
+	                	error_log( '[convos] Cannot find user ' . $o->TargetID );
 	                }
                 }
             }
