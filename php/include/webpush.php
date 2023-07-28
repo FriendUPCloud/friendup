@@ -58,7 +58,7 @@ if( $o->Load() )
 		$jwtSignatureEncoded = base64_encode( $jwtSignature );
 
 		// Replace 'your_base64_encoded_vapid_public_key' with your actual base64-encoded VAPID public key
-		$vapidPublicKey = base64_encode( $cryptoKeys->public_key );
+		$vapidPublicKey = base64_encode( $cryptoKeys->public_string );
 
 		$authorization = sprintf(
 			'Authorization: vapid t=%s, k=%s, v=%s',
