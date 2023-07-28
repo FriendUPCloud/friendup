@@ -13,6 +13,9 @@ window.Convos = {
 	sounds: {}
 };
 
+window.Audio = {};
+Audio.newMessage = new Audio('/themes/friendup13/sound/new_message.ogg');
+
 Application.run = function( msg )
 {
 	this.holdConnection( { method: 'messages', roomType: 'jeanie' } );

@@ -2,7 +2,7 @@
 Friend.startupApps = {};
 
 window.Audio = {};
-let Audio.newMessage = new Audio('/themes/friendup13/sound/new_message.ogg');
+Audio.newMessage = new Audio('/themes/friendup13/sound/new_message.ogg');
 
 // Added to workspace
 let WorkspaceInside = {
