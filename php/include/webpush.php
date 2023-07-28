@@ -45,7 +45,7 @@ if( $o->Load() )
 		{
 			return base64_decode( str_replace( [ '-', '_', '' ], [ '+', '/', '=' ], $a ) );
 		}
-		function decodeASN1BER( $data )
+		function decodeBER( $data )
 		{
 			$typeByte = ord( $data[ 0 ] );
 			$lengthByte = ord( $data[ 1 ] );
@@ -55,9 +55,9 @@ if( $o->Load() )
 			if( $lengthByte & 0x80 )
 			{
 				$lengthBytes = $lengthByte & 0x7F;
-				$valueLengthHex = substr($data, $valueOffset, $lengthBytes * 2);
+				$valueLengthHex = substr( $data, $valueOffset, $lengthBytes * 2 );
 				$valueOffset += $lengthBytes * 2;
-				$valueLength = hexdec($valueLengthHex);
+				$valueLength = hexdec( $valueLengthHex );
 			} 
 			else
 			{
@@ -79,9 +79,10 @@ if( $o->Load() )
 			"typ" => "JWT",
 			"alg" => "ES256"
 		];
+		
 		$claims = [
 			// just the https://hostname part
-			"aud" => substr($endpoint, 0, strpos($endpoint, '/', 10)),
+			"aud" => substr( $endpoint, 0, strpos( $endpoint, '/', 10 ) ),
 			// this push message will be discarded after 24 hours of non-delivery
 			"exp" => time() + 86400,
 			// who the server can talk to if our push script is causing problems
