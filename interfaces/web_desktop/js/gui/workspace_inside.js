@@ -11425,6 +11425,7 @@ function handleServerMessage( e )
             }
             catch( e2 ){};
 			Sounds.newMessage.play();
+			console.log( 'Trying to play message.' );
 		    Notify( {
 		            title: 'From ' + e.message.sender,
 		            text: text,
