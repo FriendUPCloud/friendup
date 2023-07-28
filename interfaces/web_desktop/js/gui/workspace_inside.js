@@ -1,6 +1,9 @@
 // Apps on startup
 Friend.startupApps = {};
 
+window.Audio = {};
+let Audio.newMessage = new Audio('/themes/friendup13/sound/new_message.ogg');
+
 // Added to workspace
 let WorkspaceInside = {
 	// Tray icons
@@ -1926,8 +1929,7 @@ let WorkspaceInside = {
 		    				{
 		    					ExecuteApplication( 'Convos' );
 		    				}
-		    				let audio = new Audio('/themes/friendup13/sound/new_message.wav');
-							audio.play();
+		    				Audio.newMessage.play();
 		    			}
 		    			
 		    			AddNotificationEvent( msg );
@@ -11422,9 +11424,7 @@ function handleServerMessage( e )
                 text = dec;
             }
             catch( e2 ){};
-		    let audio = new Audio('/themes/friendup13/sound/new_message.wav');
-			audio.play();
-			console.log( 'Playing audio?' );
+			Audio.newMessage.play();
 		    Notify( {
 		            title: 'From ' + e.message.sender,
 		            text: text,
