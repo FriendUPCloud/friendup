@@ -149,11 +149,6 @@ class FUIChatlog extends FUIElement
 		    val = self.domTextarea.innerHTML;
 			self.domTextarea.innerHTML = '';	
 			self.domTextarea.checkHeight();
-			self.domTextArea.focus();	
-			setTimeout( function()
-		    {
-		    	self.domTextArea.focus();
-		    }, 25 );
 			self.queueMessage( val );
     	}
     	this.domInput.querySelector( '.Emote' ).onclick = function()
@@ -216,7 +211,6 @@ class FUIChatlog extends FUIElement
                                     range.deleteContents();
                                     range.insertNode( node );
                                     range.collapse( true );
-                                    
                                     self.domTextarea.focus();
                                     return;
                                 }
@@ -344,11 +338,6 @@ class FUIChatlog extends FUIElement
 	            }
 		        val = self.domTextarea.innerHTML;
 			    self.domTextarea.innerHTML = '';	
-			    self.domTextArea.focus();
-			    setTimeout( function()
-			    {
-			    	self.domTextArea.focus();	
-			    }, 25 );
     			cancelBubble( e );
     			
     			// Strip scripts and such
@@ -575,6 +564,7 @@ class FUIChatlog extends FUIElement
     	
     	// Play a sound when sending
     	Sounds.sendMessage.play();
+    	self.domTextArea.focus();
     	
     	setTimeout( function()
     	{
