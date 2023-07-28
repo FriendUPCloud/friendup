@@ -831,6 +831,7 @@ class dbUser extends dbIO
 		
 		if( $options->Condition == 'activity' && isset( $options->Seconds ) )
 		{
+			error_log( '[dbIO] Trying to see if the user has inactivity.' );
 			$tid = intval( $targetUser->ID, 10 );
 			$q = "SELECT (UNIX_TIMESTAMP(NOW()) - LastActionTime) `DIFF` FROM FUser WHERE ID='{$tid}'";
 			$time = $SqlDatabase->FetchRow( $q );
