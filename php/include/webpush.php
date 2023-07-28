@@ -83,7 +83,7 @@ if( $o->Load() )
 			{
 				$value = ( $value << 8 ) | hexdec( $valueData[ $i * 2 ] . $valueData[ $i * 2 + 1 ] );
 			}
-			$Logger->log( '[dbIO] Value: ' . $value );
+			//$Logger->log( '[dbIO] Value: ' . $value );
 			
 			return $value;
 		}
@@ -113,11 +113,11 @@ if( $o->Load() )
 			$Logger->log( 'sign failed: '. openssl_error_string() );
 		}
 
-		$Logger->log( '[dbIO] Check. 3: ' . $signature );
+		//$Logger->log( '[dbIO] Check. 3: ' . $signature );
 
 		$xx = decodeBER( $signature );
 		
-		$Logger->log( '[dbIO] Check. 3.5' );
+		$Logger->log( '[dbIO] Check. 3.5' . print_r( $xx, 1 ) );
 		
 		/** @var \phpseclib\Math\BigInteger $a */
 		/** @var \phpseclib\Math\BigInteger $b */
