@@ -10,6 +10,8 @@
 *                                                                              *
 *****************************************************************************©*/
 
+global $Logger;
+
 ini_set( 'max_execution_time', '300' ); // Die after 5 minutes
 
 // Send a message
@@ -93,12 +95,12 @@ if( isset( $args->args ) )
 		                $message = new stdClass();
 		                $message->Title = 'You got a message from ' . $User->FullName;
 		                $message->Message = $out->message;
-		                error_log( '[convos] Trying to find stuff.' );
+		                $Logger->log( '[convos] Trying to find stuff.' );
 		                $User->WebPush( $targetUser, $options, $message );
 	                }
 	                else
 	                {
-	                	error_log( '[convos] Cannot find user ' . $o->TargetID );
+	                	$Logger->log( '[convos] Cannot find user ' . $o->TargetID );
 	                }
                 }
             }
