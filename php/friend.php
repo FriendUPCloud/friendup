@@ -11,9 +11,9 @@
 
 /******************************************************************************\
 *                                                                              *
-* FriendUP PHP API v1.2                                                        *
-* (c) 2015-2018, Friend Software Labs AS                                       *
-* mail: info@friendup.no                                                       *
+* FriendPS PHP API v1.3                                                        *
+* (c) 2015-2023, Friend Software Labs AS                                       *
+* mail: info@friendos.com                                                      *
 *                                                                              *
 \******************************************************************************/
 

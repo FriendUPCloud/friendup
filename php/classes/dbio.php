@@ -824,20 +824,26 @@ class dbUser extends dbIO
 	// Push notifications on condition
 	function WebPush( $targetUser, $options, $message )
 	{
-		global $SqlDatabase;
+		global $SqlDatabase, $UserSession;
+		
+		if( !isset( $targetUser->ID ) )
+			return false;
 		
 		if( $options->Condition == 'activity' && isset( $options->Seconds ) )
 		{
-			list( $time, ) = $SqlDatabase->FetchRow( '
-				SELECT (UNIX_TIMESTAMP(NOW()) - LastActionTime) `DIFF` FROM FUser WHERE ID=\'' . $targetUser->ID . '\'
-			' );
+			$tid = intval( $targetUser->ID, 10 );
+			$q = "SELECT (UNIX_TIMESTAMP(NOW()) - LastActionTime) `DIFF` FROM FUser WHERE ID='{$tid}'";
+			$time = $SqlDatabase->FetchRow( $q );
 			// Inactivity detected
-			if( intval( $time, 10 ) > $options->Seconds )
+			if( intval( $time[ 'DIFF' ], 10 ) > $options->Seconds )
 			{
-				error_log( '[dbUser] Inactivity detected.' );
+				if( $row = $SqlDatabase->fetchObject( 'SELECT * FROM FUserSession s WHERE s.UserID=\'' . $targetUser->ID . '\' ORDER BY ID DESC LIMIT 1' ) )
+				{
+					include( __DIR__ . '/../include/webpush.php' );
+				}
 				return;
 			}
-			error_log( '[dbUser] User isn\'t inactive.' );
+			//error_log( '[dbUser] User isn\'t inactive.' );
 		}
 		return false;
 	}

@@ -83,9 +83,9 @@ if( isset( $args->args ) )
                     $SqlDatabase->query( 'UPDATE MessageSession SET ActivityDate=\'' . date( 'Y-m-d H:i:s' ) . '\', PrevDate=\'1970-01-01 12:00:00\' WHERE UniqueUserID=\'' . $SqlDatabase->_link->real_escape_string( $o->TargetID ) . '\'' );
                     
                     // Check if user haven't been online for a while
-                    error_log( '[convos] Starting DBUser!' );
                     $targetUser = new dbUser();
-                    if( $targetUser->Load( $o->TargetID ) )
+                    $targetUser->UniqueID =  $o->TargetID;
+                    if( $targetUser->Load() )
                     {
 		                $options = new stdClass();
 		                $options->Condition = 'activity';
