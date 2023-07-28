@@ -170,21 +170,6 @@ Application.receiveMessage = function( msg )
     }
 }
 
-Application.playSound = function( snd )
-{
-    if( !Convos.sounds[ snd ] )
-    {
-        Convos.sounds[ snd ] = new AudioObject( snd, function()
-        {
-            Convos.sounds[ snd ].play();
-        } );
-    }
-    else
-    {
-        Convos.sounds[ snd ].play();
-    }
-}
-
 Application.SendUserMsg = function( opts )
 {
 	if( !opts.recipientId ) return;

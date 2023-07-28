@@ -218,7 +218,7 @@ class FUIContacts extends FUIElement
                 } );
                 
                 // Play a sound when sending
-		    	Application.playSound( '/themes/friendup13/sound/new_message.wav' );
+                Sounds.newMessage.play();
             }
         }
     }
