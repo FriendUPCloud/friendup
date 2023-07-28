@@ -494,19 +494,20 @@ span.Emoticon:hover
         margin: 0;
         content: "\f0d9";
         font-family: fontawesome;
+        font-weight: 100;
     }
     
     .FUIChatlog .Topic > .Users 
     {
-       background: var(--fui-module-background-darker);
+		background: var(--fui-module-background-darker);
 		position: absolute;
 		left: 45px;
 		top: 4px;
 		width: 18px;
 		text-align: center;
 		height: 25px;
-		line-height: 26px;
-		padding: 0px 5px 0 2px;
+		line-height: 22px;
+		padding: 0px 4px 0 4px;
 		border-radius: 13px;
     }
 
@@ -515,6 +516,8 @@ span.Emoticon:hover
         display: static;
         margin: 0;
         content: "\f0c0";
+        font-size: 12px;
+        font-weight: 100;
         font-family: fontawesome;
     }
     

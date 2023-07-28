@@ -268,6 +268,7 @@ class FUIContacts extends FUIElement
         {
             self.setChatView( this.record );
             this.classList.remove( 'NewActivity' );
+            self.hideUsers();
         }
         
         // Init user
@@ -320,6 +321,21 @@ class FUIContacts extends FUIElement
             let par = FUI.getElementByUniqueId( this.options.parentElement );
             par.setChat( false );
         }
+    }
+    toggleUsers()
+    {
+    	if( this.domElement.classList.contains( 'Users' ) )
+    	{
+    		this.domElement.classList.remove( 'Users' );
+    	}
+    	else
+    	{
+    		this.domElement.classList.add( 'Users' );
+    	}
+    }
+    hideUsers()
+    {
+    	this.domElement.classList.remove( 'Users' );
     }
     getContacts()
     {
