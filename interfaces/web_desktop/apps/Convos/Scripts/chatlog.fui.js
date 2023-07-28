@@ -553,7 +553,7 @@ class FUIChatlog extends FUIElement
     	}
     	
     	// Play a sound when sending
-    	Application.playSound( getImageUrl( 'Progdir:Assets/send.ogg' ) );
+    	Audio.sendMessage.play();
     	
     	setTimeout( function()
     	{

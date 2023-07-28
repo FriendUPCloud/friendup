@@ -15,6 +15,7 @@ window.Convos = {
 
 window.Audio = {};
 Audio.newMessage = new Audio('/themes/friendup13/sound/new_message.ogg');
+Audio.sendMessage = new Audio( getImageUrl( 'Progdir:Assets/send.ogg' ) );
 
 Application.run = function( msg )
 {
@@ -39,7 +40,7 @@ Application.receiveMessage = function( msg )
     {
     	if( document.hidden || !document.body.classList.contains( 'activated' ) )
     	{
-    		Application.playSound( '/themes/friendup13/sound/new_message.wav' );
+    		Audio.newMessage.play();
     	}
         let overview = FUI.getElementByUniqueId( 'convos' );
         if( msg.type && msg.type == 'chatroom' && msg.uniqueId )
