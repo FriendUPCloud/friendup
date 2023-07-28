@@ -65,10 +65,12 @@
 	display: flex;
 	padding: 15px 21px 15px 15px;
 	box-sizing: border-box;
-	overflow-x: hidden;
+	overflow-x: clip;
+	overflow-y: visible;
 }
 
-.FUIChatlog .Input > div
+.FUIChatlog .Input > div,
+.FUIChatlog .Input > .Tools > div
 {
     display: inline-block;
     vertical-align: top;
@@ -83,27 +85,46 @@
     transition: color,background-color 0.15s,0.15s;
 }
 
-.FUIChatlog .Input > div.Upload
+.FUIChatlog .Input > div.Tools 
+{
+    width: 150px;
+    display: flex;
+    justify-content: center;
+    box-sizing: border-box;
+}
+
+.FUIChatlog .Input .Tools > div.Upload
 {
     border-radius: 5px 0 0 5px;
 }
 
-.FUIChatlog .Input > div.Upload,
-.FUIChatlog .Input > div.Search
+.FUIChatlog .Input .Tools > div.Upload,
+.FUIChatlog .Input .Tools > div.Search
 {
     border-right: 1px solid rgba(0,0,0,0.05);
 }
 
-.FUIChatlog .Input .Search::after
+.FUIChatlog .Input .Tools .Search::after
 {
     content: "\f002";
     font-family: fontawesome;
 }
 
-.FUIChatlog .Input .Upload::after
+.FUIChatlog .Input .Tools .Upload::after
 {
     content: "\f0c6";
     font-family: fontawesome;
+}
+
+.FUIChatlog .Input .Tools .MobileMen::after
+{
+    content: "\f142";
+    font-family: fontawesome;
+}
+
+.FUIChatlog .Input .Tools > .MobileMen
+{
+	display: none;
 }
 
 .FUIChatlog .Input .Send::after
@@ -112,7 +133,7 @@
     font-family: fontawesome;
 }
 
-.FUIChatlog .Input .Emote::after
+.FUIChatlog .Input .Tools .Emote::after
 {
     content: "\f004";
     font-family: fontawesome;
@@ -123,17 +144,65 @@
     border-radius: 0 5px 5px 0;
 }
 
-.FUIChatlog .Input .Send:hover,
-.FUIChatlog .Input .Emote:hover,
-.FUIChatlog .Input .Upload:hover,
-.FUIChatlog .Input .Search:hover,
+body:not([mobile]) .FUIChatlog .Input .Send:hover,
+body:not([mobile]) .FUIChatlog .Input .Emote:hover,
+body:not([mobile]) .FUIChatlog .Input .Upload:hover,
+body:not([mobile]) .FUIChatlog .Input .Search:hover,
+body:not([mobile]) .FUIChatlog .Input .MobileMen:hover,
 .FUIChatlog .Input .Send.Active,
 .FUIChatlog .Input .Emote.Active,
 .FUIChatlog .Input .Upload.Active,
-.FUIChatlog .Input .Search.Active
+.FUIChatlog .Input .Search.Active,
+.FUIChatlog .Input .MobileMen.Active
 {
     background-color: var(--fui-button-background-hover);
     color: var(--fui-button-color-hover);
+}
+
+@media (max-width: 640px)
+{
+	.FUIChatlog .Input > div.Tools 
+	{
+		width: 50px;
+	}
+	.FUIChatlog .Input > div.Tools > div:not(.MobileMen) 
+	{
+		display: none;
+	}
+	.FUIChatlog .Input .Tools > .MobileMen
+	{
+		display: inline-block;
+	}
+	
+	.FUIChatlog .Input > div.Tools > .MobileMen.Active + div 
+	{
+		display: block;
+		position: absolute;
+		top: -35px;
+		width: 51px;
+		left: 15px;
+		border-radius: 0;
+		border: 0px;
+		border-bottom: 1px solid rgba(0,0,0,0.05);
+	}
+	
+	.FUIChatlog .Input > div.Tools > .MobileMen.Active + div + div
+	{
+		top: -86px;
+		display: block;
+	    position: absolute;
+	    border: 0px;
+	    border-bottom: 1px solid rgba(0,0,0,0.05);
+	}
+	
+	.FUIChatlog .Input > div.Tools > .MobileMen.Active + div + div + div
+	{
+		top: -137px;
+		display: block;
+	    position: absolute;
+	    border: 0px;
+	    border-bottom: 1px solid rgba(0,0,0,0.05);
+	}
 }
 
 .FUIChatlog .Input > div.Textarea
@@ -470,7 +539,6 @@ span.Emoticon:hover
     cursor: pointer;
     background-color: black;
 }
-
 
 @media (max-width: 768px)
 {

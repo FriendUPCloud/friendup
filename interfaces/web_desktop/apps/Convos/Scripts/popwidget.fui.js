@@ -24,6 +24,15 @@ class FUIPopwidget extends FUIElement
         this.domElement.className = 'FUIPopwidget';
         this.domElement.innerHTML = '';
         
+        if( this.options.blocker )
+        {
+        	let blocker = document.createElement( 'div' );
+        	blocker.className = 'FUIPopwidgetBlocker';
+	        this.domElement.parentNode.appendChild( blocker );
+	        this.blocker = blocker;
+	        blocker.onclick = function(){ self.destroy(); }
+        }
+        
         // Get left position
         let leftO = this.options.originElement;
         let left = 0;
@@ -95,6 +104,11 @@ class FUIPopwidget extends FUIElement
     {
         let self = this;
         this.domElement.classList.remove( 'Showing' );
+        if( this.blocker )
+        {
+        	if( this.blocker.parentNode )
+	        	this.blocker.parentNode.removeChild( this.blocker );
+    	}
         setTimeout( function()
         {
             if( self.domElement.parentNode )

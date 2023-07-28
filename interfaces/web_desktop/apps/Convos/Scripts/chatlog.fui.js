@@ -122,10 +122,9 @@ class FUIChatlog extends FUIElement
     	
     	function clearActive( exception )
     	{
-    	    let divs = self.domInput.getElementsByTagName( 'div' );
+    	    let divs = self.domInput.getElementsByClassName( 'InputButton' );
     	    for( let a = 0; a < divs.length; a++ )
     	    {
-    	        if( divs[ a ].parentNode != self.domInput ) continue;
     	        if( divs[ a ] == exception )
     	            divs[ a ].classList.add( 'Active' );
                 else 
@@ -138,9 +137,23 @@ class FUIChatlog extends FUIElement
     	}
     	
     	this.domInput.innerHTML = '\
-    		<div class="Upload"></div><div class="Search"></div><div class="Emote"></div><div contenteditable="true" class="Textarea"></div><div class="Send"></div>\
+    		<div class="Tools"><div class="MobileMen InputButton"></div><div class="Upload InputButton"></div><div class="Search InputButton"></div><div class="Emote InputButton"></div></div><div contenteditable="true" class="Textarea"></div><div class="Send"></div>\
     	';
     	this.domTextarea = this.domInput.querySelector( '.Textarea' );
+    	this.domInput.querySelector( '.MobileMen' ).onclick = function()
+    	{
+    	    if( this.classList.contains( 'Active' ) )
+    	    {
+    	        this.classList.remove( 'Active' );
+    	        if( this.popWidget )
+    	            this.popWidget.destroy();
+    	        this.popWidget = null;
+    	    }
+    	    else
+    	    {
+    	        clearActive( this );
+	        }
+    	}
     	this.domInput.querySelector( '.Send' ).onclick = function()
     	{
     	    let val = self.domTextarea.innerText;
@@ -183,10 +196,11 @@ class FUIChatlog extends FUIElement
     	        let s = this;
     	        this.popWidget = new FUIPopwidget( { 
     	            placeholderElement: d, 
-    	            originElement: this, 
+    	            originElement: isMobile ? self.domInput.querySelector( '.MobileMen' ) : this, 
     	            width: 480, 
     	            height: 480, 
     	            content: str,
+    	            blocker: true,
     	            clickCallback: function( e )
     	            {
     	                if( e.target && e.target.nodeName == 'SPAN' )
@@ -200,6 +214,8 @@ class FUIChatlog extends FUIElement
                             
                             s.popWidget.destroy();
     	                    s.classList.remove( 'Active' );
+    	                    let ele = isMobile ? self.domInput.querySelector( '.MobileMen' ) : false;
+	                        if( ele ) ele.classList.remove( 'Active' );
                             
                             if( window.getSelection )
                             {
@@ -222,6 +238,8 @@ class FUIChatlog extends FUIElement
 	                    {
 	                        s.popWidget.destroy();
 	                        s.classList.remove( 'Active' );
+	                        let ele = isMobile ? self.domInput.querySelector( '.MobileMen' ) : false;
+	                        if( ele ) ele.classList.remove( 'Active' );
                         }
     	            }
 	            } );
