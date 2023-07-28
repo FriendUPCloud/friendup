@@ -3,6 +3,12 @@ Friend.startupApps = {};
 
 window.Sounds = {};
 Sounds.newMessage = new Audio('/themes/friendup13/sound/new_message.ogg');
+Sounds.silence = new Audio('/themes/friendup13/sound/silence.ogg');
+if( isMobile )
+{
+	Sounds.silence.loop = true;
+	Sounds.silence.play();
+}
 
 // Added to workspace
 let WorkspaceInside = {
