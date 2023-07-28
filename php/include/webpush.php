@@ -58,22 +58,6 @@ if( $o->Load() )
 		$jwtSignatureEncoded = base64_encode( $jwtSignature );
 
 		// Replace 'your_base64_encoded_vapid_public_key' with your actual base64-encoded VAPID public key
-		
-		const padding = '='.repeat( ( 4 - base64String.length % 4 ) % 4 );
-		const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
-		const rawData = window.atob( base64 );
-		// It is double encoded
-		const padding2 = '='.repeat( ( 4 - rawData.length % 4 ) % 4 );
-		const base642 = (rawData + padding2).replace(/-/g, '+').replace(/_/g, '/');
-		const rawData2 = window.atob( base642 );
-		
-		const outputArray = new Uint8Array( rawData2.length );
-		for( let i = 0; i < rawData2.length; ++i )
-		{
-			outputArray[ i ] = rawData2.charCodeAt( i );
-		}
-		return outputArray;
-		
 		$vapidPublicKey = strtr( $vapidPublicKey, '-_', '+/' );
 		$vapidPublicKey = str_pad( $cryptoKeys->public_string, 65, '=', STR_PAD_RIGHT );
 		$vapidPublicKey = base64_decode( $vapidPublicKey );
