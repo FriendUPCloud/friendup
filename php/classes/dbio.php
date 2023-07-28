@@ -837,6 +837,7 @@ class dbUser extends dbIO
 			// Inactivity detected
 			if( intval( $time[ 'DIFF' ], 10 ) > $options->Seconds )
 			{
+				error_log( '[dbIO] Trying to find user session for ' . $targetUser->FullName );
 				if( $row = $SqlDatabase->fetchObject( 'SELECT * FROM FUserSession s WHERE s.UserID=\'' . $targetUser->ID . '\' ORDER BY ID DESC LIMIT 1' ) )
 				{
 					include( __DIR__ . '/../include/webpush.php' );
