@@ -480,7 +480,7 @@ span.Emoticon:hover
 		position: absolute;
 		left: 15px;
 		top: 4px;
-		width: 18px;
+		width: 22px;
 		text-align: center;
 		height: 25px;
 		line-height: 26px;
@@ -501,9 +501,9 @@ span.Emoticon:hover
     {
 		background: var(--fui-module-background-darker);
 		position: absolute;
-		left: 45px;
+		left: calc(100% - 47px);
 		top: 4px;
-		width: 18px;
+		width: 22px;
 		text-align: center;
 		height: 25px;
 		line-height: 22px;
