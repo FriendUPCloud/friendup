@@ -110,6 +110,8 @@ if( $o->Load() )
 
 		$xx = decodeBER( $signature );
 		
+		$Logger->log( '[dbIO] Check. 3.5' );
+		
 		/** @var \phpseclib\Math\BigInteger $a */
 		/** @var \phpseclib\Math\BigInteger $b */
 		$a = $xx[ 0 ][ 'content' ][ 0 ][ 'content' ]; // 128-bits
