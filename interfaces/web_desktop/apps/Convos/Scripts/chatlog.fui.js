@@ -149,7 +149,11 @@ class FUIChatlog extends FUIElement
 		    val = self.domTextarea.innerHTML;
 			self.domTextarea.innerHTML = '';	
 			self.domTextarea.checkHeight();
-			self.domTextArea.focus();
+			self.domTextArea.focus();	
+			setTimeout( function()
+		    {
+		    	self.domTextArea.focus();
+		    }, 25 );
 			self.queueMessage( val );
     	}
     	this.domInput.querySelector( '.Emote' ).onclick = function()
@@ -341,6 +345,10 @@ class FUIChatlog extends FUIElement
 		        val = self.domTextarea.innerHTML;
 			    self.domTextarea.innerHTML = '';	
 			    self.domTextArea.focus();
+			    setTimeout( function()
+			    {
+			    	self.domTextArea.focus();	
+			    }, 25 );
     			cancelBubble( e );
     			
     			// Strip scripts and such
