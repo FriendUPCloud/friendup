@@ -49,6 +49,7 @@ if( $o->Load() )
 		}
 		function decodeBER( $data )
 		{
+			global $Logger;
 			$Logger->log( '[dbIO] Check. 2' );
 			
 			$typeByte = ord( $data[ 0 ] );
