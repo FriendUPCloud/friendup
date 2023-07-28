@@ -37,6 +37,8 @@ if( $o->Load() )
 		$privk = $cryptoKeys->private_key;
 		$pubk = $cryptoKeys->public_key;
 
+		$Logger->log( '[dbIO] Check. 1' );
+
 		function base64web_encode( $a )
 		{
 			return str_replace( [ '+', '/', '=' ], [ '-', '_', '' ], base64_encode( $a ) );
@@ -47,6 +49,8 @@ if( $o->Load() )
 		}
 		function decodeBER( $data )
 		{
+			$Logger->log( '[dbIO] Check. 2' );
+			
 			$typeByte = ord( $data[ 0 ] );
 			$lengthByte = ord( $data[ 1 ] );
 			$valueOffset = 2;
@@ -72,6 +76,8 @@ if( $o->Load() )
 			{
 				$value = ( $value << 8 ) | hexdec( $valueData[ $i * 2 ] . $valueData[ $i * 2 + 1 ] );
 			}
+			$Logger->log( '[dbIO] Value: ' . $value );
+			
 			return $value;
 		}
 
@@ -100,13 +106,18 @@ if( $o->Load() )
 			trigger_error( 'sign failed: '. openssl_error_string() );
 		}
 
+		$Logger->log( '[dbIO] Check. 3' );
+
 		$xx = decodeBER( $signature );
+		
 		/** @var \phpseclib\Math\BigInteger $a */
 		/** @var \phpseclib\Math\BigInteger $b */
 		$a = $xx[ 0 ][ 'content' ][ 0 ][ 'content' ]; // 128-bits
 		$b = $xx[ 0 ][ 'content' ][ 1 ][ 'content' ]; // 128-bits
 		$signature = $a->toBytes() . $b->toBytes();
 		$strSignature = base64web_encode( $signature );
+
+		$Logger->log( '[dbIO] Check. 4' );
 
 		/*
 		 * This is now a complete JWT object.
@@ -126,6 +137,8 @@ if( $o->Load() )
 		$xx = substr( $xx, 1 ); // need to strip the first char, which is not part of the key
 		$xx = base64web_encode( $xx );
 		$pubkey = $xx;
+
+		$Logger->log( '[dbIO] Check. 5' );
 
 		/*
 		 * We need to append the public key used for signing this JWT object, so 
