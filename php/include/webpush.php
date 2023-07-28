@@ -52,10 +52,12 @@ if( $o->Load() )
 
 		$jwtHeaderEncoded = base64_encode( json_encode( $jwtHeader ) );
 		$jwtClaimEncoded = base64_encode( json_encode( $jwtClaim ) );
+		
+		$tokenToSign = $jwtHeaderEncoded . '.' . $jwtClaimEncoded;
 
-		$jwtSignature = '';
-		openssl_sign( $jwtHeaderEncoded . '.' . $jwtClaimEncoded, $jwtSignature, $cryptoKeys->private_key, 'SHA256' );
-		$jwtSignatureEncoded = base64_encode( $jwtSignature );
+		$signature = '';
+		openssl_sign( $tokenToSign, $signature, $cryptoKeys->private_key, OPENSSL_ALGO_SHA256 );
+		$jwtSignatureEncoded = base64_encode( $signature );
 
 		// Replace 'your_base64_encoded_vapid_public_key' with your actual base64-encoded VAPID public key
 		$vapidPublicKey = strtr( $vapidPublicKey, '-_', '+/' );
@@ -64,7 +66,7 @@ if( $o->Load() )
 
 		$authorization = sprintf(
 			'Authorization: vapid t=%s, k=%s, v=%s',
-			$jwtHeaderEncoded . '.' . $jwtClaimEncoded,
+			$tokenToSign,
 			$vapidPublicKey,
 			$jwtSignatureEncoded
 		);
