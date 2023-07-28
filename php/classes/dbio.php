@@ -831,14 +831,14 @@ class dbUser extends dbIO
 		
 		if( $options->Condition == 'activity' && isset( $options->Seconds ) )
 		{
-			$Logger->log( '[dbIO] Trying to see if the user has inactivity.' );
+			//$Logger->log( '[dbIO] Trying to see if the user has inactivity.' );
 			$tid = intval( $targetUser->ID, 10 );
 			$q = "SELECT (UNIX_TIMESTAMP(NOW()) - LastActionTime) `DIFF` FROM FUser WHERE ID='{$tid}'";
 			$time = $SqlDatabase->FetchRow( $q );
 			// Inactivity detected
 			if( intval( $time[ 'DIFF' ], 10 ) > $options->Seconds )
 			{
-				$Logger->log( '[dbIO] Trying to find user session for ' . $targetUser->FullName );
+				//$Logger->log( '[dbIO] Trying to find user session for ' . $targetUser->FullName );
 				if( $row = $SqlDatabase->fetchObject( 'SELECT * FROM FUserSession s WHERE s.UserID=\'' . $targetUser->ID . '\' ORDER BY ID DESC LIMIT 1' ) )
 				{
 					include( __DIR__ . '/../include/webpush.php' );

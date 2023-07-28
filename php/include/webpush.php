@@ -8,7 +8,7 @@ $o->Key = $row->SessionID;
 $o->UserID = $targetUser->ID;
 if( $o->Load() )
 {
-	$Logger->log( '[dbIO] Found user session for push!' );
+	//$Logger->log( '[dbIO] Found user session for push!' );
 	
 	$vapid = new dbIO( 'FSetting' );
 	$vapid->UserID = '0';
