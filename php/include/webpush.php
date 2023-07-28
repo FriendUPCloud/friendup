@@ -117,7 +117,7 @@ if( $o->Load() )
 
 		$xx = decodeBER( $signature );
 		
-		$Logger->log( '[dbIO] Check. 3.5' . print_r( $xx ) );
+		$Logger->log( '[dbIO] Check. 3.5' . print_r( $xx, 1 ) );
 		
 		$a = $xx[ 0 ][ 'content' ][ 0 ][ 'content' ]; // 128-bits
 		$b = $xx[ 0 ][ 'content' ][ 1 ][ 'content' ]; // 128-bits
