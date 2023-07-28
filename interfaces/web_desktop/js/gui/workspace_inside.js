@@ -1926,6 +1926,8 @@ let WorkspaceInside = {
 		    				{
 		    					ExecuteApplication( 'Convos' );
 		    				}
+		    				let audio = new Audio('/themes/friendup13/sound/new_message.wav');
+							audio.play();
 		    			}
 		    			
 		    			AddNotificationEvent( msg );
@@ -11420,6 +11422,8 @@ function handleServerMessage( e )
                 text = dec;
             }
             catch( e2 ){};
+		    let audio = new Audio('/themes/friendup13/sound/new_message.wav');
+			audio.play();
 		    Notify( {
 		            title: 'From ' + e.message.sender,
 		            text: text,
