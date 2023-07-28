@@ -21,9 +21,10 @@ if( $o->Load() )
 		
 		$endpoint = $o->Data;
 		
-		$vapidPublicKey = 'your_vapid_public_key';
+		$cryptoKeys = json_decode( $vapid->Data );
 		
-		$vapidPrivateKey = 'your_vapid_private_key';
+		$vapidPublicKey = $cryptoKeys->public_key; // your vapid public key
+		$vapidPrivateKey = $cryptoKeys->private_key; // your vapid private key
 		
 		// TODO: Support groups, not only DM's
 		// TODO: Decode message if possible, or say it's "encrypted"
@@ -41,28 +42,28 @@ if( $o->Load() )
 			'typ' => 'JWT',
 			'alg' => 'ES256',
 		];
-		
+
 		// TODO: Allow config registered email to pop in here!
 		$jwtClaim = [
 			'aud' => $audience,
 			'exp' => time() + 3600, // 1 hour expiration time
 			'sub' => 'mailto:info@friendos.com', // Email of the sender
 		];
-		
-		$cryptoKeys = json_decode( $vapid->Data );
-		
+
 		$jwtHeaderEncoded = base64_encode( json_encode( $jwtHeader ) );
 		$jwtClaimEncoded = base64_encode( json_encode( $jwtClaim ) );
-		
+
 		$jwtSignature = '';
-		
 		openssl_sign( $jwtHeaderEncoded . '.' . $jwtClaimEncoded, $jwtSignature, $cryptoKeys->private_key, 'SHA256' );
 		$jwtSignatureEncoded = base64_encode( $jwtSignature );
-		
+
+		// Replace 'your_base64_encoded_vapid_public_key' with your actual base64-encoded VAPID public key
+		$vapidPublicKey = base64_encode( $cryptoKeys->public_key );
+
 		$authorization = sprintf(
 			'Authorization: vapid t=%s, k=%s, v=%s',
-			$jwtHeaderEncoded,
-			$jwtClaimEncoded,
+			$jwtHeaderEncoded . '.' . $jwtClaimEncoded,
+			$vapidPublicKey,
 			$jwtSignatureEncoded
 		);
 		
