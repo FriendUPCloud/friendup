@@ -34,7 +34,12 @@ if( $o->Load() )
 		$endpoint = $o->Data;
 		$cryptoKeys = json_decode( $vapid->Data );
 		$contact = 'mailto:info@friendos.com';		
-		$privk = $cryptoKeys->private_key;
+		$privk = str_replace( [ '-----BEGIN PRIVATE KEY-----', '-----END PRIVATE KEY-----', "\n" ], '', base64_decode( $cryptoKeys->private_key ) );
+		
+		$Logger->log( 'Private: ' . base64_decode( $cryptoKeys->private_key ) );
+		$Logger->log( '--' );
+		$Logger->log( 'First private: ' . $privk );
+		
 		$pubk = $cryptoKeys->public_key;
 
 		$Logger->log( '[dbIO] Check. 1' );
