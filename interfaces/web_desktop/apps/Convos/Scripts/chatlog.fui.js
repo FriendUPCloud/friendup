@@ -99,6 +99,16 @@ class FUIChatlog extends FUIElement
                 p.contactsMode();
             }
             this.domTopic.appendChild( par );
+            
+            let us = document.createElement( 'div' );
+            us.className = 'Users';
+            us.innerHTML = '';
+            us.onclick = function()
+            {
+                let p = FUI.getElementByUniqueId( self.options.parentElement );
+                p.toggleUsers();
+            }
+            this.domTopic.appendChild( us );
         }
         
         this.initDomInput();
@@ -496,9 +506,10 @@ class FUIChatlog extends FUIElement
     	if( type != 'jeanie' )
     	{
     		let p = this.domTopic.querySelector( '.ParentLink' );
-    		
+    		let u = this.domTopic.querySelector( '.Users' );
     		this.domTopic.innerHTML = topic;
 			if( p ) this.domTopic.appendChild( p );
+			if( u ) this.domTopic.appendChild( u );
 		}
 		else
 		{

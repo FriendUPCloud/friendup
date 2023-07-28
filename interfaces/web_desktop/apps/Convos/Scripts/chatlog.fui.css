@@ -476,23 +476,47 @@ span.Emoticon:hover
 {
     .FUIChatlog .Topic > .ParentLink 
     {
-        background: var(--fui-background-dim);
-        position: absolute;
-        left: 15px;
-        top: 4px;
-        width: auto;
-        height: 25px;
-        line-height: 26px;
-        padding: 0px 10px;
-        border-radius: 13px;
+		background: var(--fui-module-background-darker);
+		position: absolute;
+		left: 15px;
+		top: 4px;
+		width: 18px;
+		text-align: center;
+		height: 25px;
+		line-height: 26px;
+		padding: 0px 5px 0 2px;
+		border-radius: 13px;
     }
 
     .FUIChatlog .Topic > .ParentLink::before
     {
         display: static;
         margin: 0;
-        content: "\f100";
+        content: "\f0d9";
         font-family: fontawesome;
     }
+    
+    .FUIChatlog .Topic > .Users 
+    {
+       background: var(--fui-module-background-darker);
+		position: absolute;
+		left: 45px;
+		top: 4px;
+		width: 18px;
+		text-align: center;
+		height: 25px;
+		line-height: 26px;
+		padding: 0px 5px 0 2px;
+		border-radius: 13px;
+    }
+
+    .FUIChatlog .Topic > .Users::before
+    {
+        display: static;
+        margin: 0;
+        content: "\f0c0";
+        font-family: fontawesome;
+    }
+    
 }
 

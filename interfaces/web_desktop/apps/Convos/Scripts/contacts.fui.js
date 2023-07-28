@@ -8,6 +8,8 @@
 *                                                                              *
 *****************************************************************************©*/
 
+window.FUIContactBuf = window.FUIContactBuf ? window.FUIContactBuf : {};
+
 class FUIContacts extends FUIElement
 {
     constructor( options )
