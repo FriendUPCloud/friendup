@@ -16,18 +16,9 @@ if( $o->Load() )
 	$vapid->Key = 'VAPID-Keys';
 	if( $vapid->Load() )
 	{
-		/*
-		 * If you get any part of this process wrong, Google gives the really helpful error message "invalid JWT provided".
-		 * 
-		 * Mozilla (Firefox) gives a slightly just-as-useful error:
-		 * {
-		 *   "code": 401, "errno": 109, "error": "Unauthorized",
-		 *   "more_info": "http://autopush.readthedocs.io/en/latest/http.html#error-codes",
-		 *   "message": "Request did not validate Invalid Authorization Header"
-		 * }
-		 */
-
-		// Generate the keys like this, although you can probably do it in PHP.
+		return;
+		
+		/*// Generate the keys like this, although you can probably do it in PHP.
 		// `openssl ecparam -genkey -name prime256v1 -noout -out server-push-ecdh-p256.pem &>/dev/null`;
 		// `openssl ec -in server-push-ecdh-p256.pem -pubout -out server-push-ecdh-p256.pub &>/dev/null`;
 
@@ -117,29 +108,31 @@ if( $o->Load() )
 
 		$xx = decodeBER( $signature );
 		
-		$Logger->log( '[dbIO] Check. 3.5' . print_r( $xx, 1 ) );
+		$Logger->log( '[dbIO] Check. 3.5' . print_r( $xx ) );
 		
+		
+		// @var \phpseclib\Math\BigInteger $a 
+		// @var \phpseclib\Math\BigInteger $b 
 		$a = $xx[ 0 ][ 'content' ][ 0 ][ 'content' ]; // 128-bits
 		$b = $xx[ 0 ][ 'content' ][ 1 ][ 'content' ]; // 128-bits
-		$signature = toBytes( $a ) . toBytes( $b );
+		$signature = $a->toBytes() . $b->toBytes();
 		$strSignature = base64web_encode( $signature );
 
 		$Logger->log( '[dbIO] Check. 4' );
 
-		/*
-		 * This is now a complete JWT object.
-		 */
+		// This is now a complete JWT object.
 		$jwt = $strHeader . '.' . $strPayload . '.' . $strSignature;
 
-		/*
-		 * Our PEM formatted public key is wrapped in an ASN.1 structure, so just 
-		 * like our signature above, lets extract
-		 * the raw public key part, which is the bit we need.
-		 */
+		//
+		// Our PEM formatted public key is wrapped in an ASN.1 structure, so just 
+		// like our signature above, lets extract
+		//the raw public key part, which is the bit we need.
+		//
+		
 		$xx = $pubk;
 		$xx = str_replace( ['-----BEGIN PUBLIC KEY-----', '-----END PUBLIC KEY-----', "\n" ], '', $xx );
 		$xx = base64_decode( $xx );
-		$xx = decodeBER( $xx );
+		$xx = $asn->decodeBER( $xx );
 		$xx = $xx[ 0 ][ 'content' ][ 1 ][ 'content' ];
 		$xx = substr( $xx, 1 ); // need to strip the first char, which is not part of the key
 		$xx = base64web_encode( $xx );
@@ -147,21 +140,18 @@ if( $o->Load() )
 
 		$Logger->log( '[dbIO] Check. 5' );
 
-		/*
-		 * We need to append the public key used for signing this JWT object, so 
-		 * the server can validate the JWT and compare the public key against the 
-		 * push-registration by the client, where we said which public key we would 
-		 * accept pushes from.
-		 */
+		// We need to append the public key used for signing this JWT object, so 
+		// the server can validate the JWT and compare the public key against the 
+		// push-registration by the client, where we said which public key we would 
+		// accept pushes from.
+		//
 		$headers = [
 			"Authorization: vapid t=$jwt,k=$pubkey",
 			"Content-length: 0",
 			"Ttl: 86400",
 		];
 
-		/**
-		 * Push!
-		 */
+		// push
 		$ch = curl_init( $endpoint );
 		curl_setopt( $ch, CURLOPT_HTTPHEADER, $headers );
 		curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
@@ -173,7 +163,7 @@ if( $o->Load() )
 		curl_close( $ch );
 		$Logger->log( $ct );
 		
-		
+		*/
 		/*$Logger->log( '[dbIO] VAPID loaded!' );
 		
 		$endpoint = $o->Data;
@@ -240,6 +230,7 @@ if( $o->Load() )
 		curl_close( $ch );
 		$Logger->log( '[dbIO] From end point, ' . $response );
 		return;*/
+		
 	}
 }
 
