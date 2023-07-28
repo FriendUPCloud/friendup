@@ -34,6 +34,10 @@ Application.receiveMessage = function( msg )
 {
     if( msg.sender )
     {
+    	if( document.hidden || !document.body.classList.contains( 'activated' ) )
+    	{
+    		Application.playSound( '/themes/friendup13/sound/new_message.wav' );
+    	}
         let overview = FUI.getElementByUniqueId( 'convos' );
         if( msg.type && msg.type == 'chatroom' && msg.uniqueId )
         {
