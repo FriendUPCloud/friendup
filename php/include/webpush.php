@@ -1,6 +1,6 @@
 <?php
 
-global $Logger;
+global $Logger, $Config;
 
 $o = new dbIO( 'FSetting' );
 $o->Type = 'WebPush';
@@ -16,8 +16,144 @@ if( $o->Load() )
 	$vapid->Key = 'VAPID-Keys';
 	if( $vapid->Load() )
 	{
+		/*
+		 * If you get any part of this process wrong, Google gives the really helpful error message "invalid JWT provided".
+		 * 
+		 * Mozilla (Firefox) gives a slightly just-as-useful error:
+		 * {
+		 *   "code": 401, "errno": 109, "error": "Unauthorized",
+		 *   "more_info": "http://autopush.readthedocs.io/en/latest/http.html#error-codes",
+		 *   "message": "Request did not validate Invalid Authorization Header"
+		 * }
+		 */
+
+		// Generate the keys like this, although you can probably do it in PHP.
+		// `openssl ecparam -genkey -name prime256v1 -noout -out server-push-ecdh-p256.pem &>/dev/null`;
+		// `openssl ec -in server-push-ecdh-p256.pem -pubout -out server-push-ecdh-p256.pub &>/dev/null`;
+
+		$endpoint = $o->Data;
+		$cryptoKeys = json_decode( $vapid->Data );
+		$contact = 'mailto:info@friendos.com';		
+		$privk = $cryptoKeys->private_key;
+		$pubk = $cryptoKeys->public_key;
+
+		function base64web_encode( $a )
+		{
+			return str_replace( [ '+', '/', '=' ], [ '-', '_', '' ], base64_encode( $a ) );
+		}
+		function base64web_decode( $a )
+		{
+			return base64_decode( str_replace( [ '-', '_', '' ], [ '+', '/', '=' ], $a ) );
+		}
+		function decodeASN1BER( $data )
+		{
+			$typeByte = ord( $data[ 0 ] );
+			$lengthByte = ord( $data[ 1 ] );
+			$valueOffset = 2;
+
+			// Determine the length of the value based on the lengthByte
+			if( $lengthByte & 0x80 )
+			{
+				$lengthBytes = $lengthByte & 0x7F;
+				$valueLengthHex = substr($data, $valueOffset, $lengthBytes * 2);
+				$valueOffset += $lengthBytes * 2;
+				$valueLength = hexdec($valueLengthHex);
+			} 
+			else
+			{
+				$valueLength = $lengthByte;
+			}
+
+			$valueData = substr( $data, $valueOffset, $valueLength * 2 );
+			$value = 0;
+
+			// Convert the raw binary data back to an integer
+			for( $i = 0; $i < $valueLength; $i++ )
+			{
+				$value = ( $value << 8 ) | hexdec( $valueData[ $i * 2 ] . $valueData[ $i * 2 + 1 ] );
+			}
+			return $value;
+		}
+
+		$header = [
+			"typ" => "JWT",
+			"alg" => "ES256"
+		];
+		$claims = [
+			// just the https://hostname part
+			"aud" => substr($endpoint, 0, strpos($endpoint, '/', 10)),
+			// this push message will be discarded after 24 hours of non-delivery
+			"exp" => time() + 86400,
+			// who the server can talk to if our push script is causing problems
+			"sub" => $contact
+		];
+
+		$strHeader = base64web_encode( json_encode( $header ) );
+		$strPayload = base64web_encode( json_encode( $claims ) );
+
+		$toSign = $strHeader . '.' . $strPayload;
+
+		$signature = '';
+		if( !openssl_sign( $toSign, $signature, $privk, OPENSSL_ALGO_SHA256 ) )
+		{
+			trigger_error( 'sign failed: '. openssl_error_string() );
+		}
+
+		$xx = decodeBER( $signature );
+		/** @var \phpseclib\Math\BigInteger $a */
+		/** @var \phpseclib\Math\BigInteger $b */
+		$a = $xx[ 0 ][ 'content' ][ 0 ][ 'content' ]; // 128-bits
+		$b = $xx[ 0 ][ 'content' ][ 1 ][ 'content' ]; // 128-bits
+		$signature = $a->toBytes() . $b->toBytes();
+		$strSignature = base64web_encode( $signature );
+
+		/*
+		 * This is now a complete JWT object.
+		 */
+		$jwt = $strHeader . '.' . $strPayload . '.' . $strSignature;
+
+		/*
+		 * Our PEM formatted public key is wrapped in an ASN.1 structure, so just 
+		 * like our signature above, lets extract
+		 * the raw public key part, which is the bit we need.
+		 */
+		$xx = $pubk;
+		$xx = str_replace( ['-----BEGIN PUBLIC KEY-----', '-----END PUBLIC KEY-----', "\n" ], '', $xx );
+		$xx = base64_decode( $xx );
+		$xx = $asn->decodeBER( $xx );
+		$xx = $xx[ 0 ][ 'content' ][ 1 ][ 'content' ];
+		$xx = substr( $xx, 1 ); // need to strip the first char, which is not part of the key
+		$xx = base64web_encode( $xx );
+		$pubkey = $xx;
+
+		/*
+		 * We need to append the public key used for signing this JWT object, so 
+		 * the server can validate the JWT and compare the public key against the 
+		 * push-registration by the client, where we said which public key we would 
+		 * accept pushes from.
+		 */
+		$headers = [
+			"Authorization: vapid t=$jwt,k=$pubkey",
+			"Content-length: 0",
+			"Ttl: 86400",
+		];
+
+		/**
+		 * Push!
+		 */
+		$ch = curl_init( $endpoint );
+		curl_setopt( $ch, CURLOPT_HTTPHEADER, $headers );
+		curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
+		curl_setopt( $ch, CURLOPT_FAILONERROR, true );
+		curl_setopt( $ch, CURLOPT_POST, 1 );
+		curl_exec( $ch );
+		$ct = curl_multi_getcontent( $ch );
+		$Logger->log( curl_error( $ch ) );
+		curl_close( $ch );
+		$Logger->log( echo $ct );
 		
-		$Logger->log( '[dbIO] VAPID loaded!' );
+		
+		/*$Logger->log( '[dbIO] VAPID loaded!' );
 		
 		$endpoint = $o->Data;
 		
@@ -82,7 +218,7 @@ if( $o->Load() )
 		$response = curl_exec( $ch );
 		curl_close( $ch );
 		$Logger->log( '[dbIO] From end point, ' . $response );
-		return;
+		return;*/
 	}
 }
 
