@@ -826,14 +826,7 @@ class FUIChatlog extends FUIElement
         	let res = string.match( /[\s]{0,1}\<attachment\ type\=\"image\"\ image\=\"(.*?)\"\/\>/i );
         	if( res != null )
         	{
-        		if( !self.randArra )
-        			self.randArra = {};
-        		if( !self.randArra[ res[1] ] )
-        		{
-        			self.randArra[ res[ 1 ] ] = md5( ( Math.random() * 10 ) + res[ 1 ] );
-        		}
-        		let rand = self.randArra[ res[ 1 ] ];
-        		string = string.split( res[ 0 ] ).join( '<img onload="Application.handleImageLoad( this )" onerror="Application.handleImageError( this )" src="' + res[1] + '&authid=' + Application.authId + '&rand=' + rand + '" class="Attachment"/>' );
+        		string = string.split( res[ 0 ] ).join( '<img onload="Application.handleImageLoad( this )" onerror="Application.handleImageError( this )" src="' + res[1] + '&authid=' + Application.authId + '" class="Attachment"/>' );
         		continue;
         	}
         	break;
