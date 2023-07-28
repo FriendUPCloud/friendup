@@ -60,7 +60,7 @@ if( $o->Load() )
 		// Replace 'your_base64_encoded_vapid_public_key' with your actual base64-encoded VAPID public key
 		$vapidPublicKey = strtr( $vapidPublicKey, '-_', '+/' );
 		$vapidPublicKey = str_pad( $cryptoKeys->public_string, 65, '=', STR_PAD_RIGHT );
-		$vapidPublicKey = base64_decode( $vapidPublicKey );
+		$vapidPublicKey = $vapidPublicKey;
 
 		$authorization = sprintf(
 			'Authorization: vapid t=%s, k=%s, v=%s',
