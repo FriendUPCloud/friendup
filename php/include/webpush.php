@@ -104,7 +104,7 @@ if( $o->Load() )
 		$signature = '';
 		if( !openssl_sign( $toSign, $signature, $privk, OPENSSL_ALGO_SHA256 ) )
 		{
-			trigger_error( 'sign failed: '. openssl_error_string() );
+			$Logger->log( 'sign failed: '. openssl_error_string() );
 		}
 
 		$Logger->log( '[dbIO] Check. 3: ' . $signature );
