@@ -119,11 +119,9 @@ if( $o->Load() )
 		
 		$Logger->log( '[dbIO] Check. 3.5' . print_r( $xx ) );
 		
-		/** @var \phpseclib\Math\BigInteger $a */
-		/** @var \phpseclib\Math\BigInteger $b */
 		$a = $xx[ 0 ][ 'content' ][ 0 ][ 'content' ]; // 128-bits
 		$b = $xx[ 0 ][ 'content' ][ 1 ][ 'content' ]; // 128-bits
-		$signature = $a->toBytes() . $b->toBytes();
+		$signature = toBytes( $a ) . toBytes( $b );
 		$strSignature = base64web_encode( $signature );
 
 		$Logger->log( '[dbIO] Check. 4' );
