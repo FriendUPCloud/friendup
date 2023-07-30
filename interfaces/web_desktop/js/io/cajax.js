@@ -325,8 +325,13 @@ cAjax = function()
 			jax.destroy();
 		}
 		// Something went wrong!
-		else if( this.readyState == 4 && ( this.status == 500 || this.status == 0 || this.status == 404 ) )
+		else if( this.readyState == 4 && ( this.status == 503 || this.status == 502 || this.status == 500 || this.status == 0 || this.status == 404 ) )
 		{
+			if( this.status == 502 || this.status == 503  )
+			{
+				Friend.User.ReLogin();
+			}
+			console.log( this.status + ' error' );
 		    // If we have available slots, but we have other ajax calls in pipe, execute them
 		    if( _cajax_http_connections < _cajax_http_max_connections )
 		    {
