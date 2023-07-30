@@ -331,7 +331,6 @@ cAjax = function()
 			{
 				Friend.User.ReLogin();
 			}
-			console.log( this.status + ' error' );
 		    // If we have available slots, but we have other ajax calls in pipe, execute them
 		    if( _cajax_http_connections < _cajax_http_max_connections )
 		    {
