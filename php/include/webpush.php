@@ -18,6 +18,10 @@ if( $o->Load() )
 	{
 		return;
 		
+		// New strategy of using openssl and curl directly
+		/*openssl s_client -connect "${APNS_HOST_NAME}":443 -cert "${CERTIFICATE_FILE_NAME}" -certform DER -key "${CERTIFICATE_KEY_FILE_NAME}" -keyform PEM
+		curl -v --header "apns-topic: ${TOPIC}" --header "apns-push-type: alert" --cert "${CERTIFICATE_FILE_NAME}" --cert-type DER --key "${CERTIFICATE_KEY_FILE_NAME}" --key-type PEM --data '{"aps":{"alert":"test"}}' --http2  https://${APNS_HOST_NAME}/3/device/${DEVICE_TOKEN}*/
+
 		/*// Generate the keys like this, although you can probably do it in PHP.
 		// `openssl ecparam -genkey -name prime256v1 -noout -out server-push-ecdh-p256.pem &>/dev/null`;
 		// `openssl ec -in server-push-ecdh-p256.pem -pubout -out server-push-ecdh-p256.pub &>/dev/null`;
@@ -164,7 +168,8 @@ if( $o->Load() )
 		$Logger->log( $ct );
 		
 		*/
-		/*$Logger->log( '[dbIO] VAPID loaded!' );
+		
+		$Logger->log( '[dbIO] VAPID loaded!' );
 		
 		$endpoint = $o->Data;
 		
@@ -203,8 +208,11 @@ if( $o->Load() )
 		$tokenToSign = $jwtHeaderEncoded . '.' . $jwtClaimEncoded;
 
 		$signature = '';
-		openssl_sign( $tokenToSign, $signature, $cryptoKeys->private_key, OPENSSL_ALGO_SHA256 );
+		openssl_sign( $tokenToSign, $signature, $cryptoKeys->private_string, OPENSSL_ALGO_SHA256 );
 		$jwtSignatureEncoded = base64_encode( $signature );
+		
+		
+		$Logger->log( 'Here is the encoded string: ' . $signature, $jwtSignatureEncoded );
 
 		// Replace 'your_base64_encoded_vapid_public_key' with your actual base64-encoded VAPID public key
 		$vapidPublicKey = strtr( $vapidPublicKey, '-_', '+/' );
@@ -229,7 +237,7 @@ if( $o->Load() )
 		$response = curl_exec( $ch );
 		curl_close( $ch );
 		$Logger->log( '[dbIO] From end point, ' . $response );
-		return;*/
+		return;
 		
 	}
 }
