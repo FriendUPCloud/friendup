@@ -1661,7 +1661,7 @@ int SocketReadBlockedNOSSL( Socket* sock, char* data, unsigned int length, unsig
 	fds.fd = sock->fd;
 	fds.events = POLLIN;
 
-	int err = poll( &fds, 1, 10000 );
+	int err = poll( &fds, 1, 500 );
 	if( err <= 0 )
 	{
 		DEBUG("[SocketReadBlockedNOSSL] Timeout or there is no data in socket\n");
