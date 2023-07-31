@@ -479,21 +479,8 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 			self.type += '_websocket';
 		this.url = url;
 		this.hasReturnCode = hasReturnCode;
-		//console.log( 'WebSocket call: ' + url );
 		return true;
 	}
-	/*// HTTP call, sanitize
-	else
-	{
-		// Repair websocket
-		// TODO: Remove completely after real fix found
-		if( window.Workspace && Workspace.conn && Workspace.conn.ws && !Workspace.conn.ws.ws )
-		{
-			console.log( 'Repairing websocket.' );
-			Workspace.initWebSocket();
-		}
-		//console.log( 'HTTP call: ' + url );
-	}*/
 	
 	// If we are running this on friendup recreate url to support old method
 	if ( typeof AjaxUrl == 'function' )
@@ -532,7 +519,7 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 			if( window.Workspace )
 				self.addVar( 'sessionid', Workspace.sessionId );
 			let u = self.url;
-			if( u.substr( 0, 1 ) == '/' )
+			if( u[0] == '/' )
 			{
 				let urlbase = _cajax_origin;
 				u = urlbase + u;
@@ -982,13 +969,11 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 				if( window.Workspace && t.response.toLowerCase() == 'user session not found' )
 				{ 
 					Workspace.flushSession();
-					console.log( 'KILLED WHO!?' );
 				}
 				if( Workspace )
 				{
 					// Add to queue
 					AddToCajaxQueue( self );
-					console.log( 'KILLED WHO, YOU!?' );
 					return Friend.User.CheckServerConnection();
 				}
 			}
