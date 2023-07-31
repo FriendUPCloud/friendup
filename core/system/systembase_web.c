@@ -79,7 +79,7 @@ extern int UserDeviceMount( SystemBase *l, UserSession *us, int force, FBOOL unm
 
 
 /**
- * Get all parameters from Http request and conver them to string
+ * Get all parameters from Http request and convert them to string
  *
  * @param request Http request
  * @param loggedSession pointer to logged user session
