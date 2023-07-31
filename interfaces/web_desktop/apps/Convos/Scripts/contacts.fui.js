@@ -264,8 +264,26 @@ class FUIContacts extends FUIElement
 	    }
        		
         d.innerHTML = '<span class="Avatar"></span><span class="Name">' + text + '</span>';
-        d.onclick = function()
+        d.addEventListener( 'contextmenu', function( e )
         {
+        	console.log( 'Fop' );
+    		ShowContextMenu( 'Hello', [ { name: 'Quit', command: 'quit' }, { name: 'Laks', command: 'laks' } ] );
+    		cancelBubble( e );
+        } );
+        /*d.addEventListener( 'mousedown', function( e )
+        {
+        	console.log( e.button );
+        	if( e && e.button == 2 )
+        	{
+        		
+        		e.stopPropagation();
+        		cancelBubble( e );
+        		return;
+        	}
+        } );*/
+        d.onclick = function( e )
+        {
+        	
             self.setChatView( this.record );
             this.classList.remove( 'NewActivity' );
             self.hideUsers();

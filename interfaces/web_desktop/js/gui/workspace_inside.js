@@ -8701,6 +8701,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		// Item uses system default
 		if( tr != null && tr.defaultContextMenu ) 
 		{
+
 			return false;
 		}
 		
@@ -8933,7 +8934,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				head.innerHTML = i18n( 'menu_icons' );
 			}
 			menuout.appendChild( head );
-
 			
 			// Check current file
 			if( window.currentMovable && currentMovable.content && currentMovable.content.icons )
@@ -9127,6 +9127,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				p.innerHTML = menu[z].name;
 				menuout.appendChild( p );
 			}
+			
 			if ( extra?.viewId )
 			{
 				v.dom.tabIndex = -1
