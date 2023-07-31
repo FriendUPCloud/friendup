@@ -1291,14 +1291,14 @@ void *FriendCoreProcessSockBlock( void *fcv )
 	lfds.fd = th->sock->fd;// STDIN_FILENO;
 	lfds.events = POLLIN;
 
-	int err = poll( &lfds, 1, 10000 );
-	if( err == 0 )
+	int err = poll( &lfds, 1, 500 );
+	if( err <= 0 )
 	{
-		FERROR("[FriendCoreProcessSockBlock] want read TIMEOUT....\n");
-		goto close_fcp;
-	}
-	else
-	{
+		if( err == 0 )
+		{
+			FERROR("[FriendCoreProcessSockBlock] want read TIMEOUT....\n");
+			goto close_fcp;
+		}
 		FERROR("[FriendCoreProcessSockBlock] other....\n");
 		goto close_fcp;
 	}
