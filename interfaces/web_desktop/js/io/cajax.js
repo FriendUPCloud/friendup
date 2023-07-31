@@ -333,7 +333,7 @@ cAjax = function()
 		{
 			if( this.status == 502 || this.status == 503  )
 			{
-				// Too many successive incidents
+				// Too many successive incidents, could be session id is invalid
 				if( typeof( Friend.User ) != 'undefined' )
 				{
 					if( Friend.User.ConnectionIncidents++ > 3 )
