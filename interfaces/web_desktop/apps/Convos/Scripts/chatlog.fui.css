@@ -51,6 +51,12 @@
 	background-color: var(--fui-background-foreground);
 }
 
+
+body[mobile] .FUIChatlog .Messages
+{
+	min-width: 100vw;
+}
+
 .FUIChatlog .Input
 {
 	position: absolute;
