@@ -295,17 +295,6 @@ class File
 		}
 		
 		// Find data
-		$extension = explode( '.', $this->Filename );
-		$extension = array_pop( $extension );
-		$extension = strtolower( $extension );
-		$ty = 'application/octet-stream';
-		switch( $extension )
-		{
-			case 'png': $ty = 'image/png'; break;
-			case 'gif': $ty = 'image/gif'; break;
-			case 'jpeg':
-			case 'jpg': $ty = 'image/jpeg'; break;
-		}
 		$data = imagecreatefromstring( $this->_content );
 		
 		// Do resize

@@ -320,7 +320,7 @@ if( isset( $args->args ) )
 										die( $f->_content );
 									}
 								}
-								die( 'fail' );
+								die( 'fail<!--separate-->' );
 							}
 						}
 					}
