@@ -291,7 +291,10 @@ if( isset( $args->args ) )
 							if( $u->Load( $o->OwnerUserID ) )
 							{
 								$f = new File( $o->Data );
+								$flags = new stdClass();
+								$flags->width = 1024; $flags->height = 1024;
 								$f->SetAuthContext( 'servertoken', $u->ServerToken );
+								$f->SetPostProcessor( 'thumbnail', $flags );
 								if( $f->Load( $o->Data ) )
 								{
 									$part = explode( '.', $o->Data );
@@ -317,6 +320,7 @@ if( isset( $args->args ) )
 										die( $f->_content );
 									}
 								}
+								die( 'fail' );
 							}
 						}
 					}
