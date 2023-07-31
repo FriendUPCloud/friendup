@@ -44,7 +44,15 @@ function AddToCajaxQueue( ele )
 	}
 	
 	// Too many in the queue!
-	if( ( Friend.cajax.dos.queue.length + Friend.cajax.normal.queue.length + Friend.cajax.thumbnail.queue.length ) > 20 )
+	let types = [ 'dos', 'normal', 'thumbnail' ];
+	let queueCount = 0;
+	for( let a = 0; a < types.length; a++ )
+	{
+		let t = Friend.cajax[ types[a] ];
+		if( t != undefined && t.queue )
+			queueCount += t.queue.length;
+	}
+	if( queueCount > 20 )
 	{
 		Friend.User.ReLogin();
 	}
