@@ -343,8 +343,7 @@ class File
 		ob_start();
 		imagejpeg( $image2, null, 80 );
 		$im = ob_get_contents();
-		$u->SetContent( $im );
-		if( $u->Save() )
+		if( $u->Save( $im ) )
 		{
 			$this->_thumbnailObject = $u;
 			return $im;
