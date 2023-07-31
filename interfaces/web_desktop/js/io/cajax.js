@@ -170,13 +170,8 @@ cAjax = function()
 	this.mode = 'ajax';
 	this.varcount = 0;
 
-	// TODO: Enable for later	
-	//this.worker = new Worker( '/webclient/js/io/cajax_worker.js' );
-	
-	// Get correct AJAX base object
-	if ( typeof( ActiveXObject ) != 'undefined' )
-		this.proxy = new ActiveXObject( 'Microsoft.XMLHTTP' );
-	else this.proxy = new XMLHttpRequest();
+	// Get AJAX base object
+	this.proxy = new XMLHttpRequest();
 	
 	this.proxy.timeout = 8000;
 	
@@ -184,8 +179,11 @@ cAjax = function()
 	let jax = this;
 	this.proxy.onreadystatechange = function()
 	{
+		// Do nothing unless state is 4
+		if( this.readyState != 4 ) return;
+		
 		// We're finished handshaking
-		if( this.readyState == 4 && this.status == 200  )
+		if( this.status == 200 )
 		{
 			// Reset incidents counter
 			if( typeof( Friend.User ) != 'undefined' )
@@ -239,9 +237,10 @@ cAjax = function()
 						let t = JSON.parse( jax.rawData );
 						// Deprecate from 1.0 beta 2 "no user!"
 						let res = t ? t.response.toLowerCase() : '';
-						if( t && ( res == 'user not found' || res.toLowerCase() == 'user session not found' ) )
+						let lres = res.toLowerCase();
+						if( t && ( lres == 'user not found' || lres == 'user session not found' ) )
 						{
-							if( window.Workspace && res.toLowerCase() == 'user session not found' ) 
+							if( window.Workspace && lres == 'user session not found' ) 
 								Workspace.flushSession();
 							if( window.Workspace )
 							{
@@ -275,10 +274,11 @@ cAjax = function()
 						let r = JSON.parse( jax.returnData );
 						
 						let res = r ? r.response.toLowerCase() : '';
+						let lres = res.toLowerCase();
 						
-						if( res == 'user not found' || res.toLowerCase() == 'user session not found' )
+						if( lres == 'user not found' || lres == 'user session not found' )
 						{
-							if( window.Workspace && res.toLowerCase() == 'user session not found' ) 
+							if( window.Workspace && lres == 'user session not found' ) 
 								Workspace.flushSession();
 							
 							if( window.Workspace && Workspace.postInitialized && Workspace.sessionId )
@@ -329,7 +329,7 @@ cAjax = function()
 			jax.destroy();
 		}
 		// Something went wrong!
-		else if( this.readyState == 4 && ( this.status == 503 || this.status == 502 || this.status == 500 || this.status == 0 || this.status == 404 ) )
+		else if( this.status == 503 || this.status == 502 || this.status == 500 || this.status == 0 || this.status == 404 )
 		{
 			if( this.status == 502 || this.status == 503  )
 			{
@@ -354,9 +354,6 @@ cAjax = function()
 				jax.onload( 'error', '' );
 			}
 			jax.destroy();
-		}
-		else
-		{
 		}
 	}
 }
