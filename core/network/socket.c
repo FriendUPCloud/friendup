@@ -826,8 +826,8 @@ Socket* SocketConnectHost( void *sb, FBOOL ssl, char *host, unsigned short port,
 						break;
 					case SSL_ERROR_WANT_READ:
 					{
-						char buf[ 256 ];
-						recv( sock->fd, buf, 256, MSG_DONTWAIT );
+						char bufy[ 256 ];
+						recv( sock->fd, bufy, 256, MSG_DONTWAIT );
 						sleep( 1 );
 						errTime++;
 						if( errTime > 10 )
@@ -1412,6 +1412,7 @@ int SocketReadNOSSL( Socket* sock, char* data, unsigned int length, unsigned int
 		{ 
 			read += res;
 			retries = 0;
+			// TODO: What is this
 			//if( read >= length )
 			{
 				DEBUG( "[SocketReadNOSSL] Done reading %d/%d\n", read, length );
