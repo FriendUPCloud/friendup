@@ -188,7 +188,8 @@ cAjax = function()
 		if( this.readyState == 4 && this.status == 200  )
 		{
 			// Reset incidents counter
-			Friend.User.ConnectionIncidents = 0;
+			if( typeof( Friend.User ) != 'undefined' )
+				Friend.User.ConnectionIncidents = 0;
 				
 			if( this.responseType == 'arraybuffer' )
 			{
@@ -333,10 +334,13 @@ cAjax = function()
 			if( this.status == 502 || this.status == 503  )
 			{
 				// Too many successive incidents
-				if( Friend.User.ConnectionIncidents++ > 3 )
+				if( typeof( Friend.User ) != 'undefined' )
 				{
-					Friend.User.ConnectionIncidents = 0;
-					Friend.User.ReLogin();
+					if( Friend.User.ConnectionIncidents++ > 3 )
+					{
+						Friend.User.ConnectionIncidents = 0;
+						Friend.User.ReLogin();
+					}
 				}
 			}
 		    // If we have available slots, but we have other ajax calls in pipe, execute them
