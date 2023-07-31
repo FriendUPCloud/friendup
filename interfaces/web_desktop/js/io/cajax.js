@@ -44,11 +44,10 @@ function AddToCajaxQueue( ele )
 	}
 	
 	// Too many in the queue!
-	let types = [ 'dos', 'normal', 'thumbnail' ];
 	let queueCount = 0;
-	for( let a = 0; a < types.length; a++ )
+	for( let a = 0; a < Friend.cajaxTypes.length; a++ )
 	{
-		let t = Friend.cajax[ types[a] ];
+		let t = Friend.cajax[ Friend.cajaxTypes[a] ];
 		if( t != undefined && t.queue )
 			queueCount += t.queue.length;
 	}
