@@ -186,7 +186,10 @@ cAjax = function()
 	{
 		// We're finished handshaking
 		if( this.readyState == 4 && this.status == 200  )
-		{	
+		{
+			// Reset incidents counter
+			Friend.User.ConnectionIncidents = 0;
+				
 			if( this.responseType == 'arraybuffer' )
 			{
 				jax.rawData = this.response;
@@ -329,7 +332,12 @@ cAjax = function()
 		{
 			if( this.status == 502 || this.status == 503  )
 			{
-				Friend.User.ReLogin();
+				// Too many successive incidents
+				if( Friend.User.ConnectionIncidents++ > 3 )
+				{
+					Friend.User.ConnectionIncidents = 0;
+					Friend.User.ReLogin();
+				}
 			}
 		    // If we have available slots, but we have other ajax calls in pipe, execute them
 		    if( _cajax_http_connections < _cajax_http_max_connections )
