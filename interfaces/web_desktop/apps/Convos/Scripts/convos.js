@@ -261,6 +261,9 @@ Application.holdConnection = function( flags )
 	let now = Math.floor( new Date().getTime() / 1000 );
 	
 	let m = new XMLHttpRequest();
+	
+	let uqkey = flags.roomType + ':' + flags.cid;
+	
 	m.open( 'POST', '/system.library/module/?module=system&command=convos&authid=' + Application.authId + '&args=' + JSON.stringify( args ), true );
 	m.onload = function( data )
 	{
@@ -348,6 +351,9 @@ Application.holdConnection = function( flags )
 		                let mess = FUI.getElementByUniqueId( 'messages' );
 		                if( mess )
 		                {
+		                	// Wrong room!
+				            if( mess.options.type + ':' + mess.options.cid != uqkey )
+				            	return;
 				            mess.addMessages( js.messages );
 				            if( mess.clearQueue ) mess.clearQueue();
 			            }
