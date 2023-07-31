@@ -874,7 +874,8 @@ class FUIChatlog extends FUIElement
         	let res = string.match( /[\s]{0,1}\<attachment\ type\=\"image\"\ image\=\"(.*?)\"\/\>/i );
         	if( res != null )
         	{
-        		string = string.split( res[ 0 ] ).join( '<img onload="Application.handleImageLoad( this )" onerror="Application.handleImageError( this )" src="' + res[1] + '&authid=' + Application.authId + '" class="Attachment"/>' );
+        		let od = res[1].split( 'getattachment' ).join( 'getoriginal' ) + '&authid=' + Application.authId;
+        		string = string.split( res[ 0 ] ).join( '<div class="AttachmentElement" contenteditable="false"><a class="Download" target="_blank" href="' + od + '"></a><img onload="Application.handleImageLoad( this )" onerror="Application.handleImageError( this )" src="' + res[1] + '&authid=' + Application.authId + '" class="Attachment"/></div>' );
         		continue;
         	}
         	break;

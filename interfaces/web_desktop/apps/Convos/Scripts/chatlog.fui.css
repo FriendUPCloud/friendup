@@ -270,7 +270,7 @@ body:not([mobile]) .FUIChatlog .Input .MobileMen:hover,
 	line-height: 22px;
 }
 
-.Text:has(.Attachment) 
+.Text:has(.AttachmentElement) 
 {
     padding: 0 0 15px 0;
 }
@@ -385,6 +385,35 @@ body:not([mobile]) .FUIChatlog .Input .MobileMen:hover,
 {
 	background-color: var(--fui-palette-chan01-dimmer);
     color: var(--fui-color);
+}
+
+.FUIChatlog .Message .AttachmentElement
+{
+	position: relative;
+}
+
+.FUIChatlog .Message .AttachmentElement > a
+{
+	position: absolute;
+    right: 20px;
+    bottom: 20px;
+    width: 25px;
+    text-align: center;
+    height: 25px;
+    line-height: 25px;
+    border-radius: 100%;
+    background-color: var(--BackgroundHeaviest);
+    transition: background-color 0.12s;
+}
+.FUIChatlog .Message .AttachmentElement > a:hover
+{
+	background-color: var(--fui-palette-chan02-dim);
+}
+.FUIChatlog .Message .AttachmentElement > a:before
+{
+	content: "\f0ed";
+	font-family: fontawesome;
+	color: white;
 }
 
 .FUIChatlog .Message img.Attachment 

@@ -267,8 +267,9 @@ if( isset( $args->args ) )
             }
             die( 'fail<!--separate-->{"response":0,"message":"Failed to retrieve messages."}' );
         }
+        // Get the original file OR
         // Get an attachment on ID
-        else if( $args->args->method == 'getattachment' )
+        else if( $args->args->method == 'getattachment' || $args->args->method == 'getoriginal' )
         {
         	// Check share
         	$o = new dbIO( 'FShared' );
@@ -291,10 +292,13 @@ if( isset( $args->args ) )
 							if( $u->Load( $o->OwnerUserID ) )
 							{
 								$f = new File( $o->Data );
-								$flags = new stdClass();
-								$flags->width = 1024; $flags->height = 1024;
 								$f->SetAuthContext( 'servertoken', $u->ServerToken );
-								$f->SetPostProcessor( 'thumbnail', $flags );
+								if( $args->args->method == 'getattachment' )
+								{
+									$flags = new stdClass();
+									$flags->width = 1024; $flags->height = 1024;
+									$f->SetPostProcessor( 'thumbnail', $flags );
+								}
 								if( $f->Load( $o->Data ) )
 								{
 									$part = explode( '.', $o->Data );
@@ -340,10 +344,13 @@ if( isset( $args->args ) )
 							if( $u->Load( $o->OwnerUserID ) )
 							{
 								$f = new File( $o->Data );
-								$flags = new stdClass();
-								$flags->width = 1024; $flags->height = 1024;
 								$f->SetAuthContext( 'servertoken', $u->ServerToken );
-								$f->SetPostProcessor( 'thumbnail', $flags );
+								if( $args->args->method == 'getattachment' )
+								{
+									$flags = new stdClass();
+									$flags->width = 1024; $flags->height = 1024;
+									$f->SetPostProcessor( 'thumbnail', $flags );
+								}
 								if( $f->Load( $o->Data ) )
 								{
 									$part = explode( '.', $o->Data );
@@ -375,9 +382,12 @@ if( isset( $args->args ) )
 					else if( $o->SharedType == 'jeanie' )
 					{
 						$f = new File( $o->Data );
-						$flags = new stdClass();
-						$flags->width = 1024; $flags->height = 1024;
-						$f->SetPostProcessor( 'thumbnail', $flags );
+						if( $args->args->method == 'getattachment' )
+						{
+							$flags = new stdClass();
+							$flags->width = 1024; $flags->height = 1024;
+							$f->SetPostProcessor( 'thumbnail', $flags );
+						}
 						if( $f->Load( $o->Data ) )
 						{
 							$part = explode( '.', $o->Data );
