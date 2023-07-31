@@ -1292,11 +1292,7 @@ void *FriendCoreProcessSockBlock( void *fcv )
 	lfds.events = POLLIN;
 
 	int err = poll( &lfds, 1, 250 );
-	if( err > 0 )
-	{
-		
-	}
-	else if( err == 0 )
+	if( err == 0 )
 	{
 		FERROR("[FriendCoreProcessSockBlock] want read TIMEOUT....\n");
 		goto close_fcp;
