@@ -43,6 +43,12 @@ function AddToCajaxQueue( ele )
 		Friend.cajaxTypes.push( ele.type );
 	}
 	
+	// Too many in the queue!
+	if( ( Friend.cajax.dos.queue.length + Friend.cajax.normal.queue.length + Friend.cajax.thumbnail.queue.length ) > 20 )
+	{
+		Friend.User.ReLogin();
+	}
+	
 	let queue = Friend.cajax[ ele.type ].queue;
 	
 	// If we're queueing it
@@ -173,7 +179,7 @@ cAjax = function()
 	// Get AJAX base object
 	this.proxy = new XMLHttpRequest();
 	
-	this.proxy.timeout = 8000;
+	this.proxy.timeout = 1000;
 	
 	// State call
 	let jax = this;
@@ -336,11 +342,7 @@ cAjax = function()
 				// Too many successive incidents, could be session id is invalid
 				if( typeof( Friend.User ) != 'undefined' )
 				{
-					if( Friend.User.ConnectionIncidents++ > 3 )
-					{
-						Friend.User.ConnectionIncidents = 0;
-						Friend.User.ReLogin();
-					}
+					Friend.User.ConnectionIncidents++;
 				}
 			}
 		    // If we have available slots, but we have other ajax calls in pipe, execute them
