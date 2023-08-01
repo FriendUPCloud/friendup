@@ -757,7 +757,8 @@ DirectoryView.prototype.initToolbar = function( winobj )
 							// This shouldn't happen!
 							else
 							{
-								d.innerHTML = '<p>Disk is broken.</p>';
+								if( d && d.parentNode )
+									d.innerHTML = '<p>Disk is broken.</p>';
 							}
 							se.refreshing = false;
 						}
