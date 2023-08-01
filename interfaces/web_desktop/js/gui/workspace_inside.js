@@ -132,6 +132,7 @@ let WorkspaceInside = {
 		if( iconFile )
 		{
 			ele.style.backgroundImage = 'url(\'' + iconFile + '\')';
+			ele.style.backgroundSize = 'contain';
 			ele.style.backgroundPosition = 'center';
 			ele.style.backgroundRepeat = 'no-repeat';
 		}
