@@ -302,8 +302,18 @@ class File
 		$osizey = imagesy( $data );
 		$csizex = $osizex;
 		$csizey = $osizey;
-		$destx = $this->_thumbnail->width;
-		$desty = $this->_thumbnail->height;
+		
+		if( $this->_thumbnail->width > $osizex || $this->_thumbnail->height > $osizey )
+		{
+			$destx = $this->_thumbnail->width;
+			$desty = $this->_thumbnail->height;
+		}
+		// Don't thumbnail if image is smaller than dest!
+		else
+		{
+			$this->_thumbnailObject = false;
+			return $this->GetContent();
+		}
 		
 		// Resize on X
 		if( $csizex > $destx )
