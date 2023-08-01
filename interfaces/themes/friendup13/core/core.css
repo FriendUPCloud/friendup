@@ -2980,9 +2980,9 @@ html body[viewlist=dockedlist] #Statusbar #Tray > div.Hidden
 {
 	background-position: center center;
 	background-repeat: no-repeat;
-	background-size: contain;
+	background-size: cover;
 	transition: filter 0.15s;
-	border-radius: 10px;
+	border-radius: 8px;
 	filter: drop-shadow(0 0 5px rgba(0,0,0,1));
 	border: 0;
 }

@@ -3692,7 +3692,6 @@ function PollDockedTaskbar()
 					
 						if( labelIcon ) viewRep.appendChild( labelIcon );
 						if( app ) viewRep.classList.add( app );
-						viewRep.style.backgroundSize = 'contain';
 						viewRep.state = 'visible';
 						viewRep.viewId = win;
 						viewRep.setAttribute( 'title', movableWindows[win].titleString );

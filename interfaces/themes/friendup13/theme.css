@@ -1200,9 +1200,7 @@ html .Desklet #DockWindowList
 
 .Desklet .Launcher
 {
-	background-size: 89% !important;
 	box-shadow: none;
-	filter: none !important;
 	transition: transform 0.15s;
 }
 
