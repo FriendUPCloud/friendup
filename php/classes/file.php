@@ -22,6 +22,7 @@ class File
 	// How to authenticate?
 	var $_authcontext = null; // authentication key (e.g. sessionid)
 	var $_authdata = null; // authentication data (e.g. a sessionid hash)
+	var $_postprocessor = false; // How to do post processing on file
 
 	function File( $path, $authcontext = false, $authdata = false )
 	{
@@ -142,6 +143,23 @@ class File
 		return false;
 	}
 	
+	// Do different things with file
+	function SetPostProcessor( $type, $flags )
+	{
+		$this->_postprocessor = $type;
+		if( $type == 'thumbnail' )
+		{
+			$this->_thumbnail = new stdClass();
+			if( !isset( $flags->width ) || !isset( $flags->height ) )
+				return false;
+			$this->_thumbnail->width = $flags->width;
+			$this->_thumbnail->height = $flags->height; 
+			$this->_thumbnail->type = isset( $flags->type ) ? $flags->type : 'aspect';
+			return true;
+		}
+		return false;
+	}
+	
 	function GetUrl( $path = false, $userInfo = false, $isinforequest = false  )
 	{
 		global $Config, $User, $Logger;
@@ -221,12 +239,125 @@ class File
 			}
 			$this->Filename = $ex;
 			
+			// Support doing stuff
+			if( isset( $this->_postprocessor ) )
+			{
+				if( $this->_postprocessor == 'thumbnail' )
+				{
+					// This is no file
+					if( substr( $r, 0, 5 ) == 'fail<' )
+						return false;
+					
+					$cnt = $this->GenerateThumbnail();
+					if( $cnt )
+					{
+						if( substr( $cnt, 0, 5 ) == 'fail<' )
+							return false;
+						$this->SetFromObject( $this->_thumbnailObject );
+						return true;
+					} 
+					return false;
+				}
+			}
 			return true;
 		}
 		else
 		{
 			$this->_content = '';
 			$this->_filesize = 0;
+		}
+		return false;
+	}
+	
+	function SetFromObject( $o )
+	{
+		foreach( $o as $k=>$v )
+		{
+			$this->$k = $v;
+		}
+	}
+	
+	// Generate a thumbnail of a file
+	function GenerateThumbnail()
+	{
+		global $Logger;
+		$ctx = $this->GetAuthContextComponent();
+		$ctx = explode( '=', $ctx );
+		
+		// Already exists?
+		$thumbFN = $this->path . '_thumb_' . $this->_thumbnail->width . 'x' . $this->_thumbnail->height .'.jpg';
+		$u = new File( $thumbFN );
+		$u->SetAuthContext( $ctx[0], $ctx[1] );
+		if( $u->Load( $thumbFN ) && isset( $u->_content ) && substr( $u->_content, 0, 5 ) != 'fail<' )
+		{
+			$Logger->log( '[GenerateThumbnail] This already exists..' );
+			$this->_thumbnailObject = $u;
+			return $u->GetContent();
+		}
+		
+		// Find data
+		$data = imagecreatefromstring( $this->_content );
+		
+		// Do resize
+		$osizex = imagesx( $data );
+		$osizey = imagesy( $data );
+		$csizex = $osizex;
+		$csizey = $osizey;
+		
+		// Original is smaller than thumbnail (fits in)
+		if( $osizex < $this->_thumbnail->width && $osizey < $this->_thumbnail->height )
+		{
+			$this->_thumbnailObject = false;
+			return $this->GetContent();
+		}
+		else
+		{
+			$destx = $this->_thumbnail->width;
+			$desty = $this->_thumbnail->height;
+		}
+		
+		// Resize on X
+		if( $csizex > $destx )
+		{
+			$csizex = $destx;
+			$csizey = $osizey / $osizex * $destx; // Resize height with new width
+			
+			// But now height is still larger than destination height
+			if( $csizey > $desty )
+			{
+				$csizey = $desty;
+				$csizex = $osizex / $osizey * $desty;
+			}
+		}
+		// On y
+		else
+		{
+			$csizey = $desty;
+			$csizex = $osizex / $osizey * $desty; // Resize width with new height
+			
+			// But now width is still larger than destination width
+			if( $csizex > $destx )
+			{
+				$csizex = $destx;
+				$csizey = $osizey / $osizex * $destx;
+			}
+		}
+		
+		// Create new image which will be resized
+		$image2 = imagecreatetruecolor( $csizex, $csizey );
+		imagecopyresized( $image2, $data, 0, 0, 0, 0, $csizex, $csizey, $osizex, $osizey );
+		
+		// Save this file
+		$u = new File( $thumbFN );
+		$u->SetAuthContext( $ctx[0], $ctx[1] );
+		
+		ob_start();
+		imagejpeg( $image2, null, 80 );
+		$im = ob_get_contents();
+		if( $u->Save( $im ) )
+		{
+			$this->_thumbnailObject = $u;
+			return $im;
 		}
 		return false;
 	}

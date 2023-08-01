@@ -1125,6 +1125,36 @@ SystemBase *SystemInit( FBOOL skipDBupdParam )
 	
 	Log( FLOG_INFO,  "[SystemBase] base initialized properly\n");
 	
+	//
+	// initialize some late stuff using module - find an admin and init!
+	//
+	
+	{
+		char query[ 1024 ];
+		char *response = NULL;
+		snprintf( query, sizeof(query), "SELECT u.ServerToken FROM `FUser` u, `FUserToGroup` fug, `FUserGroup` g, `FUserSession` s WHERE fug.UserGroupID = g.ID AND fug.UserID = u.ID AND g.Name=\"Admin\" AND g.Type = \"Level\" AND s.UserID = u.ID ORDER BY s.ID DESC LIMIT 1" );
+		
+		void *res = lsqllib->Query( lsqllib, query );
+		if( res != NULL )
+		{
+			char **row;
+			while( ( row = lsqllib->FetchRow( lsqllib, res ) ) ) 
+			{
+				// Id, Key, Value, Comment, date
+			
+				char *lrequest = FCalloc( 512, sizeof( char ) );
+				snprintf( lrequest, 512, "servertoken=%s&module=system&command=init", row[ 0 ] );
+				unsigned long resultLength = 0;
+				response = l->RunMod( l, "php", "modules/system/module.php", lrequest, &resultLength );
+				FFree( lrequest );
+				break;
+			}
+			lsqllib->FreeResult( lsqllib, res );
+		}
+		
+		if( response != NULL ) FFree( response );
+	}
+	
 	// we cannot open libs inside another init
 	FFree( tempString );
 

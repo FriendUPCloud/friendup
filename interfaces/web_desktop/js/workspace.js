@@ -115,14 +115,75 @@ Workspace = {
 	{
 		if( this.postInitialized ) return;
 		
+		// Init push notifications
 		if( 'serviceWorker' in navigator )
 		{
-			navigator.serviceWorker.register( '/webclient/js/io/service-worker.js' )
+			navigator.serviceWorker.register( '/service-worker.js' )
 			.then( registration => {
-				console.log( 'Service Worker registered successfully!', registration );
+				let m = new Module( 'system' );
+				m.onExecuted = function( ee, dd )
+				{
+					if( ee == 'ok' )
+					{
+						// Request permission for push notifications
+						Notification.requestPermission().then( permission => {
+							if( permission === 'granted' ) 
+							{
+								// User granted permission, now subscribe to push notifications
+								navigator.serviceWorker.ready
+									.then( serviceWorkerRegistration => {
+										function urlBase64ToUint8Array( base64String )
+										{
+											// TODO: Remove double encoding issue
+											// Fix string
+											const padding = '='.repeat( ( 4 - base64String.length % 4 ) % 4 );
+											const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+											const rawData = window.atob( base64 );
+											// It is double encoded
+											const padding2 = '='.repeat( ( 4 - rawData.length % 4 ) % 4 );
+											const base642 = (rawData + padding2).replace(/-/g, '+').replace(/_/g, '/');
+											const rawData2 = window.atob( base642 );
+											
+											const outputArray = new Uint8Array( rawData2.length );
+											for( let i = 0; i < rawData2.length; ++i )
+											{
+												outputArray[ i ] = rawData2.charCodeAt( i );
+											}
+											return outputArray;
+										}
+										serviceWorkerRegistration.pushManager.subscribe( {
+											userVisibleOnly: true,
+											applicationServerKey: urlBase64ToUint8Array( dd )
+										} ).then( pushSubscription => {
+											let m2 = new Module( 'system' );
+											m2.onExecuted = function( eee, ddd )
+											{
+												if( eee == 'ok' )
+												{
+													console.log( 'Web Push: System for web push initialized.' );
+													return;
+												}
+											}
+											m2.execute( 'webpush-subscribe', { endpoint: pushSubscription.endpoint } );
+										} ).catch( error => {
+											console.error( 'Error subscribing to push notifications:', error );
+										} );
+									} );
+							}
+							else
+							{
+								console.log( 'Web Push: Could not get push permissions.' );
+							}
+						} );
+						return;
+					}
+					console.log( 'Web Push: Failed to get VAPID key.' );
+				}
+				m.execute( 'getvapidkey' );
+				
 			} )
 			.catch( error => {
-				console.error( 'Service Worker registration failed:', error );
+				console.error( 'Web Push: Service Worker registration failed:', error );
 			} );
 		}
 		

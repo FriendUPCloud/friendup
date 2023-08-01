@@ -705,17 +705,29 @@ DirectoryView.prototype.initToolbar = function( winobj )
 					winobj.volumeBar = d;
 					d.refresh = function()
 					{
-						let self = this;
+						let se = this;
+						if( se.refreshing )
+						{
+							if( se.timeo ) clearTimeout( se.timeo );
+							se.timeo = setTimeout( function(){ d.refresh(); }, 250 );
+							return;
+						}
+						se.refreshing = true;
+						
 						let m = new Module( 'system' );
 						m.onExecuted = function( e, d )
 						{
+							se.refreshing = false;
+							if( !d || !d.parentNode )
+								return;
+								
 							let o = d;
 							if( typeof( o ) != 'object' )
 								o = d && d.indexOf( '{' ) >= 0 ? JSON.parse( d ) : {};
 							if( o && o.Filesize && o.Filesize > 0 )
 							{
 								let sizeBar = sizeGroove = sizeText = sizeLabel = false;
-								sizeGroove = self.querySelector( '.SizeGroove' );
+								sizeGroove = se.querySelector( '.SizeGroove' );
 								if( !sizeGroove )
 								{
 									sizeGroove = document.createElement( 'div' );
@@ -727,8 +739,8 @@ DirectoryView.prototype.initToolbar = function( winobj )
 									sizeLabel = document.createElement( 'span' );
 									sizeLabel.className = 'SizeLabel';
 									sizeLabel.innerHTML = i18n( 'i18n_disk_usage' ) + ':';
-									self.appendChild( sizeLabel );
-									self.appendChild( sizeGroove );
+									se.appendChild( sizeLabel );
+									se.appendChild( sizeGroove );
 									sizeGroove.appendChild( sizeBar );
 									sizeGroove.appendChild( sizeText );
 								}

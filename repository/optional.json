@@ -1,13 +1,5 @@
 [
   {
-    "title": "Web push notification support",
-    "description": "Enabled web push notification support module.",
-    "package_url": "https://github.com/web-push-libs/web-push-php/archive/refs/tags/v7.0.0.tar.gz",
-    "package": "webpush.tar.gz",
-    "unpack": "tar --one-top-level -xzvf webpush.tar.gz",
-    "install": "optional/webpush build/php/3rdparty/"
-  },
-  {
     "title": "SSH client support module",
     "description": "In order to use Prompts with SSH support, you need SSHy.",
     "package_url": "https://github.com/stuicey/SSHy/archive/refs/heads/master.zip",

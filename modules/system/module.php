@@ -231,6 +231,9 @@ if( isset( $args->command ) )
 {
 	switch( $args->command )
 	{
+		case 'init':
+			require( 'modules/system/include/init.php' );
+			break;
 		case 'help':
 			$commands = array(
 				'ping', 'theme', 'systempath', 'software', 'save_external_file', 'proxycheck', 'proxyget',
@@ -293,6 +296,44 @@ if( isset( $args->command ) )
 			}
 			die( 'fail<!--separate-->{"response":"ping failed"}'  );
 			break;
+		// Web push
+		case 'getvapidkey':
+			$s = new dbIO( 'FSetting' );
+			$s->UserID = 0;
+			$s->Type = 'System';
+			$s->Key = 'VAPID-Keys';
+			if( $s->Load() )
+			{
+				$keys = json_decode( $s->Data );
+				
+				// Get an encoded string
+				$rawContent = base64_decode( $pemContent );
+				$rawContent = $keys->public_string;
+				
+				// Make it URL-safe
+				$urlSafe = rtrim( strtr( base64_encode( $rawContent ), '+/', '-_' ), '=' );
+				
+				// Pack the bytes of the public key in the correct order
+				die( 'ok<!--separate-->' . $urlSafe );
+				die( 'ok<!--separate-->' . json_encode( array_values( $rawContent ) ) );
+			}
+			die( 'fail<!--separate-->{"message":"Could not load VAPID key.","response":-1} ');
+			break;
+		case 'webpush-subscribe':
+			$s = new dbIO( 'FSetting' );
+			$s->UserID = $User->ID;
+			$s->Type = 'WebPush';
+			$s->Key = $UserSession->SessionID;
+			$s->Load();
+			$s->Data = $args->args->endpoint;
+			$s->Save();
+			if( $s->ID > 1 )
+			{
+				die( 'ok<!--separate-->{"message":"Successfully registered endpoint.","response":1}' );
+			}
+			die( 'fail<!--separate-->{"message":"Registering endpoint failed.","response":-1}' );
+			break;
+		// End web push
 		// Create a thumbnail of any kind of file
 		case 'thumbnail':
 			require( 'modules/system/include/thumbnail.php' );

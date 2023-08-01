@@ -227,7 +227,11 @@ class FUIChatoverview extends FUIElement
     		}
     		else
     		{
-    			self.domChatlist.querySelector( '.Online' ).querySelector( '.Content' ).innerHTML = '<p>' + i18n( 'i18n_no_new_events' ) + '</p>';
+    			let onl = self.domChatlist.querySelector( '.Online' )
+    			if( onl )
+    			{
+    				onl.querySelector( '.Content' ).innerHTML = '<p>' + i18n( 'i18n_no_new_events' ) + '</p>';
+				}
     		}
     		self.handleResize();
     		
@@ -345,7 +349,7 @@ class FUIChatoverview extends FUIElement
     			md = JSON.parse( md );
     			for( let a = 0; a < md.length; a++ )
     			{
-    				self.domChannels.innerHTML += '<div class="Channel Group" uniqueid="chatroom" name="' + md[a].Name + '" id="' + md[a].UniqueID + '"></div>';
+    				self.domChannels.innerHTML += '<div class="Channel Group" uniqueid="chatroom" name="' + md[a].Name + '" id="' + md[a].UniqueID + '" own="' + md[a].Own + '"></div>';
     			}
     		}
     		
@@ -359,13 +363,13 @@ class FUIChatoverview extends FUIElement
 					setTimeout( function()
 					{ 
 						f.classList.add( 'Loaded' );
-					}, b * 105 );
+					}, ( b + 1 ) * 105 );
 				} )( chans[ a ], a );
 				( function( f, b, c ){
 					setTimeout( function()
 					{ 
 						f.classList.add( 'Loaded' );
-					}, c * 105 );
+					}, ( c + 1 ) * 105 );
 				} )( chans[ chans.length - a - 1 ], chans.length - a - 1, a );
 			}
 			for( let a = 0; a < chans.length; a++ )
@@ -382,7 +386,7 @@ class FUIChatoverview extends FUIElement
 					chans[ a ].hoverElement = h;
 					chans[ a ].onmouseover = function()
 					{
-						h.style.top = ( GetElementTop( this ) + 6 - document.querySelector( '.Channels' ).scrollTop ) + 'px';
+						h.style.top = ( GetElementTop( this ) - 4 - document.querySelector( '.Channels' ).scrollTop ) + 'px';
 						h.style.left = GetElementLeft( this ) + this.offsetWidth + 16 + 'px';
 						h.classList.add( 'Showing' );
 					}
@@ -481,16 +485,15 @@ class FUIChatoverview extends FUIElement
 					// It is already active
 				    if( tabs[ a ].classList.contains( 'Active' ) )
 				    {
-				    	console.log( 'Already active! Just refresh.' );
 				        let chat = FUI.getElementByUniqueId( 'messages' );
 				    	chat.refreshMessages();
 				        return;
 				    }
 				    // Activity in an inactive tab - add some info
-				    // TODO: Add a flash or bubble
 				    else
 				    {
-				    	// There will be notifications
+				    	// Play a sound when sending
+				    	Sounds.newMessage.play();
 				    }
 			    }
     		}
@@ -559,7 +562,8 @@ class FUIChatoverview extends FUIElement
 	    // Initialize a contacts element, with 
 	    else if( label == 'chatroom' )
 	    {
-	    	chlist.innerHTML = '<fui-contacts parentelement="convos" uniqueid="contacts" group="' + groupId + '" name="' + groupName + '"></fui-contacts>';
+	    	let own = tab.getAttribute( 'own' );
+	    	chlist.innerHTML = '<fui-contacts parentelement="convos" uniqueid="contacts" group="' + groupId + '" name="' + groupName + '" own="' + own + '"></fui-contacts>';
 	    }
 	    else
 	    {

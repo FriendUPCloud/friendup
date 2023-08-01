@@ -251,7 +251,12 @@ function SetWindowTitle( div, titleStr )
 		{
 			if( div.viewId == baseElement.tasks[ a ].viewId )
 			{
-				baseElement.tasks[a].dom.innerHTML = titleStr;
+				let t = baseElement.tasks[a].dom.querySelector( '.Taskname' );
+				if( t )
+				{
+					t.innerHTML = titleStr;
+				}
+				else baseElement.tasks[a].dom.innerHTML = titleStr;
 				break;
 			}
 		}

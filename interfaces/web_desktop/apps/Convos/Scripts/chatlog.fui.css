@@ -51,6 +51,12 @@
 	background-color: var(--fui-background-foreground);
 }
 
+
+body[mobile] .FUIChatlog .Messages
+{
+	min-width: 100vw;
+}
+
 .FUIChatlog .Input
 {
 	position: absolute;
@@ -65,10 +71,12 @@
 	display: flex;
 	padding: 15px 21px 15px 15px;
 	box-sizing: border-box;
-	overflow-x: hidden;
+	overflow-x: clip;
+	overflow-y: visible;
 }
 
-.FUIChatlog .Input > div
+.FUIChatlog .Input > div,
+.FUIChatlog .Input > .Tools > div
 {
     display: inline-block;
     vertical-align: top;
@@ -83,27 +91,47 @@
     transition: color,background-color 0.15s,0.15s;
 }
 
-.FUIChatlog .Input > div.Upload
+.FUIChatlog .Input > div.Tools 
+{
+    width: 150px;
+    display: flex;
+    justify-content: center;
+    box-sizing: border-box;
+    border-radius: 5px 0 0 5px;
+}
+
+.FUIChatlog .Input .Tools > div.Upload
 {
     border-radius: 5px 0 0 5px;
 }
 
-.FUIChatlog .Input > div.Upload,
-.FUIChatlog .Input > div.Search
+.FUIChatlog .Input .Tools > div.Upload,
+.FUIChatlog .Input .Tools > div.Search
 {
     border-right: 1px solid rgba(0,0,0,0.05);
 }
 
-.FUIChatlog .Input .Search::after
+.FUIChatlog .Input .Tools .Search::after
 {
     content: "\f002";
     font-family: fontawesome;
 }
 
-.FUIChatlog .Input .Upload::after
+.FUIChatlog .Input .Tools .Upload::after
 {
     content: "\f0c6";
     font-family: fontawesome;
+}
+
+.FUIChatlog .Input .Tools .MobileMen::after
+{
+    content: "\f142";
+    font-family: fontawesome;
+}
+
+.FUIChatlog .Input .Tools > .MobileMen
+{
+	display: none;
 }
 
 .FUIChatlog .Input .Send::after
@@ -112,7 +140,7 @@
     font-family: fontawesome;
 }
 
-.FUIChatlog .Input .Emote::after
+.FUIChatlog .Input .Tools .Emote::after
 {
     content: "\f004";
     font-family: fontawesome;
@@ -123,17 +151,67 @@
     border-radius: 0 5px 5px 0;
 }
 
-.FUIChatlog .Input .Send:hover,
-.FUIChatlog .Input .Emote:hover,
-.FUIChatlog .Input .Upload:hover,
-.FUIChatlog .Input .Search:hover,
+body:not([mobile]) .FUIChatlog .Input .Send:hover,
+body:not([mobile]) .FUIChatlog .Input .Emote:hover,
+body:not([mobile]) .FUIChatlog .Input .Upload:hover,
+body:not([mobile]) .FUIChatlog .Input .Search:hover,
+body:not([mobile]) .FUIChatlog .Input .MobileMen:hover,
 .FUIChatlog .Input .Send.Active,
 .FUIChatlog .Input .Emote.Active,
 .FUIChatlog .Input .Upload.Active,
-.FUIChatlog .Input .Search.Active
+.FUIChatlog .Input .Search.Active,
+.FUIChatlog .Input .MobileMen.Active
 {
     background-color: var(--fui-button-background-hover);
     color: var(--fui-button-color-hover);
+}
+
+@media (max-width: 640px)
+{
+	.FUIChatlog .Input > div.Tools 
+	{
+		width: 50px;
+		border-radius: 5px 0 0 5px;
+	}
+	.FUIChatlog .Input > div.Tools > div:not(.MobileMen) 
+	{
+		display: none;
+	}
+	.FUIChatlog .Input .Tools > .MobileMen
+	{
+		display: inline-block;
+		border-radius: 5px 0 0 5px;
+	}
+	
+	.FUIChatlog .Input > div.Tools > .MobileMen.Active + div 
+	{
+		display: block;
+		position: absolute;
+		top: -35px;
+		width: 51px;
+		left: 15px;
+		border-radius: 0;
+		border: 0px;
+		border-bottom: 1px solid rgba(0,0,0,0.05);
+	}
+	
+	.FUIChatlog .Input > div.Tools > .MobileMen.Active + div + div
+	{
+		top: -86px;
+		display: block;
+	    position: absolute;
+	    border: 0px;
+	    border-bottom: 1px solid rgba(0,0,0,0.05);
+	}
+	
+	.FUIChatlog .Input > div.Tools > .MobileMen.Active + div + div + div
+	{
+		top: -137px;
+		display: block;
+	    position: absolute;
+	    border: 0px;
+	    border-bottom: 1px solid rgba(0,0,0,0.05);
+	}
 }
 
 .FUIChatlog .Input > div.Textarea
@@ -190,6 +268,11 @@
 {
 	user-select: text;
 	line-height: 22px;
+}
+
+.Text:has(.AttachmentElement) 
+{
+    padding: 0 0 15px 0;
 }
 
 .FUIChatlog .Message > .Text .VideoCall
@@ -304,6 +387,35 @@
     color: var(--fui-color);
 }
 
+.FUIChatlog .Message .AttachmentElement
+{
+	position: relative;
+}
+
+.FUIChatlog .Message .AttachmentElement > a
+{
+	position: absolute;
+    right: 20px;
+    bottom: 20px;
+    width: 25px;
+    text-align: center;
+    height: 25px;
+    line-height: 25px;
+    border-radius: 100%;
+    background-color: var(--BackgroundHeaviest);
+    transition: background-color 0.12s;
+}
+.FUIChatlog .Message .AttachmentElement > a:hover
+{
+	background-color: var(--fui-palette-chan02-dim);
+}
+.FUIChatlog .Message .AttachmentElement > a:before
+{
+	content: "\f0ed";
+	font-family: fontawesome;
+	color: white;
+}
+
 .FUIChatlog .Message img.Attachment 
 {
     max-width: 100%;
@@ -312,6 +424,13 @@
     display: block;
     margin: 0 auto 15px auto;
     cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.25s;
+}
+
+.FUIChatlog .Message img.Attachment.Loaded
+{
+	opacity: 1;
 }
 
 .FUIChatlog .Message .VideoCall
@@ -466,28 +585,54 @@ span.Emoticon:hover
     background-color: black;
 }
 
-
 @media (max-width: 768px)
 {
     .FUIChatlog .Topic > .ParentLink 
     {
-        background: var(--fui-background-dim);
-        position: absolute;
-        left: 15px;
-        top: 4px;
-        width: auto;
-        height: 25px;
-        line-height: 26px;
-        padding: 0px 10px;
-        border-radius: 13px;
+		background: var(--fui-module-background-darker);
+		position: absolute;
+		left: 15px;
+		top: 4px;
+		width: 22px;
+		text-align: center;
+		height: 25px;
+		line-height: 26px;
+		padding: 0px 5px 0 2px;
+		border-radius: 13px;
     }
 
     .FUIChatlog .Topic > .ParentLink::before
     {
         display: static;
         margin: 0;
-        content: "\f100";
+        content: "\f0d9";
+        font-family: fontawesome;
+        font-weight: 100;
+    }
+    
+    .FUIChatlog .Topic > .Users 
+    {
+		background: var(--fui-module-background-darker);
+		position: absolute;
+		left: calc(100% - 47px);
+		top: 4px;
+		width: 22px;
+		text-align: center;
+		height: 25px;
+		line-height: 22px;
+		padding: 0px 4px 0 4px;
+		border-radius: 13px;
+    }
+
+    .FUIChatlog .Topic > .Users::before
+    {
+        display: static;
+        margin: 0;
+        content: "\f0c0";
+        font-size: 12px;
+        font-weight: 100;
         font-family: fontawesome;
     }
+    
 }
 

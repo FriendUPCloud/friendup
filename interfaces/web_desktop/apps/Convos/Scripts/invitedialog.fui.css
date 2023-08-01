@@ -48,6 +48,16 @@
 	opacity: 1;
 }
 
+@media (min-height: 600px)
+{
+	html .FUIInvitedialog > .Dia.Showing 
+	{
+		top: 15%;
+		height: 65%;
+		opacity: 1;
+	}
+}
+
 .FUIInvitedialog > .Dia > .Title
 {
 	display: block;

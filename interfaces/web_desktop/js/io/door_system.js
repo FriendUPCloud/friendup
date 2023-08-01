@@ -62,7 +62,6 @@ DoorSystem.prototype.getIcons = function( fileInfo, cb )
 {
 	const self = this;
 	const callback = ( ...args ) => {
-		console.log( 'getIcons returning on callback', args );
 		if ( cb )
 			cb( ...args );
 	}
@@ -81,8 +80,6 @@ DoorSystem.prototype.getIcons = function( fileInfo, cb )
 			Type: 'unknown'
 		};
 	}
-	
-	console.log( 'getIcons', [ fileInfo, callback ]);
 	
 	// Fix path
 	if( fileInfo.Path.indexOf( ':' ) < 0 )

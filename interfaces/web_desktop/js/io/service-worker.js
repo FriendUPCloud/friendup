@@ -9,24 +9,38 @@
 *****************************************************************************©*/
 
 self.addEventListener( 'push', event => {
-	const options = {
-		body: event.data.text(),
-		icon: '/graphics/system/friendos192.png',
-		vibrate: [100, 50, 100],
-		data: {
-			url: document.location.href
-		}
-	};
+	try
+	{
+		const options = {
+			body: event.data.text(),
+			icon: '/graphics/system/friendos192.png',
+			vibrate: [100, 50, 100],
+			data: {
+				url: document.location.href
+			}
+		};
 
-	event.waitUntil(
-		self.registration.showNotification( 'Friend OS', options )
-	);
+		event.waitUntil(
+			self.registration.showNotification( 'Friend OS', options )
+		);
+	}
+	catch( e )
+	{
+		console.log( 'Error with service worker: ', e );
+	}
 } );
 
 self.addEventListener( 'notificationclick', event => {
-	event.notification.close();
-	event.waitUntil(
-		clients.openWindow( event.notification.data.url )
-	);
+	try
+	{
+		event.notification.close();
+		event.waitUntil(
+			clients.openWindow( event.notification.data.url )
+		);
+	}
+	catch( e )
+	{
+		console.log( 'Error with service worker click: ', e );
+	}
 } );
 

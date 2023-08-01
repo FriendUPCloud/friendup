@@ -13,6 +13,22 @@ window.Convos = {
 	sounds: {}
 };
 
+window.Sounds = {};
+Sounds.newMessage = new Audio('/themes/friendup13/sound/new_message.ogg');
+Sounds.sendMessage = new Audio( getImageUrl( 'Progdir:Assets/send.ogg' ) );
+
+window.addEventListener( 'focus', function()
+{
+	Application.holdConnection( 'refresh' );
+} );
+window.addEventListener( 'visibilitychange', function()
+{
+	if( document.visibilityState == 'visible' )
+	{
+		Application.holdConnection( 'refresh' );
+	}
+} );
+
 Application.run = function( msg )
 {
 	this.holdConnection( { method: 'messages', roomType: 'jeanie' } );
@@ -34,6 +50,10 @@ Application.receiveMessage = function( msg )
 {
     if( msg.sender )
     {
+    	if( document.hidden || !document.body.classList.contains( 'activated' ) )
+    	{
+    		Sounds.newMessage.play();
+    	}
         let overview = FUI.getElementByUniqueId( 'convos' );
         if( msg.type && msg.type == 'chatroom' && msg.uniqueId )
         {
@@ -152,6 +172,9 @@ Application.receiveMessage = function( msg )
 								{
 									m.shareImageAndPost( msg.data[ a ].Path );
 								}
+								else
+								{
+								}
 							}
 						} );
 						return;
@@ -159,21 +182,6 @@ Application.receiveMessage = function( msg )
 			}
 			catch( e ){};
 		}
-    }
-}
-
-Application.playSound = function( snd )
-{
-    if( !Convos.sounds[ snd ] )
-    {
-        Convos.sounds[ snd ] = new AudioObject( snd, function()
-        {
-            Convos.sounds[ snd ].play();
-        } );
-    }
-    else
-    {
-        Convos.sounds[ snd ].play();
     }
 }
 
@@ -201,6 +209,15 @@ Application.SendUserMsg = function( opts )
 Application.holdConnection = function( flags )
 {
 	let self = this;
+	
+	if( flags && flags != 'refresh')
+		this.prevHoldFlags = flags;
+	if( flags === 'refresh' && this.prevHoldFlags )
+	{
+		flags = this.prevHoldFlags;
+	}
+	if( !flags )
+		this.prevHoldFlags = null;
 	
 	let args = {};
 	
@@ -244,6 +261,9 @@ Application.holdConnection = function( flags )
 	let now = Math.floor( new Date().getTime() / 1000 );
 	
 	let m = new XMLHttpRequest();
+	
+	let uqkey = flags.roomType + ':' + flags.cid;
+	
 	m.open( 'POST', '/system.library/module/?module=system&command=convos&authid=' + Application.authId + '&args=' + JSON.stringify( args ), true );
 	m.onload = function( data )
 	{
@@ -329,8 +349,14 @@ Application.holdConnection = function( flags )
 		            if( js.messages && js.messages.length > 0 )
 		            {
 		                let mess = FUI.getElementByUniqueId( 'messages' );
-		                mess.addMessages( js.messages );
-		                if( mess.clearQueue ) mess.clearQueue();
+		                if( mess )
+		                {
+		                	// Wrong room!
+				            if( mess.options.type + ':' + mess.options.cid != uqkey )
+				            	return;
+				            mess.addMessages( js.messages );
+				            if( mess.clearQueue ) mess.clearQueue();
+			            }
 		            }
 		        }
 		        // Response from longpolling

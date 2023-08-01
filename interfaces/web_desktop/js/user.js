@@ -23,7 +23,8 @@ Friend.User = {
     ServerIsThere: true,
     Username: '',               // Holds the user's username
     AccessToken: null,          // Holds the user's access token
-    ConnectionAttempts: 0,         // How many relogin attempts were made
+    ConnectionAttempts: 0,      // How many relogin attempts were made
+    ConnectionIncidents: 0,     // How many connection stream attemts counted
     
     // Methods -----------------------------------------------------------------
     

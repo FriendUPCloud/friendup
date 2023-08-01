@@ -43,6 +43,17 @@ function AddToCajaxQueue( ele )
 		Friend.cajaxTypes.push( ele.type );
 	}
 	
+	// Too many in the queue!
+	let queueCount = 0;
+	for( let a = 0; a < Friend.cajaxTypes.length; a++ )
+	{
+		let t = Friend.cajax[ Friend.cajaxTypes[a] ];
+		if( t != undefined && t.queue )
+			queueCount += t.queue.length;
+	}
+	if( queueCount > 20 )
+		Friend.User.ReLogin();
+	
 	let queue = Friend.cajax[ ele.type ].queue;
 	
 	// If we're queueing it
@@ -170,23 +181,25 @@ cAjax = function()
 	this.mode = 'ajax';
 	this.varcount = 0;
 
-	// TODO: Enable for later	
-	//this.worker = new Worker( '/webclient/js/io/cajax_worker.js' );
+	// Get AJAX base object
+	this.proxy = new XMLHttpRequest();
 	
-	// Get correct AJAX base object
-	if ( typeof( ActiveXObject ) != 'undefined' )
-		this.proxy = new ActiveXObject( 'Microsoft.XMLHTTP' );
-	else this.proxy = new XMLHttpRequest();
-	
-	this.proxy.timeout = 8000;
+	this.proxy.timeout = 1000;
 	
 	// State call
 	let jax = this;
 	this.proxy.onreadystatechange = function()
 	{
+		// Do nothing unless state is 4
+		if( this.readyState != 4 ) return;
+		
 		// We're finished handshaking
-		if( this.readyState == 4 && this.status == 200  )
-		{	
+		if( this.status == 200 )
+		{
+			// Reset incidents counter
+			if( typeof( Friend.User ) != 'undefined' )
+				Friend.User.ConnectionIncidents = 0;
+				
 			if( this.responseType == 'arraybuffer' )
 			{
 				jax.rawData = this.response;
@@ -235,9 +248,10 @@ cAjax = function()
 						let t = JSON.parse( jax.rawData );
 						// Deprecate from 1.0 beta 2 "no user!"
 						let res = t ? t.response.toLowerCase() : '';
-						if( t && ( res == 'user not found' || res.toLowerCase() == 'user session not found' ) )
+						let lres = res.toLowerCase();
+						if( t && ( lres == 'user not found' || lres == 'user session not found' ) )
 						{
-							if( window.Workspace && res.toLowerCase() == 'user session not found' ) 
+							if( window.Workspace && lres == 'user session not found' ) 
 								Workspace.flushSession();
 							if( window.Workspace )
 							{
@@ -271,10 +285,11 @@ cAjax = function()
 						let r = JSON.parse( jax.returnData );
 						
 						let res = r ? r.response.toLowerCase() : '';
+						let lres = res.toLowerCase();
 						
-						if( res == 'user not found' || res.toLowerCase() == 'user session not found' )
+						if( lres == 'user not found' || lres == 'user session not found' )
 						{
-							if( window.Workspace && res.toLowerCase() == 'user session not found' ) 
+							if( window.Workspace && lres == 'user session not found' ) 
 								Workspace.flushSession();
 							
 							if( window.Workspace && Workspace.postInitialized && Workspace.sessionId )
@@ -325,8 +340,16 @@ cAjax = function()
 			jax.destroy();
 		}
 		// Something went wrong!
-		else if( this.readyState == 4 && ( this.status == 500 || this.status == 0 || this.status == 404 ) )
+		else if( this.status == 503 || this.status == 502 || this.status == 500 || this.status == 0 || this.status == 404 )
 		{
+			if( this.status == 502 || this.status == 503  )
+			{
+				// Too many successive incidents, could be session id is invalid
+				if( typeof( Friend.User ) != 'undefined' )
+				{
+					Friend.User.ConnectionIncidents++;
+				}
+			}
 		    // If we have available slots, but we have other ajax calls in pipe, execute them
 		    if( _cajax_http_connections < _cajax_http_max_connections )
 		    {
@@ -338,9 +361,6 @@ cAjax = function()
 				jax.onload( 'error', '' );
 			}
 			jax.destroy();
-		}
-		else
-		{
 		}
 	}
 }
@@ -466,21 +486,8 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 			self.type += '_websocket';
 		this.url = url;
 		this.hasReturnCode = hasReturnCode;
-		//console.log( 'WebSocket call: ' + url );
 		return true;
 	}
-	/*// HTTP call, sanitize
-	else
-	{
-		// Repair websocket
-		// TODO: Remove completely after real fix found
-		if( window.Workspace && Workspace.conn && Workspace.conn.ws && !Workspace.conn.ws.ws )
-		{
-			console.log( 'Repairing websocket.' );
-			Workspace.initWebSocket();
-		}
-		//console.log( 'HTTP call: ' + url );
-	}*/
 	
 	// If we are running this on friendup recreate url to support old method
 	if ( typeof AjaxUrl == 'function' )
@@ -519,7 +526,7 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 			if( window.Workspace )
 				self.addVar( 'sessionid', Workspace.sessionId );
 			let u = self.url;
-			if( u.substr( 0, 1 ) == '/' )
+			if( u[0] == '/' )
 			{
 				let urlbase = _cajax_origin;
 				u = urlbase + u;
@@ -969,13 +976,11 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 				if( window.Workspace && t.response.toLowerCase() == 'user session not found' )
 				{ 
 					Workspace.flushSession();
-					console.log( 'KILLED WHO!?' );
 				}
 				if( Workspace )
 				{
 					// Add to queue
 					AddToCajaxQueue( self );
-					console.log( 'KILLED WHO, YOU!?' );
 					return Friend.User.CheckServerConnection();
 				}
 			}

@@ -472,6 +472,15 @@ button.Recessed, .Button.Recessed
 	margin: 0;
 }
 
+.Dialog > .DialogButtons
+{
+    bottom: 0;
+    left: 0;
+    position: absolute;
+    width: 100%;
+    height: 50px;
+}
+
 /* Stuff that is selectable */
 
 html *
@@ -2863,6 +2872,26 @@ html body[viewlist=dockedlist] #Statusbar #Tray > div.Hidden
 	border-radius: 10px;
 }
 
+#DockWindowList .Taskimage 
+{
+    display: inline-block;
+    border-radius: 8px;
+    height: 19px;
+    width: 19px;
+    position: absolute;
+    top: 4px;
+    left: 9px;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    filter: drop-shadow(0px 1px 3px rgba(0,0,0,0.1));
+}
+
+#DockWindowList .Task:has(.Taskimage) 
+{
+    background-image: unset;
+}
+
 /* Voice overlay handsfree mode --------------------------------------------- */
 
 #Handsfree
@@ -2951,9 +2980,9 @@ html body[viewlist=dockedlist] #Statusbar #Tray > div.Hidden
 {
 	background-position: center center;
 	background-repeat: no-repeat;
-	background-size: contain;
+	background-size: cover;
 	transition: filter 0.15s;
-	border-radius: 10px;
+	border-radius: 8px;
 	filter: drop-shadow(0 0 5px rgba(0,0,0,1));
 	border: 0;
 }
@@ -3015,7 +3044,7 @@ body:not([tablet]):not([mobile]) .Desklet .Launcher.Startmenu:hover
 .Desklet[position=bottom_center] .Launcher.Running:after,
 .Desklet[position=bottom_right] .Launcher.Running:after
 {
-	background: rgba(255,255,255,0.8);
+	background: linear-gradient(180deg, #ffffffcc, #ffffff66);
 	opacity: 1;
 	box-shadow: 0px 1px 2px rgba(0,0,0,0.5);
 }
@@ -4328,7 +4357,7 @@ html #DockWindowList .Task.Directory
     margin-bottom: 4px;
 	background-size: 18px;
 	background-position: 5px 2px;
-	padding: 0 10px 0 30px;
+	padding: 0 10px 0 32px;
 }
 
 #DockWindowList.Size32 .Task

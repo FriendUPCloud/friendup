@@ -99,6 +99,16 @@ class FUIChatlog extends FUIElement
                 p.contactsMode();
             }
             this.domTopic.appendChild( par );
+            
+            let us = document.createElement( 'div' );
+            us.className = 'Users';
+            us.innerHTML = '';
+            us.onclick = function()
+            {
+                let p = FUI.getElementByUniqueId( self.options.parentElement );
+                p.toggleUsers();
+            }
+            this.domTopic.appendChild( us );
         }
         
         this.initDomInput();
@@ -112,10 +122,9 @@ class FUIChatlog extends FUIElement
     	
     	function clearActive( exception )
     	{
-    	    let divs = self.domInput.getElementsByTagName( 'div' );
+    	    let divs = self.domInput.getElementsByClassName( 'InputButton' );
     	    for( let a = 0; a < divs.length; a++ )
     	    {
-    	        if( divs[ a ].parentNode != self.domInput ) continue;
     	        if( divs[ a ] == exception )
     	            divs[ a ].classList.add( 'Active' );
                 else 
@@ -128,9 +137,23 @@ class FUIChatlog extends FUIElement
     	}
     	
     	this.domInput.innerHTML = '\
-    		<div class="Upload"></div><div class="Search"></div><div class="Emote"></div><div contenteditable="true" class="Textarea"></div><div class="Send"></div>\
+    		<div class="Tools"><div class="MobileMen InputButton"></div><div class="Upload InputButton"></div><div class="Search InputButton"></div><div class="Emote InputButton"></div></div><div contenteditable="true" class="Textarea"></div><div class="Send"></div>\
     	';
     	this.domTextarea = this.domInput.querySelector( '.Textarea' );
+    	this.domInput.querySelector( '.MobileMen' ).onclick = function()
+    	{
+    	    if( this.classList.contains( 'Active' ) )
+    	    {
+    	        this.classList.remove( 'Active' );
+    	        if( this.popWidget )
+    	            this.popWidget.destroy();
+    	        this.popWidget = null;
+    	    }
+    	    else
+    	    {
+    	        clearActive( this );
+	        }
+    	}
     	this.domInput.querySelector( '.Send' ).onclick = function()
     	{
     	    let val = self.domTextarea.innerText;
@@ -173,10 +196,11 @@ class FUIChatlog extends FUIElement
     	        let s = this;
     	        this.popWidget = new FUIPopwidget( { 
     	            placeholderElement: d, 
-    	            originElement: this, 
+    	            originElement: isMobile ? self.domInput.querySelector( '.MobileMen' ) : this, 
     	            width: 480, 
     	            height: 480, 
     	            content: str,
+    	            blocker: true,
     	            clickCallback: function( e )
     	            {
     	                if( e.target && e.target.nodeName == 'SPAN' )
@@ -190,6 +214,8 @@ class FUIChatlog extends FUIElement
                             
                             s.popWidget.destroy();
     	                    s.classList.remove( 'Active' );
+    	                    let ele = isMobile ? self.domInput.querySelector( '.MobileMen' ) : false;
+	                        if( ele ) ele.classList.remove( 'Active' );
                             
                             if( window.getSelection )
                             {
@@ -201,7 +227,6 @@ class FUIChatlog extends FUIElement
                                     range.deleteContents();
                                     range.insertNode( node );
                                     range.collapse( true );
-                                    
                                     self.domTextarea.focus();
                                     return;
                                 }
@@ -213,9 +238,15 @@ class FUIChatlog extends FUIElement
 	                    {
 	                        s.popWidget.destroy();
 	                        s.classList.remove( 'Active' );
+	                        let ele = isMobile ? self.domInput.querySelector( '.MobileMen' ) : false;
+	                        if( ele ) ele.classList.remove( 'Active' );
                         }
     	            }
 	            } );
+	            this.popWidget.onDestroy = function()
+	            {
+	            	s.classList.remove( 'Active' );
+	            }
     	    }
     	}
     	this.domInput.querySelector( '.Upload' ).onclick = function()
@@ -242,29 +273,7 @@ class FUIChatlog extends FUIElement
 						
 						if( arr && arr.length > 0 )
 						{
-							let m = new Module( 'system' );
-							m.onExecuted = function( me, md )
-							{
-								if( me == 'ok' )
-								{
-									let res = JSON.parse( md );
-									self.queueMessage( '<attachment type="' + res.type + '" image="' + res.url + '"/>' );
-								}
-							}
-							let zmsg = { method: 'addupload', path: arr[ 0 ].Path };
-							if( self.options.type == 'dm-user' )
-							{
-								zmsg.userId = self.options.cid;
-							}
-							else if( self.options.type == 'jeanie' )
-							{
-								zmsg.context = 'jeanie';
-							}
-							else
-							{
-								zmsg.groupId = self.options.cid;
-							}
-							m.execute( 'convos', zmsg );
+							self.shareImageAndPost( arr[ 0 ].Path );
 						}
 					},
 					path: false,
@@ -375,6 +384,39 @@ class FUIChatlog extends FUIElement
             return instr.substr( test.length, instr.length - test.length );
         return instr;
     }
+    // Share an image and post it
+    shareImageAndPost( path )
+    {
+    	let self = this;
+    	let m = new Module( 'system' );
+		m.onExecuted = function( me, md )
+		{
+			if( me == 'ok' )
+			{
+				let res = JSON.parse( md );
+				let i = new Image();
+				i.src = res.url + '&authid=' + Application.authId;
+				i.onload = function()
+				{
+					self.queueMessage( '<attachment type="' + res.type + '" image="' + res.url + '" width="' + this.naturalWidth + '" height="' + this.naturalHeight + '"/>' );
+				}
+			}
+		}
+		let zmsg = { method: 'addupload', path: path };
+		if( self.options.type == 'dm-user' )
+		{
+			zmsg.userId = self.options.cid;
+		}
+		else if( self.options.type == 'jeanie' )
+		{
+			zmsg.context = 'jeanie';
+		}
+		else
+		{
+			zmsg.groupId = self.options.cid;
+		}
+		m.execute( 'convos', zmsg );
+    }
     // Adds messages to a list locked by sorted timestamps
     addMessages( messageList )
     {
@@ -402,6 +444,9 @@ class FUIChatlog extends FUIElement
                 text = dec;
             }
             catch( e ){};
+            
+            let mess = md5( m.Message );
+            d.setAttribute( 'message-hash', mess );
              
             let replacements = {
                 message: self.replaceUrls( self.replaceEmojis( text ) ),
@@ -412,6 +457,7 @@ class FUIChatlog extends FUIElement
                 fullname: m.Own ? i18n( 'i18n_you' ) : m.Name
             };
             d.innerHTML = FUI.getFragment( 'chat-message-head', replacements );
+            
             let timestamp = Math.floor( ( new Date( m.Date ) ).getTime() / 1000 );
             if( m.Own ) d.classList.add( 'Own' );
             
@@ -436,7 +482,12 @@ class FUIChatlog extends FUIElement
                 // Replace existing node
                 if( found )
                 {
-                    this.messageList[ slot ].replaceChild( d, found );
+                	// Only update content that changed
+                	if( found.getAttribute( 'message-hash' ) != mess )
+                	{
+		            	console.log( 'Replacing because ' + mess + ' != ' + found.getAttribute( 'message-hash' ) );
+		                this.messageList[ slot ].replaceChild( d, found );
+	                }
                 }
                 // Add a new node to this group slot
                 else
@@ -496,9 +547,10 @@ class FUIChatlog extends FUIElement
     	if( type != 'jeanie' )
     	{
     		let p = this.domTopic.querySelector( '.ParentLink' );
-    		
+    		let u = this.domTopic.querySelector( '.Users' );
     		this.domTopic.innerHTML = topic;
 			if( p ) this.domTopic.appendChild( p );
+			if( u ) this.domTopic.appendChild( u );
 		}
 		else
 		{
@@ -553,7 +605,8 @@ class FUIChatlog extends FUIElement
     	}
     	
     	// Play a sound when sending
-    	Application.playSound( getImageUrl( 'Progdir:Assets/send.ogg' ) );
+    	Sounds.sendMessage.play();
+    	self.domTextarea.focus();
     	
     	setTimeout( function()
     	{
@@ -823,17 +876,24 @@ class FUIChatlog extends FUIElement
         // Take attachments
         while( 1 )
         {
-        	let res = string.match( /[\s]{0,1}\<attachment\ type\=\"image\"\ image\=\"(.*?)\"\/\>/i );
+        	let res = string.match( /[\s]{0,1}\<attachment\ type\=\"image\"\ image\=\"(.*?)\"(.*?)\/\>/i );
         	if( res != null )
         	{
-        		if( !self.randArra )
-        			self.randArra = {};
-        		if( !self.randArra[ res[1] ] )
+        		let od = res[1].split( 'getattachment' ).join( 'getoriginal' ) + '&authid=' + Application.authId;
+        		
+        		let w = 'auto';
+        		let h = 'auto';
+        		if( typeof res[2] != undefined )
         		{
-        			self.randArra[ res[ 1 ] ] = md5( ( Math.random() * 10 ) + res[ 1 ] );
+        			let wh = string.match( /[\s]{0,1}\ width\=\"(.*?)\"\ height\=\"(.*?)\"/i );
+        			if( wh && wh.length && parseInt( wh[1] ) > 0 )
+        			{
+		    			w = wh[1];
+		    			h = wh[2];
+	    			}
         		}
-        		let rand = self.randArra[ res[ 1 ] ];
-        		string = string.split( res[ 0 ] ).join( '<img onload="Application.handleImageLoad( this )" onerror="Application.handleImageError( this )" src="' + res[1] + '&authid=' + Application.authId + '&rand=' + rand + '" class="Attachment"/>' );
+        		
+        		string = string.split( res[ 0 ] ).join( '<div class="AttachmentElement" contenteditable="false"><a class="Download" target="_blank" href="' + od + '"></a><img width="' + w + '" height="' + h + '" onload="Application.handleImageLoad( this )" onerror="Application.handleImageError( this )" src="' + res[1] + '&authid=' + Application.authId + '" class="Attachment"/></div>' );
         		continue;
         	}
         	break;
@@ -914,6 +974,7 @@ Application.handleImageLoad = function( ele )
 	setTimeout( function()
 	{
 		mes.style.scrollBehavior = '';
+		ele.classList.add( 'Loaded' );
 	}, 10 );
 	// Open the image in image viewer
 	ele.onclick = function()

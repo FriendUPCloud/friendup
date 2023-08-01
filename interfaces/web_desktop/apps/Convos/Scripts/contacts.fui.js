@@ -8,6 +8,8 @@
 *                                                                              *
 *****************************************************************************©*/
 
+window.FUIContactBuf = window.FUIContactBuf ? window.FUIContactBuf : {};
+
 class FUIContacts extends FUIElement
 {
     constructor( options )
@@ -38,6 +40,15 @@ class FUIContacts extends FUIElement
     {
     	let ex = this.options.groupid ? '<div class="Group"></div>' : '<div class="Videocall"></div>';
         let add = this.options.groupid ? '<div class="Add"></div>' : '';
+        
+        if( this.options.own != 'true' )
+        {
+        	if( this.options.groupid )
+        	{
+        		ex = '';
+        		add = '';
+    		}
+        }
         
         // <div class="Gearbox"></div>
         
@@ -173,6 +184,9 @@ class FUIContacts extends FUIElement
         let groupId = domElement.getAttribute( 'group' );
         if( groupId ) this.options.groupid = groupId;
         
+        let own = domElement.getAttribute( 'own' );
+        if( own ) this.options.own = own;
+        
         let groupName = domElement.getAttribute( 'name' );
         if( groupName ) this.options.groupname = groupName;
         
@@ -216,6 +230,9 @@ class FUIContacts extends FUIElement
                 {
                 	ele.click();                	
                 } );
+                
+                // Play a sound when sending
+                Sounds.newMessage.play();
             }
         }
     }
@@ -259,10 +276,62 @@ class FUIContacts extends FUIElement
 	    }
        		
         d.innerHTML = '<span class="Avatar"></span><span class="Name">' + text + '</span>';
-        d.onclick = function()
+        if( this.record && this.record.Type == 'chatroom' )
+    	{
+    		if( this.options.own == 'true' )
+    		{
+				d.addEventListener( 'contextmenu', function( e )
+				{
+					ShowContextMenu( i18n( 'i18n_contact' ), [ { name: i18n( 'i18n_remove_user' ), command: function()
+					{
+						Confirm( i18n( 'i18n_are_you_sure' ), i18n( 'i18n_this_will_kick' ), function( data )
+						{
+							if( data.data )
+							{
+								let m = new Module( 'system' );
+								m.onExecuted = function( ne, nd )
+								{
+									self.refreshDom();
+								}
+								m.execute( 'convos', { method: 'kickuser', uid: d.record.ID, gid: self.record.ID } );
+							}
+						} );
+					} } ] );
+					cancelBubble( e );
+				} );
+			}
+			else
+			{
+				d.addEventListener( 'contextmenu', function( e )
+				{
+					cancelBubble( e );
+				} );
+			}
+	    }
+	    else
+	    {
+	    	d.addEventListener( 'contextmenu', function( e )
+		    {
+		    	cancelBubble( e );
+		    } );
+	    }
+        /*d.addEventListener( 'mousedown', function( e )
         {
+        	console.log( e.button );
+        	if( e && e.button == 2 )
+        	{
+        		
+        		e.stopPropagation();
+        		cancelBubble( e );
+        		return;
+        	}
+        } );*/
+        d.onclick = function( e )
+        {
+        	
             self.setChatView( this.record );
             this.classList.remove( 'NewActivity' );
+            self.hideUsers();
         }
         
         // Init user
@@ -315,6 +384,21 @@ class FUIContacts extends FUIElement
             let par = FUI.getElementByUniqueId( this.options.parentElement );
             par.setChat( false );
         }
+    }
+    toggleUsers()
+    {
+    	if( this.domElement.classList.contains( 'Users' ) )
+    	{
+    		this.domElement.classList.remove( 'Users' );
+    	}
+    	else
+    	{
+    		this.domElement.classList.add( 'Users' );
+    	}
+    }
+    hideUsers()
+    {
+    	this.domElement.classList.remove( 'Users' );
     }
     getContacts()
     {

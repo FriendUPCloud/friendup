@@ -1,6 +1,9 @@
 // Apps on startup
 Friend.startupApps = {};
 
+window.Sounds = {};
+Sounds.newMessage = new Audio('/themes/friendup13/sound/new_message.ogg');
+
 // Added to workspace
 let WorkspaceInside = {
 	// Tray icons
@@ -1926,6 +1929,7 @@ let WorkspaceInside = {
 		    				{
 		    					ExecuteApplication( 'Convos' );
 		    				}
+		    				Sounds.newMessage.play();
 		    			}
 		    			
 		    			AddNotificationEvent( msg );
@@ -8697,6 +8701,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		// Item uses system default
 		if( tr != null && tr.defaultContextMenu ) 
 		{
+
 			return false;
 		}
 		
@@ -8929,7 +8934,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				head.innerHTML = i18n( 'menu_icons' );
 			}
 			menuout.appendChild( head );
-
 			
 			// Check current file
 			if( window.currentMovable && currentMovable.content && currentMovable.content.icons )
@@ -9051,23 +9055,43 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							p.cmd = function( e )
 							{
 								let app = findApplication( extra.applicationId );
-								if( extra.viewId && app.windows[ extra.viewId ] )
+								// Using the callback system
+								if( m.callbackid && m.command == 'callback' )
 								{
-									if ( extra.callback )
+									if( extra.viewId && app.windows[ extra.viewId ] )
 									{
-										app.windows[ extra.viewId ].sendMessage({
+										app.windows[ extra.viewId ].sendMessage( {
+											type     : 'callback',
+											callback : m.callbackid,
+											data     : m.data
+										} );
+									}
+									else
+									{
+										app.postMessage( { type: 'callback', callback: m.callbackid, data: m.data }, '*' );
+									}
+								}
+								// Just send the command
+								else if( extra.viewId && app.windows[ extra.viewId ] )
+								{
+									if( extra.callback )
+									{
+										app.windows[ extra.viewId ].sendMessage( {
 											type     : 'callback',
 											callback : extra.callback,
 											command  : m.command,
 											data     : m.data,
-										})
+										} );
 									}
 									else
 									{
 										app.windows[ extra.viewId ].sendMessage( { command: m.command, data: m.data } );
 									}
 								}
-								else app.postMessage( { command: m.command, data: m.data }, '*' );
+								else 
+								{
+									app.postMessage( { command: m.command, data: m.data }, '*' );
+								}
 							}
 						} )( menu[ z ] );
 					}
@@ -9123,6 +9147,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				p.innerHTML = menu[z].name;
 				menuout.appendChild( p );
 			}
+			
 			if ( extra?.viewId )
 			{
 				v.dom.tabIndex = -1
@@ -9130,7 +9155,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					focusVisible : false,
 				})
 				v.dom.addEventListener( 'blur', e => {
-					v.hide()
+					v.hide();
 					if ( extra.callback )
 					{
 						let app = findApplication( extra.applicationId )
@@ -11420,6 +11445,7 @@ function handleServerMessage( e )
                 text = dec;
             }
             catch( e2 ){};
+			Sounds.newMessage.play();
 		    Notify( {
 		            title: 'From ' + e.message.sender,
 		            text: text,

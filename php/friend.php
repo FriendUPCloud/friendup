@@ -11,9 +11,9 @@
 
 /******************************************************************************\
 *                                                                              *
-* FriendUP PHP API v1.2                                                        *
-* (c) 2015-2018, Friend Software Labs AS                                       *
-* mail: info@friendup.no                                                       *
+* FriendPS PHP API v1.3                                                        *
+* (c) 2015-2023, Friend Software Labs AS                                       *
+* mail: info@friendos.com                                                      *
 *                                                                              *
 \******************************************************************************/
 
@@ -235,9 +235,6 @@ if( isset( $argv ) && isset( $argv[1] ) )
 {
 	if( $args = explode( '&', $argv[1] ) )
 	{
-		//include_once( 'classes/logger.php' );
-		//$Logger->log( 'Here are the received args: ' . $argv[1]  .' __ ' . count( $args ) . '::' . print_r( $args, 1 ) );
-
 		/*
 			special case for large amount of data in request; Friend Core creates a file for us to read and parse here
 		*/
@@ -249,7 +246,6 @@ if( isset( $argv ) && isset( $argv[1] ) )
 			{
 				$dataset = file_get_contents( end( $args1 ) );
 				$args = explode( '&', $dataset );
-				//$Logger->log( 'Date from that file: ' . print_r($newargs,1) );
 			}
 		}
 
@@ -421,7 +417,6 @@ if( file_exists( 'cfg/cfg.ini' ) )
 		// Make sure the value is valid
 		if( isset( $val ) && $val )
 		{
-			//$Logger->log( 'Setting: ' . $car[$k] . ' = ' . $val );
 			$Config->{$car[$k]} = $val;
 		}
 	}
@@ -454,7 +449,7 @@ if( file_exists( 'cfg/cfg.ini' ) )
 	$UserApplication = false;
 	
 	// Get user information, trying first on FUserSession SessionID ------------
-	$User = new dbIO( 'FUser' );
+	$User = new dbUser();
 	$UserSession = new dbIO( 'FUserSession' );
 
 	// Match sessionid by authid
@@ -469,7 +464,6 @@ if( file_exists( 'cfg/cfg.ini' ) )
 	}
 
 	$sudm = false;
-	
 	// Use UserAccount object to authenticate directly into the database
 	if( $UserAccount )
 	{
@@ -480,43 +474,35 @@ if( file_exists( 'cfg/cfg.ini' ) )
 				u.Password = \'' . '{S6}' . hash( 'sha256', 'HASHED' . hash( 'sha256', $UserAccount->Password ) ) . '\'
 		' ) )
 		{
-			$logger->log('User found');
-			$User = $mu;
+			$User->setFromObject( $mu );
 			if( $mus = $SqlDatabase->fetchObject( '
 				SELECT * FROM FUserSession WHERE UserID = \'' . $mu->ID . '\' LIMIT 1
 			' ) )
 			{
-				$logger->log( 'UserSession found' );
 				$UserSession = $mus;
 			}	
-			else
-			{
-				//$logger->log( 'UserSession Not Found: ' . $uq );
-			}
-		}
-		else
-		{
-			//$logger->log( 'UserSession Not Found because query failed: ' . $uq );
 		}
 	}
 	// Try with server token
-	else if( isset( $GLOBALS[ 'args' ]->servertoken ) )
+	if( !isset( $UserSession->ID ) && isset( $GLOBALS[ 'args' ]->servertoken ) )
 	{
-		$User->ServerToken = $GLOBALS[ 'args' ]->servertoken;
-		$User->Load();
-
-		if( $mus = $SqlDatabase->FetchObject( '
-            SELECT * FROM FUserSession WHERE UserID = \'' . $User->ID . '\' LIMIT 1
-        ' ) )
-        {
-			$Logger->log( 'UserSession found -> servertoken' );
-			$UserSession = $mus;
-        }
+		if( $session = $SqlDatabase->FetchObject( $q = ( '
+			SELECT s.* FROM
+				FUserSession s, FUser u
+			WHERE
+				u.ID = s.UserID AND u.ServerToken = "' . $SqlDatabase->_link->real_escape_string( $GLOBALS[ 'args' ]->servertoken ) . '"
+			ORDER BY ID DESC
+			LIMIT 1
+		' ) ) )
+		{
+			$UserSession = $session;
+		}
 	}
 	// Load by session id
-	else if( isset( $GLOBALS[ 'args' ]->sessionid ) )
+	if( !isset( $UserSession->ID ) && isset( $GLOBALS[ 'args' ]->sessionid ) )
 	{
-	    $UserSession->SessionID = $GLOBALS['args']->sessionid;
+		$User = new dbUser();
+	    $UserSession->SessionID = $GLOBALS[ 'args' ]->sessionid;
 	    if( $UserSession->Load() )
 	    {
 	        $User->Load( $UserSession->UserID );
@@ -554,28 +540,20 @@ if( file_exists( 'cfg/cfg.ini' ) )
 			{
 				$User->Load( $row->ID );
 
-				if( $User->ID > 0 )
+				if( isset( $User->ID ) && $User->ID > 0 )
 				{
 					$GLOBALS[ 'User' ] =& $User;
-					$Logger->log( 'User load by authid NEW' );
 
 					if( $mus = $SqlDatabase->FetchObject( '
 						SELECT * FROM FUserSession WHERE UserID = \'' . $User->ID . '\' LIMIT 1
 						' ) )
 						{
-							$Logger->log( 'UserSession found' );
 							$UserSession = $mus;
 							$GLOBALS['UserSession'] =& $UserSession;
 						}
 				}
-				else
-				{
-					$Logger->log('UserID not found');
-				}
 			}
 		}
-		
-		//$logger->log( 'ok: ' . ( isset( $User ) ? ' has user' : ' no user' ) );
 		
 		// Failed to authenticate
 		if( !isset( $groupSession ) && isset( $User->ID ) && $User->ID <= 0 )

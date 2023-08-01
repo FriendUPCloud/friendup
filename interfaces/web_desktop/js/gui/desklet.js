@@ -795,7 +795,6 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 			div.className = 'Launcher MousePointer';
 			if( o.className ) div.className += ' ' + o.className;
 			div.style.width = this.width - ( this.margin * 2 ) + 'px';
-			div.style.backgroundSize = 'contain';
 			div.style.height = this.width - ( this.margin * 2 ) + 'px';
 			div.executable = o.exe;
 			

@@ -10,6 +10,8 @@
 *                                                                              *
 *****************************************************************************©*/
 
+global $Logger;
+
 ini_set( 'max_execution_time', '300' ); // Die after 5 minutes
 
 // Send a message
@@ -43,8 +45,6 @@ if( !$sess->Load() )
     $sess->ActivityDate = $sess->PrevDate;
     $sess->Save();
 }
-
-//error_log( '[convos.php] Received this: ' . print_r( $args, 1 ) );
 
 if( isset( $args->args ) )
 {
@@ -81,6 +81,20 @@ if( isset( $args->args ) )
                 if( $o->RoomType == 'dm-user' )
                 {
                     $SqlDatabase->query( 'UPDATE MessageSession SET ActivityDate=\'' . date( 'Y-m-d H:i:s' ) . '\', PrevDate=\'1970-01-01 12:00:00\' WHERE UniqueUserID=\'' . $SqlDatabase->_link->real_escape_string( $o->TargetID ) . '\'' );
+                    
+                    // Check if user haven't been online for a while
+                    $targetUser = new dbUser();
+                    $targetUser->UniqueID = $o->TargetID;
+                    if( $targetUser->Load() )
+                    {
+		                $options = new stdClass();
+		                $options->Condition = 'activity';
+		                $options->Seconds = 300; // Five minutes since last activity
+		                $message = new stdClass();
+		                $message->Title = 'You got a message from ' . $User->FullName;
+		                $message->Message = $out->message;
+		                $User->WebPush( $targetUser, $options, $message );
+	                }
                 }
             }
             $o->DateUpdated = date( 'Y-m-d H:i:s' );
@@ -251,8 +265,9 @@ if( isset( $args->args ) )
             }
             die( 'fail<!--separate-->{"response":0,"message":"Failed to retrieve messages."}' );
         }
+        // Get the original file OR
         // Get an attachment on ID
-        else if( $args->args->method == 'getattachment' )
+        else if( $args->args->method == 'getattachment' || $args->args->method == 'getoriginal' )
         {
         	// Check share
         	$o = new dbIO( 'FShared' );
@@ -276,6 +291,12 @@ if( isset( $args->args ) )
 							{
 								$f = new File( $o->Data );
 								$f->SetAuthContext( 'servertoken', $u->ServerToken );
+								if( $args->args->method == 'getattachment' )
+								{
+									$flags = new stdClass();
+									$flags->width = 1024; $flags->height = 1024;
+									$f->SetPostProcessor( 'thumbnail', $flags );
+								}
 								if( $f->Load( $o->Data ) )
 								{
 									$part = explode( '.', $o->Data );
@@ -301,6 +322,7 @@ if( isset( $args->args ) )
 										die( $f->_content );
 									}
 								}
+								die( 'fail<!--separate-->' );
 							}
 						}
 					}
@@ -321,6 +343,12 @@ if( isset( $args->args ) )
 							{
 								$f = new File( $o->Data );
 								$f->SetAuthContext( 'servertoken', $u->ServerToken );
+								if( $args->args->method == 'getattachment' )
+								{
+									$flags = new stdClass();
+									$flags->width = 1024; $flags->height = 1024;
+									$f->SetPostProcessor( 'thumbnail', $flags );
+								}
 								if( $f->Load( $o->Data ) )
 								{
 									$part = explode( '.', $o->Data );
@@ -352,6 +380,12 @@ if( isset( $args->args ) )
 					else if( $o->SharedType == 'jeanie' )
 					{
 						$f = new File( $o->Data );
+						if( $args->args->method == 'getattachment' )
+						{
+							$flags = new stdClass();
+							$flags->width = 1024; $flags->height = 1024;
+							$f->SetPostProcessor( 'thumbnail', $flags );
+						}
 						if( $f->Load( $o->Data ) )
 						{
 							$part = explode( '.', $o->Data );
@@ -468,6 +502,24 @@ if( isset( $args->args ) )
 			}
         	die( 'fail<!--separate-->{"response":0,"message":"Failed to load attachment."}' );
         }
+        else if( $args->args->method == 'kickuser' )
+        {
+        	if( !isset( $args->args->gid ) ) die( 'fail<!--separate-->{"response":-1,"message":"Invalid call."}' );
+        	$g = new dbIO( 'FUserGroup' );
+        	$g->UserID = $User->ID; 
+        	$g->UniqueID = $args->args->gid;
+        	if( $g->Load() && isset( $args->args->uid ) )
+        	{
+        		$u = new dbIO( 'FUser' );
+        		$u->UniqueID = $args->args->uid;
+        		if( $u->Load() )
+        		{
+        			$SqlDatabase->query( 'DELETE FROM FUserToGroup WHERE UserID=\'' . $u->ID . '\' AND UserGroupID=\'' . $g->ID . '\'' );
+        			die( 'ok<!--separate-->{"response":1,"message":"User removed from group."}' );
+    			}
+        	}
+        	die( 'fail<!--separate-->{"response":-1,"message":"Nothing to do."}' );
+        }
         else if( $args->args->method == 'getrooms' )
         {
         	if( $rows = $SqlDatabase->fetchObjects( '
@@ -493,7 +545,10 @@ if( isset( $args->args ) )
         			$o->UniqueID = $row->UniqueID;
         			$o->Name = $row->Name;
         			$o->Description = $row->Description;
-        			$out[] = $row;
+        			$o->Own = false;
+        			if( $row->UserID == $User->ID )
+        				$o->Own = true;
+        			$out[] = $o;
         		}
         		die( 'ok<!--separate-->' . json_encode( $out ) );
         	}

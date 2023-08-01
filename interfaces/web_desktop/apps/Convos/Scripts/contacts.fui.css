@@ -315,3 +315,35 @@
     width: calc(100% - 300px);
     height: 100%;
 }
+
+.FUIContacts.Chat.Users .Contacts.User,
+.Chatlist .FUIContacts.Chat.Users .Contacts
+{
+    width: 80%;
+    z-index: 4;
+    border-radius: 0;
+}
+
+.FUIContacts.Chat:after 
+{
+    content: " ";
+    display: block;
+    position: absolute;
+    top: 35px;
+    left: 0;
+    width: 100%;
+    height: calc(100% - 35px);
+    background: rgba(0,0,0,0.5);
+    mix-blend-mode: multiply;
+    z-index: 2;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.5s;
+}
+
+.FUIContacts.Chat.Users:after 
+{
+	opacity: 1;
+	pointer-events: all;
+}
+
