@@ -290,6 +290,7 @@ class File
 		$u->SetAuthContext( $ctx[0], $ctx[1] );
 		if( $u->Load( $thumbFN ) && isset( $u->_content ) && substr( $u->_content, 0, 5 ) != 'fail<' )
 		{
+			$Logger->log( '[GenerateThumbnail] This already exists..' );
 			$this->_thumbnailObject = $u;
 			return $u->GetContent();
 		}
@@ -303,16 +304,16 @@ class File
 		$csizex = $osizex;
 		$csizey = $osizey;
 		
-		if( $this->_thumbnail->width > $osizex || $this->_thumbnail->height > $osizey )
-		{
-			$destx = $this->_thumbnail->width;
-			$desty = $this->_thumbnail->height;
-		}
-		// Don't thumbnail if image is smaller than dest!
-		else
+		// Original is smaller than thumbnail (fits in)
+		if( $osizex < $this->_thumbnail->width && $osizey < $this->_thumbnail->height )
 		{
 			$this->_thumbnailObject = false;
 			return $this->GetContent();
+		}
+		else
+		{
+			$destx = $this->_thumbnail->width;
+			$desty = $this->_thumbnail->height;
 		}
 		
 		// Resize on X
