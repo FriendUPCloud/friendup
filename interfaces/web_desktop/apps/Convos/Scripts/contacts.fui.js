@@ -268,7 +268,10 @@ class FUIContacts extends FUIElement
     	{
 		    d.addEventListener( 'contextmenu', function( e )
 		    {
-				ShowContextMenu( i18n( 'i18n_contact' ), [ { name: i18n( 'i18n_remove_user' ), command: 'quit' } ] );
+				ShowContextMenu( i18n( 'i18n_contact' ), [ { name: i18n( 'i18n_remove_user' ), command: function()
+				{
+					console.log( 'Hey' );
+				} } ] );
 				cancelBubble( e );
 		    } );
 	    }

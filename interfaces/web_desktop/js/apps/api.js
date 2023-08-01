@@ -7180,11 +7180,27 @@ function Alert( title, string, callback )
 
 function ShowContextMenu( header, menu )
 {
+	function MenuToCallbacks( m )
+	{
+		for( let a in m )
+		{
+			if( m[ a ].items )
+			{
+				m[ a ].items = MenuToCallbacks( m[ a ].items );
+			}
+			else if( typeof( m[a].command ) == 'function' )
+			{
+				m[a].callbackid = addCallback( m[a].command );
+				m[a].command = 'callback';
+			}
+		}
+		return menu;
+	}
 	Application.sendMessage( {
 		type    : 'system',
 		header  : header,
 		command : 'showcontextmenu',
-		menu    : menu
+		menu    : MenuToCallbacks( menu )
 	} );
 }
 

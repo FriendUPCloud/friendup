@@ -9055,23 +9055,43 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							p.cmd = function( e )
 							{
 								let app = findApplication( extra.applicationId );
-								if( extra.viewId && app.windows[ extra.viewId ] )
+								// Using the callback system
+								if( m.callbackid && m.command == 'callback' )
 								{
-									if ( extra.callback )
+									if( extra.viewId && app.windows[ extra.viewId ] )
 									{
-										app.windows[ extra.viewId ].sendMessage({
+										app.windows[ extra.viewId ].sendMessage( {
+											type     : 'callback',
+											callback : m.callbackid,
+											data     : m.data
+										} );
+									}
+									else
+									{
+										app.postMessage( { type: 'callback', callback: m.callbackid, data: m.data }, '*' );
+									}
+								}
+								// Just send the command
+								else if( extra.viewId && app.windows[ extra.viewId ] )
+								{
+									if( extra.callback )
+									{
+										app.windows[ extra.viewId ].sendMessage( {
 											type     : 'callback',
 											callback : extra.callback,
 											command  : m.command,
 											data     : m.data,
-										})
+										} );
 									}
 									else
 									{
 										app.windows[ extra.viewId ].sendMessage( { command: m.command, data: m.data } );
 									}
 								}
-								else app.postMessage( { command: m.command, data: m.data }, '*' );
+								else 
+								{
+									app.postMessage( { command: m.command, data: m.data }, '*' );
+								}
 							}
 						} )( menu[ z ] );
 					}
