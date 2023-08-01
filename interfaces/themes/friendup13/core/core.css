@@ -2875,11 +2875,11 @@ html body[viewlist=dockedlist] #Statusbar #Tray > div.Hidden
 #DockWindowList .Taskimage 
 {
     display: inline-block;
-    border-radius: 6px;
-    height: 18px;
-    width: 18px;
+    border-radius: 8px;
+    height: 19px;
+    width: 19px;
     position: absolute;
-    top: 5px;
+    top: 4px;
     left: 9px;
     background-size: cover;
     background-position: center;
@@ -4357,7 +4357,7 @@ html #DockWindowList .Task.Directory
     margin-bottom: 4px;
 	background-size: 18px;
 	background-position: 5px 2px;
-	padding: 0 10px 0 30px;
+	padding: 0 10px 0 32px;
 }
 
 #DockWindowList.Size32 .Task
