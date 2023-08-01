@@ -424,6 +424,13 @@ body:not([mobile]) .FUIChatlog .Input .MobileMen:hover,
     display: block;
     margin: 0 auto 15px auto;
     cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.25s;
+}
+
+.FUIChatlog .Message img.Attachment.Loaded
+{
+	opacity: 1;
 }
 
 .FUIChatlog .Message .VideoCall

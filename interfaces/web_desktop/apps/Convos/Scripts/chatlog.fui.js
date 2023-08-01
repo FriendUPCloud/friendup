@@ -974,6 +974,7 @@ Application.handleImageLoad = function( ele )
 	setTimeout( function()
 	{
 		mes.style.scrollBehavior = '';
+		ele.classList.add( 'Loaded' );
 	}, 10 );
 	// Open the image in image viewer
 	ele.onclick = function()
