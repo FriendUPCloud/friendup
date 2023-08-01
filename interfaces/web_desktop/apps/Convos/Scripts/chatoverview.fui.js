@@ -345,7 +345,7 @@ class FUIChatoverview extends FUIElement
     			md = JSON.parse( md );
     			for( let a = 0; a < md.length; a++ )
     			{
-    				self.domChannels.innerHTML += '<div class="Channel Group" uniqueid="chatroom" name="' + md[a].Name + '" id="' + md[a].UniqueID + '"></div>';
+    				self.domChannels.innerHTML += '<div class="Channel Group" uniqueid="chatroom" name="' + md[a].Name + '" id="' + md[a].UniqueID + '" own="' + md[a].Own + '"></div>';
     			}
     		}
     		
@@ -558,7 +558,8 @@ class FUIChatoverview extends FUIElement
 	    // Initialize a contacts element, with 
 	    else if( label == 'chatroom' )
 	    {
-	    	chlist.innerHTML = '<fui-contacts parentelement="convos" uniqueid="contacts" group="' + groupId + '" name="' + groupName + '"></fui-contacts>';
+	    	let own = tab.getAttribute( 'own' );
+	    	chlist.innerHTML = '<fui-contacts parentelement="convos" uniqueid="contacts" group="' + groupId + '" name="' + groupName + '" own="' + own + '"></fui-contacts>';
 	    }
 	    else
 	    {

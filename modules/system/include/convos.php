@@ -545,7 +545,10 @@ if( isset( $args->args ) )
         			$o->UniqueID = $row->UniqueID;
         			$o->Name = $row->Name;
         			$o->Description = $row->Description;
-        			$out[] = $row;
+        			$o->Own = false;
+        			if( $row->UserID == $User->ID )
+        				$o->Own = true;
+        			$out[] = $o;
         		}
         		die( 'ok<!--separate-->' . json_encode( $out ) );
         	}

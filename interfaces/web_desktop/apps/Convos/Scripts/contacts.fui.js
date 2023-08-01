@@ -41,6 +41,15 @@ class FUIContacts extends FUIElement
     	let ex = this.options.groupid ? '<div class="Group"></div>' : '<div class="Videocall"></div>';
         let add = this.options.groupid ? '<div class="Add"></div>' : '';
         
+        if( this.options.own != 'true' )
+        {
+        	if( this.options.groupid )
+        	{
+        		ex = '';
+        		add = '';
+    		}
+        }
+        
         // <div class="Gearbox"></div>
         
     	return '\
@@ -175,6 +184,9 @@ class FUIContacts extends FUIElement
         let groupId = domElement.getAttribute( 'group' );
         if( groupId ) this.options.groupid = groupId;
         
+        let own = domElement.getAttribute( 'own' );
+        if( own ) this.options.own = own;
+        
         let groupName = domElement.getAttribute( 'name' );
         if( groupName ) this.options.groupname = groupName;
         
@@ -266,25 +278,35 @@ class FUIContacts extends FUIElement
         d.innerHTML = '<span class="Avatar"></span><span class="Name">' + text + '</span>';
         if( this.record && this.record.Type == 'chatroom' )
     	{
-		    d.addEventListener( 'contextmenu', function( e )
-		    {
-				ShowContextMenu( i18n( 'i18n_contact' ), [ { name: i18n( 'i18n_remove_user' ), command: function()
+    		if( this.options.own == 'true' )
+    		{
+				d.addEventListener( 'contextmenu', function( e )
 				{
-					Confirm( i18n( 'i18n_are_you_sure' ), i18n( 'i18n_this_will_kick' ), function( data )
+					ShowContextMenu( i18n( 'i18n_contact' ), [ { name: i18n( 'i18n_remove_user' ), command: function()
 					{
-						if( data.data )
+						Confirm( i18n( 'i18n_are_you_sure' ), i18n( 'i18n_this_will_kick' ), function( data )
 						{
-							let m = new Module( 'system' );
-							m.onExecuted = function( ne, nd )
+							if( data.data )
 							{
-								self.refreshDom();
+								let m = new Module( 'system' );
+								m.onExecuted = function( ne, nd )
+								{
+									self.refreshDom();
+								}
+								m.execute( 'convos', { method: 'kickuser', uid: d.record.ID, gid: self.record.ID } );
 							}
-							m.execute( 'convos', { method: 'kickuser', uid: d.record.ID, gid: self.record.ID } );
-						}
-					} );
-				} } ] );
-				cancelBubble( e );
-		    } );
+						} );
+					} } ] );
+					cancelBubble( e );
+				} );
+			}
+			else
+			{
+				d.addEventListener( 'contextmenu', function( e )
+				{
+					cancelBubble( e );
+				} );
+			}
 	    }
 	    else
 	    {
