@@ -1696,7 +1696,7 @@ function AttachAppSandbox( ifr, path, pathType )
 	var x = document.createElement( 'div' );
 	var icon = oicon = '/webclient/gfx/icons/64x64/mimetypes/application-x-javascript.png';
 	if( path.indexOf( '?' ) < 0 || path.indexOf( 'command=resource' ) > 0 )
-		icon = ( pathType == 'friendpath' ? oicon : ( path + '/icon.png' ) );
+		icon = ( pathType == 'friendpath' ? oicon : ( path + ( ( path[ path.length - 1 ] == '/' ? '' : '/' ) ) + 'icon.png' ) );
 	ifr.icon = icon;
 	x.style.backgroundImage = 'url(' + ifr.icon + ')';
 	x.className = 'Close';

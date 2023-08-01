@@ -3203,7 +3203,7 @@ function PollTaskbar( curr )
 									}
 									else
 									{
-										ele.classList.add( 'Task', 'MoustPointer' );
+										ele.classList.add( 'Task', 'MousePointer' );
 										ele.classList.remove( 'Hidden' );
 									}
 								}, 5 );
@@ -3230,7 +3230,12 @@ function PollTaskbar( curr )
 						d.window = pn;
 						pn.taskbarTask = d;
 						d.applicationId = d.window.applicationId;
-						d.innerHTML = d.window.titleString;
+						d.taskImage = document.createElement( 'div' );
+						d.taskImage.className = 'Taskimage';
+						d.taskName = document.createElement( 'div' );
+						d.taskName.className = 'Taskname';
+						d.appendChild( d.taskImage ); d.appendChild( d.taskName );
+						d.taskName.innerHTML = d.window.titleString;
 						t.tasks.push( { viewId: pn.viewId, dom: d } );
 				
 						if( pn == currentMovable ) d.classList.add( 'Active' );
@@ -3407,7 +3412,9 @@ function PollTaskbar( curr )
 								if( task.applicationId == d.applicationId )
 								{
 									// If we have a match!
-									d.style.backgroundImage = 'url(' + task.icon + ')';
+									let ti = d.taskImage;
+									if( ti ) ti.style.backgroundImage = 'url(' + task.icon + ')';
+									else d.style.backgroundImage = 'url(' + task.icon + ')';
 								}
 							}
 						}
