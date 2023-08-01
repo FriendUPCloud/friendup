@@ -717,6 +717,10 @@ DirectoryView.prototype.initToolbar = function( winobj )
 						let m = new Module( 'system' );
 						m.onExecuted = function( e, d )
 						{
+							se.refreshing = false;
+							if( !d || !d.parentNode )
+								return;
+								
 							let o = d;
 							if( typeof( o ) != 'object' )
 								o = d && d.indexOf( '{' ) >= 0 ? JSON.parse( d ) : {};
@@ -757,10 +761,8 @@ DirectoryView.prototype.initToolbar = function( winobj )
 							// This shouldn't happen!
 							else
 							{
-								if( d && d.parentNode )
-									d.innerHTML = '<p>Disk is broken.</p>';
+								d.innerHTML = '<p>Disk is broken.</p>';
 							}
-							se.refreshing = false;
 						}
 						m.execute( 'volumeinfo', { path: winobj.fileInfo.Path } );
 					}
