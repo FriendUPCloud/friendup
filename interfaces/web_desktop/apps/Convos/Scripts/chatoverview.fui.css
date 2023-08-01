@@ -163,7 +163,7 @@
     box-shadow: inset 0px 0px 15px rgba(255,255,255,0.4);
     position: relative;
     overflow: hidden;
-    transition: opacity,filter,box-shadow 1.5s,2.25s,0.15s;
+    transition: opacity,filter,box-shadow 1.5s,2.25s,0.45s;
     filter: drop-shadow(0px 0px 0px rgba(255,255,255,0.0));
     box-shadow: 0px 0px 0px 1px rgba(0,0,0,0.0);
     opacity: 0;
@@ -204,7 +204,14 @@
 	width: 30px;
 	height: 20px;
 	border-radius: 100%;
+	opacity: 0;
+	transition: opacity 0.8s;
 	background: linear-gradient(0deg, transparent, rgba(255,255,255,0.4));
+}
+
+.FUIChatoverview > .Channels > .Channel.Loaded::before
+{
+	opacity: 1;
 }
 
 .FUIChatoverview > .Channels > .Channel.Home 

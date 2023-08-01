@@ -359,13 +359,13 @@ class FUIChatoverview extends FUIElement
 					setTimeout( function()
 					{ 
 						f.classList.add( 'Loaded' );
-					}, b * 105 );
+					}, ( b + 1 ) * 105 );
 				} )( chans[ a ], a );
 				( function( f, b, c ){
 					setTimeout( function()
 					{ 
 						f.classList.add( 'Loaded' );
-					}, c * 105 );
+					}, ( c + 1 ) * 105 );
 				} )( chans[ chans.length - a - 1 ], chans.length - a - 1, a );
 			}
 			for( let a = 0; a < chans.length; a++ )

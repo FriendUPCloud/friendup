@@ -274,6 +274,12 @@ class FUIContacts extends FUIElement
 					{
 						if( data.data )
 						{
+							let m = new Module( 'system' );
+							m.onExecuted = function( ne, nd )
+							{
+								self.refreshDom();
+							}
+							m.execute( 'convos', { method: 'kickuser', uid: d.record.ID, gid: self.record.ID } );
 						}
 					} );
 				} } ] );

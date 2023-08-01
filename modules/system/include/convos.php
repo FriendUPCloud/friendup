@@ -46,8 +46,6 @@ if( !$sess->Load() )
     $sess->Save();
 }
 
-//error_log( '[convos.php] Received this: ' . print_r( $args, 1 ) );
-
 if( isset( $args->args ) )
 {
     if( is_string( $args->args ) && !json_decode( $args->args ) )
@@ -503,6 +501,24 @@ if( isset( $args->args ) )
 				}
 			}
         	die( 'fail<!--separate-->{"response":0,"message":"Failed to load attachment."}' );
+        }
+        else if( $args->args->method == 'kickuser' )
+        {
+        	if( !isset( $args->args->gid ) ) die( 'fail<!--separate-->{"response":-1,"message":"Invalid call."}' );
+        	$g = new dbIO( 'FUserGroup' );
+        	$g->UserID = $User->ID; 
+        	$g->UniqueID = $args->args->gid;
+        	if( $g->Load() && isset( $args->args->uid ) )
+        	{
+        		$u = new dbIO( 'FUser' );
+        		$u->UniqueID = $args->args->uid;
+        		if( $u->Load() )
+        		{
+        			$SqlDatabase->query( 'DELETE FROM FUserToGroup WHERE UserID=\'' . $u->ID . '\' AND UserGroupID=\'' . $g->ID . '\'' );
+        			die( 'ok<!--separate-->{"response":1,"message":"User removed from group."}' );
+    			}
+        	}
+        	die( 'fail<!--separate-->{"response":-1,"message":"Nothing to do."}' );
         }
         else if( $args->args->method == 'getrooms' )
         {
