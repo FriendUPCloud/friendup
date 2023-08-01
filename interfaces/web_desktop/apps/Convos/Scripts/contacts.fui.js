@@ -264,12 +264,21 @@ class FUIContacts extends FUIElement
 	    }
        		
         d.innerHTML = '<span class="Avatar"></span><span class="Name">' + text + '</span>';
-        d.addEventListener( 'contextmenu', function( e )
-        {
-        	console.log( 'Fop' );
-    		ShowContextMenu( 'Hello', [ { name: 'Quit', command: 'quit' }, { name: 'Laks', command: 'laks' } ] );
-    		cancelBubble( e );
-        } );
+        if( this.record && this.record.Type == 'chatroom' )
+    	{
+		    d.addEventListener( 'contextmenu', function( e )
+		    {
+				ShowContextMenu( i18n( 'i18n_contact' ), [ { name: i18n( 'i18n_remove_user' ), command: 'quit' } ] );
+				cancelBubble( e );
+		    } );
+	    }
+	    else
+	    {
+	    	d.addEventListener( 'contextmenu', function( e )
+		    {
+		    	cancelBubble( e );
+		    } );
+	    }
         /*d.addEventListener( 'mousedown', function( e )
         {
         	console.log( e.button );

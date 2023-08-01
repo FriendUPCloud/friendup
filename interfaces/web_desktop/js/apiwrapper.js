@@ -3204,21 +3204,26 @@ function apiWrapper( event, force )
 						windowMouseY = msg.y;
 						if( app && app.windows && app.windows[msg.viewId] )
 						{
-							var div = app.windows[ msg.viewId ];
-							var x = GetElementLeft( div.content );
-							var y = GetElementTop( div.content );
+							let div = app.windows[ msg.viewId ];
+							let x = GetElementLeft( div.content );
+							let y = GetElementTop( div.content );
 							windowMouseX += x;
 							windowMouseY += y;
 						}
 						var el = document.elementFromPoint( windowMouseX, windowMouseY );
 						if( el )
 						{
-							var clickEvent = document.createEvent( 'MouseEvents' );
-							clickEvent.initEvent( 'mouseup', true, true );
-							el.dispatchEvent( clickEvent );
+							// On context menus, don't do this
+							if( !Workspace.contextMenuShowing )
+							{
+								let clickEvent = document.createEvent( 'MouseEvents' );
+								clickEvent.initEvent( 'mouseup', true, true );
+								el.dispatchEvent( clickEvent );
+							}
 						}
 						break;
 					case 'showcontextmenu':
+						// Show the menu
 						Workspace.showContextMenu( msg.menu, window.event, msg );
 						break;
 					case 'setworkspacemode':

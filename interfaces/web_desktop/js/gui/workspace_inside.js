@@ -9135,7 +9135,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					focusVisible : false,
 				})
 				v.dom.addEventListener( 'blur', e => {
-					v.hide()
+					v.hide();
 					if ( extra.callback )
 					{
 						let app = findApplication( extra.applicationId )

@@ -334,7 +334,7 @@ Widget.prototype.lower = function( callback )
 
 Widget.prototype.show = function( callback )
 {
-	var self = this;
+	let self = this;
 	
 	// Remove fadeout class if it exists
 	self.dom.classList.remove( 'Fadeout' );
@@ -358,7 +358,8 @@ Widget.prototype.show = function( callback )
 
 Widget.prototype.hide = function( callback )
 {
-	var self = this;
+	let self = this;
+
 	function doHide()
 	{
 		self.shown = false;
