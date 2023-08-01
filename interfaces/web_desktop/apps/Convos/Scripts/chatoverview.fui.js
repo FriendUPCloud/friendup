@@ -227,7 +227,11 @@ class FUIChatoverview extends FUIElement
     		}
     		else
     		{
-    			self.domChatlist.querySelector( '.Online' ).querySelector( '.Content' ).innerHTML = '<p>' + i18n( 'i18n_no_new_events' ) + '</p>';
+    			let onl = self.domChatlist.querySelector( '.Online' )
+    			if( onl )
+    			{
+    				onl.querySelector( '.Content' ).innerHTML = '<p>' + i18n( 'i18n_no_new_events' ) + '</p>';
+				}
     		}
     		self.handleResize();
     		
