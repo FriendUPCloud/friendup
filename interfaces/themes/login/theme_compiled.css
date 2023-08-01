@@ -107,7 +107,7 @@ html input[type=text]:focus, html input[type=username]:focus, html input[type=pa
 	width: 100%;
 	outline: 0;
 	border-radius: 15px;
-	box-shadow: none;
+	box-shadow: inset 0px 2px 0px 0px rgba(0,0,0,0.05);
 	height: 35px;
 	line-height: 30px;
 	border: 1px solid #BDC3C7;

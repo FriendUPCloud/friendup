@@ -3478,14 +3478,24 @@ html .File .Icon .Friend_Marketplace
 
 /* Input elements ----------------------------------------------------------- */
 
-input[type=text], input[type=range], input[type=number], input[type=date],
+input, input[type=text], input[type=range], input[type=number], input[type=date],
 input[type=email], input[type=username],
 input[type=datetime-local], input[type=password], html body textarea, html select, html select:hover
 {
 	border-radius: 10px;
-	border: 1px solid #e3e7e8;
+	border: 1px solid #BDC3C7;
 	background: #e8e8e8;
 	font-size: 0.9em;
+	box-shadow: inset 0px 2px 0px 0px rgba(0,0,0,0.05);
+	transition: border 0.5s;
+}
+
+input:focus, input[type=text]:focus, input[type=range]:focus, input[type=number]:focus, 
+input[type=date]:focus, input[type=email]:focus, input[type=username]:focus,
+input[type=datetime-local]:focus, input[type=password]:focus, 
+html body textarea:focus, html select:focus
+{
+	border: 1px solid #404040;
 }
 
 html select, html select:hover
