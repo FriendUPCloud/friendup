@@ -270,7 +270,12 @@ class FUIContacts extends FUIElement
 		    {
 				ShowContextMenu( i18n( 'i18n_contact' ), [ { name: i18n( 'i18n_remove_user' ), command: function()
 				{
-					console.log( 'Hey' );
+					Confirm( i18n( 'i18n_are_you_sure' ), i18n( 'i18n_this_will_kick' ), function( data )
+					{
+						if( data.data )
+						{
+						}
+					} );
 				} } ] );
 				cancelBubble( e );
 		    } );
