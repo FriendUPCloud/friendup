@@ -394,7 +394,12 @@ class FUIChatlog extends FUIElement
 			if( me == 'ok' )
 			{
 				let res = JSON.parse( md );
-				self.queueMessage( '<attachment type="' + res.type + '" image="' + res.url + '"/>' );
+				let i = new Image();
+				i.src = res.url + '&authid=' + Application.authId;
+				i.onload = function()
+				{
+					self.queueMessage( '<attachment type="' + res.type + '" image="' + res.url + '" width="' + this.naturalWidth + '" height="' + this.naturalHeight + '"/>' );
+				}
 			}
 		}
 		let zmsg = { method: 'addupload', path: path };
@@ -871,11 +876,24 @@ class FUIChatlog extends FUIElement
         // Take attachments
         while( 1 )
         {
-        	let res = string.match( /[\s]{0,1}\<attachment\ type\=\"image\"\ image\=\"(.*?)\"\/\>/i );
+        	let res = string.match( /[\s]{0,1}\<attachment\ type\=\"image\"\ image\=\"(.*?)\"(.*?)\/\>/i );
         	if( res != null )
         	{
         		let od = res[1].split( 'getattachment' ).join( 'getoriginal' ) + '&authid=' + Application.authId;
-        		string = string.split( res[ 0 ] ).join( '<div class="AttachmentElement" contenteditable="false"><a class="Download" target="_blank" href="' + od + '"></a><img onload="Application.handleImageLoad( this )" onerror="Application.handleImageError( this )" src="' + res[1] + '&authid=' + Application.authId + '" class="Attachment"/></div>' );
+        		
+        		let w = 'auto';
+        		let h = 'auto';
+        		if( typeof res[2] != undefined )
+        		{
+        			let wh = string.match( /[\s]{0,1}\ width\=\"(.*?)\"\ height\=\"(.*?)\"/i );
+        			if( wh && wh.length && parseInt( wh[1] ) > 0 )
+        			{
+		    			w = wh[1];
+		    			h = wh[2];
+	    			}
+        		}
+        		
+        		string = string.split( res[ 0 ] ).join( '<div class="AttachmentElement" contenteditable="false"><a class="Download" target="_blank" href="' + od + '"></a><img width="' + w + '" height="' + h + '" onload="Application.handleImageLoad( this )" onerror="Application.handleImageError( this )" src="' + res[1] + '&authid=' + Application.authId + '" class="Attachment"/></div>' );
         		continue;
         	}
         	break;
