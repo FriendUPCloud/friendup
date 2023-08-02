@@ -1,8 +1,6 @@
 <?php
 
-$Logger->log( '[dbIO] Look for autoload!' );
-
-require __DIR__ . '../vendor/autoload.php';
+require __DIR__ . '../../vendor/autoload.php';
 
 $Logger->log( '[dbIO] Autoloaded!' );
 
