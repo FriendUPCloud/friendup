@@ -826,11 +826,13 @@ class dbUser extends dbIO
 	{
 		global $SqlDatabase, $UserSession, $Logger, $Config, $configfilesettings;
 		
+		$Logger->log( '[dbIO] Testing for target user' );
 		if( !isset( $targetUser->ID ) )
 			return false;
 		
 		if( isset( $configfilesettings[ 'Security' ] ) && isset( $configfilesettings[ 'Security' ][ 'push_system' ] ) )
 		{
+			$Logger->log( '[dbIO] Checking activity' );
 			$system = $configfilesettings[ 'Security' ][ 'push_system' ];
 			if( $options->Condition == 'activity' && isset( $options->Seconds ) )
 			{
@@ -844,6 +846,7 @@ class dbUser extends dbIO
 					//$Logger->log( '[dbIO] Trying to find user session for ' . $targetUser->FullName );
 					if( $row = $SqlDatabase->fetchObject( 'SELECT * FROM FUserSession s WHERE s.UserID=\'' . $targetUser->ID . '\' ORDER BY ID DESC LIMIT 1' ) )
 					{
+						$Logger->log( '[dbIO] Here we go webpush.php' );
 						if( $system == 'php-web-push' )
 						{
 							require( __DIR__ . '/../include/webpush.php' );

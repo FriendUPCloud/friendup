@@ -85,13 +85,12 @@ if( isset( $args->args ) )
                     // Check if user haven't been online for a while
                     $cf = isset( $GLOBALS[ 'configfilesettings' ] ) ? $GLOBALS[ 'configfilesettings' ] : false;
                     if( $cf && isset( $cf[ 'Security' ] ) && isset( $cf[ 'Security' ][ 'push_system' ] ) )
-					{
-		                $Logger->log( '[convos] Trying push.' );
-		                
+					{		                
 		                $targetUser = new dbUser();
 		                $targetUser->UniqueID = $o->TargetID;
 		                if( $targetUser->Load() )
 		                {
+				            $Logger->log( '[convos] Trying push.' );
 				            $options = new stdClass();
 				            $options->Condition = 'activity';
 				            $options->Seconds = 300; // Five minutes since last activity
