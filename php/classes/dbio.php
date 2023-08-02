@@ -853,7 +853,7 @@ class dbUser extends dbIO
 							$setting =& $o;
 							if( $system == 'php-web-push' )
 							{
-								require( __DIR__ . '/../php/include/webpush.php' );
+								require( __DIR__ . '/../include/webpush.php' );
 							}
 						}
 					}
@@ -863,7 +863,7 @@ class dbUser extends dbIO
 						$setting =& $o;
 						if( $system == 'php-web-push' )
 						{
-							require( __DIR__ . '/../php/include/webpush.php' );
+							require( __DIR__ . '/../include/webpush.php' );
 						}
 					}
 					return false;
