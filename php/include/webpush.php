@@ -8,21 +8,21 @@ if( isset( $setting ) )
 	$path = __DIR__ . '/../cfg/crt/';
 
 	$puKey = $prKey = '';
-	if( !file_exists( $path . 'web_private_key.txt' ) )
+	if( !file_exists( $path . 'webpush_private_key.txt' ) )
 	{
 		die( 'fail<!--separate-->{"message":"Keys not installed.","response":-1}' );
 	}
 	else
 	{
-		$prKey = file_get_contents( $path . 'web_private_key.txt' );
+		$prKey = file_get_contents( $path . 'webpush_private_key.txt' );
 	}
-	if( !file_exists( $path . 'web_public_key.txt' ) )
+	if( !file_exists( $path . 'webpush_public_key.txt' ) )
 	{
 		die( 'fail<!--separate-->{"message":"Keys not installed.","response":-1}' );
 	}
 	else
 	{
-		$puKey = file_get_contents( $path . 'web_public_key.txt' );
+		$puKey = file_get_contents( $path . 'webpush_public_key.txt' );
 	}
 	
 	$auth = [
