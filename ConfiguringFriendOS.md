@@ -23,6 +23,7 @@ configuration file.
 
 Entries which start with ! are required.
 
+```
 [DatabaseUser]
 --------------
 
@@ -95,4 +96,5 @@ cron_user_login_notice        = "5 MINUTE"  ; How long till login notice
 cron_user_activity_notice     = "10 MINUTE" ; How long till lack activity notice
 cron_user_feedback_notice     = "15 MINUTE" ; How long till ask feedback
 cron_team_cancellation_period = "7"         ; Grace time for team cancellation
+```
 
