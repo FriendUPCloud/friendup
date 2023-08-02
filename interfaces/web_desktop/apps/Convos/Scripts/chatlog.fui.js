@@ -417,12 +417,12 @@ class FUIChatlog extends FUIElement
 		}
 		m.execute( 'convos', zmsg );
     }
-    setVideoCall( data )
+    setVideoCall( data, init = false )
     {
     	// initVideoCall( data )
     	let contacts = FUI.getElementByUniqueId( 'contacts' );
     	if( contacts )
-    		contacts.setVideoCall( data );
+    		contacts.setVideoCall( data, init );
     }
     // Adds messages to a list locked by sorted timestamps
     addMessages( messageList )
@@ -473,7 +473,7 @@ class FUIChatlog extends FUIElement
 				        	text: m.Name + ' ' + i18n( 'i18n_video_invite_desc' )
 				        }, false, function()
 				        {
-				        	self.setVideoCall( res[1] );     	
+				        	self.setVideoCall( res[1], true );     	
 				        } );
 				        continue;
 				    }
