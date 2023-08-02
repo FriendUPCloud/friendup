@@ -64,6 +64,7 @@ if( isset( $setting ) )
 			//$uri = $request->getUri();
 			if( $result->isSuccess() )
 			{
+				$Logger->log( 'The message was sent successfully: ' . $payload );
 				return true;
 			}
 		}
