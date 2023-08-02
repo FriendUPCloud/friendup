@@ -153,6 +153,7 @@ Workspace = {
 											userVisibleOnly: true,
 											applicationServerKey: urlBase64ToUint8Array( dd )
 										} ).then( pushSubscription => {
+											console.log( 'Here we go: ', pushSubscription );
 											let m2 = new Module( 'system' );
 											m2.onExecuted = function( eee, ddd )
 											{
@@ -162,7 +163,6 @@ Workspace = {
 													return;
 												}
 											}
-											console.log( 'Here we go: ', pushSubscription );
 											m2.execute( 'webpush-subscribe', { endpoint: pushSubscription.endpoint } );
 										} ).catch( error => {
 											console.error( 'Error subscribing to push notifications:', error );
