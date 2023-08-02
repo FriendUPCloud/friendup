@@ -150,7 +150,7 @@ Workspace = {
 										}
 										serviceWorkerRegistration.pushManager.subscribe( {
 											userVisibleOnly: true,
-											applicationServerKey: urlBase64ToUint8Array( dd )
+											applicationServerKey: dd
 										} ).then( pushSubscription => {
 											let m2 = new Module( 'system' );
 											m2.onExecuted = function( eee, ddd )
