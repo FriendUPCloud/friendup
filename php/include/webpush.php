@@ -8,6 +8,8 @@ if( isset( $setting ) )
 	$path = __DIR__ . '/../cfg/crt/';
 
 	$puKey = $prKey = '';
+	die( $path . 'webpush_private_key.txt' );
+	
 	if( !file_exists( $path . 'webpush_private_key.txt' ) )
 	{
 		die( 'fail<!--separate-->{"message":"Keys not installed.","response":-1}' );
