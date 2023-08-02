@@ -455,6 +455,7 @@ class FUIChatlog extends FUIElement
             // Trap video calls
             if( !m.Own )
             {
+            	console.log( ( new Date().getTime() / 1000 ) - ( new Date( m.Date ).getTime() / 1000 ) );
 		        if( text.indexOf( '<videocall' ) == 0 )
 		        {
 		        	// Only take new calls (expire after 30 seconds)
