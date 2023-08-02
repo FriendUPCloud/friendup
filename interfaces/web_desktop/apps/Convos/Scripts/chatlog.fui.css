@@ -291,6 +291,8 @@ body:not([mobile]) .FUIChatlog .Input .MobileMen:hover,
 {
 	display: inline-block;
 	cursor: pointer;
+	min-width: 16px;
+	text-align: center;
 }
 
 .FUIChatlog .Message > .Toolbar > .ToolbarButton.Delete:before
