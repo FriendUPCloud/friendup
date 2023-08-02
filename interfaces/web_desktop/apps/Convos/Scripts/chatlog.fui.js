@@ -453,16 +453,19 @@ class FUIChatlog extends FUIElement
             catch( e ){};
             
             // Trap video calls
-            if( text.indexOf( '<videocall' ) == 0 )
+            if( !m.Own )
             {
-            	// Take video calls
-            	let string = text;
-				let res = string.match( /[\s]{0,1}\<videocall\ type\=\"video\"\ callid\=\"(.*?)\"\/\>/i );
-				if( res != null )
-				{
-					self.setVideoCall( res[1] );
-				}
-            }
+		        if( text.indexOf( '<videocall' ) == 0 )
+		        {
+		        	// Take video calls
+		        	let string = text;
+					let res = string.match( /[\s]{0,1}\<videocall\ type\=\"video\"\ callid\=\"(.*?)\"\/\>/i );
+					if( res != null )
+					{
+						self.setVideoCall( res[1] );
+					}
+		        }
+	        }
             
             let mess = md5( m.Message );
             d.setAttribute( 'message-hash', mess );
