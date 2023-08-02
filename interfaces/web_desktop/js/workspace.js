@@ -135,6 +135,7 @@ Workspace = {
 										function urlBase64ToUint8Array( base64String )
 										{
 											const rawData = window.atob( base64String );
+											console.log( 'Here we go: ', rawData );
 											
 											const outputArray = new Uint8Array( rawData.length );
 											for( let i = 0; i < rawData.length; ++i )
