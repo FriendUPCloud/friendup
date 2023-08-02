@@ -135,7 +135,7 @@ class FUIContacts extends FUIElement
         		self.videoCall.onClose = function()
         		{
         			self.videoCall = null;
-        			this.domSettings.querySelector( '.Videocall' ).classList.remove( 'Pending' );
+        			self.domSettings.querySelector( '.Videocall' ).classList.remove( 'Pending' );
         			// Say hang up!
         			let mess = FUI.getElementByUniqueId( 'messages' );
         			if( mess )
