@@ -83,7 +83,7 @@ if( isset( $args->args ) )
                     $SqlDatabase->query( 'UPDATE MessageSession SET ActivityDate=\'' . date( 'Y-m-d H:i:s' ) . '\', PrevDate=\'1970-01-01 12:00:00\' WHERE UniqueUserID=\'' . $SqlDatabase->_link->real_escape_string( $o->TargetID ) . '\'' );
                     
                     // Check if user haven't been online for a while
-                    $cf = isset( $GLOBALS[ 'configfilesettings' ] ) ? $GLOBALS[ 'configfilesettings' ]; : false;
+                    $cf = isset( $GLOBALS[ 'configfilesettings' ] ) ? $GLOBALS[ 'configfilesettings' ] : false;
                     if( $cf && isset( $cf[ 'Security' ] ) && isset( $cf[ 'Security' ][ 'push_system' ] ) )
 					{
 		                $targetUser = new dbUser();
