@@ -135,7 +135,7 @@ Workspace = {
 										function urlBase64ToUint8Array( base64String )
 										{
 											// Fix string
-											const rawData = window.atob( base64String );
+											let rawData = window.atob( base64String );
 											rawData = rawData.split( "\r\n" ).join( "" ).split( "\n" ).join( "" );
 											
 											const padding = '='.repeat( ( 4 - rawData.length % 4 ) % 4 );
