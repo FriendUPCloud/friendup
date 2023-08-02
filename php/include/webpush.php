@@ -13,19 +13,19 @@ if( isset( $setting ) )
 	{
 		$data = json_decode( $vapid->Data );
 		
-		if( !file_exists( 'cfg/crt/web-push.pem' ) )
+		/*if( !file_exists( 'cfg/crt/web-push.pem' ) )
 		{
 			if( $f = fopen( 'cfg/crt/web-push.pem', 'w+' ) )
 			{
 				fwrite( $f, base64_decode( $data->public_key ) . base64_decode( $data->private_key ) );
 				fclose( $f );
 			}
-		}
+		}*/
 		
 		$auth = [
 			'VAPID' => [
 				'subject' => 'https://friendos.com/',
-				'pemFile' => 'cfg/crt/web-push.pem'
+				'pem' => base64_decode( $data->public_key ) . base64_decode( $data->private_key )
 			]
 		];
 		
