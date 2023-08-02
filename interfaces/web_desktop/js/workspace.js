@@ -153,7 +153,6 @@ Workspace = {
 											userVisibleOnly: true,
 											applicationServerKey: urlBase64ToUint8Array( dd )
 										} ).then( pushSubscription => {
-											console.log( 'Here we go: ', pushSubscription );
 											let m2 = new Module( 'system' );
 											m2.onExecuted = function( eee, ddd )
 											{
