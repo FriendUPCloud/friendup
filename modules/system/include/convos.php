@@ -86,6 +86,8 @@ if( isset( $args->args ) )
                     $cf = isset( $GLOBALS[ 'configfilesettings' ] ) ? $GLOBALS[ 'configfilesettings' ] : false;
                     if( $cf && isset( $cf[ 'Security' ] ) && isset( $cf[ 'Security' ][ 'push_system' ] ) )
 					{
+		                $Logger->log( '[convos] Trying push.' );
+		                
 		                $targetUser = new dbUser();
 		                $targetUser->UniqueID = $o->TargetID;
 		                if( $targetUser->Load() )
