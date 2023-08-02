@@ -51,7 +51,20 @@ if( isset( $setting ) )
     ] );
 	
 	$Logger->log( '[dbIO] Sending the notification.' );
-	$result = $webPush->sendOneNotification( $subscription, "Hello there" ); //json_encode( $message ) );
+	if( $result = $webPush->sendOneNotification( $subscription, "Hello there" ) )
+	{
+		$Logger->log( '[dbIO] Got a result.' );
+		if( $request = $report->getRequest() )
+		{
+			$uri = $request->getUri();
+			$Logger->log( '[dbIO] URI: ' . print_r( $uri, 1 ) );
+			$Logger->log( '[dbIO] Success? ' . $report->isSuccess() ? 'Yes' : 'No' ); 
+			if( !$report->isSuccess() )
+			{
+				$Logger->log( '[dbIO] Reason: ' . print_r( $report->getReason(),1 ) );
+			}
+		}
+	}
 	$Logger->log( '[dbIO] Result: ' . print_r( $result, 1 ) );
 	return true;
 }
