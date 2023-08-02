@@ -38,8 +38,8 @@ if( isset( $setting ) )
 	$webPush = new WebPush( $auth );
 	$webPush->setReuseVAPIDHeaders( true );
 	$subscription = Subscription::create( [
-	        'endpoint' => $setting->Data,
-	        'contentEncoding' => 'aes128gcm'
+        'endpoint' => $setting->Data,
+        'contentEncoding' => 'aes128gcm'
     ] );
 	
 	$Logger->log( '[dbIO] Sending the notification.' );
