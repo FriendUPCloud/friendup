@@ -826,24 +826,22 @@ class dbUser extends dbIO
 	{
 		global $SqlDatabase, $UserSession, $Logger, $Config, $configfilesettings;
 		
-		$Logger->log( '[dbIO] Testing for target user' );
 		if( !isset( $targetUser->ID ) )
 			return false;
 		
 		if( isset( $configfilesettings[ 'Security' ] ) && isset( $configfilesettings[ 'Security' ][ 'push_system' ] ) )
 		{
-			$Logger->log( '[dbIO] Checking activity' );
 			$system = $configfilesettings[ 'Security' ][ 'push_system' ];
 			if( $options->Condition == 'activity' && isset( $options->Seconds ) )
 			{
-				//$Logger->log( '[dbIO] Trying to see if the user has inactivity.' );
+				$Logger->log( '[dbIO] Trying to see if the user has inactivity.' );
 				$tid = intval( $targetUser->ID, 10 );
 				$q = "SELECT (UNIX_TIMESTAMP(NOW()) - LastActionTime) `DIFF` FROM FUser WHERE ID='{$tid}'";
 				$time = $SqlDatabase->FetchRow( $q );
 				// Inactivity detected
 				if( intval( $time[ 'DIFF' ], 10 ) > $options->Seconds )
 				{
-					//$Logger->log( '[dbIO] Trying to find user session for ' . $targetUser->FullName );
+					$Logger->log( '[dbIO] Trying to find user session for ' . $targetUser->FullName );
 					if( $row = $SqlDatabase->fetchObject( 'SELECT * FROM FUserSession s WHERE s.UserID=\'' . $targetUser->ID . '\' ORDER BY ID DESC LIMIT 1' ) )
 					{
 						$Logger->log( '[dbIO] Here we go webpush.php' );

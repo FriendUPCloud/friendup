@@ -90,7 +90,6 @@ if( isset( $args->args ) )
 		                $targetUser->UniqueID = $o->TargetID;
 		                if( $targetUser->Load() )
 		                {
-				            $Logger->log( '[convos] Trying push.' );
 				            $options = new stdClass();
 				            $options->Condition = 'activity';
 				            $options->Seconds = 300; // Five minutes since last activity
@@ -99,10 +98,6 @@ if( isset( $args->args ) )
 				            $message->Message = $out->message;
 				            $User->WebPush( $targetUser, $options, $message );
 			            }
-		            }
-		            else
-		            {
-		            	$Logger->log( '[convos] Have not set up push.' );
 		            }
                 }
             }
