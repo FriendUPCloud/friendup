@@ -12,25 +12,34 @@ if( isset( $setting ) )
 	if( $vapid->Load() )
 	{
 		$data = json_decode( $vapid->Data );
-		
-		/*if( !file_exists( 'cfg/crt/web-push.pem' ) )
+		$puKey = $prKey = '';
+		if( !file_exists( 'cfg/crt/web_private_key.txt' ) )
 		{
-			if( $f = fopen( 'cfg/crt/web-push.pem', 'w+' ) )
-			{
-				fwrite( $f, base64_decode( $data->public_key ) . base64_decode( $data->private_key ) );
-				fclose( $f );
-			}
-		}*/
+			die( 'fail<!--separate-->{"message":"Keys not installed.","response":-1}' );
+		}
+		else
+		{
+			$prKey = file_get_contents( 'cfg/crt/web_private_key.txt' );
+		}
+		if( !file_exists( 'cfg/crt/web_public_key.txt' ) )
+		{
+			die( 'fail<!--separate-->{"message":"Keys not installed.","response":-1}' );
+		}
+		else
+		{
+			$puKey = file_get_contents( 'cfg/crt/web_public_key.txt' );
+		}
 		
 		$auth = [
 			'VAPID' => [
 				'subject' => 'https://friendos.com/',
-				'pem' => base64_decode( $data->public_key ) . base64_decode( $data->private_key )
+				'publicKey' => $puKey,
+				'privateKey' => $prKey
 			]
 		];
 		
 		$webPush = new WebPush( $auth );
-		
+		$webPush->setReuseVAPIDHeaders( true );
 		$subscription = Subscription::create( [
 		        'endpoint' => $setting->Data
 	    ] );
