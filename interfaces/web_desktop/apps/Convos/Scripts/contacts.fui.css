@@ -139,6 +139,18 @@
 	font-family: FontAwesome;
 }
 
+@keyframes pulse-video
+{
+	0% { background-color: black; }
+	50% { background-color: var(--ColorAcceptBg); }
+	100% { background-color: black; }
+}
+
+.FUIContacts .Contacts > .Settings .Videocall.Pending
+{
+	animation: pulse-video 0.5s infinite;
+}
+
 .FUIContacts .Contacts > .Settings .Gearbox:before
 {
 	content: "\f013";

@@ -58,6 +58,20 @@ class FUIContacts extends FUIElement
         <div class="Chat"><div class="Placeholder"><span>' + i18n( 'i18n_start_conversation' ) + '</span></div></div>\
         ';
     }
+    setVideoCall( data = false )
+    {
+    	let vid = this.domSettings.querySelector( '.Videocall' );
+    	if( data )
+    	{
+    		window.currentPeerId = data;
+    		vid.classList.add( 'Pending' );
+		}
+    	else 
+    	{
+    		window.videoCallData = null;
+    		vid.classList.remove( 'Pending' );
+		}
+    }
     attachDomElement()
     {
         super.attachDomElement();
