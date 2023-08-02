@@ -134,13 +134,13 @@ Workspace = {
 									.then( serviceWorkerRegistration => {
 										function urlBase64ToUint8Array( base64String )
 										{
-											// TODO: Remove double encoding issue
 											// Fix string
 											const rawData = window.atob( base64String );
-											return rawData;
-											//const padding = '='.repeat( ( 4 - base64String.length % 4 ) % 4 );
-											//const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
-											//const rawData = window.atob( base64 );
+											rawData = rawData.join( "\r\n" ).join( "\n" );
+											
+											const padding = '='.repeat( ( 4 - rawData.length % 4 ) % 4 );
+											const base64 = (rawData + padding).replace(/-/g, '+').replace(/_/g, '/');
+											rawData = window.atob( base64 );
 											
 											console.log( 'Here it is in url safe: ' + rawData );
 											const outputArray = new Uint8Array( rawData.length );
