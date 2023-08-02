@@ -136,7 +136,7 @@ Workspace = {
 										{
 											// Fix string
 											const rawData = window.atob( base64String );
-											rawData = rawData.join( "\r\n" ).join( "\n" );
+											rawData = rawData.split( "\r\n" ).join( "" ).split( "\n" ).join( "" );
 											
 											const padding = '='.repeat( ( 4 - rawData.length % 4 ) % 4 );
 											const base64 = (rawData + padding).replace(/-/g, '+').replace(/_/g, '/');
