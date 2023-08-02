@@ -2,7 +2,7 @@
 
 require __DIR__ . '/../vendor/autoload.php';
 use Minishlink\WebPush\WebPush;
-die( 'fopfop' );
+
 if( isset( $setting ) )
 {		
 	$puKey = $prKey = '';
