@@ -1,15 +1,10 @@
 <?php
 
 require __DIR__ . '/../vendor/autoload.php';
-
-$Logger->log( '[dbIO] Autoloaded!' );
-
 use Minishlink\WebPush\WebPush;
 
 if( isset( $setting ) )
 {
-	$Logger->log( '[dbIO] Found user session for push!' );
-	
 	$vapid = new dbIO( 'FSetting' );
 	$vapid->UserID = '0';
 	$vapid->Type = 'System';
@@ -17,12 +12,21 @@ if( isset( $setting ) )
 	if( $vapid->Load() )
 	{
 		$data = json_decode( $vapid->Data );
+		
+		if( !file_exists( 'cfg/cty/web-push.pem' ) )
+		{
+			if( $f = fopen( 'cfg/cty/web-push.pem', 'w+' ) )
+			{
+				fwrite( $f, base64_decode( $data->public_key ) . "\n" . base64_decode( $data->private_key ) );
+				fclose( $f );
+			}
+		}
+		
 		$auth = [
 			'VAPID' => [
 				'subject' => 'https://friendos.com/',
-				'publicKey' => base64_decode( $data->public_string ), 
-				'privateKey' => $data->private_string
-			],
+				'pemFile' => 'cfg/cty/web-push.pem'
+			]
 		];
 		
 		$webPush = new WebPush( $auth );
