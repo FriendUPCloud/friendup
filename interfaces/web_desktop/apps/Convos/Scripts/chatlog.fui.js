@@ -455,38 +455,41 @@ class FUIChatlog extends FUIElement
             // Trap video calls
             if( !m.Own )
             {
-            	console.log( ( new Date().getTime() / 1000 ) - ( new Date( m.Date ).getTime() / 1000 ) );
-		        if( text.indexOf( '<videocall' ) == 0 )
-		        {
-		        	// Only take new calls (expire after 30 seconds)
-		        	// Take video calls
-		        	let string = text;
-					let res = string.match( /[\s]{0,1}\<videocall\ type\=\"video\"\ callid\=\"(.*?)\"\/\>/i );
-					if( res != null )
-					{
-						self.setVideoCall( res[1] );
-					}
-				    Notify( {
-		            	title: i18n( 'i18n_video_invite' ),
-		            	text: m.Name + ' ' + i18n( 'i18n_video_invite_desc' )
-		            }, false, function()
-		            {
-		            	self.setVideoCall( res[1] );     	
-		            } );
-		            continue;
-		        }
-		        else if( text.indexOf( '<videohangup' ) == 0 )
-		        {
-		        	// Only take new calls (expire after 30 seconds)
-		        	// Take video calls
-		        	let string = text;
-					let res = string.match( /[\s]{0,1}\<videohangup callid\=\"(.*?)\"\/\>/i );
-					if( res != null && window.currentPeerId == res[1] )
-					{
-						self.setVideoCall( false );
-					}
-					continue;
-		        }
+            	// Expire after 3 secs
+            	if( ( new Date().getTime() / 1000 ) - ( new Date( m.Date ).getTime() / 1000 ) < 3 )
+            	{
+				    if( text.indexOf( '<videocall' ) == 0 )
+				    {
+				    	// Only take new calls (expire after 30 seconds)
+				    	// Take video calls
+				    	let string = text;
+						let res = string.match( /[\s]{0,1}\<videocall\ type\=\"video\"\ callid\=\"(.*?)\"\/\>/i );
+						if( res != null )
+						{
+							self.setVideoCall( res[1] );
+						}
+						Notify( {
+				        	title: i18n( 'i18n_video_invite' ),
+				        	text: m.Name + ' ' + i18n( 'i18n_video_invite_desc' )
+				        }, false, function()
+				        {
+				        	self.setVideoCall( res[1] );     	
+				        } );
+				        continue;
+				    }
+				    else if( text.indexOf( '<videohangup' ) == 0 )
+				    {
+				    	// Only take new calls (expire after 30 seconds)
+				    	// Take video calls
+				    	let string = text;
+						let res = string.match( /[\s]{0,1}\<videohangup callid\=\"(.*?)\"\/\>/i );
+						if( res != null && window.currentPeerId == res[1] )
+						{
+							self.setVideoCall( false );
+						}
+						continue;
+				    }
+			    }
 	        }
             
             let mess = md5( m.Message );
