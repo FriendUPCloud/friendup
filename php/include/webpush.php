@@ -54,7 +54,7 @@ if( isset( $setting ) )
 	if( $result = $webPush->sendOneNotification( $subscription, "Hello there" ) )
 	{
 		$Logger->log( '[dbIO] Got a result.' );
-		if( $request = $report->getRequest() )
+		if( $request = $result->getRequest() )
 		{
 			$uri = $request->getUri();
 			$Logger->log( '[dbIO] URI: ' . print_r( $uri, 1 ) );
