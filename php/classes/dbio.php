@@ -824,14 +824,14 @@ class dbUser extends dbIO
 	// Push notifications on condition
 	function WebPush( $targetUser, $options, $message )
 	{
-		global $SqlDatabase, $UserSession, $Logger, $Config;
+		global $SqlDatabase, $UserSession, $Logger, $Config, $configfilesettings;
 		
 		if( !isset( $targetUser->ID ) )
 			return false;
 		
-		if( isset( $Config[ 'Security' ] ) && isset( $Config[ 'Security' ][ 'push_system' ] ) )
+		if( isset( $configfilesettings[ 'Security' ] ) && isset( $configfilesettings[ 'Security' ][ 'push_system' ] ) )
 		{
-			$system = $Config[ 'Security' ][ 'push_system' ];
+			$system = $configfilesettings[ 'Security' ][ 'push_system' ];
 			if( $options->Condition == 'activity' && isset( $options->Seconds ) )
 			{
 				//$Logger->log( '[dbIO] Trying to see if the user has inactivity.' );
