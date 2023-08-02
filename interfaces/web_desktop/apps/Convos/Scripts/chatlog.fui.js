@@ -455,10 +455,12 @@ class FUIChatlog extends FUIElement
             // Trap video calls
             if( !m.Own )
             {
+            	let vidc = text.indexOf( '<videocall' ) == 0;
+            	let vidh = text.indexOf( '<videohangup' ) == 0;
             	// Expire after 3 secs
             	if( ( new Date().getTime() / 1000 ) - ( new Date( m.Date ).getTime() / 1000 ) < 3 )
             	{
-				    if( text.indexOf( '<videocall' ) == 0 )
+				    if( vidc )
 				    {
 				    	// Only take new calls (expire after 30 seconds)
 				    	// Take video calls
@@ -477,13 +479,18 @@ class FUIChatlog extends FUIElement
 				        } );
 				        continue;
 				    }
-				    else if( text.indexOf( '<videohangup' ) == 0 )
+				    else if( vidh )
 				    {
 				    	// Only take new calls (expire after 30 seconds)
 				    	// Take video calls
 				    	self.setVideoCall( false );
 						continue;
 				    }
+			    }
+			    else
+			    {
+			    	if( vidc || vidh )
+			    		continue;
 			    }
 	        }
 	        // Skip own video calls and hangups
