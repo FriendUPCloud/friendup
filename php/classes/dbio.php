@@ -840,6 +840,7 @@ class dbUser extends dbIO
 				// Inactivity detected
 				if( intval( $time[ 'DIFF' ], 10 ) > $options->Seconds )
 				{
+					// There's an active session record
 					if( $row = $SqlDatabase->fetchObject( 'SELECT * FROM FUserSession s WHERE s.UserID=\'' . $targetUser->ID . '\' ORDER BY ID DESC LIMIT 1' ) )
 					{
 						// Get session record
@@ -850,7 +851,6 @@ class dbUser extends dbIO
 						if( $o->Load() )
 						{
 							$setting =& $o;
-							$Logger->log( '[dbIO] Here we go webpush.php' );
 							if( $system == 'php-web-push' )
 							{
 								require( __DIR__ . '/../php/include/webpush.php' );
@@ -861,10 +861,8 @@ class dbUser extends dbIO
 					else if( $o = $SqlDatabase->fetchObject( 'SELECT * FROM FSetting WHERE `Type`="WebPush" AND UserID=\'' . $targetUser->ID . '\' ORDER BY ID DESC LIMIT 1' ) )
 					{
 						$setting =& $o;
-						$Logger->log( '[dbIO] Here we go (2) webpush.php' );
 						if( $system == 'php-web-push' )
 						{
-							$Logger->log( '[dbIO] GO webpush.php' );
 							require( __DIR__ . '/../php/include/webpush.php' );
 						}
 					}
