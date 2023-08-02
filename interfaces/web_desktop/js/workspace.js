@@ -138,16 +138,13 @@ Workspace = {
 											// Fix string
 											const padding = '='.repeat( ( 4 - base64String.length % 4 ) % 4 );
 											const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
-											//const rawData = window.atob( base64 );
-											// It is double encoded
-											//const padding2 = '='.repeat( ( 4 - rawData.length % 4 ) % 4 );
-											//const base642 = (rawData + padding2).replace(/-/g, '+').replace(/_/g, '/');
-											//const rawData2 = window.atob( base642 );
-											console.log( 'Here it is in url safe: ' + base64 );
-											const outputArray = new Uint8Array( base64.length );
-											for( let i = 0; i < base64.length; ++i )
+											const rawData = window.atob( base64 );
+											/
+											console.log( 'Here it is in url safe: ' + rawData );
+											const outputArray = new Uint8Array( rawData.length );
+											for( let i = 0; i < rawData.length; ++i )
 											{
-												outputArray[ i ] = base64.charCodeAt( i );
+												outputArray[ i ] = rawData.charCodeAt( i );
 											}
 											return outputArray;
 										}
