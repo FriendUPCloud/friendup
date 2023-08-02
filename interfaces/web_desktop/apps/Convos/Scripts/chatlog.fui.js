@@ -465,6 +465,13 @@ class FUIChatlog extends FUIElement
 						self.setVideoCall( res[1] );
 					}
 		        }
+		        Notify( {
+                	title: i18n( 'i18n_video_invite' ),
+                	text: m.Name + ' ' + i18n( 'i18n_video_invite_desc' )
+                }, false, function()
+                {
+                	self.setVideoCall( res[1] );     	
+                } );
 	        }
             
             let mess = md5( m.Message );

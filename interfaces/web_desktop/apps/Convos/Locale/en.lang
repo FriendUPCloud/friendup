@@ -60,4 +60,5 @@ i18n_video_call                        : Video call
 i18n_video_call_button                 : Click to join video call.
 i18n_sharing_screen                    : You are sharing your screen.
 
-
+i18n_video_invite                      : Video invite
+i18n_video_invite_desc                 : is inviting you to a video session.

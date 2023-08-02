@@ -136,6 +136,7 @@ class FUIContacts extends FUIElement
         		{
         			window.currentPeerId = null;
         			self.videoCall = null;
+        			this.domSettings.querySelector( '.Videocall' ).classList.remove( 'Pending' );
         		}
         		let f = new File( 'Progdir:Markup/videocall.html' );
         		f.replacements = { 'peerId': window.currentPeerId ? window.currentPeerId : '' };
