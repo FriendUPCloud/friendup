@@ -1,5 +1,6 @@
 <?php
 
+require __DIR__ . '/vendor/autoload.php';
 use Minishlink\WebPush\WebPush;
 
 if( isset( $setting ) )
