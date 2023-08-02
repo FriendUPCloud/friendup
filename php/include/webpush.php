@@ -43,7 +43,7 @@ if( isset( $setting ) )
     ] );
 	
 	$Logger->log( '[dbIO] Sending the notification.' );
-	$result = $webPush->sendOneNotification( $subscription, json_encode( $message ) );
+	$result = $webPush->sendOneNotification( $subscription, "Hello there" ); //json_encode( $message ) );
 	$Logger->log( '[dbIO] Result: ' . print_r( $result, 1 ) );
 	return true;
 }
