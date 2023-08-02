@@ -83,18 +83,26 @@ if( isset( $args->args ) )
                     $SqlDatabase->query( 'UPDATE MessageSession SET ActivityDate=\'' . date( 'Y-m-d H:i:s' ) . '\', PrevDate=\'1970-01-01 12:00:00\' WHERE UniqueUserID=\'' . $SqlDatabase->_link->real_escape_string( $o->TargetID ) . '\'' );
                     
                     // Check if user haven't been online for a while
-                    $targetUser = new dbUser();
-                    $targetUser->UniqueID = $o->TargetID;
-                    if( $targetUser->Load() )
-                    {
-		                $options = new stdClass();
-		                $options->Condition = 'activity';
-		                $options->Seconds = 300; // Five minutes since last activity
-		                $message = new stdClass();
-		                $message->Title = 'You got a message from ' . $User->FullName;
-		                $message->Message = $out->message;
-		                $User->WebPush( $targetUser, $options, $message );
-	                }
+                    $cf = isset( $GLOBALS[ 'configfilesettings' ] ) ? $GLOBALS[ 'configfilesettings' ]; : false;
+                    if( $cf && isset( $cf[ 'Security' ] ) && isset( $cf[ 'Security' ][ 'push_system' ] ) )
+					{
+		                $targetUser = new dbUser();
+		                $targetUser->UniqueID = $o->TargetID;
+		                if( $targetUser->Load() )
+		                {
+				            $options = new stdClass();
+				            $options->Condition = 'activity';
+				            $options->Seconds = 300; // Five minutes since last activity
+				            $message = new stdClass();
+				            $message->Title = 'You got a message from ' . $User->FullName;
+				            $message->Message = $out->message;
+				            $User->WebPush( $targetUser, $options, $message );
+			            }
+		            }
+		            else
+		            {
+		            	$Logger->log( '[convos] Have not set up push.' );
+		            }
                 }
             }
             $o->DateUpdated = date( 'Y-m-d H:i:s' );
