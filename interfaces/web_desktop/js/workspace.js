@@ -141,10 +141,10 @@ Workspace = {
 											
 											console.log( 'It became: ', rawData, 'or', base64 );
 											
-											const outputArray = new Uint8Array( rawData.length );
-											for( let i = 0; i < rawData.length; ++i )
+											const outputArray = new Uint8Array( base64.length );
+											for( let i = 0; i < base64.length; ++i )
 											{
-												outputArray[ i ] = rawData.charCodeAt( i );
+												outputArray[ i ] = base64.charCodeAt( i );
 											}
 											return outputArray;
 										}
