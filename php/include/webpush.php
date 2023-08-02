@@ -35,8 +35,16 @@ if( isset( $setting ) )
 		]
 	];
 	
-	$webPush = new WebPush( $auth );
+	$defOpts = [
+		'TTL' => 300,
+		'urgency' => 'normal',
+		'topic' => 'message',
+		'batchSize' => 200
+	];
+	
+	$webPush = new WebPush( $auth, $defOpts );
 	$webPush->setReuseVAPIDHeaders( true );
+	
 	$subscription = Subscription::create( [
         'endpoint' => $setting->Data,
         'contentEncoding' => 'aes128gcm'
