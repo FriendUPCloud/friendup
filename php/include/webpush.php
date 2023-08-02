@@ -1,6 +1,11 @@
 <?php
 
+$Logger->log( '[dbIO] Look for autoload!' );
+
 require __DIR__ . '../vendor/autoload.php';
+
+$Logger->log( '[dbIO] Autoloaded!' );
+
 use Minishlink\WebPush\WebPush;
 
 if( isset( $setting ) )
