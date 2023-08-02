@@ -52,9 +52,9 @@ if( isset( $setting ) )
 	
 	$msg = new stdClass();
 	$msg->message = new stdClass();
-	$msg->notification = new stdClass();
-	$msg->notification->title = 'Hello from Friend OS';
-	$msg->notification->body = 'This is just a text to test the notifications...';
+	$msg->message->notification = new stdClass();
+	$msg->message->notification->title = 'Hello from Friend OS';
+	$msg->message->notification->body = 'This is just a text to test the notifications...';
 	$payload = json_encode( $msg );
 	
 	if( $result = $webPush->sendOneNotification( $subscription, $payload ) )
