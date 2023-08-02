@@ -162,7 +162,7 @@ Workspace = {
 													return;
 												}
 											}
-											console.log( 'Here we go: ', pushSubscriptions );
+											console.log( 'Here we go: ', pushSubscription );
 											m2.execute( 'webpush-subscribe', { endpoint: pushSubscription.endpoint } );
 										} ).catch( error => {
 											console.error( 'Error subscribing to push notifications:', error );
