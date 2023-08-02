@@ -17,7 +17,7 @@ if( isset( $setting ) )
 		{
 			if( $f = fopen( 'cfg/crt/web-push.pem', 'w+' ) )
 			{
-				fwrite( $f, base64_decode( $data->public_key ) . "\n" . base64_decode( $data->private_key ) );
+				fwrite( $f, base64_decode( $data->public_key ) . base64_decode( $data->private_key ) );
 				fclose( $f );
 			}
 		}
