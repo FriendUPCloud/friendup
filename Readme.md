@@ -57,7 +57,7 @@ make clean setup release install
 Configuring your server
 -----------------------
 
-* (Please see configuration file information here)[./ConfiguringFriendOS.md].
+* (Please see configuration file information here)[/ConfiguringFriendOS.md].
 
 Default login
 -------------
