@@ -824,28 +824,34 @@ class dbUser extends dbIO
 	// Push notifications on condition
 	function WebPush( $targetUser, $options, $message )
 	{
-		global $SqlDatabase, $UserSession, $Logger;
+		global $SqlDatabase, $UserSession, $Logger, $Config;
 		
 		if( !isset( $targetUser->ID ) )
 			return false;
 		
-		if( $options->Condition == 'activity' && isset( $options->Seconds ) )
+		if( isset( $Config[ 'Security' ] ) && isset( $Config[ 'Security' ][ 'push_system' ] ) )
 		{
-			//$Logger->log( '[dbIO] Trying to see if the user has inactivity.' );
-			$tid = intval( $targetUser->ID, 10 );
-			$q = "SELECT (UNIX_TIMESTAMP(NOW()) - LastActionTime) `DIFF` FROM FUser WHERE ID='{$tid}'";
-			$time = $SqlDatabase->FetchRow( $q );
-			// Inactivity detected
-			if( intval( $time[ 'DIFF' ], 10 ) > $options->Seconds )
+			$system = $Config[ 'Security' ][ 'push_system' ];
+			if( $options->Condition == 'activity' && isset( $options->Seconds ) )
 			{
-				//$Logger->log( '[dbIO] Trying to find user session for ' . $targetUser->FullName );
-				if( $row = $SqlDatabase->fetchObject( 'SELECT * FROM FUserSession s WHERE s.UserID=\'' . $targetUser->ID . '\' ORDER BY ID DESC LIMIT 1' ) )
+				//$Logger->log( '[dbIO] Trying to see if the user has inactivity.' );
+				$tid = intval( $targetUser->ID, 10 );
+				$q = "SELECT (UNIX_TIMESTAMP(NOW()) - LastActionTime) `DIFF` FROM FUser WHERE ID='{$tid}'";
+				$time = $SqlDatabase->FetchRow( $q );
+				// Inactivity detected
+				if( intval( $time[ 'DIFF' ], 10 ) > $options->Seconds )
 				{
-					include( __DIR__ . '/../include/webpush.php' );
+					//$Logger->log( '[dbIO] Trying to find user session for ' . $targetUser->FullName );
+					if( $row = $SqlDatabase->fetchObject( 'SELECT * FROM FUserSession s WHERE s.UserID=\'' . $targetUser->ID . '\' ORDER BY ID DESC LIMIT 1' ) )
+					{
+						if( $system == 'php-web-push' )
+						{
+							require( __DIR__ . '/../include/webpush.php' );
+						}
+					}
+					return false;
 				}
-				return;
 			}
-			//error_log( '[dbUser] User isn\'t inactive.' );
 		}
 		return false;
 	}
