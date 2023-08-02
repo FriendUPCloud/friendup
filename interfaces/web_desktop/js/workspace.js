@@ -142,7 +142,6 @@ Workspace = {
 											const base64 = (rawData + padding).replace(/-/g, '+').replace(/_/g, '/');
 											rawData = window.atob( base64 );
 											
-											console.log( 'Here it is in url safe: ' + rawData );
 											const outputArray = new Uint8Array( rawData.length );
 											for( let i = 0; i < rawData.length; ++i )
 											{
