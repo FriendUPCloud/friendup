@@ -2,11 +2,7 @@
 
 use Minishlink\WebPush\WebPush;
 
-$o = new dbIO( 'FSetting' );
-$o->Type = 'WebPush';
-$o->Key = $row->SessionID;
-$o->UserID = $targetUser->ID;
-if( $o->Load() )
+if( isset( $setting ) )
 {
 	$Logger->log( '[dbIO] Found user session for push!' );
 	
@@ -28,7 +24,7 @@ if( $o->Load() )
 		$webPush = new WebPush( $auth );
 		
 		$subscription = Subscription::create( [
-		        'endpoint' => $o->Data
+		        'endpoint' => $setting->Data
 	    ] );
 		
 		$Logger->log( '[dbIO] Sending the notification.' );

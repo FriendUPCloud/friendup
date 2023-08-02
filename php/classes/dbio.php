@@ -834,20 +834,37 @@ class dbUser extends dbIO
 			$system = $configfilesettings[ 'Security' ][ 'push_system' ];
 			if( $options->Condition == 'activity' && isset( $options->Seconds ) )
 			{
-				$Logger->log( '[dbIO] Trying to see if the user has inactivity.' );
 				$tid = intval( $targetUser->ID, 10 );
 				$q = "SELECT (UNIX_TIMESTAMP(NOW()) - LastActionTime) `DIFF` FROM FUser WHERE ID='{$tid}'";
 				$time = $SqlDatabase->FetchRow( $q );
 				// Inactivity detected
 				if( intval( $time[ 'DIFF' ], 10 ) > $options->Seconds )
 				{
-					$Logger->log( '[dbIO] Trying to find user session for ' . $targetUser->FullName );
 					if( $row = $SqlDatabase->fetchObject( 'SELECT * FROM FUserSession s WHERE s.UserID=\'' . $targetUser->ID . '\' ORDER BY ID DESC LIMIT 1' ) )
 					{
-						$Logger->log( '[dbIO] Here we go webpush.php' );
+						// Get session record
+						$o = new dbIO( 'FSetting' );
+						$o->Type = 'WebPush';
+						$o->Key = $row->SessionID;
+						$o->UserID = $targetUser->ID;
+						if( $o->Load() )
+						{
+							$setting =& $o;
+							$Logger->log( '[dbIO] Here we go webpush.php' );
+							if( $system == 'php-web-push' )
+							{
+								require( __DIR__ . '/../php/include/webpush.php' );
+							}
+						}
+					}
+					// Just get last used session
+					else if( $o = $SqlDatabase->fetchObject( 'SELECT * FROM FSetting WHERE `Type`="WebPush" AND UserID=\'' . $targetUser->ID . '\' ORDER BY ID DESC LIMIT 1' ) )
+					{
+						$setting =& $o;
+						$Logger->log( '[dbIO] Here we go (2) webpush.php' );
 						if( $system == 'php-web-push' )
 						{
-							require( __DIR__ . '/../include/webpush.php' );
+							require( __DIR__ . '/../php/include/webpush.php' );
 						}
 					}
 					return false;
