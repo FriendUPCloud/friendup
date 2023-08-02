@@ -2,7 +2,7 @@
 
 $Logger->log( '[dbIO] ' . __DIR__ );
 
-require __DIR__ . '../../vendor/autoload.php';
+/*require __DIR__ . '../../vendor/autoload.php';
 
 $Logger->log( '[dbIO] Autoloaded!' );
 
@@ -39,6 +39,6 @@ if( isset( $setting ) )
 		return true;
 	}
 }
-return false;
+return false;*/
 
 ?>
