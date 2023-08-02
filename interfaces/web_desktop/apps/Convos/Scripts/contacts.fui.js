@@ -134,9 +134,13 @@ class FUIContacts extends FUIElement
         		self.videoCall.record = self.record;
         		self.videoCall.onClose = function()
         		{
-        			window.currentPeerId = null;
         			self.videoCall = null;
         			this.domSettings.querySelector( '.Videocall' ).classList.remove( 'Pending' );
+        			// Say hang up!
+        			let mess = FUI.getElementByUniqueId( 'messages' );
+        			if( mess )
+        				mess.queueMessage( '<videohangup callid="' + window.currentPeerId + '"/>' );
+    				window.currentPeerId = null;
         		}
         		let f = new File( 'Progdir:Markup/videocall.html' );
         		f.replacements = { 'peerId': window.currentPeerId ? window.currentPeerId : '' };

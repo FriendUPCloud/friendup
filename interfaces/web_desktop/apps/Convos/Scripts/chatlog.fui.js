@@ -457,6 +457,7 @@ class FUIChatlog extends FUIElement
             {
 		        if( text.indexOf( '<videocall' ) == 0 )
 		        {
+		        	// Only take new calls (expire after 30 seconds)
 		        	// Take video calls
 		        	let string = text;
 					let res = string.match( /[\s]{0,1}\<videocall\ type\=\"video\"\ callid\=\"(.*?)\"\/\>/i );
@@ -464,14 +465,27 @@ class FUIChatlog extends FUIElement
 					{
 						self.setVideoCall( res[1] );
 					}
+				    Notify( {
+		            	title: i18n( 'i18n_video_invite' ),
+		            	text: m.Name + ' ' + i18n( 'i18n_video_invite_desc' )
+		            }, false, function()
+		            {
+		            	self.setVideoCall( res[1] );     	
+		            } );
+		            continue;
 		        }
-		        Notify( {
-                	title: i18n( 'i18n_video_invite' ),
-                	text: m.Name + ' ' + i18n( 'i18n_video_invite_desc' )
-                }, false, function()
-                {
-                	self.setVideoCall( res[1] );     	
-                } );
+		        else if( text.indexOf( '<videohangup' ) == 0 )
+		        {
+		        	// Only take new calls (expire after 30 seconds)
+		        	// Take video calls
+		        	let string = text;
+					let res = string.match( /[\s]{0,1}\<videohangup callid\=\"(.*?)\"\/\>/i );
+					if( res != null && window.currentPeerId == res[1] )
+					{
+						self.setVideoCall( false );
+					}
+					continue;
+		        }
 	        }
             
             let mess = md5( m.Message );
