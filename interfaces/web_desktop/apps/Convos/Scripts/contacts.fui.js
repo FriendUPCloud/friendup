@@ -70,6 +70,8 @@ class FUIContacts extends FUIElement
     	{
     		window.videoCallData = null;
     		vid.classList.remove( 'Pending' );
+    		if( self.videoCall )
+	    		self.videoCall.close();
 		}
     }
     attachDomElement()

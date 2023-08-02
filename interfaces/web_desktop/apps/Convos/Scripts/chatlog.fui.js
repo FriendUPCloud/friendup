@@ -481,12 +481,7 @@ class FUIChatlog extends FUIElement
 				    {
 				    	// Only take new calls (expire after 30 seconds)
 				    	// Take video calls
-				    	let string = text;
-						let res = string.match( /[\s]{0,1}\<videohangup callid\=\"(.*?)\"\/\>/i );
-						if( res != null && window.currentPeerId == res[1] )
-						{
-							self.setVideoCall( false );
-						}
+				    	self.setVideoCall( false );
 						continue;
 				    }
 			    }
