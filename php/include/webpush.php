@@ -50,23 +50,24 @@ if( isset( $setting ) )
         'contentEncoding' => 'aes128gcm'
     ] );
 	
-	$Logger->log( '[dbIO] Sending the notification.' );
-	if( $result = $webPush->sendOneNotification( $subscription, "Hello there" ) )
+	$msg = new stdClass();
+	$msg->message = new stdClass();
+	$msg->notification = new stdClass();
+	$msg->notification->title = 'Hello from Friend OS';
+	$msg->notification->body = 'This is just a text to test the notifications...';
+	$payload = json_encode( $msg );
+	
+	if( $result = $webPush->sendOneNotification( $subscription, $payload ) )
 	{
-		$Logger->log( '[dbIO] Got a result.' );
 		if( $request = $result->getRequest() )
 		{
-			$uri = $request->getUri();
-			$Logger->log( '[dbIO] URI: ' . print_r( $uri, 1 ) );
-			$Logger->log( '[dbIO] Success? ' . $result->isSuccess() ? 'Yes' : 'No' ); 
-			if( !$result->isSuccess() )
+			//$uri = $request->getUri();
+			if( $result->isSuccess() )
 			{
-				$Logger->log( '[dbIO] Reason: ' . print_r( $result->getReason(),1 ) );
+				return true;
 			}
 		}
 	}
-	$Logger->log( '[dbIO] Result: ' . print_r( $result, 1 ) );
-	return true;
 }
 return false;
 
