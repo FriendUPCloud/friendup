@@ -2,6 +2,7 @@
 
 require __DIR__ . '/../vendor/autoload.php';
 use Minishlink\WebPush\WebPush;
+use Minishlink\WebPush\Subscription;
 
 if( isset( $setting ) )
 {		
@@ -37,7 +38,8 @@ if( isset( $setting ) )
 	$webPush = new WebPush( $auth );
 	$webPush->setReuseVAPIDHeaders( true );
 	$subscription = Subscription::create( [
-	        'endpoint' => $setting->Data
+	        'endpoint' => $setting->Data,
+	        'contentEncoding' => 'aes128gcm'
     ] );
 	
 	$Logger->log( '[dbIO] Sending the notification.' );
