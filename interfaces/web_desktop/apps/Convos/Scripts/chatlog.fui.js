@@ -491,6 +491,14 @@ class FUIChatlog extends FUIElement
 				    }
 			    }
 	        }
+	        // Skip own video calls and hangups
+	        else
+	        {
+	        	if( text.indexOf( '<videocall' ) == 0 || text.indexOf( '<videohangup' ) == 0 )
+			    {
+			    	continue;
+			    }			   
+	        }
             
             let mess = md5( m.Message );
             d.setAttribute( 'message-hash', mess );
