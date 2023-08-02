@@ -853,6 +853,10 @@ class dbUser extends dbIO
 				}
 			}
 		}
+		else
+		{
+			$Logger->log( '[dbIO] Could not use web push.' );
+		}
 		return false;
 	}
 }
