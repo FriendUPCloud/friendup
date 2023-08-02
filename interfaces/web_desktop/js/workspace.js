@@ -134,20 +134,12 @@ Workspace = {
 									.then( serviceWorkerRegistration => {
 										function urlBase64ToUint8Array( base64String )
 										{
-											// TODO: Remove double encoding issue
-											// Fix string
-											const padding = '='.repeat( ( 4 - base64String.length % 4 ) % 4 );
-											const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
-											const rawData = window.atob( base64 );
-											// It is double encoded
-											const padding2 = '='.repeat( ( 4 - rawData.length % 4 ) % 4 );
-											const base642 = (rawData + padding2).replace(/-/g, '+').replace(/_/g, '/');
-											const rawData2 = window.atob( base642 );
+											const rawData = window.atob( base64String );
 											
-											const outputArray = new Uint8Array( rawData2.length );
-											for( let i = 0; i < rawData2.length; ++i )
+											const outputArray = new Uint8Array( rawData.length );
+											for( let i = 0; i < rawData.length; ++i )
 											{
-												outputArray[ i ] = rawData2.charCodeAt( i );
+												outputArray[ i ] = rawData.charCodeAt( i );
 											}
 											return outputArray;
 										}
