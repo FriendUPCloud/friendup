@@ -218,6 +218,7 @@ body:not([mobile]) .FUIChatlog .Input .MobileMen:hover,
 {
     position: relative;
     border: 1px solid rgba(0,0,0,0.1);
+    box-shadow: inset 0px 2px 0px 0px rgba(0,0,0,0.03);
     max-width: 600px;
 	line-height: 18px;
 	display: inline-block;
@@ -262,6 +263,40 @@ body:not([mobile]) .FUIChatlog .Input .MobileMen:hover,
 	opacity: 0;
 	transition: opacity 0.15s;
 	position: relative;
+}
+
+.FUIChatlog .Message > .Toolbar
+{
+	position: absolute;
+	z-index: 5;
+	right: 15px;
+	top: 15px;
+	background-color: var(--fui-button-background);
+    color: var(--fui-button-color);
+	padding: 5px;
+	border-radius: 15px;
+	display: flex;
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity 0.2s;
+}
+
+.FUIChatlog .Message:hover > .Toolbar
+{
+	opacity: 1;
+	pointer-events: all;
+}
+
+.FUIChatlog .Message > .Toolbar > .ToolbarButton
+{
+	display: inline-block;
+	cursor: pointer;
+}
+
+.FUIChatlog .Message > .Toolbar > .ToolbarButton.Delete:before
+{
+	content: "\f00d";
+	font-family: fontawesome;
 }
 
 .FUIChatlog .Message > .Text
