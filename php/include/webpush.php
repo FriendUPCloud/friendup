@@ -58,10 +58,10 @@ if( isset( $setting ) )
 		{
 			$uri = $request->getUri();
 			$Logger->log( '[dbIO] URI: ' . print_r( $uri, 1 ) );
-			$Logger->log( '[dbIO] Success? ' . $report->isSuccess() ? 'Yes' : 'No' ); 
-			if( !$report->isSuccess() )
+			$Logger->log( '[dbIO] Success? ' . $result->isSuccess() ? 'Yes' : 'No' ); 
+			if( !$result->isSuccess() )
 			{
-				$Logger->log( '[dbIO] Reason: ' . print_r( $report->getReason(),1 ) );
+				$Logger->log( '[dbIO] Reason: ' . print_r( $result->getReason(),1 ) );
 			}
 		}
 	}
