@@ -102,7 +102,7 @@ if( isset( $args->args ) )
 				            $options->Seconds = 300; // Five minutes since last activity
 				            $message = new stdClass();
 				            $message->Title = 'You got a message from ' . $User->FullName;
-				            $message->Message = $out->message;
+				            $message->Body = $out->message;
 				            $User->WebPush( $targetUser, $options, $message );
 			            }
 		            }
