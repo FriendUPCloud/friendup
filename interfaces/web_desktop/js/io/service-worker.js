@@ -9,33 +9,28 @@
 *****************************************************************************©*/
 
 self.addEventListener( 'push', ( event ) => {
-	console.log('Received a push message', event);
 	let title = data.title;
 	let body = data.body;
 	let icon = data.icon;
 	let tag = 'friendos-tag';
 	let data = { some: 'data' };
-
 	event.waitUntil(
-		self.registration.showNotification( title, {
+		self.registration.showNotification( "Hello there!", {
 			body: body,
 			icon: icon,
 			tag: tag,
 			data: data
 		} )
 	);
-	alert( 'Test' );
 } );
 
 self.addEventListener( 'notificationclick', event => {
 	try
 	{
 		event.notification.close();
-		alert( 'Here we go.' );
 		const data = event.data?.json() ?? {};
-		
 		event.waitUntil(
-			clients.openWindow( data ? data.url : 'https://intranet.friendup.cloud/webclient/index.html' )
+			clients.openWindow( data && data.url ? data.url : 'https://intranet.friendup.cloud/webclient/index.html' )
 		);
 	}
 	catch( e )
