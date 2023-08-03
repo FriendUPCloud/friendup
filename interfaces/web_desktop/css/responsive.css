@@ -988,7 +988,7 @@ html .Desklet .Launcher
 	margin: 20px 0 20px 0 !important;
 }
 
-.Desklet .Launcher.AppIcon 
+.Desklet .Launcher .AppIcon 
 {
     width: calc(100% - 20px);
     height: inherit;
