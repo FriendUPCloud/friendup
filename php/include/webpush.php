@@ -37,7 +37,7 @@ if( isset( $setting ) )
 	
 	$defOpts = [
 		'TTL' => 300,
-		'urgency' => 'normal',
+		'urgency' => 'high',
 		'topic' => 'message',
 		'batchSize' => 200
 	];

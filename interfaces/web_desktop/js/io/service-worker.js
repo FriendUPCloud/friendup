@@ -9,7 +9,7 @@
 *****************************************************************************©*/
 
 self.addEventListener( 'push', ( event ) => {
-	let d = event.data ? event.data : { title: event.title, body: 'dummy', icon: 'dummy' };
+	let d = event.data ? event.data : { title: event.title ? event.title : 'Friend OS', body: event.body ? event.body : 'Some body..', icon: 'dummy' };
 	let title = d.title;
 	let body = d.body;
 	let icon = d.icon;
