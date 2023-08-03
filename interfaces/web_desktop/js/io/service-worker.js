@@ -10,8 +10,11 @@
 
 self.addEventListener( 'push', ( event ) => {
 	const data = event.data?.json() ?? {};
+	let str = '';
+	for( let a in event )
+		str += a + ' -- ';
 	const title = data.title || "Friend OS 1.3";
-	const body = data.message || "Hello there";
+	const body = str;
 	const icon = "images/new-notification.png";
 	const tag = 'friendos-tag';
 	event.waitUntil(
