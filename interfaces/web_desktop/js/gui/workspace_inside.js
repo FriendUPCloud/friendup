@@ -3496,17 +3496,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		if( !isMobile && globalConfig.viewList == 'dockedlist' )
 		{
 			let img = 'startmenu.png';
-			if( Workspace.mainDock.conf )
-			{
-				if( Workspace.mainDock.conf.size == '32' )
-				{
-					img = 'startmenu_32.png';
-				}
-				else if( Workspace.mainDock.conf.size == '16' )
-				{
-					img = 'startmenu_16.png';
-				}
-			}
 			let ob = {
 				type: 'startmenu',
 				src: '/webclient/gfx/system/' + img,

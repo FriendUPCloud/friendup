@@ -1203,7 +1203,7 @@ body[mobile] .Desklet .Launcher.MousePointer > span
 	top: 60px;
 }
 
-.Desklet .Launcher.Startmenu
+.Desklet .Launcher.Startmenu > .AppIcon
 {
 	background-image: url(/themes/friendup12/gfx/AppsMenu.svg) !important;
 }
@@ -3365,7 +3365,7 @@ html .Desklet[position=top_left] .Launcher.Running:after,
 html .Desklet[position=top_center] .Launcher.Running:after, 
 html .Desklet[position=top_right] .Launcher.Running:after
 {
-	height: 4px;
+	height: 3px;
 }
 
 html .Desklet[position=left_top] .Launcher.Running:after, 
@@ -3375,7 +3375,7 @@ html .Desklet[position=right_top] .Launcher.Running:after,
 html .Desklet[position=right_middle] .Launcher.Running:after, 
 html .Desklet[position=right_bottom] .Launcher.Running:after
 {
-	width: 4px;
+	width: 3px;
 }
 
 

@@ -3006,8 +3006,21 @@ html body[viewlist=dockedlist] #Statusbar #Tray > div.Hidden
 	background-size: cover;
 	transition: filter 0.15s;
 	border-radius: 8px;
-	filter: drop-shadow(0 0 5px rgba(0,0,0,1));
+	filter: drop-shadow(0 0 5px rgba(0,0,0,0.2));
 	border: 0;
+}
+
+.Desklet .Launcher .AppIcon 
+{
+    width: inherit;
+    height: inherit;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    border-radius: 10px;
+    margin: auto;
+    display: block;
+    border: 0;
 }
 
 .Desklet .Launcher span

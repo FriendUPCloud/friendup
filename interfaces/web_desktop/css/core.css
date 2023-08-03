@@ -3005,9 +3005,6 @@ html body[viewlist=dockedlist] #Statusbar #Tray > div.Hidden
 	background-size: contain;
 	transition: filter 0.15s;
 	border-radius: 2px;
-	-moz-border-radius: 2px;
-	-webkit-border-radius: 2px;
-	-webkit-filter: drop-shadow(0 0 5px rgba(0,0,0,1));
 	filter: drop-shadow(0 0 5px rgba(0,0,0,0.2));
 	border: 0;
 }
@@ -3062,7 +3059,7 @@ body:not([tablet]):not([mobile]) .Desklet .Launcher.Startmenu:hover
 {
     width: 40%;
 	left: 30%;
-	top: 100%;
+	top: 105%;
 	height: 3px;
 }
 .Desklet[position=bottom_left] .Launcher.Running:after,
