@@ -533,19 +533,24 @@ DirectoryView.prototype.initToolbar = function( winobj )
 			]
 		},
 		{
-			element: 'toggle-group',
-			align: 'center',
+			element: 'group',
+			align: 'left',
 			buttons: [
 				{
 					element: 'div',
-					value: 'iconview',
 					className: 'VolumeInfo',
 					content: '<div></div>',
 					onclick: function( e )
 					{
 						// Nothing
 					}
-				},
+				}
+			]
+		},
+		{
+			element: 'toggle-group',
+			align: 'center',
+			buttons: [
 				{
 					element: 'button',
 					value: 'iconview',
@@ -579,24 +584,7 @@ DirectoryView.prototype.initToolbar = function( winobj )
 							this.parentNode.checkActive( this.value );
 						}
 					}
-				},/*
-				{
-					element: 'button',
-					value: 'compact',
-					className: 'IconButton IconCompact IconSmall fa-th' + ( lmode == 'compact' ? ' Active' : '' ),
-					content: i18n( 'i18n_dir_btn_compact' ),
-					onclick: function( e )
-					{
-						if( winobj.directoryview.listMode != 'compact' )
-						{
-							winobj.directoryview.window.classList.add( 'LoadingIcons' );
-							winobj.directoryview.listMode = 'compact';
-							winobj.directoryview.toChange = true;
-							winobj.refresh();
-							this.parentNode.checkActive( this.value );
-						}
-					}
-				},*/
+				},
 				{
 					element: 'button',
 					value: 'listview',
@@ -746,8 +734,10 @@ DirectoryView.prototype.initToolbar = function( winobj )
 						m.onExecuted = function( e, d )
 						{
 							se.refreshing = false;
-							if( !d || !d.parentNode )
+							if( !se || !se.parentNode )
+							{
 								return;
+							}
 								
 							let o = d;
 							if( typeof( o ) != 'object' )

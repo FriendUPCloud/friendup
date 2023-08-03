@@ -3795,6 +3795,57 @@ body.Offline #OfflineMessage
 	position: absolute;
 	box-sizing: border-box;
 	overflow: hidden;
+	container-type: inline-size;
+}
+
+.DirectoryToolbar .VolumeInfo 
+{
+    display: inline-block;
+    font-size: 80%;
+    white-space: nowrap;
+}
+
+.DirectoryToolbar .VolumeInfo > * 
+{
+    display: inline-block;
+    vertical-align: top;
+    position: relative;
+}
+
+.DirectoryToolbar .VolumeInfo > .SizeGroove .SizeBar 
+{
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 17px;
+    background-color: var(--fui-palette-chan02-dim);
+    z-index: 1;
+}
+
+.DirectoryToolbar .VolumeInfo .SizeText 
+{
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 3;
+    text-align: center;
+    height: 100%;
+}
+
+.DirectoryToolbar .VolumeInfo > .SizeLabel 
+{
+    margin: 0 5px 0 0;
+}
+
+.DirectoryToolbar .VolumeInfo > .SizeGroove 
+{
+    background-color: var(--BackgroundHeaviest);
+    position: relative;
+    width: 180px;
+    height: 17px;
+    border-radius: 15px;
+    overflow: hidden;
 }
 
 .DirectoryToolbar button.IconButton:hover, 
@@ -3846,6 +3897,21 @@ html .DirectoryToolbar button.Search
 .Active .DirectoryToolbar
 {
 	border-bottom-color: var(--WinFrameBgActive);
+}
+
+@container (width <= 460px)
+{
+	.DirectoryToolbar .ToggleGroup
+	{
+		display: none;
+	}
+}
+@container (width <= 700px)
+{
+	.DirectoryToolbar .Group:has(.VolumeInfo)
+	{
+		display: none;
+	}
 }
 
 .DirectoryToolbar button
