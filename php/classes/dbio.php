@@ -856,6 +856,7 @@ class dbUser extends dbIO
 					ORDER BY 
 						s.ID DESC LIMIT 1
 					' );
+					$Logger->log( 'Got object: ' . print_r( $setting, 1 ) );
 					if( $setting && $setting->ID )
 					{
 						$setting =& $o;
