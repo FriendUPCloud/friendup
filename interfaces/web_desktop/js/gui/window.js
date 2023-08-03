@@ -5624,11 +5624,11 @@ var View = function( args )
 				this.flags[ flag ] = value;
 				if( value == true )
 				{
-					viewdiv.style.transition = 'height,width 0.2s,0.2s';
+					viewdiv.classList.add( 'Animated' );
 				}
 				else
 				{
-					viewdiv.style.transition = '';
+					viewdiv.classList.remove( 'Animated' );
 				}
 				break;
 			case 'resize':

@@ -44,6 +44,11 @@ body:not([mobile]) .ViewContainer
 	background-color: transparent;
 }
 
+.View.Animated
+{
+	transition: width,height 0.2s,0.2s;
+}
+
 html .View, html .View.Active
 {
 	border: 0 !important;
