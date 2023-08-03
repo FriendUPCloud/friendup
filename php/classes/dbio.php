@@ -834,12 +834,12 @@ class dbUser extends dbIO
 			$system = $configfilesettings[ 'Security' ][ 'push_system' ];
 			if( $options->Condition == 'activity' && isset( $options->Seconds ) )
 			{
-				$tid = intval( $targetUser->ID, 10 );
+				/*$tid = intval( $targetUser->ID, 10 );
 				$q = "SELECT (UNIX_TIMESTAMP(NOW()) - LastActionTime) `DIFF` FROM FUser WHERE ID='{$tid}'";
 				$time = $SqlDatabase->FetchRow( $q );
 				// Inactivity detected
 				if( intval( $time[ 'DIFF' ], 10 ) > $options->Seconds )
-				{
+				{*/
 					// Get session record (only one touch device, most recent)
 					$setting = $SqlDatabase->fetchObject( '
 					SELECT 
@@ -867,7 +867,8 @@ class dbUser extends dbIO
 					{
 						$Logger->log( '[dbio] Could not read setting...' );
 					}
-				}
+				//}
+				
 			}
 		}
 		else
