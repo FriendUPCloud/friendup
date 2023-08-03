@@ -9264,7 +9264,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				'min-width': 480,
 				'min-height': 92,
 				height: 92,
-				id: 'workspace_search'
+				id: 'workspace_search',
+				animated: true
 			} );
 		}
 		
