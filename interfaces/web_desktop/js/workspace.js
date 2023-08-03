@@ -162,15 +162,7 @@ Workspace = {
 													return;
 												}
 											}
-											let d = {
-												keys: { 
-													auth: pushSubscription.getKey( 'auth' ),
-													p256dh: pushSubscription.getKey( 'p256dh' )
-												},
-												endpoint: pushSubscription.endpoint,
-												expire: pushSubscription.expirationTime
-											};
-											m2.execute( 'webpush-subscribe', { data: JSON.stringify( d ) } );
+											m2.execute( 'webpush-subscribe', { data: JSON.stringify( pushSubscription ) } );
 										} ).catch( error => {
 											console.error( 'Error subscribing to push notifications:', error );
 										} );
