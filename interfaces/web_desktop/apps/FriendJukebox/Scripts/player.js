@@ -45,7 +45,7 @@ function miniplaylistVisibility()
 	if( Application.miniplaylist )
 	{
 		ge( 'MiniPlaylistContainer' ).style.bottom = '47px';
-		ge( 'MiniPlaylistContainer' ).style.top = '113px';
+		ge( 'MiniPlaylistContainer' ).style.top = '123px';
 		ge( 'MiniPlaylistContainer' ).style.visibility = 'visible';
 		ge( 'MiniPlaylistContainer' ).style.inputEvents = '';
 		ge( 'MiniPlaylistContainer' ).style.opacity = 1;
@@ -161,7 +161,7 @@ Application.receiveMessage = function( msg )
 		
 			if( this.miniplaylist )
 			{
-				ge( 'Equalizer' ).style.height = '113px';
+				ge( 'Equalizer' ).style.height = '123px';
 				this.index = msg.index;
 				this.playlist = msg.playlist;
 				this.redrawMiniPlaylist();
