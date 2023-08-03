@@ -565,7 +565,7 @@ DirectoryView.prototype.initToolbar = function( winobj )
 				},
 				{
 					element: 'button',
-					value: 'iconview',
+					value: 'imageview',
 					className: 'IconButton IconView IconSmall fa-picture-o' + ( lmode == 'imageview' ? ' Active' : '' ),
 					content: i18n( 'i18n_dir_btn_imageview' ),
 					onclick: function( e )
