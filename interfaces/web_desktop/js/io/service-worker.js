@@ -15,11 +15,12 @@ self.addEventListener( 'push', async function(event) {
 	let tag = 'friendos-tag';
 	let data = { some: 'data' };
 	event.waitUntil(
-		self.registration.showNotification( title, {
+		self.registration.showNotification( 'Friend OS', {
 			body: body,
 			icon: icon,
 			tag: tag,
-			data: data
+			data: data,
+            vibrate: [100, 50, 100]
 		} )
 	);
 } );
