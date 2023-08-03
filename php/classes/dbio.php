@@ -832,7 +832,7 @@ class dbUser extends dbIO
 		if( isset( $configfilesettings[ 'Security' ] ) && isset( $configfilesettings[ 'Security' ][ 'push_system' ] ) )
 		{
 			$system = $configfilesettings[ 'Security' ][ 'push_system' ];
-			$Logger->log( '[dbio] Tryinbg.' );
+			$Logger->log( '[dbio] Tryinbg.' . print_r( $options, 1 ) );
 			if( $options->Condition == 'activity' && isset( $options->Seconds ) )
 			{
 				/*$tid = intval( $targetUser->ID, 10 );
