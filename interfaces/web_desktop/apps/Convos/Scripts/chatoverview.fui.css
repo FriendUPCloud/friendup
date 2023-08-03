@@ -149,7 +149,7 @@
 {
 	border-radius: 100%;
 	background-color: var(--fui-background);
-	width: 100%;
+	width: 40px;
 	height: 40px;
 	margin: 0 0 15px 0;
 	cursor: pointer;
