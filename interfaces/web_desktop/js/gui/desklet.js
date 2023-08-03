@@ -1106,6 +1106,7 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 					if( window.isMobile && !dk.open ) return;
 					o.click( e );
 					if( div.helpBubble ) div.helpBubble.close();
+					cancelBubble( e );
 				}
 				div.ontouchend = div.onclick;
 			}
@@ -1123,6 +1124,7 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 					if( window.isMobile && !dk.open ) return;
 					deskletClickFunc( e );
 					if( div.helpBubble ) div.helpBubble.close();
+					cancelBubble( e );
 				}
 				div.ontouchend = div.onclick;
 			}
