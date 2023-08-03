@@ -433,7 +433,7 @@ button:not(.Disabled):not(.IconButton):hover, .Button:not(.Disabled):not(.IconBu
 
 button:not(.Disabled).IconButton:hover, .Button:not(.Disabled).IconButton:hover
 {
-	color: var(--ColorButtonHover);
+	color: var(--ColorBgButtonHover);
 }
 
 button.Recessed, .Button.Recessed
