@@ -843,12 +843,20 @@ class dbUser extends dbIO
 					// There's an active session record
 					if( $row = $SqlDatabase->fetchObject( 'SELECT * FROM FUserSession s WHERE s.UserID=\'' . $targetUser->ID . '\' ORDER BY ID DESC LIMIT 1' ) )
 					{
-						// Get session record
-						$o = new dbIO( 'FSetting' );
-						$o->Type = 'WebPush';
-						$o->Key = $row->SessionID;
-						$o->UserID = $targetUser->ID;
-						if( $o->Load() )
+						// Get session record (only one touch device, most recent)
+						$setting = $SqlDatabase->fetchObject( 'SELECT us.DeviceIdentity, s.* 
+						FROM 
+							FSetting s, 
+							FUserSession us 
+						WHERE 
+							s.Type = "WebPush" AND 
+							s.Key = us.SessionID AND 
+							us.UserID = \'' . $targetUser->ID . '\' AND
+							us.DeviceIdentity LIKE "touch%" 
+						ORDER BY 
+							s.ID DESC LIMIT 1
+						' );
+						if( $setting && $setting->ID )
 						{
 							$setting =& $o;
 							if( $system == 'php-web-push' )

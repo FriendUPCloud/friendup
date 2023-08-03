@@ -69,12 +69,12 @@ if( isset( $setting ) )
 			//$uri = $request->getUri();
 			if( $result->isSuccess() )
 			{
-				$Logger->log( 'The message was sent successfully: ' . $payload . ' -> ' . $setting->ID );
+				$Logger->log( '[webpush] The message was sent successfully'. );
 				return true;
 			}
 			else
 			{
-				$Logger->log( 'Failed to send message: ' . print_r( $result->getReason(), 1 ) );
+				$Logger->log( '[webpush] Failed to send message' );
 			}
 		}
 	}
