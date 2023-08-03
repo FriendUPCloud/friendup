@@ -72,6 +72,10 @@ if( isset( $setting ) )
 				$Logger->log( 'The message was sent successfully: ' . $payload );
 				return true;
 			}
+			else
+			{
+				$Logger->log( 'Failed to send message: ' . print_r( $result->getReason(), 1 );
+			}
 		}
 	}
 }
