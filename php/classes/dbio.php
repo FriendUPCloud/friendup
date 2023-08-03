@@ -832,9 +832,9 @@ class dbUser extends dbIO
 		if( isset( $configfilesettings[ 'Security' ] ) && isset( $configfilesettings[ 'Security' ][ 'push_system' ] ) )
 		{
 			$system = $configfilesettings[ 'Security' ][ 'push_system' ];
-			$Logger->log( '[dbio] Tryinbg.' . print_r( $options, 1 ) );
 			if( $options->Condition == 'activity' && isset( $options->Seconds ) )
 			{
+				$Logger->log( '[dbio] Trying.' );
 				/*$tid = intval( $targetUser->ID, 10 );
 				$q = "SELECT (UNIX_TIMESTAMP(NOW()) - LastActionTime) `DIFF` FROM FUser WHERE ID='{$tid}'";
 				$time = $SqlDatabase->FetchRow( $q );
