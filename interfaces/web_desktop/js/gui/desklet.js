@@ -888,17 +888,23 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 			}
 			else
 			{
-				div.style.backgroundImage = 'url(\'' + o.src + '\')';
-				div.innerHTML = '<span>' + ( o.displayname ? o.displayname: o.exe ) + '</span>';
-				div.setAttribute('data-exename', o.exe);
+				let ic = document.createElement( 'div' );
+				ic.className = 'AppIcon';
+				ic.style.backgroundImage = 'url(\'' + o.src + '\')';
+				div.setAttribute('data-exename', o.exe );
 				div.setAttribute('data-workspace', ( o.workspace ? o.workspace : 0 ) );
 				div.setAttribute('data-displayname', ( o.displayname ? o.displayname: o.exe ) );
 				div.setAttribute('id', 'dockItem_' + o.exe );
+				let sp = document.createElement( 'span' );
+				sp.className = 'AppName';
+				sp.innerHTML = o.displayname ? o.displayname: o.exe;
+				div.appendChild( ic );
+				div.appendChild( sp );
 				let i = new Image();
 				i.src = o.src;
 				i.onerror = function( e )
 				{
-					div.style.backgroundImage = 'url(/iconthemes/friendup15/File_Function.svg)';
+					ic.style.backgroundImage = 'url(/iconthemes/friendup15/File_Function.svg)';
 				}
 			}
 			

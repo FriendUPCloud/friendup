@@ -3008,7 +3008,7 @@ html body[viewlist=dockedlist] #Statusbar #Tray > div.Hidden
 	-moz-border-radius: 2px;
 	-webkit-border-radius: 2px;
 	-webkit-filter: drop-shadow(0 0 5px rgba(0,0,0,1));
-	filter: drop-shadow(0 0 5px rgba(0,0,0,1));
+	filter: drop-shadow(0 0 5px rgba(0,0,0,0.2));
 	border: 0;
 }
 
