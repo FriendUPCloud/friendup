@@ -212,7 +212,7 @@ if( 1==1/* || $rolePermission || $level == 'Admin' || $uid == $User->ID*/ )
 
 					foreach( $wgs as $wg )
 					{
-						if( $User->ID != $wg->UserID && ( $wg->Level && $wg->Level == 'User' ) || ( isset( $args->args->owner ) && !$wg->Owner ) )
+						if( $User->ID != $wg->UserID && ( isset( $wg->Level ) && $wg->Level == 'User' ) || ( isset( $args->args->owner ) && !$wg->Owner ) )
 						{
 							$row->Hide = true;
 						}
