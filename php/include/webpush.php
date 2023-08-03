@@ -45,9 +45,15 @@ if( isset( $setting ) )
 	$webPush = new WebPush( $auth, $defOpts );
 	$webPush->setReuseVAPIDHeaders( true );
 	
+	$dataObject = json_decode( $setting->Data );
+	
 	$subscription = Subscription::create( [
-        'endpoint' => $setting->Data,
-        'contentEncoding' => 'aes128gcm'
+        'endpoint' => $dataObject->endpoint,
+        'contentEncoding' => 'aes128gcm',
+        'keys' => [
+        	'p256dh' => $dataObject->keys->p256dh,
+		    'auth' => $dataObject->keys->auth
+	    ]
     ] );
 	
 	$cf = isset( $GLOBALS[ 'configfilesettings' ] ) ? $GLOBALS[ 'configfilesettings' ] : false;
