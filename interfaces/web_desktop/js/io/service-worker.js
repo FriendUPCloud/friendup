@@ -16,14 +16,19 @@ self.addEventListener( 'push', ( event ) => {
 	let tag = 'friendos-tag';
 	let data = { some: 'data' };
 
-	event.waitUntil(
+	const getNoti = new Promise( (resolve, reject ) => {
 		self.registration.showNotification( title, {
 			body: body,
 			icon: icon,
 			tag: tag,
 			data: data
 		} )
-	);
+		.then(() => {
+		    resolve();
+		} );
+	} );
+
+	event.waitUntil( getNoti );
 } );
 
 self.addEventListener( 'notificationclick', event => {
