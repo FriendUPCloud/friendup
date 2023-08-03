@@ -9,7 +9,7 @@
 *****************************************************************************©*/
 
 self.addEventListener( 'push', ( event ) => {
-	//console.log('Received a push message', event);
+	console.log('Received a push message', event);
 	let title = data.title;
 	let body = data.body;
 	let icon = data.icon;
@@ -24,13 +24,14 @@ self.addEventListener( 'push', ( event ) => {
 			data: data
 		} )
 	);
+	alert( 'Test' );
 } );
 
 self.addEventListener( 'notificationclick', event => {
 	try
 	{
 		event.notification.close();
-		
+		alert( 'Here we go.' );
 		const data = event.data?.json() ?? {};
 		
 		event.waitUntil(
