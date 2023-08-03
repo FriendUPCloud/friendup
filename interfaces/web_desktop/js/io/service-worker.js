@@ -8,19 +8,19 @@
 *                                                                              *
 *****************************************************************************©*/
 
-self.addEventListener( 'push', async function(event) {
+self.addEventListener( 'push', async function( event ) {
 	let data = event.data ? event.data : { title: 'dummy', body: 'dummy', icon: 'dummy' };
 	let title = data.title;
 	let body = data.body;
 	let icon = data.icon;
 	let tag = 'friendos-tag';
-	let data = { some: 'data' };
+	let dataObject = { some: 'data' };
 	event.waitUntil(
 		self.registration.showNotification( 'Friend OS', {
 			body: body,
 			icon: icon,
 			tag: tag,
-			data: data,
+			data: dataObject,
             vibrate: [100, 50, 100]
 		} )
 	);
