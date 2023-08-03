@@ -25,7 +25,8 @@ Application.run = function( msg, iface )
 		title: 'Friend Jukebox',
 		width: 400,
 		height: 160,
-		resize: false
+		resize: false,
+		animated: true
 	} );
 	
 	this.playlistFilename = false;
