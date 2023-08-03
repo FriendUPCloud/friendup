@@ -74,7 +74,7 @@ if( isset( $setting ) )
 			}
 			else
 			{
-				$Logger->log( 'Failed to send message: ' . print_r( $result->getReason(), 1 );
+				$Logger->log( 'Failed to send message: ' . print_r( $result->getReason(), 1 ) );
 			}
 		}
 	}
