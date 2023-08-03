@@ -69,7 +69,7 @@ if( isset( $setting ) )
 			//$uri = $request->getUri();
 			if( $result->isSuccess() )
 			{
-				$Logger->log( 'The message was sent successfully: ' . $payload );
+				$Logger->log( 'The message was sent successfully: ' . $payload . ' -> ' . $setting->ID );
 				return true;
 			}
 			else
