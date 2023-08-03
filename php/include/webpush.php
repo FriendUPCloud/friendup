@@ -27,6 +27,8 @@ if( isset( $setting ) )
 		$puKey = file_get_contents( $path . 'webpush_public_key.txt' );
 	}
 	
+	$Logger->log( 'Preparing top shoot' );
+	
 	$auth = [
 		'VAPID' => [
 			'subject' => 'https://friendos.com/',
