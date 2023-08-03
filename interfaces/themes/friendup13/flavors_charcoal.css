@@ -197,9 +197,9 @@ html body.Charcoal .View .DirectoryToolbar .Button:not(.IconButton)
 	background-color: none;
 }
 
-html body .View .DirectoryToolbar > .ToggleGroup > button:hover:before, 
-html body .View .DirectoryToolbar > .Group > button:hover:before, 
-html body .View .DirectoryToolbar > button:hover:before
+html body.Charcoal .View .DirectoryToolbar > .ToggleGroup > button:hover:before, 
+html body.Charcoal .View .DirectoryToolbar > .Group > button:hover:before, 
+html body.Charcoal .View .DirectoryToolbar > button:hover:before
 {
 	color: white;
 }
