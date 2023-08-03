@@ -8,14 +8,14 @@
 *                                                                              *
 *****************************************************************************©*/
 
-self.addEventListener( 'push', ( event ) => {
+self.addEventListener( 'push', async function(event) {
 	let title = data.title;
 	let body = data.body;
 	let icon = data.icon;
 	let tag = 'friendos-tag';
 	let data = { some: 'data' };
 	event.waitUntil(
-		self.registration.showNotification( "Hello there!", {
+		self.registration.showNotification( title, {
 			body: body,
 			icon: icon,
 			tag: tag,
