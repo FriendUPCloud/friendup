@@ -46,7 +46,7 @@ body:not([mobile]) .ViewContainer
 
 .View.Animated
 {
-	transition: width,height 0.2s,0.2s;
+	transition: opacity,width,height 0.25s,0.2s,0.2s;
 }
 
 html .View, html .View.Active
