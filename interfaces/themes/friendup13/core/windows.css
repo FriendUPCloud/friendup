@@ -50,6 +50,12 @@ html > body #Screens .View.Animated
 	transition-duration: 0.25s, 0.2s, 0.2s;
 }
 
+html > body #Screens .View.Animated:active
+{
+	transition-property: opacity;
+	transition-duration: 0.2s;
+}
+
 html .View, html .View.Active
 {
 	border: 0 !important;
