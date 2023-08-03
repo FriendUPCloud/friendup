@@ -9,6 +9,8 @@
 *****************************************************************************©*/
 
 self.addEventListener( 'push', event => {
+	console.log( 'Push event: ', event );
+	
 	try
 	{
 		const options = {
@@ -31,6 +33,8 @@ self.addEventListener( 'push', event => {
 } );
 
 self.addEventListener( 'notificationclick', event => {
+	console.log( 'Notification click event: ', event );
+	
 	try
 	{
 		event.notification.close();
