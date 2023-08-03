@@ -336,7 +336,9 @@ function apiWrapper( event, force )
 			case 'dos':
 			{
 				let win = ( app && app.windows ) ? app.windows[ msg.viewId ] : false;
-				let tar = win ? app.windows[ msg.targetViewId ] : false; // Target for postmessage
+				let tar = win && app.windows[ msg.targetViewId ] ? app.windows[ msg.targetViewId ] : win; // Target for postmessage
+				if( tar && !tar.iframe )
+					tar = false;
 				let cbk = msg.callback;
 				switch ( msg.method )
 				{
