@@ -69,7 +69,7 @@ if( isset( $setting ) )
 			//$uri = $request->getUri();
 			if( $result->isSuccess() )
 			{
-				$Logger->log( '[webpush] The message was sent successfully'. );
+				$Logger->log( '[webpush] The message was sent successfully' );
 				return true;
 			}
 			else
