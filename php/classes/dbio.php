@@ -841,7 +841,9 @@ class dbUser extends dbIO
 				if( intval( $time[ 'DIFF' ], 10 ) > $options->Seconds )
 				{
 					// Get session record (only one touch device, most recent)
-					$setting = $SqlDatabase->fetchObject( 'SELECT us.DeviceIdentity, s.* 
+					$setting = $SqlDatabase->fetchObject( '
+					SELECT 
+						us.DeviceIdentity, s.* 
 					FROM 
 						FSetting s, 
 						FUserSession us 
@@ -860,6 +862,10 @@ class dbUser extends dbIO
 						{
 							require( __DIR__ . '/../include/webpush.php' );
 						}
+					}
+					else
+					{
+						$Logger->log( '[dbio] Could not read setting...' );
 					}
 				}
 			}
