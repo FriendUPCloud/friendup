@@ -1082,8 +1082,6 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 				div.addEventListener( 'contextmenu', function( ee ){ return cancelBubble( ee ); }, false );
 			}
 			
-			var evt = window.isMobile || window.isTablet ? 'ontouchend' : 'onclick';
-			
 			if( window.isMobile )
 			{
 				// You have 0.25s to click
@@ -1099,32 +1097,34 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 			
 			if( o.click )
 			{
-				div[ evt ] = function( e )
+				div.onclick = function( e )
 				{
 					if( e.button != 0 && e.type != 'touchend' ) return;
 					
 					var t = e.target ? e.target : e.srcElement;
-					if( t != div ) return;
+					if( t != div && !( t.classList && t.classList.contains( 'AppIcon' ) ) ) return;
 					if( window.isMobile && !dk.open ) return;
 					o.click( e );
 					if( div.helpBubble ) div.helpBubble.close();
 				}
+				div.ontouchend = div.onclick;
 			}
 			else 
 			{
-				div[ evt ] = function( e )
-				{			
+				div.onclick = function( e )
+				{
 					if( e.button != 0 && e.type != 'touchend' ) return;
 					
 					if( window.isMobile && !this.touchTime )
 						return;
 					
 					var t = e.target ? e.target : e.srcElement;
-					if( t && t != div ) return;
+					if( t != div && !( t.classList && t.classList.contains( 'AppIcon' ) ) ) return;
 					if( window.isMobile && !dk.open ) return;
 					deskletClickFunc( e );
 					if( div.helpBubble ) div.helpBubble.close();
 				}
+				div.ontouchend = div.onclick;
 			}
 			
 			if( !isMobile )
