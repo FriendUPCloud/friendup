@@ -8,35 +8,33 @@
 *                                                                              *
 *****************************************************************************©*/
 
-self.addEventListener( 'push', event => {
-	console.log( 'We got this data.', event );
-	try
+self.addEventListener( 'push', ( event ) => {
+	if( !(self.Notification && self.Notification.permission === 'granted' ) ) 
 	{
-		const options = {
-			body: event.data.text(),
-			icon: '/graphics/system/friendos192.png',
-			vibrate: [100, 50, 100],
-			data: {
-				url: event.data
-			}
-		};
+		return;
+	}
+	const data = event.data?.json() ?? {};
+	const title = data.title || 'Something Has Happened';
+	const message =
+		data.message || 'Here\'s something you might want to check out.';
+	const icon = '/graphics/system/friendos192.png';
 
-		event.waitUntil(
-			self.registration.showNotification( 'Friend OS', options )
-		);
-	}
-	catch( e )
-	{
-		console.log( 'Error with service worker: ', e );
-	}
+	const notification = new self.Notification( title, {
+		body: message,
+		tag: "friend-os-message",
+		icon
+	} );
 } );
 
 self.addEventListener( 'notificationclick', event => {
 	try
 	{
 		event.notification.close();
+		
+		const data = event.data?.json() ?? {};
+		
 		event.waitUntil(
-			clients.openWindow( event.notification.data.url )
+			clients.openWindow( data ? data.url : 'https://intranet.friendup.cloud' )
 		);
 	}
 	catch( e )
