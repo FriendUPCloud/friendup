@@ -824,28 +824,55 @@ class dbUser extends dbIO
 	// Push notifications on condition
 	function WebPush( $targetUser, $options, $message )
 	{
-		global $SqlDatabase, $UserSession, $Logger;
+		global $SqlDatabase, $UserSession, $Logger, $Config, $configfilesettings;
 		
 		if( !isset( $targetUser->ID ) )
 			return false;
 		
-		if( $options->Condition == 'activity' && isset( $options->Seconds ) )
+		if( isset( $configfilesettings[ 'Security' ] ) && isset( $configfilesettings[ 'Security' ][ 'push_system' ] ) )
 		{
-			//$Logger->log( '[dbIO] Trying to see if the user has inactivity.' );
-			$tid = intval( $targetUser->ID, 10 );
-			$q = "SELECT (UNIX_TIMESTAMP(NOW()) - LastActionTime) `DIFF` FROM FUser WHERE ID='{$tid}'";
-			$time = $SqlDatabase->FetchRow( $q );
-			// Inactivity detected
-			if( intval( $time[ 'DIFF' ], 10 ) > $options->Seconds )
+			$system = $configfilesettings[ 'Security' ][ 'push_system' ];
+			if( $options->Condition == 'activity' && isset( $options->Seconds ) )
 			{
-				//$Logger->log( '[dbIO] Trying to find user session for ' . $targetUser->FullName );
-				if( $row = $SqlDatabase->fetchObject( 'SELECT * FROM FUserSession s WHERE s.UserID=\'' . $targetUser->ID . '\' ORDER BY ID DESC LIMIT 1' ) )
+				$tid = intval( $targetUser->ID, 10 );
+				$q = "SELECT (UNIX_TIMESTAMP(NOW()) - LastActionTime) `DIFF` FROM FUser WHERE ID='{$tid}'";
+				$time = $SqlDatabase->FetchRow( $q );
+				// Inactivity detected
+				if( intval( $time[ 'DIFF' ], 10 ) > $options->Seconds )
 				{
-					include( __DIR__ . '/../include/webpush.php' );
+					// There's an active session record
+					if( $row = $SqlDatabase->fetchObject( 'SELECT * FROM FUserSession s WHERE s.UserID=\'' . $targetUser->ID . '\' ORDER BY ID DESC LIMIT 1' ) )
+					{
+						// Get session record
+						$o = new dbIO( 'FSetting' );
+						$o->Type = 'WebPush';
+						$o->Key = $row->SessionID;
+						$o->UserID = $targetUser->ID;
+						if( $o->Load() )
+						{
+							$setting =& $o;
+							if( $system == 'php-web-push' )
+							{
+								require( __DIR__ . '/../include/webpush.php' );
+							}
+						}
+					}
+					// Just get last used session
+					else if( $o = $SqlDatabase->fetchObject( 'SELECT * FROM FSetting WHERE `Type`="WebPush" AND UserID=\'' . $targetUser->ID . '\' ORDER BY ID DESC LIMIT 1' ) )
+					{
+						$setting =& $o;
+						if( $system == 'php-web-push' )
+						{
+							require( __DIR__ . '/../include/webpush.php' );
+						}
+					}
+					return false;
 				}
-				return;
 			}
-			//error_log( '[dbUser] User isn\'t inactive.' );
+		}
+		else
+		{
+			$Logger->log( '[dbIO] Could not use web push.' );
 		}
 		return false;
 	}

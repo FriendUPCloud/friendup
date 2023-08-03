@@ -888,17 +888,23 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 			}
 			else
 			{
-				div.style.backgroundImage = 'url(\'' + o.src + '\')';
-				div.innerHTML = '<span>' + ( o.displayname ? o.displayname: o.exe ) + '</span>';
-				div.setAttribute('data-exename', o.exe);
+				let ic = document.createElement( 'div' );
+				ic.className = 'AppIcon';
+				ic.style.backgroundImage = 'url(\'' + o.src + '\')';
+				div.setAttribute('data-exename', o.exe );
 				div.setAttribute('data-workspace', ( o.workspace ? o.workspace : 0 ) );
 				div.setAttribute('data-displayname', ( o.displayname ? o.displayname: o.exe ) );
 				div.setAttribute('id', 'dockItem_' + o.exe );
+				let sp = document.createElement( 'span' );
+				sp.className = 'AppName';
+				sp.innerHTML = o.displayname ? o.displayname: o.exe;
+				div.appendChild( ic );
+				div.appendChild( sp );
 				let i = new Image();
 				i.src = o.src;
 				i.onerror = function( e )
 				{
-					div.style.backgroundImage = 'url(/iconthemes/friendup15/File_Function.svg)';
+					ic.style.backgroundImage = 'url(/iconthemes/friendup15/File_Function.svg)';
 				}
 			}
 			
@@ -1076,8 +1082,6 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 				div.addEventListener( 'contextmenu', function( ee ){ return cancelBubble( ee ); }, false );
 			}
 			
-			var evt = window.isMobile || window.isTablet ? 'ontouchend' : 'onclick';
-			
 			if( window.isMobile )
 			{
 				// You have 0.25s to click
@@ -1093,32 +1097,36 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 			
 			if( o.click )
 			{
-				div[ evt ] = function( e )
+				div.onclick = function( e )
 				{
 					if( e.button != 0 && e.type != 'touchend' ) return;
 					
 					var t = e.target ? e.target : e.srcElement;
-					if( t != div ) return;
+					if( t != div && !( t.classList && t.classList.contains( 'AppIcon' ) ) ) return;
 					if( window.isMobile && !dk.open ) return;
 					o.click( e );
 					if( div.helpBubble ) div.helpBubble.close();
+					cancelBubble( e );
 				}
+				div.ontouchend = div.onclick;
 			}
 			else 
 			{
-				div[ evt ] = function( e )
-				{			
+				div.onclick = function( e )
+				{
 					if( e.button != 0 && e.type != 'touchend' ) return;
 					
 					if( window.isMobile && !this.touchTime )
 						return;
 					
 					var t = e.target ? e.target : e.srcElement;
-					if( t && t != div ) return;
+					if( t != div && !( t.classList && t.classList.contains( 'AppIcon' ) ) ) return;
 					if( window.isMobile && !dk.open ) return;
 					deskletClickFunc( e );
 					if( div.helpBubble ) div.helpBubble.close();
+					cancelBubble( e );
 				}
+				div.ontouchend = div.onclick;
 			}
 			
 			if( !isMobile )

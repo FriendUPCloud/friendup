@@ -54,6 +54,11 @@ cd myfriend
 make clean setup release install
 ```
 
+Configuring your server
+-----------------------
+
+* <a href="ConfiguringFriendOS.md">Please see configuration file information here</a>.
+
 Default login
 -------------
 

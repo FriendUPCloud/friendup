@@ -58,6 +58,26 @@ class FUIContacts extends FUIElement
         <div class="Chat"><div class="Placeholder"><span>' + i18n( 'i18n_start_conversation' ) + '</span></div></div>\
         ';
     }
+    setVideoCall( data = false, init = false )
+    {
+    	let vid = this.domSettings.querySelector( '.Videocall' );
+    	if( data )
+    	{
+    		window.currentPeerId = data;
+    		vid.classList.add( 'Pending' );
+    		if( init )
+    		{
+    			vid.onclick();
+    		}
+		}
+    	else 
+    	{
+    		window.videoCallData = null;
+    		vid.classList.remove( 'Pending' );
+    		if( self.videoCall )
+	    		self.videoCall.close();
+		}
+    }
     attachDomElement()
     {
         super.attachDomElement();
@@ -120,8 +140,13 @@ class FUIContacts extends FUIElement
         		self.videoCall.record = self.record;
         		self.videoCall.onClose = function()
         		{
-        			window.currentPeerId = null;
         			self.videoCall = null;
+        			self.domSettings.querySelector( '.Videocall' ).classList.remove( 'Pending' );
+        			// Say hang up!
+        			let mess = FUI.getElementByUniqueId( 'messages' );
+        			if( mess )
+        				mess.queueMessage( '<videohangup callid="' + window.currentPeerId + '"/>' );
+    				window.currentPeerId = null;
         		}
         		let f = new File( 'Progdir:Markup/videocall.html' );
         		f.replacements = { 'peerId': window.currentPeerId ? window.currentPeerId : '' };

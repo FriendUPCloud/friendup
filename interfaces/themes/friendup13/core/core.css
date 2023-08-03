@@ -391,14 +391,14 @@ body .Button.IconButton
 	border: 0 !important;
 }
 
-span.VerticalLine
+span.VerticalLine 
 {
-    background-color: #455155;
+    background-color: #00000033;
     width: 3px;
-    top: -1px;
+    top: -3px;
     border-radius: 5px;
     position: relative;
-    height: 14px;
+    height: 6px;
     border: 0;
     margin: 0px 10px 0 4px;
     display: inline-block;
@@ -433,7 +433,7 @@ button:not(.Disabled):not(.IconButton):hover, .Button:not(.Disabled):not(.IconBu
 
 button:not(.Disabled).IconButton:hover, .Button:not(.Disabled).IconButton:hover
 {
-	color: var(--ColorButtonHover);
+	color: var(--ColorBgButtonHover);
 }
 
 button.Recessed, .Button.Recessed
@@ -2961,6 +2961,29 @@ html body[viewlist=dockedlist] #Statusbar #Tray > div.Hidden
 	animation:         micblink 2s infinite;
 }
 
+#launchErrorWarning
+{
+    display: flex;
+    gap: 5px;
+    align-items: center;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+}
+
+#launchErrorWarning span:first-child 
+{
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+    font-size: 14px;
+}
+
+#launchErrorWarning span:last-child 
+{
+    text-align: right;
+    cursor: pointer;
+}
+
 /* Desklets ----------------------------------------------------------------- */
 
 .Desklet
@@ -2983,8 +3006,21 @@ html body[viewlist=dockedlist] #Statusbar #Tray > div.Hidden
 	background-size: cover;
 	transition: filter 0.15s;
 	border-radius: 8px;
-	filter: drop-shadow(0 0 5px rgba(0,0,0,1));
+	filter: drop-shadow(0 0 5px rgba(0,0,0,0.2));
 	border: 0;
+}
+
+.Desklet .Launcher .AppIcon 
+{
+    width: inherit;
+    height: inherit;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    border-radius: 10px;
+    margin: auto;
+    display: block;
+    border: 0;
 }
 
 .Desklet .Launcher span
@@ -3770,23 +3806,72 @@ body.Offline #OfflineMessage
 {
 	z-index: 3;
 	position: absolute;
-	height: 56px;
-	background: #4c4c4c;
-	border-bottom: 1px solid rgba(0,0,0,0.3);
-	padding: 8px;
-	border-bottom: 3px solid;
-	border-bottom-color: var(--WinFrameBgBlur);
 	box-sizing: border-box;
-	-moz-box-sizing: border-box;
-	box-shadow: inset 0px 2px 8px rgba(0,0,0,0.3);
 	overflow: hidden;
+	container-type: inline-size;
+}
+
+.DirectoryToolbar .VolumeInfo 
+{
+    display: inline-block;
+    font-size: 80%;
+    white-space: nowrap;
+}
+
+.DirectoryToolbar .VolumeInfo > * 
+{
+    display: inline-block;
+    vertical-align: top;
+    position: relative;
+}
+
+.DirectoryToolbar .VolumeInfo > .SizeGroove .SizeBar 
+{
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 17px;
+    background-color: var(--fui-palette-chan02-dim);
+    z-index: 1;
+}
+
+.DirectoryToolbar .VolumeInfo .SizeText 
+{
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 3;
+    text-align: center;
+    height: 100%;
+}
+
+.DirectoryToolbar .VolumeInfo > .SizeLabel 
+{
+    margin: 0 5px 0 0;
+}
+
+.DirectoryToolbar .VolumeInfo > .SizeGroove 
+{
+    background-color: var(--BackgroundHeaviest);
+    position: relative;
+    width: 180px;
+    height: 17px;
+    border-radius: 15px;
+    overflow: hidden;
+}
+
+.DirectoryToolbar button.IconButton:hover, 
+.DirectoryToolbar .Button.IconButton:hover
+{
+	color: rgba(0,0,0,0);
 }
 
 html .DirectoryToolbar button.Makedir:before
 {
 	content: " ";
 	width: 16px;
-	height: 26px;
+	height: 16px;
 	margin-top: 0;
 	display: inline-block;
 	background-image: url(/iconthemes/friendup15/AddFolder.svg);
@@ -3807,7 +3892,6 @@ html .DirectoryToolbar button.Search:before
 	font-family: fontawesome;
 	width: 16px;
 	height: 26px;
-	line-height: 26px;
 	font-size: 0.9em;
 	margin-top: 0;
 	display: inline-block;
@@ -3828,29 +3912,26 @@ html .DirectoryToolbar button.Search
 	border-bottom-color: var(--WinFrameBgActive);
 }
 
-.DirectoryToolbar .ToggleGroup
+@container (width <= 460px)
 {
-	position: absolute;
-	top: 8px;
+	.DirectoryToolbar .ToggleGroup
+	{
+		display: none;
+	}
 }
-
-.DirectoryToolbar .ToggleGroup.center
+@container (width <= 700px)
 {
-	left: calc(50% - 30px);
+	.DirectoryToolbar .Group:has(.VolumeInfo)
+	{
+		display: none;
+	}
 }
 
 .DirectoryToolbar button
 {
-	outline: none;
-	border: 0px !important;
 	background: none;
-	line-height: 20px;
 	text-align: center;
-	padding: 0 8px 20px 8px;
-	margin: 0 4px 0 0;
-	text-shadow: 0px 1px 1px rgba(0,0,0,0.5);
 	box-shadow: none;
-	border-radius: 10px;
 }
 
 .DirectoryToolbar button:hover

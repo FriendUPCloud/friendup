@@ -417,6 +417,13 @@ class FUIChatlog extends FUIElement
 		}
 		m.execute( 'convos', zmsg );
     }
+    setVideoCall( data, init = false )
+    {
+    	// initVideoCall( data )
+    	let contacts = FUI.getElementByUniqueId( 'contacts' );
+    	if( contacts )
+    		contacts.setVideoCall( data, init );
+    }
     // Adds messages to a list locked by sorted timestamps
     addMessages( messageList )
     {
@@ -444,6 +451,56 @@ class FUIChatlog extends FUIElement
                 text = dec;
             }
             catch( e ){};
+            
+            // Trap video calls
+            if( !m.Own )
+            {
+            	let vidc = text.indexOf( '<videocall' ) == 0;
+            	let vidh = text.indexOf( '<videohangup' ) == 0;
+            	// Expire after 3 secs
+            	if( ( new Date().getTime() / 1000 ) - ( new Date( m.Date ).getTime() / 1000 ) < 3 )
+            	{
+				    if( vidc )
+				    {
+				    	// Only take new calls (expire after 30 seconds)
+				    	// Take video calls
+				    	let string = text;
+						let res = string.match( /[\s]{0,1}\<videocall\ type\=\"video\"\ callid\=\"(.*?)\"\/\>/i );
+						if( res != null )
+						{
+							self.setVideoCall( res[1] );
+						}
+						Notify( {
+				        	title: i18n( 'i18n_video_invite' ),
+				        	text: m.Name + ' ' + i18n( 'i18n_video_invite_desc' )
+				        }, false, function()
+				        {
+				        	self.setVideoCall( res[1], true );     	
+				        } );
+				        continue;
+				    }
+				    else if( vidh )
+				    {
+				    	// Only take new calls (expire after 30 seconds)
+				    	// Take video calls
+				    	self.setVideoCall( false );
+						continue;
+				    }
+			    }
+			    else
+			    {
+			    	if( vidc || vidh )
+			    		continue;
+			    }
+	        }
+	        // Skip own video calls and hangups
+	        else
+	        {
+	        	if( text.indexOf( '<videocall' ) == 0 || text.indexOf( '<videohangup' ) == 0 )
+			    {
+			    	continue;
+			    }			   
+	        }
             
             let mess = md5( m.Message );
             d.setAttribute( 'message-hash', mess );
@@ -894,18 +951,6 @@ class FUIChatlog extends FUIElement
         		}
         		
         		string = string.split( res[ 0 ] ).join( '<div class="AttachmentElement" contenteditable="false"><a class="Download" target="_blank" href="' + od + '"></a><img width="' + w + '" height="' + h + '" onload="Application.handleImageLoad( this )" onerror="Application.handleImageError( this )" src="' + res[1] + '&authid=' + Application.authId + '" class="Attachment"/></div>' );
-        		continue;
-        	}
-        	break;
-        }
-        // Take video calls
-        while( 1 )
-        {
-        	let res = string.match( /[\s]{0,1}\<videocall\ type\=\"video\"\ callid\=\"(.*?)\"\/\>/i );
-        	if( res != null )
-        	{
-        		let button = '<div class="VideoCall" onclick="initVideoCall(\'' + res[1] + '\')"><span>' + i18n( 'i18n_video_call_button' ) + '</span></div>';
-        		string = string.split( res[ 0 ] ).join( button );
         		continue;
         	}
         	break;

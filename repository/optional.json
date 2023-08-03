@@ -6,5 +6,13 @@
     "package": "ssh.zip",
     "unpack": "unzip ssh.zip -d ssh",
     "install": "optional/ssh build/php/3rdparty/"
+  },
+  {
+  	"title": "Firebase Admin PHP SDK",
+  	"description": "The Firebase Admin PHP SDK enables access to Firebase services from privileged environments (such as servers or cloud) in PHP.",
+  	"package_url": "https://github.com/kreait/firebase-php/archive/refs/tags/6.9.6.tar.gz",
+  	"package": "firebase_php.tar.gz",
+  	"unpack": "tar -xzvf firebase_php.tar.gz firebase_php",
+  	"install": "optional/firebase_php build/php/3rdparty/"
   }
 ]

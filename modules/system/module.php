@@ -298,24 +298,13 @@ if( isset( $args->command ) )
 			break;
 		// Web push
 		case 'getvapidkey':
-			$s = new dbIO( 'FSetting' );
-			$s->UserID = 0;
-			$s->Type = 'System';
-			$s->Key = 'VAPID-Keys';
-			if( $s->Load() )
+			if( file_exists( 'cfg/crt/webpush_public_key.txt' ) )
 			{
-				$keys = json_decode( $s->Data );
-				
 				// Get an encoded string
-				$rawContent = base64_decode( $pemContent );
-				$rawContent = $keys->public_string;
-				
-				// Make it URL-safe
-				$urlSafe = rtrim( strtr( base64_encode( $rawContent ), '+/', '-_' ), '=' );
+				$rawContent = base64_encode( file_get_contents( 'cfg/crt/webpush_public_key.txt' ) );
 				
 				// Pack the bytes of the public key in the correct order
-				die( 'ok<!--separate-->' . $urlSafe );
-				die( 'ok<!--separate-->' . json_encode( array_values( $rawContent ) ) );
+				die( 'ok<!--separate-->' . $rawContent );
 			}
 			die( 'fail<!--separate-->{"message":"Could not load VAPID key.","response":-1} ');
 			break;

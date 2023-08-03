@@ -36,16 +36,6 @@ Application.run = function( msg )
 	this.sendMessage( { command: 'app-ready' } );
 } 
 
-function initVideoCall( peerId )
-{
-	let v = document.querySelector( '.Videocall' );
-	if( v )
-	{
-		window.currentPeerId = peerId;
-		v.onclick();
-	}
-}
-
 Application.receiveMessage = function( msg )
 {
     if( msg.sender )

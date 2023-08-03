@@ -542,30 +542,6 @@ function ResizeWindow( div, wi, he, mode, depth )
 		div.refreshWindow();
 	}
 	
-	// Recalculate toggle group
-	// It will pop out of view if it's overlapped by other buttons
-	if( div.content.directoryview && !document.body.classList.contains( 'ThemeEngine' ) )
-	{
-		let t = div.getElementsByClassName( 'ToggleGroup' );
-		let r = div.getElementsByClassName( 'Reload' );
-		let m = div.getElementsByClassName( 'Makedir' );
-		if( t.length > 0 && r.length > 0 )
-		{
-			let hideCondition = t[0].offsetLeft < r[0].offsetLeft + r[0].offsetWidth || 
-				( m && m[0] && t[0].offsetLeft + t[0].offsetWidth > m[0].offsetLeft );
-			if( hideCondition )
-			{
-				t[0].style.visibility = 'hidden';
-				t[0].style.pointerEvents = 'none';
-			}
-			else
-			{
-				t[0].style.visibility = 'visible';
-				t[0].style.pointerEvents = 'all';
-			}
-		}
-	}
-	
 	let flagDia = div.windowObject.getFlag( 'dialog' );
 	if( flagDia )
 	{
@@ -5617,6 +5593,18 @@ var View = function( args )
 					
 					ResizeWindow( viewdiv, ( flag == 'width' ? value : null ), ( flag == 'height' ? value : null ) );
 					RefreshWindow( viewdiv );
+				}
+				break;
+			// TODO: Expand to work with more properties
+			case 'animated':
+				this.flags[ flag ] = value;
+				if( value == true )
+				{
+					viewdiv.classList.add( 'Animated' );
+				}
+				else
+				{
+					viewdiv.classList.remove( 'Animated' );
 				}
 				break;
 			case 'resize':

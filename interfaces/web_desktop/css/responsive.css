@@ -969,10 +969,10 @@ html .Desklet .Launcher
 	text-overflow: ellipsis;
 	position: absolute;
 	left: 5px;
-	width: calc(100% - 5px);
+	width: calc(100% - 10px);
 	top: 56px;
 	text-align: center;
-	text-shadow: 0px 1px 1px rgba(0,0,0,0.5);
+	text-shadow: 0px 1px 1px rgba(0,0,0,0.2);
 }
 
 .Desklet.Open.Opened
@@ -986,6 +986,19 @@ html .Desklet .Launcher
 	overflow: visible;
 	box-sizing: border-box;
 	margin: 20px 0 20px 0 !important;
+}
+
+.Desklet .Launcher .AppIcon 
+{
+    width: calc(100% - 20px);
+    height: inherit;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    border-radius: 15px;
+    margin: auto;
+    display: block;
+    border: 0;
 }
 
 .AppsShowing .View

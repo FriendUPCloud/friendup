@@ -3496,17 +3496,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		if( !isMobile && globalConfig.viewList == 'dockedlist' )
 		{
 			let img = 'startmenu.png';
-			if( Workspace.mainDock.conf )
-			{
-				if( Workspace.mainDock.conf.size == '32' )
-				{
-					img = 'startmenu_32.png';
-				}
-				else if( Workspace.mainDock.conf.size == '16' )
-				{
-					img = 'startmenu_16.png';
-				}
-			}
 			let ob = {
 				type: 'startmenu',
 				src: '/webclient/gfx/system/' + img,
@@ -9264,7 +9253,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				'min-width': 480,
 				'min-height': 92,
 				height: 92,
-				id: 'workspace_search'
+				id: 'workspace_search',
+				animated: true
 			} );
 		}
 		
@@ -9669,9 +9659,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			{
 				ww.setFlag( 'max-height', 140 );
 				ww.setFlag( 'height', 140 );
-				ge( 'launch_error' ).innerHTML = '<p id="launchErrorWarning" class="Danger Rounded PaddingSmall">' + message.errorMessage + '</p>';
+				ge( 'launch_error' ).innerHTML = '<p id="launchErrorWarning" class="Danger Rounded PaddingSmall"><span>' + message.errorMessage + '</span></p>';
 				let b = document.createElement( 'span' );
-				b.className = 'FloatRight IconSmall fa-remove';
+				b.className = 'IconSmall fa-remove';
 				b.innerHTML = '&nbsp;';
 				ge( 'launchErrorWarning' ).appendChild( b );
 				b.onclick = function()
@@ -9689,7 +9679,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		let m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
-			console.log( 'listuserapplications', [ e, d ]);
 			if( e != 'ok' ) 
 			{
 				ExecuteApplication( app, args, cbk );
@@ -9733,7 +9722,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			resize: false,
 			id: 'launcherview',
 			dialog: true,
-			'standard-dialog': true
+			'standard-dialog': true,
+			animated: true
 		};
 		if( isMobile )
 		{
