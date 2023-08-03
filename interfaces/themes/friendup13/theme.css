@@ -2099,16 +2099,21 @@ a:active, a:hover
 
 /* Directory views ---------------------------------------------------------- */
 
-html .View .DirectoryToolbar
+html .View .DirectoryToolbar 
 {
-	background-color: #e0e0e0;
-	box-shadow: none;
-	height: 28px;
-	padding: 3px;
-	left: 0;
-	right: 0;
-	color: #455155;
-	border-bottom: 1px solid rgba(0,0,0,0.02);
+    display: flex;
+    background-color: #e0e0e0;
+    box-shadow: none;
+    height: 28px;
+    left: 0;
+    right: 0;
+    color: #455155;
+    border-bottom: 1px solid rgba(0,0,0,0.02);
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-content: center;
+    justify-content: space-between;
+    align-items: center;
 }
 html .View .DirectoryToolbar .DriveGauge,
 html body[mobile] .View .DirectoryToolbar
@@ -2146,13 +2151,15 @@ html > body .View .DirectoryToolbar button:after
 	color: #455155;
 }
 
-html .View .DirectoryToolbar > .ToggleGroup
+html .View .DirectoryToolbar > .ToggleGroup,
+html .View .DirectoryToolbar > .Group
 {
 	top: 0px;
 	left: calc(50% - 54px);
 }
 
 html body .View .DirectoryToolbar > .ToggleGroup > button:hover:before,
+html body .View .DirectoryToolbar > .Group > button:hover:before,
 html body .View .DirectoryToolbar > button:hover:before
 {
 	color: black;
@@ -2163,12 +2170,6 @@ html body .View .DirectoryToolbar > button:before
 	transition: color 0.25s;
 }
 
-html .View .DirectoryToolbar > .ToggleGroup > button
-{
-	height: 26px;
-	top: 0;
-	line-height: 26px;
-}
 html .View .DirectoryToolbar > .ToggleGroup > button.Active
 {
 	background: none;
@@ -2244,13 +2245,7 @@ html .View .DirectoryToolbar button
 	overflow: hidden;
 	text-shadow: none;
 	position: relative;
-	top: -2px;
 	border-radius: 0;
-}
-
-html .View .DirectoryToolbar button:before
-{
-	margin-top: 2px;
 }
 
 html .View .DirectoryToolbar button:before

@@ -354,177 +354,183 @@ DirectoryView.prototype.initToolbar = function( winobj )
 	let lmode = this.listMode;
 
 	let buttons = [
-		// Go up a level
-		{
-			element: 'button',
-			className: 'IconButton Up IconSmall ' + ( isMobile ? 'fa-arrow-left' : 'fa-arrow-up' ),
-			content: i18n( 'i18n_dir_btn_up' ),
-			onclick: function( e )
+	{
+		element: 'group',
+		align: 'left',
+		buttons: [
+			// Go up a level
 			{
-				let test = winobj.fileInfo.Path;
-				if( ( !winobj.directoryview.hasSidebar && !winobj.directoryview.filedialog ) && test.substr( test.length - 1, 1 ) == ':' )
+				element: 'button',
+				className: 'IconButton Up IconSmall ' + ( isMobile ? 'fa-arrow-left' : 'fa-arrow-up' ),
+				content: i18n( 'i18n_dir_btn_up' ),
+				onclick: function( e )
 				{
-					return;
-				}
-				
-				let volu = path = fnam = '';
-				
-				if( ( winobj.directoryview.hasSidebar || winobj.directoryview.filedialog ) && test != 'Mountlist:' && test.substr( test.length - 1, 1 ) == ':' )
-				{
-					path = 'Mountlist:';
-					volu = 'Mountlist';
-				}
-				else
-				{
-					// Fetch path again
-					let rpath2 = winobj.fileInfo.Path ? winobj.fileInfo.Path : ( winobj.fileInfo.Volume );
-
-					if ( rpath2.indexOf( ':' < 0 ) )
-						rpath2 += ':';
-					path = rpath2.split( ':' );
-
-					volu = path[0];
-					path = path[1];
-					if( path.substr( path.length - 1, 1 ) == '/' )
-						path = path.substr( 0, path.length - 1 );
-
-					if( path.indexOf( '/' ) > 0 )
+					let test = winobj.fileInfo.Path;
+					if( ( !winobj.directoryview.hasSidebar && !winobj.directoryview.filedialog ) && test.substr( test.length - 1, 1 ) == ':' )
 					{
-						path = path.split( '/' );
-						path.pop();
-						fnam = path[ path.length - 1 ]; // filename
-						path = path.join( '/' );
+						return;
+					}
+					
+					let volu = path = fnam = '';
+					
+					if( ( winobj.directoryview.hasSidebar || winobj.directoryview.filedialog ) && test != 'Mountlist:' && test.substr( test.length - 1, 1 ) == ':' )
+					{
+						path = 'Mountlist:';
+						volu = 'Mountlist';
 					}
 					else
 					{
-						path = '';
-						fnam = volu;
-					}
-					path = volu + ':' + path;
+						// Fetch path again
+						let rpath2 = winobj.fileInfo.Path ? winobj.fileInfo.Path : ( winobj.fileInfo.Volume );
 
-					let lp = path.substr( path.length - 1, 1 )
-					if( lp != ':' && lp != '/' ) path += '/';
-				}
+						if ( rpath2.indexOf( ':' < 0 ) )
+							rpath2 += ':';
+						path = rpath2.split( ':' );
 
-				let fin = {
-					Volume: volu + ':',
-					Path: path,
-					Filename: fnam,
-					Type: winobj.fileInfo.Type,
-					Door: Workspace.getDoorByPath( path )
-				}
-				fin.Door.cancelId = dw.cancelId;
+						volu = path[0];
+						path = path[1];
+						if( path.substr( path.length - 1, 1 ) == '/' )
+							path = path.substr( 0, path.length - 1 );
 
-				// Set as current history element at end of list
-				dw.addToHistory( fin );
-				
-				// Animation for going to next folder
-				if( isMobile )
-				{
-					// Remove previous one
-					if( winobj.slideAnimation )
-						winobj.slideAnimation.parentNode.removeChild( winobj.slideAnimation );
-					
-					let n = document.createElement( 'div' );
-					n.className = 'Content SlideAnimation';
-					n.style.willChange = 'transform';
-					n.style.transition = 'transform 0.4s';
-					n.innerHTML = winobj.innerHTML;
-					n.scrollTop = winobj.scrollTop;
-					n.style.zIndex = 10;
-					winobj.parentNode.appendChild( n );
-					winobj.slideAnimation = n;
-					
-					winobj.parentNode.classList.add( 'Redrawing' );
-					
-					// Refresh and animate
-					winobj.refresh( function()
-					{
-						n.style.transform = 'translate3d(100%,0,0)';
-						setTimeout( function()
+						if( path.indexOf( '/' ) > 0 )
 						{
-							if( n.parentNode )
+							path = path.split( '/' );
+							path.pop();
+							fnam = path[ path.length - 1 ]; // filename
+							path = path.join( '/' );
+						}
+						else
+						{
+							path = '';
+							fnam = volu;
+						}
+						path = volu + ':' + path;
+
+						let lp = path.substr( path.length - 1, 1 )
+						if( lp != ':' && lp != '/' ) path += '/';
+					}
+
+					let fin = {
+						Volume: volu + ':',
+						Path: path,
+						Filename: fnam,
+						Type: winobj.fileInfo.Type,
+						Door: Workspace.getDoorByPath( path )
+					}
+					fin.Door.cancelId = dw.cancelId;
+
+					// Set as current history element at end of list
+					dw.addToHistory( fin );
+					
+					// Animation for going to next folder
+					if( isMobile )
+					{
+						// Remove previous one
+						if( winobj.slideAnimation )
+							winobj.slideAnimation.parentNode.removeChild( winobj.slideAnimation );
+						
+						let n = document.createElement( 'div' );
+						n.className = 'Content SlideAnimation';
+						n.style.willChange = 'transform';
+						n.style.transition = 'transform 0.4s';
+						n.innerHTML = winobj.innerHTML;
+						n.scrollTop = winobj.scrollTop;
+						n.style.zIndex = 10;
+						winobj.parentNode.appendChild( n );
+						winobj.slideAnimation = n;
+						
+						winobj.parentNode.classList.add( 'Redrawing' );
+						
+						// Refresh and animate
+						winobj.refresh( function()
+						{
+							n.style.transform = 'translate3d(100%,0,0)';
+							setTimeout( function()
 							{
-								n.parentNode.removeChild( n );
-								if( winobj.parentNode )
-									winobj.parentNode.classList.remove( 'Redrawing' );
-							}
-							winobj.slideAnimation = null;
-						}, 400 );
-					} );
-					
-				}
-				else
-				{
-					winobj.refresh();
-				}
-			}
-		},
-		!isMobile ? {
-			element: 'button',
-			className: 'IconButton  Back IconSmall fa-arrow-left',
-			content: i18n( 'i18n_dir_btn_back' ),
-			onclick: function( e )
-			{
-				// If we're not at the top of the history array, go back
-				if( dw.pathHistoryIndex > 0 )
-				{
-					let fin = dw.pathHistoryRewind();
-					dw.window.fileInfo = fin; 
-					
-					if( !isMobile && winobj.fileBrowser )
-					{
-					    console.log( '[BACK] Test.' );
-						//winobj.fileBrowser.setPath( fin.Path, false, { lockHistory: true } ); // <- doesn't work properly
+								if( n.parentNode )
+								{
+									n.parentNode.removeChild( n );
+									if( winobj.parentNode )
+										winobj.parentNode.classList.remove( 'Redrawing' );
+								}
+								winobj.slideAnimation = null;
+							}, 400 );
+						} );
+						
 					}
-					winobj.refresh();
-				}
-			}
-		}: false,
-		!isMobile ? {
-			element: 'button',
-			className: 'IconButton Forward IconSmall fa-arrow-right',
-			content: i18n( 'i18n_dir_btn_forward' ),
-			onclick: function( e )
-			{
-				// If we're not at the end of the history array, go forward
-				if( dw.pathHistoryIndex < dw.pathHistory.length - 1 )
-				{
-					let fin = dw.pathHistoryForward();
-					dw.window.fileInfo = fin;
-					
-					if( !isMobile && winobj.fileBrowser )
+					else
 					{
-						//winobj.fileBrowser.setPath( fin.Path, false, { lockHistory: true } );
+						winobj.refresh();
 					}
+				}
+			},
+			!isMobile ? {
+				element: 'button',
+				className: 'IconButton  Back IconSmall fa-arrow-left',
+				content: i18n( 'i18n_dir_btn_back' ),
+				onclick: function( e )
+				{
+					// If we're not at the top of the history array, go back
+					if( dw.pathHistoryIndex > 0 )
+					{
+						let fin = dw.pathHistoryRewind();
+						dw.window.fileInfo = fin; 
+						
+						if( !isMobile && winobj.fileBrowser )
+						{
+							console.log( '[BACK] Test.' );
+							//winobj.fileBrowser.setPath( fin.Path, false, { lockHistory: true } ); // <- doesn't work properly
+						}
+						winobj.refresh();
+					}
+				}
+			}: false,
+			!isMobile ? {
+				element: 'button',
+				className: 'IconButton Forward IconSmall fa-arrow-right',
+				content: i18n( 'i18n_dir_btn_forward' ),
+				onclick: function( e )
+				{
+					// If we're not at the end of the history array, go forward
+					if( dw.pathHistoryIndex < dw.pathHistory.length - 1 )
+					{
+						let fin = dw.pathHistoryForward();
+						dw.window.fileInfo = fin;
+						
+						if( !isMobile && winobj.fileBrowser )
+						{
+							//winobj.fileBrowser.setPath( fin.Path, false, { lockHistory: true } );
+						}
+						winobj.refresh();
+					}
+				}
+			}: false,
+			{
+				element: 'button',
+				className: 'IconButton Reload IconSmall fa-refresh',
+				content: i18n( 'i18n_dir_btn_reload' ),
+				onclick: function( e )
+				{
+					winobj.directoryview.toChange = true;
 					winobj.refresh();
 				}
-			}
-		}: false,
-		{
-			element: 'button',
-			className: 'IconButton Reload IconSmall fa-refresh',
-			content: i18n( 'i18n_dir_btn_reload' ),
-			onclick: function( e )
+			},
 			{
-				winobj.directoryview.toChange = true;
-				winobj.refresh();
-			}
-		},
-		{
-		    element: 'separator',
-		    className: 'VerticalLine',
-		    content: '',
-		    onclick: null
-		},
-		{
-		    element: 'button',
-		    className: 'IconButton Upload IconSmall fa-cloud-upload',
-		    content: i18n( 'i18n_upload_a_file' ),
-		    onclick: function( e )
-		    {
-		        Workspace.uploadFile();
-		    }
+				element: 'separator',
+				className: 'VerticalLine',
+				content: '',
+				onclick: null
+			},
+			{
+				element: 'button',
+				className: 'IconButton Upload IconSmall fa-cloud-upload',
+				content: i18n( 'i18n_upload_a_file' ),
+				onclick: function( e )
+				{
+				    Workspace.uploadFile();
+				}
+			},
+			]
 		},
 		{
 			element: 'toggle-group',
@@ -611,19 +617,41 @@ DirectoryView.prototype.initToolbar = function( winobj )
 			]
 		},
 		{
-			element: 'button',
-			className: 'IconButton DriveGauge FloatRight IconSmall fa-hdd',
-			content: i18n( 'i18n_diskspace' ),
-			onclick: function( e ){}
+			element: 'group',
+			align: 'right',
+			id: 'right-group',
+			buttons: [
+				{
+					element: 'button',
+					className: 'IconButton DriveGauge FloatRight IconSmall fa-hdd',
+					content: i18n( 'i18n_diskspace' ),
+					onclick: function( e ){}
+				}
+			]
 		}
 	];
+	
+	function getGroupElement( id, lst )
+	{
+		for( let a in lst )
+		{
+			if( lst[a].id && lst[a].id == id )
+				return lst[a];
+			if( lst[a].buttons )
+			{
+				let c = getGroupElement( id, lst[a].buttons );
+				if( c ) return c;
+			}
+		}
+		return false;
+	}
 
 	this.buttonUp = buttons[0];
 
 	// Non System gets makedir
 	if( rpath.substr( 0, 7 ) != 'System:' )
 	{
-		buttons.push( {
+		getGroupElement( 'right-group', buttons ).buttons.push( {
 			element: 'button',
 			className: 'IconButton Makedir FloatRight IconSmall',
 			content: i18n( 'i18n_create_container' ),
@@ -634,7 +662,7 @@ DirectoryView.prototype.initToolbar = function( winobj )
 		} );
 	}
 	
-	buttons.push( {
+	getGroupElement( 'right-group', buttons ).buttons.push( {
 		element: 'button',
 		className: 'IconButton Search FloatRight IconSmall',
 		content: i18n( 'i18n_search' ),
@@ -677,11 +705,11 @@ DirectoryView.prototype.initToolbar = function( winobj )
 	for( let a in buttons )
 	{
 		if( !buttons[a] ) continue;
-		if( buttons[a].element == 'toggle-group' )
+		if( buttons[a].element == 'toggle-group' || buttons[a].element == 'group' )
 		{
 			let ele = document.createElement( 'div' );
 			buttons[a].domElement = ele;
-			ele.className = 'ToggleGroup';
+			ele.className = buttons[a].element == 'toggle-group' ? 'ToggleGroup' : 'Group';
 			if( buttons[a].align )
 				ele.className += ' ' + buttons[a].align;
 			ele.checkActive = function( value )
