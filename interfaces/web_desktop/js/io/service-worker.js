@@ -9,6 +9,7 @@
 *****************************************************************************©*/
 
 self.addEventListener( 'push', async function(event) {
+	let data = event.data ? event.data : { title: 'dummy', body: 'dummy', icon: 'dummy' };
 	let title = data.title;
 	let body = data.body;
 	let icon = data.icon;
