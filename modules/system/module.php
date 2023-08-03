@@ -314,7 +314,7 @@ if( isset( $args->command ) )
 			$s->Type = 'WebPush';
 			$s->Key = $UserSession->SessionID;
 			$s->Load();
-			$s->Data = $args->args->endpoint;
+			$s->Data = $args->args->data;
 			$s->Save();
 			if( $s->ID > 1 )
 			{
