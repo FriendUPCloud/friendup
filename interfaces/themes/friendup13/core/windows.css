@@ -44,9 +44,9 @@ body:not([mobile]) .ViewContainer
 	background-color: transparent;
 }
 
-body:not([mobile]) #Screens .View.Animated:not([moving]):not(.Opening):not(.Opened)
+html > body #Screens .View.Animated
 {
-	transition: opacity,width,height 0.25s,0.2s,0.2s;
+	transition: opacity,width,height 0.25s,0.2s,0.2s !important;
 }
 
 html .View, html .View.Active
