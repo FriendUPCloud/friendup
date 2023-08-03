@@ -177,7 +177,7 @@ Friend.FileBrowser.prototype.drop = function( elements, e, win )
 Friend.FileBrowser.prototype.setPath = function( target, cbk, tempFlags, e )
 {
 	let winobj = false;
-	if( this.directoryView.window.windowObject )
+	if( this.directoryView.window && this.directoryView.window.windowObject )
 		winobj = this.directoryView.window.windowObject;
 	else return false;
 	
