@@ -834,8 +834,6 @@ class dbUser extends dbIO
 			$system = $configfilesettings[ 'Security' ][ 'push_system' ];
 			if( $options->Condition == 'activity' && isset( $options->Seconds ) )
 			{
-				$Logger->log( '[dbio] Trying.' );
-				
 				// Get session record (only one touch device, most recent)
 				$setting = $SqlDatabase->fetchObject( '
 				SELECT 
@@ -857,10 +855,6 @@ class dbUser extends dbIO
 					{
 						require( __DIR__ . '/../include/webpush.php' );
 					}
-				}
-				else
-				{
-					$Logger->log( '[dbio] Could not read setting...' );
 				}
 			}
 		}
