@@ -9,8 +9,7 @@
 *****************************************************************************©*/
 
 self.addEventListener( 'push', event => {
-	console.log( 'Push event: ', event );
-	
+	console.log( 'We got this data.', event );
 	try
 	{
 		const options = {
@@ -18,7 +17,7 @@ self.addEventListener( 'push', event => {
 			icon: '/graphics/system/friendos192.png',
 			vibrate: [100, 50, 100],
 			data: {
-				url: document.location.href
+				url: event.data
 			}
 		};
 
@@ -33,8 +32,6 @@ self.addEventListener( 'push', event => {
 } );
 
 self.addEventListener( 'notificationclick', event => {
-	console.log( 'Notification click event: ', event );
-	
 	try
 	{
 		event.notification.close();

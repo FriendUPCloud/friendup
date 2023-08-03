@@ -50,9 +50,14 @@ if( isset( $setting ) )
         'contentEncoding' => 'aes128gcm'
     ] );
 	
+	$cf = isset( $GLOBALS[ 'configfilesettings' ] ) ? $GLOBALS[ 'configfilesettings' ] : false;
+	if( !$cf ) die( 'fail<!--separate-->major failure' );
+	$ssl = isset( $cf[ 'Core' ][ 'SSLEnable' ] ) && $cf[ 'Core' ][ 'SSLEnable' ] ? true : false;
+	
 	$msg = new stdClass();
 	$msg->message = new stdClass();
 	$msg->message->notification = new stdClass();
+	$msg->message->notification->url = ( $ssl ? 'https://' : 'http://' ) . $cf[ 'FriendCore' ][ 'fchost' ] . '/webclient/index.html';
 	$msg->message->notification->title = 'Hello from Friend OS';
 	$msg->message->notification->body = 'This is just a text to test the notifications...';
 	$payload = json_encode( $msg );

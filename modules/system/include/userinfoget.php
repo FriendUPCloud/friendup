@@ -10,7 +10,13 @@
 *                                                                              *
 *****************************************************************************©*/
 
+global $level;
 
+if( !isset( $level ) )
+{
+	$level = $SqlDatabase->fetchObject( 'SELECT g.* FROM FUserGroup g, FUserToGroup fug WHERE fug.UserID = \'' . $User->ID . '\' AND fug.UserGroupID = g.ID AND g.Type = "Level"' );
+	$level = $level->Name;
+}
 
 // Get user by ID
 if( isset( $args->args->id ) )
