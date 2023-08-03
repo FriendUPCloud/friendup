@@ -53,11 +53,13 @@ if( isset( $setting ) )
 	$cf = isset( $GLOBALS[ 'configfilesettings' ] ) ? $GLOBALS[ 'configfilesettings' ] : false;
 	if( !$cf ) die( 'fail<!--separate-->major failure' );
 	$ssl = isset( $cf[ 'Core' ][ 'SSLEnable' ] ) && $cf[ 'Core' ][ 'SSLEnable' ] ? true : false;
+	$host = ( $ssl ? 'https://' : 'http://' ) . $cf[ 'FriendCore' ][ 'fchost' ];
 	
 	$msg = new stdClass();
-	$msg->url = ( $ssl ? 'https://' : 'http://' ) . $cf[ 'FriendCore' ][ 'fchost' ] . '/webclient/index.html';
+	$msg->url = $host . '/webclient/index.html';
 	$msg->title = $message->Title;
 	$msg->body = $message->Body;
+	$msg->icon = $host . '/graphics/system/friendos192.png';
 	$payload = json_encode( $msg );
 	
 	if( $result = $webPush->sendOneNotification( $subscription, $payload ) )
