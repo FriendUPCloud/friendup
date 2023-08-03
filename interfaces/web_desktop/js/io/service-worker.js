@@ -10,17 +10,16 @@
 
 self.addEventListener( 'push', ( event ) => {
 	const data = event.data?.json() ?? {};
-	let str = event.data.text();
-	const title = data.title || "Friend OS 1.3";
-	const body = str;
-	const icon = "images/new-notification.png";
+	const title = data.title;
+	const body = '';
+	const icon = data.icon;
 	const tag = 'friendos-tag';
 	event.waitUntil(
 		self.registration.showNotification( title, {
 			body: body,
 			icon: icon,
 			tag: tag,
-			data: { some: 'data' }
+			url: data.url
 		} )
 	);
 } );
