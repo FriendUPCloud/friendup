@@ -55,11 +55,9 @@ if( isset( $setting ) )
 	$ssl = isset( $cf[ 'Core' ][ 'SSLEnable' ] ) && $cf[ 'Core' ][ 'SSLEnable' ] ? true : false;
 	
 	$msg = new stdClass();
-	$msg->message = new stdClass();
-	$msg->message->notification = new stdClass();
-	$msg->message->notification->url = ( $ssl ? 'https://' : 'http://' ) . $cf[ 'FriendCore' ][ 'fchost' ] . '/webclient/index.html';
-	$msg->message->notification->title = 'Hello from Friend OS';
-	$msg->message->notification->body = 'This is just a text to test the notifications...';
+	$msg->url = ( $ssl ? 'https://' : 'http://' ) . $cf[ 'FriendCore' ][ 'fchost' ] . '/webclient/index.html';
+	$msg->title = $message->Title;
+	$msg->body = $message->Body;
 	$payload = json_encode( $msg );
 	
 	if( $result = $webPush->sendOneNotification( $subscription, $payload ) )
