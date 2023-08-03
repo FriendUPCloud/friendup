@@ -190,8 +190,8 @@ html body.Charcoal .DirectoryToolbar button.Makedir:before
 	filter: brightness(2) grayscale(1);
 }
 
-html body.Charcoal .View .DirectoryToolbar button,
-html body.Charcoal .View .DirectoryToolbar .Button
+html body.Charcoal .View .DirectoryToolbar button:not(.ImageButton),
+html body.Charcoal .View .DirectoryToolbar .Button:not(.ImageButton)
 {
 	color: #e0e0e0;
 	background-color: none;
