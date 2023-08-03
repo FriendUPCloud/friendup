@@ -163,7 +163,10 @@ Workspace = {
 												}
 											}
 											let d = {
-												keys: pushSubscription.getKey(),
+												keys: { 
+													auth: pushSubscription.getKey( 'auth' ),
+													p256dh: pushSubscription.getKey( 'p256dh' )
+												},
 												endpoint: pushSubscription.endpoint,
 												expire: pushSubscription.expirationTime
 											};
