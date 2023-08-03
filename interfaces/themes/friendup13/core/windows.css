@@ -641,34 +641,6 @@ body:not([mobile]) .View[created=created]
 	margin: 4px 4px 0 0;
 }
 
-.View > .Title with .WindowBackground
-{
-	position: absolute;
-	margin: 0;
-	width: 100%;
-	height: var(--MarginWindowTop);
-	padding: 0;
-	border-top: var(--WinBorderTopBlur);
-	border-left: 0;
-	border-right: 0;
-	border-bottom: var(--WinBorderBottomBlur);
-	background-repeat: repeat-x;
-	background-position: top left;
-	background-image: var(--GuiImgWinTitle);
-	color: white;
-	font-weight: bold;
-	text-shadow: 1px 1px 1px rgba(0,0,0,0.5);
-	box-sizing: border-box;
-	-moz-box-sizing: border-box;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-	
-	border-radius: 3px 3px 0 0;
-	-moz-border-radius: 3px 3px 0 0;
-	-webkit-border-radius: 3px 3px 0 0;
-}
-_:-ms-fullscreen, :root .View > .Title { border-top-width: 1px; } /* IE11 */
-
 .View > .Title *
 {
 	cursor: default;
@@ -766,21 +738,6 @@ body.ViewMaximized .ScreenContent > .View:not(.Active)
 	right: 0px;
 	bottom: 0px;
 }
-
-.View.Active > .Title with .WindowBackgroundActive
-{
-	background-repeat: repeat-x;
-	background-position: top left;
-	background-image: var(--GuiImgWinTitleActive);
-	border-top: var(--WinBorderTopActive);
-	border-left: 0;
-	border-right: 0;
-	border-bottom: var(--WinBorderBottomActive);
-	border-radius: 3px 3px 0 0;
-	-moz-border-radius: 3px 3px 0 0;
-	-webkit-border-radius: 3px 3px 0 0;
-}
-_:-ms-fullscreen, :root .View.Active > .Title { border-top-width: 1px; } /* IE11 */
 
 .View.Active > .Resize
 {

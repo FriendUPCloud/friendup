@@ -876,10 +876,7 @@ html .View > .Title
 	height: 26px;
 	background-image: none;
 	border-radius: 10px 10px 0 0;
-	/* --- old color --- */
-	/*background-color: #4A6075;*/
-	/* --- new color --- */
-	background-color: #344A5E;
+	background-color: #39658b;
 }
 
 html .View > .Title > div > span
@@ -928,21 +925,12 @@ html .View > .BottomBar, html .View.Active > .BottomBar
 }
 
 html .View.Active > .Title,
-html .View.Active > .LeftBar,
-html .View.Active > .RightBar,
-html .View.Active > .BottomBar
-{
-	background-image: none;
-	background-color: #455155;
-}
-
-html .View.Active > .Title,
 html body[mobile] .View > .Title
 {
 	/* --- old color --- */
 	/*background-color: #34495E;*/
 	/* --- new color ---*/
-	background-color: #20374D;
+	background-color: #20374d;
 }
 
 /* Done here - find marker to continue */
