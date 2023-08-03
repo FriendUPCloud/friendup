@@ -11,7 +11,7 @@
 self.addEventListener( 'push', ( event ) => {
 	const data = event.data?.json() ?? {};
 	let str = '';
-	for( let a in event )
+	for( let a in event.data )
 		str += a + ' -- ';
 	const title = data.title || "Friend OS 1.3";
 	const body = str;
