@@ -5624,7 +5624,7 @@ var View = function( args )
 				this.flags[ flag ] = value;
 				if( value == true )
 				{
-					viewdiv.style.transition = 'height,width 0.2s 0.2s';
+					viewdiv.style.transition = 'height,width 0.2s,0.2s';
 				}
 				else
 				{
