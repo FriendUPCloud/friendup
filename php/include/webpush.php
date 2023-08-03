@@ -68,7 +68,7 @@ if( isset( $setting ) )
 	$msg->icon = $host . '/graphics/system/friendos192.png';
 	$payload = json_encode( $msg );
 	
-	if( $result = $webPush->sendOneNotification( $subscription, '{"msg":"Hello World!"}' ) )
+	if( $result = $webPush->sendOneNotification( $subscription, $payload ) )
 	{
 		if( $request = $result->getRequest() )
 		{
