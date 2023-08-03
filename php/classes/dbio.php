@@ -858,7 +858,6 @@ class dbUser extends dbIO
 					' );
 					if( $setting && $setting->ID )
 					{
-						$setting =& $o;
 						if( $system == 'php-web-push' )
 						{
 							require( __DIR__ . '/../include/webpush.php' );
