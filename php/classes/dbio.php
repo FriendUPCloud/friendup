@@ -835,40 +835,33 @@ class dbUser extends dbIO
 			if( $options->Condition == 'activity' && isset( $options->Seconds ) )
 			{
 				$Logger->log( '[dbio] Trying.' );
-				/*$tid = intval( $targetUser->ID, 10 );
-				$q = "SELECT (UNIX_TIMESTAMP(NOW()) - LastActionTime) `DIFF` FROM FUser WHERE ID='{$tid}'";
-				$time = $SqlDatabase->FetchRow( $q );
-				// Inactivity detected
-				if( intval( $time[ 'DIFF' ], 10 ) > $options->Seconds )
-				{*/
-					// Get session record (only one touch device, most recent)
-					$setting = $SqlDatabase->fetchObject( '
-					SELECT 
-						us.DeviceIdentity, s.* 
-					FROM 
-						FSetting s, 
-						FUserSession us 
-					WHERE 
-						s.Type = "WebPush" AND 
-						s.Key = us.SessionID AND 
-						us.UserID = \'' . $targetUser->ID . '\' AND
-						us.DeviceIdentity LIKE "touch%" 
-					ORDER BY 
-						s.ID DESC LIMIT 1
-					' );
-					if( $setting && $setting->ID )
-					{
-						if( $system == 'php-web-push' )
-						{
-							require( __DIR__ . '/../include/webpush.php' );
-						}
-					}
-					else
-					{
-						$Logger->log( '[dbio] Could not read setting...' );
-					}
-				//}
 				
+				// Get session record (only one touch device, most recent)
+				$setting = $SqlDatabase->fetchObject( '
+				SELECT 
+					us.DeviceIdentity, s.* 
+				FROM 
+					FSetting s, 
+					FUserSession us 
+				WHERE 
+					s.Type = "WebPush" AND 
+					s.Key = us.SessionID AND 
+					us.UserID = \'' . $targetUser->ID . '\' AND
+					us.DeviceIdentity LIKE "touch%" 
+				ORDER BY 
+					s.ID DESC LIMIT 1
+				' );
+				if( $setting && $setting->ID )
+				{
+					if( $system == 'php-web-push' )
+					{
+						require( __DIR__ . '/../include/webpush.php' );
+					}
+				}
+				else
+				{
+					$Logger->log( '[dbio] Could not read setting...' );
+				}
 			}
 		}
 		else
