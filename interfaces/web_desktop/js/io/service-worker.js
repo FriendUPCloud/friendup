@@ -8,20 +8,19 @@
 *                                                                              *
 *****************************************************************************©*/
 
-self.addEventListener( 'push', async function( event ) {
-	let data = event.data ? event.data : { title: 'dummy', body: 'dummy', icon: 'dummy' };
-	let title = data.title;
-	let body = data.body;
-	let icon = data.icon;
+self.addEventListener( 'push', ( event ) => {
+	let d = event.data ? event.data : { title: 'dummy', body: 'dummy', icon: 'dummy' };
+	let title = d.title;
+	let body = d.body;
+	let icon = d.icon;
 	let tag = 'friendos-tag';
-	let dataObject = { some: 'data' };
+	let data = { some: 'data' };
 	event.waitUntil(
-		self.registration.showNotification( 'Friend OS', {
+		self.registration.showNotification( title, {
 			body: body,
 			icon: icon,
 			tag: tag,
-			data: dataObject,
-            vibrate: [100, 50, 100]
+			data: data
 		} )
 	);
 } );
