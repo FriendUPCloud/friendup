@@ -9669,9 +9669,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			{
 				ww.setFlag( 'max-height', 140 );
 				ww.setFlag( 'height', 140 );
-				ge( 'launch_error' ).innerHTML = '<p id="launchErrorWarning" class="Danger Rounded PaddingSmall">' + message.errorMessage + '</p>';
+				ge( 'launch_error' ).innerHTML = '<p id="launchErrorWarning" class="Danger Rounded PaddingSmall"><span>' + message.errorMessage + '</span></p>';
 				let b = document.createElement( 'span' );
-				b.className = 'FloatRight IconSmall fa-remove';
+				b.className = 'IconSmall fa-remove';
 				b.innerHTML = '&nbsp;';
 				ge( 'launchErrorWarning' ).appendChild( b );
 				b.onclick = function()
@@ -9689,7 +9689,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		let m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
-			console.log( 'listuserapplications', [ e, d ]);
 			if( e != 'ok' ) 
 			{
 				ExecuteApplication( app, args, cbk );
@@ -9733,7 +9732,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			resize: false,
 			id: 'launcherview',
 			dialog: true,
-			'standard-dialog': true
+			'standard-dialog': true,
+			animated: true
 		};
 		if( isMobile )
 		{

@@ -2959,6 +2959,28 @@ html body[viewlist=dockedlist] #Statusbar #Tray > div.Hidden
 	animation:         micblink 2s infinite;
 }
 
+#launchErrorWarning
+{
+    display: flex;
+    gap: 5px;
+    align-items: center;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+}
+
+#launchErrorWarning span:first-child 
+{
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+    font-size: 14px;
+}
+
+#launchErrorWarning span:last-child 
+{
+    text-align: right;
+}
+
 /* Desklets ----------------------------------------------------------------- */
 
 .Desklet

@@ -5619,6 +5619,18 @@ var View = function( args )
 					RefreshWindow( viewdiv );
 				}
 				break;
+			// TODO: Expand to work with more properties
+			case 'animated':
+				this.flags[ flag ] = value;
+				if( value == true )
+				{
+					viewdiv.style.transition = 'height,width 0.2s 0.2s';
+				}
+				else
+				{
+					viewdiv.style.transition = '';
+				}
+				break;
 			case 'resize':
 				this.flags[ flag ] = value;
 				ResizeWindow( viewdiv );
