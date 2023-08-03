@@ -417,24 +417,24 @@ html body #Toolbar button.IconButton:not(:hover), html body #Toolbar .Button.Ico
 
 /* Mobile ------------------------------------------------------------------- */
 
-[mobile] #SideBar
+body[mobile] #SideBar
 {
 	transition: transform 0.25s;
 	width: 100%;
 	z-index: 5;
 }
 
-[mobile]:not(.Editing) #SideBar
+body[mobile]:not(.Editing) #SideBar
 {
 	transform: translate3d(0%,0,0);
 }
 
-[mobile].Editing #SideBar
+body[mobile].Editing #SideBar
 {
 	transform: translate3d(-100%,0,0);
 }
 
-[mobile] #CodeArea
+body[mobile] #CodeArea
 {
 	transition: transform 0.25s;
 	left: 0;
@@ -442,7 +442,7 @@ html body #Toolbar button.IconButton:not(:hover), html body #Toolbar .Button.Ico
 	z-index: 4;
 }
 
-[mobile] #StatusMessage
+body[mobile] #StatusMessage
 {
 	left: auto;
 	right: 70px;
@@ -450,23 +450,23 @@ html body #Toolbar button.IconButton:not(:hover), html body #Toolbar .Button.Ico
 	pointer-events: none;
 }
 
-[mobile] #CodeArea .ace_editor
+body[mobile] #CodeArea .ace_editor
 {
 	right: 0 !important;
 }
 
-[mobile] .Minimap, [mobile] .MinimapRect, [mobile] .MinimapGroove
+body[mobile] .Minimap, [mobile] .MinimapRect, [mobile] .MinimapGroove
 {
 	pointer-events: none;
 	visibility: hidden;
 }
 
-[mobile].Editing #CodeArea
+body[mobile].Editing #CodeArea
 {
 	transform: translate3d(0%,0,0);
 }
 
-[mobile]:not(.Editing) #CodeArea
+body[mobile]:not(.Editing) #CodeArea
 {
 	transform: translate3d(-100%,0,0);
 }
