@@ -27,7 +27,7 @@ DeepestField = {
 
 Workspace = {
 	locale: 'en',
-	theme: 'friendup12',
+	theme: 'friendup13',
 	themeData: {
 		buttonSchemeText: "windows",
 		colorSchemeText: "default"
@@ -147,10 +147,11 @@ Workspace = {
 				if( ( ( si || au ) && ( !o || typeof( o ) == 'undefined' ) ) || o.result == '0' || o.result == 3 )
 				{
 					// Loading remaining scripts
-					var s = document.createElement( 'script' );
+					let s = document.createElement( 'script' );
 					s.src = '/webclient/js/api/friendapi.js;' +
 						'webclient/js/gui/workspace_inside.js;' +
 						'webclient/3rdparty/adapter.js;' +
+						'webclient/3rdparty/pdfjs/build/pdf.js;' +
 						'webclient/js/utils/speech-input.js;' +
 						'webclient/js/utils/events.js;' +
 						'webclient/js/utils/utilities.js;' +
@@ -185,7 +186,9 @@ Workspace = {
 						'webclient/js/gui/desklet.js;' +
 						'webclient/js/gui/calendar.js;' +
 						'webclient/js/gui/colorpicker.js;' +
+						'webclient/js/gui/workspace_calendar.js;' +
 						'webclient/js/gui/workspace_tray.js;' +
+						'webclient/js/gui/workspace_sharing.js;' +
 						'webclient/js/gui/tutorial.js;' +
 						'webclient/js/media/audio.js;' +
 						'webclient/js/io/p2p.js;' +
@@ -209,7 +212,7 @@ Workspace = {
 
 						// Setup default Doors screen
 						var wbscreen = new Screen( {
-								title: 'Friend Workspace v1.2.5',
+								title: 'Friend Workspace v1.3',
 								id:	'DoorsScreen',
 								extra: Workspace.fullName,
 								taskbar: false
@@ -320,7 +323,7 @@ Workspace = {
 					return;
 				}
 			}
-			if( !error ) error = 'FriendUP can not interpret application call.';
+			if( !error ) error = 'Friend OS can not interpret application call.';
 			var d = document.createElement( 'div' );
 			d.className = 'DialogError';
 			d.innerHTML = '<p>' + error + '</p>';
