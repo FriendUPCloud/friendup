@@ -8,34 +8,29 @@
 *                                                                              *
 *****************************************************************************©*/
 
-self.addEventListener( 'push', event => {
-	try
-	{
-		const options = {
-			body: event.data.text(),
-			icon: '/graphics/system/friendos192.png',
-			vibrate: [100, 50, 100],
-			data: {
-				url: document.location.href
-			}
-		};
-
-		event.waitUntil(
-			self.registration.showNotification( 'Friend OS', options )
-		);
-	}
-	catch( e )
-	{
-		console.log( 'Error with service worker: ', e );
-	}
+self.addEventListener( 'push', ( event ) => {
+	const data = event.data?.json() ?? {};
+	const title = data.title;
+	const body = '';
+	const icon = data.icon;
+	const tag = 'friendos-tag';
+	event.waitUntil(
+		self.registration.showNotification( title, {
+			body: body,
+			icon: icon,
+			tag: tag,
+			url: data.url
+		} )
+	);
 } );
 
 self.addEventListener( 'notificationclick', event => {
 	try
 	{
 		event.notification.close();
+		const data = event.data?.json() ?? {};
 		event.waitUntil(
-			clients.openWindow( event.notification.data.url )
+			clients.openWindow( data && data.url ? data.url : 'https://intranet.friendup.cloud/webclient/index.html' )
 		);
 	}
 	catch( e )

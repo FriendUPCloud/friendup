@@ -834,39 +834,27 @@ class dbUser extends dbIO
 			$system = $configfilesettings[ 'Security' ][ 'push_system' ];
 			if( $options->Condition == 'activity' && isset( $options->Seconds ) )
 			{
-				$tid = intval( $targetUser->ID, 10 );
-				$q = "SELECT (UNIX_TIMESTAMP(NOW()) - LastActionTime) `DIFF` FROM FUser WHERE ID='{$tid}'";
-				$time = $SqlDatabase->FetchRow( $q );
-				// Inactivity detected
-				if( intval( $time[ 'DIFF' ], 10 ) > $options->Seconds )
+				// Get session record (only one touch device, most recent)
+				$setting = $SqlDatabase->fetchObject( '
+				SELECT 
+					us.DeviceIdentity, s.* 
+				FROM 
+					FSetting s, 
+					FUserSession us 
+				WHERE 
+					s.Type = "WebPush" AND 
+					s.Key = us.SessionID AND 
+					us.UserID = \'' . $targetUser->ID . '\' AND
+					us.DeviceIdentity LIKE "touch%" 
+				ORDER BY 
+					s.ID DESC LIMIT 1
+				' );
+				if( $setting && $setting->ID )
 				{
-					// There's an active session record
-					if( $row = $SqlDatabase->fetchObject( 'SELECT * FROM FUserSession s WHERE s.UserID=\'' . $targetUser->ID . '\' ORDER BY ID DESC LIMIT 1' ) )
+					if( $system == 'php-web-push' )
 					{
-						// Get session record
-						$o = new dbIO( 'FSetting' );
-						$o->Type = 'WebPush';
-						$o->Key = $row->SessionID;
-						$o->UserID = $targetUser->ID;
-						if( $o->Load() )
-						{
-							$setting =& $o;
-							if( $system == 'php-web-push' )
-							{
-								require( __DIR__ . '/../include/webpush.php' );
-							}
-						}
+						require( __DIR__ . '/../include/webpush.php' );
 					}
-					// Just get last used session
-					else if( $o = $SqlDatabase->fetchObject( 'SELECT * FROM FSetting WHERE `Type`="WebPush" AND UserID=\'' . $targetUser->ID . '\' ORDER BY ID DESC LIMIT 1' ) )
-					{
-						$setting =& $o;
-						if( $system == 'php-web-push' )
-						{
-							require( __DIR__ . '/../include/webpush.php' );
-						}
-					}
-					return false;
 				}
 			}
 		}

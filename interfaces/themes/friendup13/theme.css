@@ -1,4 +1,5 @@
 @import url(/themes/friendup13/definitions.css);
+@import url(/themes/friendup13/core/appspace.css);
 @import url(/themes/friendup13/core/core.css);
 @import url(/themes/friendup13/core/lists.css);
 @import url(/themes/friendup13/core/windows.css);
@@ -1906,12 +1907,6 @@ html .View > .Title > div > .Depth
 html .View > .Title > div > .Depth:after
 {
 	display: none;
-}
-
-.View.Active > .Title > div > .Depth:hover,
-.View.Active > .Title > div > .Depth
-{
-	background-image: url(/themes/friendup12/gfx/win_depth_active.png);
 }
 
 body[focusmode=clicktofront] .View .Depth

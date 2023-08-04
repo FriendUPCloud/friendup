@@ -10,6 +10,13 @@
 *                                                                              *
 *****************************************************************************©*/
 
+/*******************************************************************************
+*                                                                              *
+* This file manages the app "convos", and handles actions related to contacts, *
+* messaging, message related shared files, thumbnails and push notifications.  *
+*                                                                              *
+*******************************************************************************/
+
 global $Logger;
 
 ini_set( 'max_execution_time', '300' ); // Die after 5 minutes
@@ -95,7 +102,7 @@ if( isset( $args->args ) )
 				            $options->Seconds = 300; // Five minutes since last activity
 				            $message = new stdClass();
 				            $message->Title = 'You got a message from ' . $User->FullName;
-				            $message->Message = $out->message;
+				            $message->Body = $out->message;
 				            $User->WebPush( $targetUser, $options, $message );
 			            }
 		            }

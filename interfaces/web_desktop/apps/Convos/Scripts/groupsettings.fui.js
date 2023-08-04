@@ -65,7 +65,7 @@ class FUIGroupsettings extends FUIInvitedialog
 		let f = new File( 'Progdir:Markup/groupsettings.html' );
 		f.replacements = {
 			'room-name': this.options.channelName,
-			'room-description': this.options.description
+			'room-description': this.options.description != undefined ? this.options.description : ''
 		};
 		f.i18n();
 		f.onLoad = function( data )

@@ -1,0 +1,31 @@
+body[sharedapp=sharedapp] .TitleBar
+{
+	display: none;
+}
+html > body[sharedapp=sharedapp] #DoorsScreen > .ScreenContent
+{
+	top: 0 !important;
+	height: 100% !important;
+}
+body[sharedapp=sharedapp] .ViewContainer,
+body[sharedapp=sharedapp] .View
+{
+	top: 0;
+	left: 0;
+	min-width: 100%;
+	min-height: 100%;
+	max-width: 100%;
+	max-height: 100%;
+	border-radius: 0;
+}
+body[sharedapp=sharedapp] .View > .Title
+{
+	display: none;
+}
+
+body[sharedapp=sharedapp] .View > .Content,
+html body:not([mobile])[sharedapp=sharedapp] .View > .Content
+{
+	top: 0;
+	border-radius: 0;
+}

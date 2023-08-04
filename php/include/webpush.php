@@ -37,7 +37,7 @@ if( isset( $setting ) )
 	
 	$defOpts = [
 		'TTL' => 300,
-		'urgency' => 'normal',
+		'urgency' => 'high',
 		'topic' => 'message',
 		'batchSize' => 200
 	];
@@ -45,16 +45,27 @@ if( isset( $setting ) )
 	$webPush = new WebPush( $auth, $defOpts );
 	$webPush->setReuseVAPIDHeaders( true );
 	
+	$dataObject = json_decode( $setting->Data );
+	
 	$subscription = Subscription::create( [
-        'endpoint' => $setting->Data,
-        'contentEncoding' => 'aes128gcm'
+        'endpoint' => $dataObject->endpoint,
+        'contentEncoding' => 'aes128gcm',
+        'keys' => [
+        	'p256dh' => $dataObject->keys->p256dh,
+		    'auth' => $dataObject->keys->auth
+	    ]
     ] );
 	
+	$cf = isset( $GLOBALS[ 'configfilesettings' ] ) ? $GLOBALS[ 'configfilesettings' ] : false;
+	if( !$cf ) die( 'fail<!--separate-->major failure' );
+	$ssl = isset( $cf[ 'Core' ][ 'SSLEnable' ] ) && $cf[ 'Core' ][ 'SSLEnable' ] ? true : false;
+	$host = ( $ssl ? 'https://' : 'http://' ) . $cf[ 'FriendCore' ][ 'fchost' ];
+	
 	$msg = new stdClass();
-	$msg->message = new stdClass();
-	$msg->message->notification = new stdClass();
-	$msg->message->notification->title = 'Hello from Friend OS';
-	$msg->message->notification->body = 'This is just a text to test the notifications...';
+	$msg->url = $host . '/webclient/index.html';
+	$msg->title = $message->Title;
+	$msg->body = $message->Body;
+	$msg->icon = $host . '/graphics/system/friendos192.png';
 	$payload = json_encode( $msg );
 	
 	if( $result = $webPush->sendOneNotification( $subscription, $payload ) )
@@ -64,8 +75,12 @@ if( isset( $setting ) )
 			//$uri = $request->getUri();
 			if( $result->isSuccess() )
 			{
-				$Logger->log( 'The message was sent successfully: ' . $payload );
+				$Logger->log( '[webpush] The message was sent successfully' );
 				return true;
+			}
+			else
+			{
+				$Logger->log( '[webpush] Failed to send message' );
 			}
 		}
 	}

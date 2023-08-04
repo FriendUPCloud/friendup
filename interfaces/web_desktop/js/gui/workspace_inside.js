@@ -2402,7 +2402,21 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			m.onExecuted = function( e, d )
 			{
 			    if( userSettingsFetched ) 
+			    {
+			        callback();
 			        return;
+			    }
+			    
+			    Friend.User.settingsHash = MD5( e + d );
+			    if( Friend.User.prevSettingsHash && Friend.User.settingsHash == Friend.User.prevSettingsHash )
+			    {
+			    	userSettingsFetched = true;
+			    	Workspace.userSettingsLoaded = true;
+			    	ScreenOverlay.hide();
+			    	callback();
+			    	return;
+			    }
+			    Friend.User.prevSettingsHash = Friend.User.settingsHash;
 		        
 				userSettingsFetched = true;
 				
@@ -2411,7 +2425,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					// Make sure we have loaded
 					if( !Workspace.dashboard && Workspace.mode != 'vr' && ( Workspace.screen && Workspace.screen.contentDiv ) )
 					{
-						if( Workspace.screen.contentDiv.offsetHeight < 100 )
+						if( Workspace.screen.contentDiv.offsetHeight < 50 )
 						{
 							return setTimeout( function(){ initFriendWorkspace(); }, 50 );
 						}
@@ -2561,12 +2575,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							Workspace.workspacemode = 'developer';
 						}
 					
-						// Disable console log now..
-						if( Workspace.workspacemode == 'normal' || Workspace.workspacemode == 'gamified' )
-						{
-							//console.log = function(){};
-						}
-						
 						if( dat.workspace_labels )
 						{
 							globalConfig.workspace_labels = dat.workspace_labels;
@@ -2762,13 +2770,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		{
 			if( !userSettingsFetched )
 			{
-				console.log( 'Failed to get user settings 1' );
 				getUserSettings();
 				setTimeout( function()
 				{
 					if( !userSettingsFetched )
 					{
-						console.log( 'Failed to get user settings!' );
+						console.log( 'Test2: Failed to get user settings!' );
 					}
 				}, 450 );
 			}
@@ -3923,10 +3930,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	refreshTheme: function( themeName, update, themeConfig, initpass )
 	{
 		let self = this;
-		
 		// Don't reupdate when it's already loaded
 		if( Workspace.theme && Workspace.theme == themeName ) 
 		{
+			document.body.classList.remove( 'ThemeRefreshing' );
+			Workspace.setLoading( false );
 			return;
 		}
 		
@@ -3938,6 +3946,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		if( this.themeRefreshed && !update )
 		{
 			document.body.classList.remove( 'ThemeRefreshing' );
+			Workspace.setLoading( false );
 			this.refreshThemeBlock = false;
 			return;
 		}
@@ -3994,7 +4003,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		        }
 		        catch( e )
 		        {
-		            console.log( 'Retrying, as we cannot read json from rdat: ', themeName, rdat );
 		            rdat = false;
 		            if( num == 0 )
     		            return initThemeSettingsJson( num + 1 );
@@ -4068,6 +4076,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			    }
 			    
 			    Workspace.themeRefreshed = true;
+			    
 			    Workspace.refreshUserSettings( function() 
 			    {
 				    console.log( '[Login phase] Done refreshing user settings.' );
@@ -11899,7 +11908,7 @@ function loadApplicationBasics( callback )
 	}
 	_applicationBasicsLoading = setTimeout( function()
 	{
-		_applicationBasicsLoading = null;
+		_applicationBasicsLoading = false;
 		
 		let themeName = Workspace.theme ? Workspace.theme : 'friendup13';
 		
@@ -11996,7 +12005,6 @@ function loadApplicationBasics( callback )
 		let j_ = new File( js );
 		j_.onLoad = function( data )
 		{
-			//console.log( 'BASICS LOADED: ' + data );
 			_applicationBasics.js = data;
 			loadSteps++;
 		}
@@ -12010,7 +12018,9 @@ function loadApplicationBasics( callback )
 				//console.log( '------------- Basics loaded! ------------' );
 				clearInterval( intr );
 				if( callback )
+				{
 					callback();
+				}
 			}
 			else
 			{
