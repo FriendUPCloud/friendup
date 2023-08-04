@@ -429,6 +429,8 @@ class FUIChatlog extends FUIElement
     {
         let self = this;
         
+        let scrolled = this.checkScrolled();
+        
         for( let a = messageList.length - 1; a >= 0; a-- )
         {
             let m = messageList[a];
@@ -629,7 +631,8 @@ class FUIChatlog extends FUIElement
                 }
             }
         }
-        this.toBottom();
+        if( !scrolled )
+	        this.toBottom();
         this.refreshDom();
     }
     setTopic( topic, type = false )
@@ -650,16 +653,22 @@ class FUIChatlog extends FUIElement
 			this.domTopic.innerHTML = topic;
 		}
     }
-    toBottom( way )
+    // Did we scroll?
+    checkScrolled = function()
     {
-        let self = this;
+    	return  this.domMessages.scrollTop + 50 < this.domMessages.scrollHeight - this.domMessages.offsetHeight;
+    }
+    // Scroll to the bottom of messages
+    toBottom( way = false )
+    {
+    	let self = this;
         if( way == 'smooth' )
         {
-            this.domMessages.scrollTop = this.domMessages.lastChild.offsetHeight + this.domMessages.lastChild.offsetTop;
+            this.domMessages.scrollTop = this.domMessages.scrollHeight;
             return;
         }
         this.domMessages.style.scrollBehavior = 'inherit';
-        this.domMessages.scrollTop = this.domMessages.lastChild.offsetHeight + this.domMessages.lastChild.offsetTop;
+        this.domMessages.scrollTop = this.domMessages.scrollHeight;
         setTimeout( function(){ self.domMessages.style.scrollBehavior = 'smooth'; }, 5 );
     }
     queueMessage( string )
@@ -671,6 +680,8 @@ class FUIChatlog extends FUIElement
         {
             return setTimeout( function(){ self.queueMessage( string ); }, 250 );
         }
+        
+        let scrolled = this.checkScrolled();
         
     	let dom = document.createElement( 'div' );
     	dom.className = 'Message Own';
@@ -693,7 +704,8 @@ class FUIChatlog extends FUIElement
     	        method: 'messages', 
     	        roomType: this.options.type ? this.options.type : '', 
     	        cid: this.options.cid ? this.options.cid : '',
-    	        lastId: this.lastId
+    	        lastId: this.lastId,
+    	        force: true
 	        } );
     	}
     	
@@ -706,7 +718,8 @@ class FUIChatlog extends FUIElement
     		dom.classList.add( 'Showing' );
 		}, 2 );
 		
-		this.toBottom( 'smooth' );
+		if( !scrolled )
+			this.toBottom( 'smooth' );
     }
     refreshMessages()
     {

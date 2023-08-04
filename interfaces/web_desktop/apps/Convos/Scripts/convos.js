@@ -346,6 +346,10 @@ Application.holdConnection = function( flags )
 				            	return;
 				            mess.addMessages( js.messages );
 				            if( mess.clearQueue ) mess.clearQueue();
+				            if( flags.force )
+				            {
+						        mess.toBottom();
+				            }
 			            }
 		            }
 		        }

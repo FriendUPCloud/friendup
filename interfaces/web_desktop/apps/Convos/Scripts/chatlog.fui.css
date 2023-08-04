@@ -263,22 +263,42 @@ body:not([mobile]) .FUIChatlog .Input .MobileMen:hover,
 	opacity: 0;
 	transition: opacity 0.15s;
 	position: relative;
+	overflow: hidden;
+}
+
+.FUIChatlog .Message:after
+{
+	content: " ";
+	position: absolute;
+	z-index: 100;
+	width: 100%;
+	height: 100%;
+	top: 0;
+	left: 0;
+	pointer-events: none;
+	background-color: rgba(0,0,0,0);
+	transition: background-color 0.3s;
+}
+.FUIChatlog .Message:hover:after
+{
+	background-color: rgba(0,0,0,0.05);
 }
 
 .FUIChatlog .Message > .Toolbar
 {
 	position: absolute;
 	z-index: 5;
-	right: 15px;
-	top: 15px;
+	right: 16px;
+	top: 1px;
 	background-color: var(--fui-button-background);
     color: var(--fui-button-color);
-	padding: 5px;
+	padding: 1px;
 	border-radius: 15px;
 	display: flex;
 	opacity: 0;
 	pointer-events: none;
 	transition: opacity 0.2s;
+	overflow: hidden;
 }
 
 .FUIChatlog .Message:hover > .Toolbar
@@ -293,6 +313,12 @@ body:not([mobile]) .FUIChatlog .Input .MobileMen:hover,
 	cursor: pointer;
 	min-width: 16px;
 	text-align: center;
+	border-radius: 100%;
+}
+.FUIChatlog .Message > .Toolbar > .ToolbarButton:hover
+{
+	color: var(--fui-button-background);
+    background-color: var(--fui-button-color);
 }
 
 .FUIChatlog .Message > .Toolbar > .ToolbarButton.Delete:before
