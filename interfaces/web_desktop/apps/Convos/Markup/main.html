@@ -5,8 +5,14 @@
         </row>
     </rows>
 </group>
+<fui-fragment uniqueid="chat-message-toolbar">
+	<div class="Toolbar"><div class="ToolbarButton Delete"></div></div>
+</fui-fragment>
+<fui-fragment uniqueid="chat-message-admin">
+	<div class="Toolbar"><div class="ToolbarButton Moderate"></div></div>
+</fui-fragment>
 <fui-fragment uniqueid="chat-message-head">
-    <div class="Toolbar"><div class="ToolbarButton Delete"></div></div>
+    {toolbar}
     <div class="Avatar"><span style="background-image: url({avatar-image})"></span></div>
     <p class="Nickname">
         <span class="Name">{fullname}</label>

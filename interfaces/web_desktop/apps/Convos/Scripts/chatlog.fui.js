@@ -504,14 +504,21 @@ class FUIChatlog extends FUIElement
             
             let mess = md5( m.Message );
             d.setAttribute( 'message-hash', mess );
-             
+            
+            // Get toolbar to handle own messages
+            let toolbar = FUI.getFragment( 'chat-message-toolbar' );
+            //let toolbarAdmin = FUI.getFragment( 'chat-message-admin' ); // <- todo
+            if( !m.Own )
+            	toolbar = '';
+            
             let replacements = {
                 message: self.replaceUrls( self.replaceEmojis( text ) ),
                 i18n_date: i18n( 'i18n_date' ),
                 i18n_fullname: i18n( 'i18n_fullname' ),
                 date: self.parseDate( m.Date ),
                 signature: '',
-                fullname: m.Own ? i18n( 'i18n_you' ) : m.Name
+                fullname: m.Own ? i18n( 'i18n_you' ) : m.Name,
+                toolbar: toolbar
             };
             d.innerHTML = FUI.getFragment( 'chat-message-head', replacements );
             
