@@ -838,6 +838,19 @@ if( isset( $args->args ) )
 	    	}
 	    	die( 'fail<!--separate-->{"message":"Unknown contact.","response":-1}' );
         }
+        else if( $args->args->method == 'deletemessage' )
+        {
+        	$m = new dbIO( 'Message' );
+        	if( $m->Load( $args->args->mid ) )
+        	{
+		    	if( $m->UniqueUserID == $User->UniqueID )
+		    	{
+		    		$m->delete();
+		    		die( 'ok<!--separate-->{"message":"Message deleted.","response":1}' );
+		    	}
+	    	}
+        	die( 'fail<!--separate-->{"message":"Message count not be deleted.","response":-1}' );
+        }
         else if( $args->args->method == 'contacts' )
         {
             $filterA = $filterB = $groupSpec = $groupContacts = '';

@@ -522,6 +522,34 @@ class FUIChatlog extends FUIElement
             };
             d.innerHTML = FUI.getFragment( 'chat-message-head', replacements );
             
+            ( function( message, par )
+            {
+		        let td = par.querySelector( '.Delete' );
+		        td.onclick = function()
+		        {
+		        	Confirm( i18n( 'i18n_deleting_message' ), i18n( 'i18n_deleting_message_text' ), function( response )
+		        	{
+		        		if( response.data == true )
+		        		{
+		        			let m = new Module( 'system' );
+		        			m.onExecuted = function( me, md )
+		        			{
+		        				if( me == 'ok' )
+		        				{
+				    				d.parentNode.removeChild( d );
+				    				Application.holdConnection( { 
+										method: 'messages', 
+										roomType: self.options.type ? self.options.type : '', 
+										cid: self.options.cid ? self.options.cid : ''
+									} );
+								}
+		        			}
+		        			m.execute( 'convos', { method: 'deletemessage', mid: message.ID } );
+		        		}
+		        	} );
+		        }
+	        } )( m, d );
+            
             let timestamp = Math.floor( ( new Date( m.Date ) ).getTime() / 1000 );
             if( m.Own ) d.classList.add( 'Own' );
             

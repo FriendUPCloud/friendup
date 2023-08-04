@@ -62,3 +62,7 @@ i18n_sharing_screen                    : You are sharing your screen.
 
 i18n_video_invite                      : Video invite
 i18n_video_invite_desc                 : is inviting you to a video session.
+
+i18n_deleting_message                  : Delete message?
+i18n_deleting_message_text             : This will permanently remove this message.
+
