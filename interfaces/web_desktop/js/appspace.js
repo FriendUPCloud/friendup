@@ -14,15 +14,14 @@
 * other places. This is the app space version of workspace!                    *
 *                                                                              *
 *******************************************************************************/
-var _protocol = document.location.href.split( '://' )[0];
+const _protocol = document.location.href.split( '://' )[0];
 
-/* just make the needed functions available without enven doing stuff in deepestfield */
+/* dummy structure */
 DeepestField = {
 	drawTasks: function() {},
 	networkActivity: { timeToFinish: [] },
 	addConnection: function(){},
 	delConnection: function(){}
-
 };
 
 Workspace = {
@@ -37,8 +36,8 @@ Workspace = {
 		document.body.classList.remove( 'WorkspaceMenuOpen' );
 		if( ge( 'WorkspaceMenu' ) )
 		{
-			var eles = ge( 'WorkspaceMenu' ).getElementsByTagName( '*' );
-			for( var z = 0; z < eles.length; z++ )
+			let eles = ge( 'WorkspaceMenu' ).getElementsByTagName( '*' );
+			for( let z = 0; z < eles.length; z++ )
 			{
 				if( eles[z].classList && eles[z].classList.contains( 'Open' ) )
 					eles[z].classList.remove( 'Open' );
@@ -59,8 +58,8 @@ Workspace = {
 		this.mode = mode;
 
 		// Interpret directive
-		var urlVars = {};
-		var url = document.location.href;
+		let urlVars = {};
+		let url = document.location.href;
 		if( url.indexOf( '?' ) > 0 )
 		{
 			url = url.split( '?' )[1];
@@ -73,16 +72,16 @@ Workspace = {
 				url = [ url ];
 			}
 			
-			for( var a = 0; a < url.length; a++ )
+			for( let a = 0; a < url.length; a++ )
 			{
-				var pair = url[a].split( '=' );
+				let pair = url[a].split( '=' );
 				urlVars[pair[0]] = decodeURIComponent( pair[1] );
 				if( urlVars[pair[0]].indexOf( ':' ) > 0 )
 				{
 					// JSON?
 					try
 					{
-						var o = JSON.parse( urlVars[pair[0]] );
+						let o = JSON.parse( urlVars[pair[0]] );
 						if( o ) urlVars[pair[0]] = o;
 					}
 					// No, a path maybe
@@ -94,18 +93,18 @@ Workspace = {
 			}
 		}
 		this.conf = urlVars;
-		var t = this;
-		var p = 'HASHED' + Sha256.hash( 'apipass' );
-		var j = new cAjax();
+		let t = this;
+		let p = 'HASHED' + Sha256.hash( 'apipass' );
+		let j = new cAjax();
 
-		var si = GetUrlVar( 'sessionid' );
-		var au = GetUrlVar( 'authid' );
-		var th = GetUrlVar( 'theme' );
+		let si = GetUrlVar( 'sessionid' );
+		let au = GetUrlVar( 'authid' );
+		let th = GetUrlVar( 'theme' );
 		if( th )
 			this.themeOverride = th;
 		
-		var authType = si ? 'sessionId' : 'authId';
-		var authValue = si ? si : au;
+		let authType = si ? 'sessionId' : 'authId';
+		let authValue = si ? si : au;
 
 		if( !au && !si )
 		{
@@ -122,9 +121,9 @@ Workspace = {
 		}
 		j.onload = function( r, d )
 		{
-			var error = false;
+			let error = false;
 			
-			var o = false;
+			let o = false;
 			if( r )
 			{
 				try
@@ -211,8 +210,8 @@ Workspace = {
 						Workspace.pingAccount();
 
 						// Setup default Doors screen
-						var wbscreen = new Screen( {
-								title: 'Friend Workspace v1.3',
+						let wbscreen = new Screen( {
+								title: GetUrlVar( 'app' ) ? GetUrlVar( 'app' ) : 'Friend OS',
 								id:	'DoorsScreen',
 								extra: Workspace.fullName,
 								taskbar: false
@@ -222,7 +221,7 @@ Workspace = {
 						// Touch start show menu!
 						wbscreen.contentDiv.addEventListener( 'click', function( e )
 						{
-							var t = e.target ? e.target : e.srcElement;
+							let t = e.target ? e.target : e.srcElement;
 							if( t == wbscreen.contentDiv )
 							{
 								// You need to click two times! And within 500 ms
@@ -245,7 +244,7 @@ Workspace = {
 
 						document.body.style.visibility = 'visible';
 						// Loading notice
-						var loading = document.createElement( 'div' );
+						let loading = document.createElement( 'div' );
 						loading.className = 'LoadingMessage';
 						if( typeof( t.conf.app ) == 'undefined' )
 							loading.innerHTML = '<p>Nothing to load...</p>';
@@ -284,13 +283,13 @@ Workspace = {
 										if( !ge( 'Thanks' ) )
 										{
 											// Wait till we have windows!
-											var count = 0;
-											for( var a in window.movableWindows ){ count++; }
+											let count = 0;
+											for( let a in window.movableWindows ){ count++; }
 											if( count <= 0 )
 												return setTimeout( showThankyou, 500 );
 										
 											// Open the thank you template
-											var jo = new cAjax();
+											let jo = new cAjax();
 											let templPath = '/webclient/templates/thankyou.html';
 											if ( -1 != document.location.host.indexOf( 'jeanie' ))
 												templPath = '/webclient/templates/thankyoujeanie.html';
@@ -299,11 +298,11 @@ Workspace = {
 											jo.onload = function()
 											{
 												if( ge( 'Thanks' ) ) return;
-												var ele = document.createElement( 'div' );
+												let ele = document.createElement( 'div' );
 												ele.id = 'Thanks';
 												ele.className = 'ThankYou Padding';
 												ele.innerHTML = this.responseText();
-												var s = GeByClass( 'ScreenContent' );
+												let s = GeByClass( 'ScreenContent' );
 												if( s )
 												{
 													if( s.length ) s = s[0];
@@ -324,18 +323,18 @@ Workspace = {
 				}
 			}
 			if( !error ) error = 'Friend OS can not interpret application call.';
-			var d = document.createElement( 'div' );
-			d.className = 'DialogError';
-			d.innerHTML = '<p>' + error + '</p>';
-			document.body.appendChild( d );
+			let u = document.createElement( 'div' );
+			u.className = 'DialogError';
+			u.innerHTML = '<p>' + error + '</p>';
+			document.body.appendChild( u );
 			document.body.classList.add( 'Error' );
 		}
 		j.send();
 
 		// Add event listeners
-		for( var a = 0; a < this.runLevels.length; a++ )
+		for( let a = 0; a < this.runLevels.length; a++ )
 		{
-			var listener = this.runLevels[a].listener;
+			let listener = this.runLevels[a].listener;
 
 			if ( !listener )
 				continue;
@@ -360,8 +359,8 @@ Workspace = {
 	// Fetch mountlist from database
 	getMountlist: function( callback )
 	{
-		var t = this;
-		var m = new Module( 'system' );
+		let t = this;
+		let m = new Module( 'system' );
 		m.onExecuted = function( e, dat )
 		{
 			t.icons = [];
@@ -369,16 +368,16 @@ Workspace = {
 			// Check dormant
 			if( DormantMaster )
 			{
-				var doors = DormantMaster.getDoors();
-				var found = [];
-				for( var a = 0; a < doors.length; a++ )
+				let doors = DormantMaster.getDoors();
+				let found = [];
+				for( let a = 0; a < doors.length; a++ )
 				{
 					// Fixie
 					if( doors[a].Title && !doors[a].Volume )
 						doors[a].Volume = doors[a].Title;
 					doors[a].Filesize = '';
-					var isfound = false;
-					for( var b = 0; b < found.length; b++ )
+					let isfound = false;
+					for( let b = 0; b < found.length; b++ )
 						if( found[b].Title == doors[a].Title )
 							isfound = true;
 					if( !isfound )
@@ -390,21 +389,21 @@ Workspace = {
 			}
 
 			// Network devices
-			var rows = friendUP.tool.parse( dat );
+			let rows = friendUP.tool.parse( dat );
 			if ( rows && rows.length )
 			{
-				for ( var a = 0; a < rows.length; a++ )
+				for ( let a = 0; a < rows.length; a++ )
 				{
-					var r = rows[a];
+					let r = rows[a];
 					if( r.Mounted != '1' )
 					{
 						continue;
 					}
-					var o = false;
+					let o = false;
 
-					var d;
+					let d;
 
-					var typ = r.Type.substr(0,1).toUpperCase()+r.Type.substr(1,r.Type.length);
+					let typ = r.Type.substr(0,1).toUpperCase()+r.Type.substr(1,r.Type.length);
 
 					d = ( new Door() ).get( r.Name + ':' );
 					d.permissions[0] = 'r';
@@ -412,7 +411,7 @@ Workspace = {
 					d.permissions[2] = 'e';
 					d.permissions[3] = 'd';
 
-					var o = {
+					let i = {
 						Title: r.Name.split(':').join('') + ':',
 						Volume: r.Name.split(':').join('') + ':',
 						Path: r.Name.split(':').join('') + ':',
@@ -424,7 +423,7 @@ Workspace = {
 					};
 
 					// Force mounnt
-					var f = new FriendLibrary( 'system.library' );
+					let f = new FriendLibrary( 'system.library' );
 					f.addVar( 'type', r.Type );
 					f.addVar( 'devname', r.Name.split(':').join('') );
 					if( r.Type != 'Local' )
@@ -432,11 +431,11 @@ Workspace = {
 					f.execute( 'device/mount' );
 
 					// We need volume information
-					d.Volume = o.Volume;
+					d.Volume = i.Volume;
 					d.Type = typ;
 
 					// Add to list
-					t.icons.push( o );
+					t.icons.push( i );
 				}
 			}
 
@@ -450,14 +449,14 @@ Workspace = {
 	// Just check if the system is being used or has expired
 	pingAccount: function()
 	{
-		var realApps = 0;
-		for( var a = 0; a < Workspace.applications.length; a++ )
+		let realApps = 0;
+		for( let a = 0; a < Workspace.applications.length; a++ )
 		{
 			realApps++;
 		}
 		if( realApps > 0 )
 		{
-			var m = new Module( 'system' );
+			let m = new Module( 'system' );
 			m.onExecuted = function( e, d )
 			{
 				if( e != 'ok' )
