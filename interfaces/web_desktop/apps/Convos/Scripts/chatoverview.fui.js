@@ -126,8 +126,6 @@ class FUIChatoverview extends FUIElement
         this.domChannels = this.domElement.querySelector( '.Channels' );
         this.domChatlist = this.domElement.querySelector( '.Chatlist' );
         
-        this.initHome();
-        
         // Set stuff on this.domElement.innerHTML
         this.refreshDom();
     }
@@ -336,9 +334,9 @@ class FUIChatoverview extends FUIElement
     	
     	// Default
     	self.domChannels.innerHTML = '\
+    	<div class="Channel DM" uniqueid="dm"></div>\
     	<div class="Channel Home" uniqueid="home"></div>\
-    	<div class="Channel Jeanie" uniqueid="jeanie"></div>\
-    	<div class="Channel DM" uniqueid="dm"></div>';
+    	<div class="Channel Jeanie" uniqueid="jeanie"></div>';
     	
     	let m = new Module( 'system' );
     	m.onExecuted = function( me, md )
@@ -418,7 +416,7 @@ class FUIChatoverview extends FUIElement
 				{
 					if( prop == 'home' )
 					{
-						ele.innerHTML = '<i class="fa fa-home"></i>';
+						ele.innerHTML = '<i class="fa fa-search"></i>';
 						ele.onclick = function()
 						{
 							self.initHome();
@@ -434,7 +432,7 @@ class FUIChatoverview extends FUIElement
 					}
 					else if( prop == 'dm' )
 					{
-						ele.style.backgroundImage = 'url(' + getImageUrl( 'Progdir:Assets/dm.png' ) + ')';
+						ele.style.backgroundImage = 'url(' + getImageUrl( 'Progdir:Assets/chat.svg' ) + ')';
 						ele.onclick = function()
 						{
 							self.setActiveChannel( prop, this );
@@ -463,6 +461,11 @@ class FUIChatoverview extends FUIElement
 				} )( chans[ a ], uniqueid, groupId, groupName );
 			}
 			self.handleResize();
+			if( !self.initialized )
+			{
+				self.initialized = true;
+				self.domElement.querySelector( '.DM' ).click();
+			}
     	}
     	m.execute( 'convos', { 'method': 'getrooms' } );
     }
