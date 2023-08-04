@@ -16,6 +16,8 @@ $s = new stdClass();
 // The first login test!
 // NB: This is run on every user login
 include( 'modules/system/include/firstlogin.php' );
+// This one is there for the first user to be upgraded to recent settings
+include( 'modules/system/include/upgradesettings.php' );
 
 if( isset( $args->args->authid ) && !isset( $args->authid ) )
 {

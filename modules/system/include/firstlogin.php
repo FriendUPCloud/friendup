@@ -47,8 +47,6 @@ if( !Trim( $User->ServerToken ) )
 	$SqlDatabase->query( 'UPDATE FUser SET ServerToken="' . $token . '" WHERE ID=\'' . $User->ID . '\'' );
 }
 
-$debug = ( isset( $debug ) ? $debug : [] );
-
 $userid = ( isset( $args->args->userid ) ? $args->args->userid : $User->ID );
 
 // Check if the user is in quarantine
@@ -96,8 +94,6 @@ if( $wgroups = $SqlDatabase->FetchObjects( '
 			$postLogin->FriendUser = $User->Name;
 			require( 'cfg/postlogin_' . $wkey . '.php' );
 		}
-		
-		$debug[] = $cr->Key;
 	}
 }
 
@@ -135,9 +131,5 @@ if( !$cr->Load() || ( isset( $args->args->force ) && $args->args->force ) )
 	{
 		$cr->Save();
 	}
-}
-else
-{
-	$debug[] = $cr->Key;
 }
 

@@ -1161,6 +1161,7 @@ Workspace = {
 						let m = new Module( 'system' );
 						m.onExecuted = function( e, d )
 						{
+							console.log( 'Here we have user settings: ', e, d );
 							let m = new Module( 'system' );
 							m.onExecuted = function( ee, dd )
 							{
@@ -1185,7 +1186,7 @@ Workspace = {
 							m.execute( 'checkeula' );
 							
 							// When eula is displayed or not
-							function afterEula( e )
+							function afterEula( ev )
 							{
 								// Invites
 								if( json.inviteHash )
@@ -1199,7 +1200,7 @@ Workspace = {
 									inv.execute( 'verifyinvite', { hash: json.inviteHash } );
 								}
 								
-								if( e == 'ok' )
+								if( ev == 'ok' )
 								{
 									let s = {};
 									try

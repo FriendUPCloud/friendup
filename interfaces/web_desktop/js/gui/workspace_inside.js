@@ -2403,6 +2403,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			{
 			    if( userSettingsFetched ) 
 			    {
+			        callback();
 			        return;
 			    }
 			    
@@ -2412,6 +2413,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			    	userSettingsFetched = true;
 			    	Workspace.userSettingsLoaded = true;
 			    	ScreenOverlay.hide();
+			    	callback();
 			    	return;
 			    }
 			    Friend.User.prevSettingsHash = Friend.User.settingsHash;
@@ -2420,7 +2422,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				
 				function initFriendWorkspace()
 				{	
-					console.log( 'Test3: Initializing workspace!' );
 					// Make sure we have loaded
 					if( !Workspace.dashboard && Workspace.mode != 'vr' && ( Workspace.screen && Workspace.screen.contentDiv ) )
 					{
@@ -2434,7 +2435,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					{
 						Workspace.userSettingsLoaded = true;
 						let dat = JSON.parse( d );
-						console.log( 'Test3: Initializing workspace - lets go!', dat );
 						if( dat.wallpaperdoors && dat.wallpaperdoors.substr )
 						{
 							if( dat.wallpaperdoors.substr(0,5) == 'color' )
