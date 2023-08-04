@@ -28,7 +28,7 @@ i18n_no_new_events                     : No new events.
 i18n_history                           : History
 i18n_invite_to_chatroom                : Invited to chat room
 i18n_invite_to_chatroom_desc           : You were invited to a chat room {groupname} by {username}.
-i18n_news_and_events                   : News and events
+i18n_news_and_events                   : Search and events
 
 i18n_share_image_with_group            : Share image with chat room?
 i18n_share_image_desc                  : If you add the image to the chat room, everyone can see it. Do you want that?

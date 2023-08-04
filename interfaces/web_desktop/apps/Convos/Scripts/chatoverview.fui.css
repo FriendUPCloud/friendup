@@ -471,3 +471,12 @@ html body.activated .FUIChatoverview .Channels.Scroll::-webkit-scrollbar-track
 	font-size: 30px;
 }
 
+/* Theme exceptions */
+
+.FUIChatoverview > .Channels > .Channel.Active 
+{
+    border-color: #000000bb;
+    box-shadow: 0px 0px 0px 4px rgb(255 255 255 / 80%);
+}
+
+
