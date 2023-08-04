@@ -2575,12 +2575,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							Workspace.workspacemode = 'developer';
 						}
 					
-						// Disable console log now..
-						if( Workspace.workspacemode == 'normal' || Workspace.workspacemode == 'gamified' )
-						{
-							//console.log = function(){};
-						}
-						
 						if( dat.workspace_labels )
 						{
 							globalConfig.workspace_labels = dat.workspace_labels;
