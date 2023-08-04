@@ -78,14 +78,14 @@ Workspace = {
 		if( this.initialized ) return;
 
 		// Preload some images
-		var imgs = [
+		let imgs = [
 			'/webclient/gfx/system/offline_16px.png',
 			'/themes/friendup13/gfx/busy.png'
 		];
 		this.imgPreload = [];
-		for( var a = 0; a < imgs.length; a++ )
+		for( let a = 0; a < imgs.length; a++ )
 		{
-			var i = new Image();
+			let i = new Image();
 			i.src = imgs[a];
 			this.imgPreload.push( i );
 		}
@@ -508,8 +508,6 @@ Workspace = {
 
 		// Init security subdomains
 		SubSubDomains.initSubSubDomains();
-		
-		// console.log( 'Test2: Done post init.' );
 	},
 	setLoading: function( isLoading )
 	{
@@ -962,16 +960,12 @@ Workspace = {
 	{
 	},
 	initUserWorkspace: function( json, callback, ev )
-	{
-		//console.log( 'Test2: Init user workspace.' );
-		
+	{	
 		let _this = Workspace;
 
 		// Once we are done
 		function SetupWorkspaceData( json, cb )
-		{
-			// console.log( 'Test2: Set it up.', json );
-			
+		{	
 			// Ok, we're in
 			_this.sessionId = json.sessionid ? json.sessionid : null;
 			_this.userId    = json.userid;
@@ -1001,7 +995,6 @@ Workspace = {
 				{
 					document.body.removeChild( ge( 'SessionBlock' ) );
 				}
-				// console.log( 'Test2: Renewing all sessions.' );
 				
 				// We have renewed our session, make sure to set it and run ajax queue
 				Friend.User.RenewAllSessionIds( _this.sessionId );
@@ -1021,30 +1014,11 @@ Workspace = {
 				} );
 			}
 
-			// Make sure we have a public key for this user (depending on login interface)
-			// TODO: See if we actually need this (and it doesn't work properly)
-			/*if( window.friendApp )
-			{
-				var credentials = friendApp.getCredentials();
-				var info = Workspace.generateKeys( credentials.username, credentials.password );
-				var m = new Module( 'system' );
-				m.onExecuted = function( e, d )
-				{
-					// Call back!
-					if( cb ) cb();
-				}
-				m.execute( 'setuserpublickey', { publickey: info.publickey } );
-				return;
-			}*/
-
 			// Call back!
 			if( cb ) cb();
 		}
 
 		// Manipulate screen overlay
-		// (this will only be shown once!)
-		// TODO: Figure out if this is the right behavior in every case
-		//       implementation circumvents relogin issue
 		if( !Workspace.screenOverlayShown )
 		{
 			ScreenOverlay.show();
@@ -1053,7 +1027,6 @@ Workspace = {
 		
 		if( !this.userWorkspaceInitialized )
 		{
-			// console.log( 'Test2: Doing the initialization.' );
 			this.userWorkspaceInitialized = true;
 
 			// Loading remaining scripts
@@ -1113,8 +1086,6 @@ Workspace = {
 			s.onload = function()
 			{
 			    // Start with expanding the workspace object
-				// TODO: If we have sessionid - verify it through ajax.
-				// TODO: This block is only for already initialized workspace
 				if( _this.sessionId && _this.postInitialized )
 				{
 					//console.log( 'This is the session.:', _this.sessionId );
@@ -1124,7 +1095,6 @@ Workspace = {
 
 				if( !json || !json.sessionid ) 
 				{
-					// console.log( 'Test2: Got in sessionid error.', json );
 					return false;
 				}
 
@@ -1190,7 +1160,7 @@ Workspace = {
 						// Check eula
 						let m = new Module( 'system' );
 						m.onExecuted = function( e, d )
-						{	
+						{
 							let m = new Module( 'system' );
 							m.onExecuted = function( ee, dd )
 							{
@@ -1248,10 +1218,12 @@ Workspace = {
 									{
 										_this.refreshTheme( false, false );
 									}
-									//console.log( 'We got a theme: ' + s.Theme );
 									_this.mimeTypes = s.Mimetypes;
 								}
-								else _this.refreshTheme( false, false );
+								else 
+								{
+									_this.refreshTheme( false, false );
+								}
 
 								if( _this.loginPrompt )
 								{

@@ -19,8 +19,6 @@
 *                                                                              *
 *****************************************************************************©*/
 
-$debug = ( isset( $debug ) ? $debug : [] );
-
 $userid = ( isset( $args->args->userid ) ? $args->args->userid : $User->ID );
 
 // 0. Check if mountlist is installed and user have access!
@@ -49,9 +47,7 @@ if( ( !isset( $args->args->exclude ) || isset( $args->args->exclude ) && !in_arr
 	if( $path = findInSearchPaths( 'Mountlist' ) )
 	{
 		if( file_exists( $path . '/Config.conf' ) )
-		{
-			$debug[] = $path;
-			
+		{	
 			$f = file_get_contents( $path . '/Config.conf' );
 			// Path is dynamic!
 			$f = preg_replace( '/\"Path[^,]*?\,/i', '"Path": "' . $path . '/",', $f );
@@ -103,8 +99,6 @@ if( ( !isset( $args->args->exclude ) || isset( $args->args->exclude ) && !in_arr
 	}
 }
 
-if( isset( $q ) ) $debug[] = $q;
-
 // 1. Check dock!
 if( ( !isset( $args->args->exclude ) || isset( $args->args->exclude ) && !in_array( 'dock', $args->args->exclude ) ) 
 && !( $row = $SqlDatabase->FetchObject( $q = 'SELECT * FROM DockItem WHERE UserID=\'' . $userid . '\'' ) ) )
@@ -129,18 +123,12 @@ if( ( !isset( $args->args->exclude ) || isset( $args->args->exclude ) && !in_arr
 		$d->SortOrder = $i++;
 		$d->Parent = 0;
 		$d->Save();
-		
-		$debug[] = $d->Application;
 	}
 }
-
-if( isset( $q ) ) $debug[] = $q;
 
 // 2. Check if we never logged in before..
 if( !( $disk = $SqlDatabase->FetchObject( $q = 'SELECT * FROM Filesystem WHERE UserID=\'' . $userid . '\'' ) ) )
 {
-	$Logger->log( 'Creating home dir' );
-	
 	// 3. Setup a standard disk
 	$o = new dbIO( 'Filesystem' );
 	$o->UserID = $userid;
@@ -153,8 +141,6 @@ if( !( $disk = $SqlDatabase->FetchObject( $q = 'SELECT * FROM Filesystem WHERE U
 	
 	if( $o->Save() )
 	{
-		$debug[] = $o->Name;
-		
 		if( !isset( $args->args->exclude ) || isset( $args->args->exclude ) && !in_array( 'mount', $args->args->exclude ) )
 		{
 			// 3b. Mount the thing
@@ -173,7 +159,6 @@ if( !( $disk = $SqlDatabase->FetchObject( $q = 'SELECT * FROM Filesystem WHERE U
 			curl_close( $c );
 		}
 
-
 		// 4. Wallpaper images directory
 		$f2 = new dbIO( 'FSFolder' );
 		$f2->FilesystemID = $o->ID;
@@ -185,8 +170,6 @@ if( !( $disk = $SqlDatabase->FetchObject( $q = 'SELECT * FROM Filesystem WHERE U
 			$f2->DateModified = $f2->DateCreated;
 			$f2->Save();
 		}
-		
-		$debug[] = $f2->Name;
 		
 		// 5. Some example documents
 		$f = new dbIO( 'FSFolder' );
@@ -200,8 +183,6 @@ if( !( $disk = $SqlDatabase->FetchObject( $q = 'SELECT * FROM Filesystem WHERE U
 			$f->Save();
 		}
 		
-		$debug[] = $f->Name;
-		
 		$fdownloadfolder = new dbIO( 'FSFolder' );
 		$fdownloadfolder->FilesystemID = $o->ID;
 		$fdownloadfolder->UserID = $userid;
@@ -212,21 +193,6 @@ if( !( $disk = $SqlDatabase->FetchObject( $q = 'SELECT * FROM Filesystem WHERE U
 			$fdownloadfolder->DateModified = $f->DateCreated;
 			$fdownloadfolder->Save();
 		}
-		
-		$debug[] = $fdownloadfolder->Name;
-		
-		/*$f1 = new dbIO( 'FSFolder' );
-		$f1->FilesystemID = $o->ID;
-		$f1->UserID = $userid;
-		$f1->Name = 'Code examples';
-		if( !$f1->Load() )
-		{
-			$f1->DateCreated = date( 'Y-m-d H:i:s' );
-			$f1->DateModified = $f1->DateCreated;
-			$f1->Save();
-		}
-		
-		$debug[] = $f1->Name;*/
 		
 		// 6. Copy some wallpapers
 		// TODO: Implement support for "copydefaultwallpapers"
@@ -282,42 +248,7 @@ if( !( $disk = $SqlDatabase->FetchObject( $q = 'SELECT * FROM Filesystem WHERE U
 					$wallpaperstring .= $wallpaperseperator . '"Home:Wallpaper/' . $file . '.jpg"';
 					$wallpaperseperator = ',';
 				}
-			
-				$debug[] = $fl->Filename;
 			}
-
-			// 7. Copy some other files
-			// This is deprecated
-			/*$prefix = "resources/webclient/examples/";
-			$files = array(
-			"ExampleWindow.jsx", "Template.html"
-			);
-
-			foreach( $files as $filen )
-			{
-				list( $file, $ext ) = explode( '.', $filen );
-
-				$fl = new dbIO( 'FSFile' );
-				$fl->Filename = $file . '.' . $ext;
-				$fl->FolderID = $f1->ID;
-				$fl->FilesystemID = $o->ID;
-				$fl->UserID = $userid;
-				if( !$fl->Load() )
-				{
-					$newname = $file;
-					while( file_exists( 'storage/' . $newname . '.' . $ext ) )
-						$newname = $file . rand( 0, 999999 );
-					copy( $prefix . $file . '.' . $ext, 'storage/' . $newname . '.' . $ext );
-
-					$fl->DiskFilename = $newname . '.' . $ext;
-					$fl->Filesize = filesize( $prefix . $file . '.' . $ext );
-					$fl->DateCreated = date( 'Y-m-d H:i:s' );
-					$fl->DateModified = $fl->DateCreated;
-					$fl->Save();
-				}
-			
-				$debug[] = $fl->Filename;
-			}*/
 		}
 
 		// 8. Fill Wallpaper app with settings and set default wallpaper
@@ -331,8 +262,6 @@ if( !( $disk = $SqlDatabase->FetchObject( $q = 'SELECT * FROM Filesystem WHERE U
 			$wp->Save();
 		}
 		
-		$debug[] = $wp->Data;
-		
 		$wp = new dbIO( 'FSetting' );
 		$wp->UserID = $userid;
 		$wp->Type = 'system';
@@ -342,11 +271,7 @@ if( !( $disk = $SqlDatabase->FetchObject( $q = 'SELECT * FROM Filesystem WHERE U
 			$wp->Data = '';
 			$wp->Save();
 		}
-		
-		$debug[] = $wp->Data;
 	}
 }
-
-if( isset( $q ) ) $debug[] = $q;
 
 ?>

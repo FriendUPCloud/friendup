@@ -1909,12 +1909,6 @@ html .View > .Title > div > .Depth:after
 	display: none;
 }
 
-.View.Active > .Title > div > .Depth:hover,
-.View.Active > .Title > div > .Depth
-{
-	background-image: url(/themes/friendup12/gfx/win_depth_active.png);
-}
-
 body[focusmode=clicktofront] .View .Depth
 {
 	display: none;

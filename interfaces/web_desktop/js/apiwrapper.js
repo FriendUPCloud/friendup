@@ -27,11 +27,11 @@ Friend.singleInstanceApps = [];
 Friend.windowBaseString = 'Friend Workspace';
 
 // Some global variables
-var globalConfig = {};
+window.globalConfig = {};
 globalConfig.language = 'en-US'; // Defaults to US english
 
 // Handle callbacks
-var apiWrapperCallbacks = [];
+window.apiWrapperCallbacks = [];
 function addWrapperCallback( f )
 {
 	var uniqueId = ( new Date() ).getTime() + '_' + ( Math.random() * 1000 ) + ( Math.random() * 1000 );
