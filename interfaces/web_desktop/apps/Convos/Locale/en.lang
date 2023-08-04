@@ -33,6 +33,10 @@ i18n_news_and_events                   : Search and events
 i18n_find_things                       : Keywords...
 i18n_find_button                       : Find messages
 
+i18n_create_invite                     : Create invite
+i18n_invite_desc                       : Click create to generate an invite link. Each time you generate a link, the old one is deleted.
+i18n_create                            : Create
+
 i18n_share_image_with_group            : Share image with chat room?
 i18n_share_image_desc                  : If you add the image to the chat room, everyone can see it. Do you want that?
 

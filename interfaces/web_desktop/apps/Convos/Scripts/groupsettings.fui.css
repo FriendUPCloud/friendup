@@ -5,14 +5,31 @@
 	width: 800px;
 }
 
-.FUIInvitedialog.FUIGroupsettings > .Dia .TheForm > .Form
+.FUIInvitedialog.FUIGroupsettings > .Dia .TheForm > .Form 
 {
-	position: absolute;
+    box-sizing: border-box;
+    position: absolute;
     top: 0;
-    left: 15px;
+    padding: 15px;
+    left: 0;
     width: calc(100% - 30px);
     height: 100%;
     overflow: auto;
+}
+
+.Section > .AvatarBox 
+{
+    margin: auto;
+}
+
+.Section > p
+{
+	margin: 0 0 15px 0;
+}
+
+.Section > p.AvatarBox
+{
+	margin: 0 auto 15px auto;
 }
 
 .FUIInvitedialog.FUIGroupsettings > .Dia .TheForm > .Form > .Flow
