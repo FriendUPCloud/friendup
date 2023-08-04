@@ -311,6 +311,47 @@ body:not([mobile=mobile]) .FUIChatoverview > .HoverElement.Showing
 	position: absolute;
 }
 
+.FUIChatoverview .OverviewUpdates
+{
+	container-name: overview;
+	container-type: inline-size;
+}
+
+@container overview (max-width: 400px)
+{
+	.OverviewUpdates .SearchForm 
+	{
+		padding: 15px;
+		width: calc(100% - 40px);
+		display: block;
+		box-sizing: border-box;
+		margin: 0 20px 0 20px;
+	}
+	
+	.OverviewUpdates .SearchForm button
+	{
+		color: rgba(0,0,0,0);
+		font-size: 0;
+		width: 25px;
+		text-overflow: hidden;
+		text-align: center;
+		overflow: hidden;
+	}
+	.OverviewUpdates .SearchForm button, 
+	.OverviewUpdates .SearchForm input
+	{
+		height: 26px;
+		flex: none;
+	}
+	.OverviewUpdates .SearchForm button:before
+	{
+		content: "\f00d";
+		font-family: fontawesome;
+		color: var(--fui-color);
+		margin: 0;
+	}
+}
+
 .FUIChatoverview .OverviewUpdates .Search h2
 {
 	text-align: center;
