@@ -846,6 +846,7 @@ if( isset( $args->args ) )
 		    	if( $m->UniqueUserID == $User->UniqueID )
 		    	{
 		    		$m->delete();
+		    		
 		    		die( 'ok<!--separate-->{"message":"Message deleted.","response":1}' );
 		    	}
 	    	}

@@ -525,6 +525,7 @@ class FUIChatlog extends FUIElement
             ( function( message, par )
             {
 		        let td = par.querySelector( '.Delete' );
+		        if( !td ) return;
 		        td.onclick = function()
 		        {
 		        	Confirm( i18n( 'i18n_deleting_message' ), i18n( 'i18n_deleting_message_text' ), function( response )
@@ -536,7 +537,7 @@ class FUIChatlog extends FUIElement
 		        			{
 		        				if( me == 'ok' )
 		        				{
-				    				d.parentNode.removeChild( d );
+				    				d.parentNode.removeChild( par );
 				    				Application.holdConnection( { 
 										method: 'messages', 
 										roomType: self.options.type ? self.options.type : '', 
@@ -577,7 +578,7 @@ class FUIChatlog extends FUIElement
                 	// Only update content that changed
                 	if( found.getAttribute( 'message-hash' ) != mess )
                 	{
-		            	console.log( 'Replacing because ' + mess + ' != ' + found.getAttribute( 'message-hash' ) );
+		            	//console.log( 'Replacing because ' + mess + ' != ' + found.getAttribute( 'message-hash' ) );
 		                this.messageList[ slot ].replaceChild( d, found );
 	                }
                 }
