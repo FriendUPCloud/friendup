@@ -52,6 +52,7 @@
     overflow: hidden;
     box-shadow: 0px 0px 10px 1px rgba(0,0,0,0.02);
     border-radius: 15px;
+    transition: max-height 0.2s;
 }
 
 .SearchResults .SearchedUser:before 
@@ -78,6 +79,12 @@
 	padding: 15px;
 	margin: 0 0 15px 0;
 	color: black;
+	word-wrap: break-word;
+}
+
+.SearchResults .SearchedUser:hover
+{
+	max-height: max-content;
 }
 
 
