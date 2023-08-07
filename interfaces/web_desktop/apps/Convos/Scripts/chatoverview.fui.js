@@ -271,7 +271,7 @@ class FUIChatoverview extends FUIElement
 					let mess = JSON.parse( d );
 					let lsearchString = searchString ? searchString.toLowerCase() : '';
 					if( !lsearchString ) return;
-					str = lsearchString;
+					let str = lsearchString;
 					if( str.indexOf( ',' ) > 0 )
 					{
 						str = lsearchString.split( ',' );
@@ -292,7 +292,7 @@ class FUIChatoverview extends FUIElement
 						catch( e ){};
 						for( let c = 0; c < str.length; c++ )
 						{
-							if( text && text.toLowerCase().indexOf( str[ c ] ) >= 0 )
+							if( text && text.toLowerCase().indexOf( Trim( str[ c ] ) ) >= 0 )
 							{
 								let m = mess.messages[ a ];
 								m.Message = text;
@@ -316,12 +316,12 @@ class FUIChatoverview extends FUIElement
 			{
 				if( !par.userList ) par.userList = {};
 				let us;
-				if( !par.userList[ data[a].UniqueUserID ] )
+				if( !par.userList[ data[a].FlatUserID ] )
 				{	
 					us = document.createElement( 'div' );
 					us.className = 'SearchedUser';
 					us.setAttribute( 'uuid', data[a].UniqueUserID );
-					par.userList[ data[a].UniqueUserID ] = us;
+					par.userList[ data[a].FlatUserID ] = us;
 					par.appendChild( us );
 					
 					let av = document.createElement( 'div' );
@@ -338,7 +338,7 @@ class FUIChatoverview extends FUIElement
 				}
 				else
 				{
-					us = par.userList[ data[a].UniqueUserID ];
+					us = par.userList[ data[a].FlatUserID ];
 				}
 				let d = document.createElement( 'div' );
 				d.className = 'SearchedMessage';
