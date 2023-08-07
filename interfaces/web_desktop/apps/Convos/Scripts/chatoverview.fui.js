@@ -349,12 +349,42 @@ class FUIChatoverview extends FUIElement
 				{
 					us = par.userList[ data[a].FlatUserID ];
 				}
+				
+				let dat = parseDate( data[ a ].Date );
+				
 				let d = document.createElement( 'div' );
 				d.className = 'SearchedMessage';
-				d.innerHTML = '<p><strong>' + data[a].Name + ':</strong> ' + data[a].Message + '</p>';
+				d.innerHTML = '<p><strong>' + data[a].Name + ':</strong> <span class="Date">' + dat + '</span> ' + data[a].Message + '</p>';
 				us.appendChild( d );
 			}
 		} );
+    }
+    parseDate( instr )
+    {
+        let now = new Date();
+        let test = now.getFullYear() + '-' + StrPad( now.getMonth() + 1, 2, '0' ) + '-' + StrPad( now.getDate(), 2, '0' );
+        let time = new Date( instr );
+        let diff = ( now.getTime() / 1000 ) - ( time.getTime() / 1000 );
+        if( diff < 60 )
+        {
+            if( diff < 1 )
+            {
+                return i18n( 'i18n_just_now' );
+            }
+            return Math.floor( diff ) + ' ' + i18n( 'i18n_seconds_ago' ) + '.';
+        }
+        else if( diff < 3600 )
+        {
+            return Math.floor( diff / 60 ) + ' ' + i18n( 'i18n_minutes_ago' ) + '.';
+        }
+        else if( diff < 86400 )
+        {
+            return Math.floor( diff / 60 / 24 ) + ' ' + i18n( 'i18n_hours_ago' ) + '.';
+        }
+        instr = time.getFullYear() + '-' + StrPad( time.getMonth() + 1, 2, '0' ) + '-' + StrPad( time.getDate(), 2, '0' );
+        if( test == instr.substr( 0, test.length ) )
+            return instr.substr( test.length, instr.length - test.length );
+        return instr;
     }
     getAvatarFromUser( userid, cbk )
     {
