@@ -179,7 +179,7 @@ if( isset( $args->args ) )
             		// Pages start on 0, then 1, 2, 3 etc (multiplied by 50)
             		$page = isset( $args->args->page ) ? intval( $args->args->page, 10 ) : 0;
             		$rows = $SqlDatabase->FetchObjects( $q = ( '
-            			SELECT m.*, owner.ID AS `FlatUserID`, owner.UniqueID FROM Message m, FUser u, FUser owner
+            			SELECT m.*, owner.ID AS `FlatUserID`, owner.UniqueID, owner.FullName AS `Name` FROM Message m, FUser u, FUser owner
             			WHERE
             				(
 		        				m.RoomType = \'dm-user\' AND 

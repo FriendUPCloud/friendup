@@ -290,6 +290,8 @@ class FUIChatoverview extends FUIElement
 						    text = dec;
 						}
 						catch( e ){};
+						if( !text ) continue;
+						text = text.split( /\<.*?\>/i ).join( '' );
 						for( let c = 0; c < str.length; c++ )
 						{
 							if( text && text.toLowerCase().indexOf( Trim( str[ c ] ) ) >= 0 )
@@ -342,7 +344,7 @@ class FUIChatoverview extends FUIElement
 				}
 				let d = document.createElement( 'div' );
 				d.className = 'SearchedMessage';
-				d.innerHTML = '<p>(' + data[a].FlatUserID + ') ' + data[a].Message + '</p>';
+				d.innerHTML = '<p><strong>' + data[a].Name + ':</strong> ' + data[a].Message + '</p>';
 				us.appendChild( d );
 			}
 		} );
