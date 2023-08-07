@@ -650,18 +650,26 @@ span.Emoticon:hover
 
 @media (max-width: 768px)
 {
-    .FUIChatlog .Topic > .ParentLink 
+	.FUIChatlog .Topic > .ParentLink,
+	.FUIChatlog .Topic > .Video,
+	.FUIChatlog .Topic > .Users 
+	{
+		cursor: pointer;
+		position: absolute;
+		top: 4px;
+		height: 25px;
+		border-radius: 13px;
+	}
+   
+    .FUIChatlog .Topic > .ParentLink
     {
 		background: var(--fui-module-background-darker);
-		position: absolute;
 		left: 15px;
-		top: 4px;
 		width: 22px;
 		text-align: center;
-		height: 25px;
 		line-height: 26px;
 		padding: 0px 5px 0 2px;
-		border-radius: 13px;
+		
     }
 
     .FUIChatlog .Topic > .ParentLink::before
@@ -673,18 +681,33 @@ span.Emoticon:hover
         font-weight: 100;
     }
     
+    .FUIChatlog .Topic > .Video
+    {
+        background: var(--fui-module-background-darker);
+		left: calc(100% - 80px);
+		width: 22px;
+		text-align: center;
+		line-height: 26px;
+		padding: 0px 4px 0 4px;
+    }
+    
+    .FUIChatlog .Topic > .Video::before
+    {
+        display: static;
+        margin: 0;
+        content: "\f03d";
+        font-family: fontawesome;
+        font-weight: 100;
+    }
+    
     .FUIChatlog .Topic > .Users 
     {
 		background: var(--fui-module-background-darker);
-		position: absolute;
 		left: calc(100% - 47px);
-		top: 4px;
 		width: 22px;
 		text-align: center;
-		height: 25px;
 		line-height: 22px;
 		padding: 0px 4px 0 4px;
-		border-radius: 13px;
     }
 
     .FUIChatlog .Topic > .Users::before
