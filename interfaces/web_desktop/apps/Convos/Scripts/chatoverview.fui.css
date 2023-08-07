@@ -81,6 +81,8 @@
 	color: black;
 	word-wrap: break-word;
 	cursor: pointer;
+	outline: 2px solid rgba(255,255,255,0.0);
+	transition: outline 0.2s;
 }
 
 .SearchResults .SearchedUser > .SearchedMessage:hover
