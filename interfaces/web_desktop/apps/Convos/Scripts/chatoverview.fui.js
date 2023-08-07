@@ -268,6 +268,7 @@ class FUIChatoverview extends FUIElement
     	let self = this;
     	document.querySelector( '.SearchForm' ).classList.add( 'Searching', 'Loading' );
     	let par = document.querySelector( '.SearchResults' );
+    	par.userList = [];
     	par.innerHTML = '';
     	function fetchNextPage( page = 0, searchString, cbk )
     	{
