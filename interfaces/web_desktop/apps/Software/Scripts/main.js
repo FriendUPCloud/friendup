@@ -30,7 +30,7 @@ function resiz()
 Application.run = function( msg, iface )
 {
 	refreshSoftware();
-	InitTabs( 'DetailTabs' );
+	InitTabs( ge( 'DetailTabs' ) );
 	//showNotice();
 	resiz();
 }
@@ -462,7 +462,7 @@ function refreshSoftware( specificApp, appData, searchKeywords )
 			}
 		}
 		
-		InitTabs( 'SoftwareTabs' );
+		InitTabs( ge( 'SoftwareTabs' ) );
 		
 		// Set scrolltops
 		eles = ge( 'Software' ).getElementsByClassName( 'PageScroll' );
