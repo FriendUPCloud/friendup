@@ -179,7 +179,7 @@ if( isset( $args->args ) )
             		// Pages start on 0, then 1, 2, 3 etc (multiplied by 50)
             		$page = isset( $args->args->page ) ? intval( $args->args->page, 10 ) : 0;
             		$rows = $SqlDatabase->FetchObjects( $q = ( '
-            			SELECT m.*, u.ID AS `FlatUserID` FROM Message m, FUser u
+            			SELECT m.*, u.ID AS `FlatUserID`, u.UniqueID FROM Message m, FUser u
             			WHERE
             				(
 		        				m.RoomType = \'dm-user\' AND 
@@ -295,12 +295,14 @@ if( isset( $args->args ) )
                     $out->ID = $v->ID;
                     if( isset( $v->FlatUserID ) )
                     	$out->FlatUserID = $v->FlatUserID;
-                    $out->Name = $v->Name;
+                	if( isset( $v->Name ) )
+	                    $out->Name = $v->Name;
                     $out->Message = $v->Message;
                     $out->Date = $v->Date;
                     $out->Own = false;
-                    if( $v->UniqueID == $User->UniqueID )
-                        $out->Own = true;
+                    if( isset( $v->UniqueID ) )
+	                    if( $v->UniqueID == $User->UniqueID )
+    	                    $out->Own = true;
                     $outlist[] = $out;
                 }
                 die( 'ok<!--separate-->{"response":1,"messages":' . json_encode( $outlist ) . '}' );
