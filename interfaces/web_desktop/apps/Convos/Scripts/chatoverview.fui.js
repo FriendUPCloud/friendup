@@ -242,22 +242,112 @@ class FUIChatoverview extends FUIElement
 			
 			// Search element
 			let se = self.domChatlist.querySelector( '.SearchField' );
+			let bt = self.domChatlist.querySelector( '.SearchButton' );
 			if( !se ) return;
-			se.onkeydown = function()
+			bt.onclick = function()
 			{
-				self.executeSearch( self.value );
+				self.executeSearch( se.value );
 			}
         }
         f.load();
     }
+    base64ToBytes( base64 )
+    {
+        const binString = atob( base64 );
+        return Uint8Array.from( binString, ( m ) => m.codePointAt( 0 ) );
+    }
     executeSearch( searchString )
     {
-    	let m = new Module( 'system' );
-    	m.onExecuted = function( e, d )
+    	let self = this;
+    	let par = document.querySelector( '.SearchResults' );
+    	par.innerHTML = '';
+    	function fetchNextPage( page = 0, searchString, cbk )
     	{
-    		console.log( 'Search: ', e, d );
-    	}
-    	m.execute( 'convos', { method: 'messages', roomType: '*', searchString: searchString } );
+			let m = new Module( 'system' );
+			m.onExecuted = function( e, d )
+			{
+				if( e == 'ok' )
+				{
+					let mess = JSON.parse( d );
+					let lsearchString = searchString ? searchString.toLowerCase() : '';
+					if( !lsearchString ) return;
+					let out = [];
+					for( let a = 0; a < mess.messages.length; a++ )
+					{
+						let text = mess.messages[a].Message;
+						try
+						{
+						    let dec = new TextDecoder().decode( self.base64ToBytes( text ) );
+						    text = dec;
+						}
+						catch( e ){};
+						if( text && text.toLowerCase().indexOf( lsearchString ) >= 0 )
+						{
+							let m = mess.messages[ a ];
+							m.Message = text;
+							out.push( m );
+						}
+					}
+					if( out.length )
+					{
+						cbk( out );
+					}
+					fetchNextPage( page + 1, searchString, cbk );
+				}
+			}
+			m.execute( 'convos', { method: 'messages', roomType: '*', searchString: searchString, page: page } );
+		}
+		fetchNextPage( 0, searchString, function( data )
+		{
+			if( !data || !data.length ) return;
+			for( let a = 0; a < data.length; a++ )
+			{
+				if( !par.userList ) par.userList = {};
+				let us;
+				if( !par.userList[ data[a].UniqueUserID ] )
+				{	
+					us = document.createElement( 'div' );
+					us.className = 'SearchedUser';
+					us.setAttribute( 'uuid', data[a].UniqueUserID );
+					par.userList[ data[a].UniqueUserID ] = us;
+					par.appendChild( us );
+					
+					let av = document.createElement( 'div' );
+					av.className = 'Avatar';
+					( function( fuid, avo ) {
+						self.getAvatarFromUser( fuid, function( src )
+						{
+							avo.style.backgroundImage = 'url(' + src + ')';
+							avo.classList.add( 'Loaded' );
+						} );
+					} )( data[ a ].FlatUserID, av );
+					console.log( 'Trying: ' + data[ a ].FlatUserID );
+					us.appendChild( av );
+					
+				}
+				else
+				{
+					us = par.userList[ data[a].UniqueUserID ];
+				}
+				let d = document.createElement( 'div' );
+				d.className = 'SearchedMessage';
+				d.innerHTML = '<p>' + data[a].Message + '</p>';
+				us.appendChild( d );
+			}
+		} );
+    }
+    getAvatarFromUser( userid, cbk )
+    {
+        let i = new Image();
+        i.src = '/system.library/module/?module=system&command=getavatar&userid=' + userid + '&width=128&height=128&authid=' + Application.authId;
+        i.onload = function()
+        {
+           	cbk( this.src );
+            document.body.removeChild( i );
+        }
+        i.style.position = 'absolute';
+        i.style.visibility = 'hidden';
+        document.body.appendChild( i );
     }
     renderOverview()
     {

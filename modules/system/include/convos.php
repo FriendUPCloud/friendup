@@ -174,16 +174,38 @@ if( isset( $args->args ) )
             if( isset( $args->args->roomType ) )
             {
             	// Get all messages by paging
-            	if( $args->args->roomType == '*' && isset( $args->args->searchString ) )
+            	if( $args->args->roomType == '*' )
             	{
             		// Pages start on 0, then 1, 2, 3 etc (multiplied by 50)
             		$page = isset( $args->args->page ) ? intval( $args->args->page, 10 ) : 0;
-            		$rows = $SqlDatabase->FetchObjects( '
-            			SELECT m.* FROM Message m, FUser u
+            		$rows = $SqlDatabase->FetchObjects( $q = ( '
+            			SELECT m.*, u.ID AS `FlatUserID` FROM Message m, FUser u
             			WHERE
-            				u.ID = \'' . $User->ID . '\' AND m.UniqueUserID = u.UniqueID
+            				(
+		        				m.RoomType = \'dm-user\' AND 
+				                ( 
+				                    ( 
+				                        m.UniqueUserID = \'' . $User->UniqueID . '\' AND 
+				                        m.UniqueUserID = u.UniqueID
+				                    )
+				                    OR
+				                    (
+				                        m.UniqueUserID != \'' . $User->UniqueID . '\' AND
+				                        u.UniqueID = m.UniqueUserID AND
+				                        m.TargetID = \'' . $User->UniqueID . '\'
+				                    )
+				                )
+			                )
+			                OR
+			                (
+			                	m.RoomType = \'chatroom\' AND 
+				                ( 
+				                    m.UniqueUserID = u.UniqueID AND
+				                    m.TargetID != \'' . $User->UniqueID . '\'
+				                )
+			                )
             			ORDER BY m.ID DESC LIMIT ' . ( $page * 50 ) . ', 50
-            		' );
+            		' ) );
             	}
                 else if( $args->args->roomType == 'jeanie' )
                 {
@@ -271,6 +293,8 @@ if( isset( $args->args ) )
                 {
                     $out = new stdClass();
                     $out->ID = $v->ID;
+                    if( isset( $v->FlatUserID ) )
+                    	$out->FlatUserID = $v->FlatUserID;
                     $out->Name = $v->Name;
                     $out->Message = $v->Message;
                     $out->Date = $v->Date;
@@ -286,7 +310,7 @@ if( isset( $args->args ) )
             {
                 die( 'ok<!--separate-->' . json_encode( $response ) );
             }
-            die( 'fail<!--separate-->{"response":0,"message":"Failed to retrieve messages."}' );
+            die( 'fail<!--separate-->{"response":0,"message":"Failed to retrieve messages."}' . $q );
         }
         // Get the original file OR
         // Get an attachment on ID
