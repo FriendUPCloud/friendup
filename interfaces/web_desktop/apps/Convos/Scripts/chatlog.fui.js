@@ -115,9 +115,7 @@ class FUIChatlog extends FUIElement
             vid.innerHTML = '';
             vid.onclick = function()
             {
-            	let cnts = FUI.getElementByUniqueId( 'contacts' );
-            	if( !cnts ) return;
-            	cnts.setVideoCall();
+            	self.setVideoCall();
             }
             this.domTopic.appendChild( vid );
         }
