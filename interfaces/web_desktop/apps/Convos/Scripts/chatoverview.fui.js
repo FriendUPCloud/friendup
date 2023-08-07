@@ -119,15 +119,93 @@ class FUIChatoverview extends FUIElement
         let data = '\
         <div class="Channels"></div>\
         <div class="Chatlist"></div>\
+        <div class="Events"></div>\
         ';
         
         this.domElement.innerHTML = data;
         
         this.domChannels = this.domElement.querySelector( '.Channels' );
         this.domChatlist = this.domElement.querySelector( '.Chatlist' );
+        this.domEvents   = this.domElement.querySelector( '.Events'   );
         
         // Set stuff on this.domElement.innerHTML
         this.refreshDom();
+        this.getEvents();
+    }
+    getEvents()
+    {
+    	let ev = new Module( 'system' );
+		ev.onExecuted = function( me, md )
+		{
+			if( me == 'ok' )
+			{
+				let j = JSON.parse( md );
+				
+				let cnt = this.domEvents;
+				
+				for( let a = 0; a < j.length; a++ )
+				{
+					let existing = cnt.getElementsByClassName( 'UserEvent' );
+					let found = false;
+					for( let b = 0; b < existing.length; b++ )
+					{
+						if( existing[ b ].getAttribute( 'mid' ) == j[a].ID )
+						{
+							found = true;
+							break;
+						}
+					}
+					if( found ) continue;
+					
+					let mess = i18n( j[a].Message );
+					mess = mess.split( '{username}' ).join( '<strong>' + j[a].User + '</strong>' );
+					mess = mess.split( '{groupname}' ).join( '<strong>#' + ( j[a].Groupname ) + '</strong>' );
+					
+					let d = document.createElement( 'div' );
+					d.className = 'UserEvent';
+					
+					let t = document.createElement( 'div' );
+					t.className = 'Title';
+					t.innerHTML = '<span>' + i18n( j[a].Title ) + '</span><div class="Buttons" iid="' + j[a].ID + '"><div class="Ball fa fa-check"></div><div class="Ball fa fa-times"></div></div>';
+					
+					let m = document.createElement( 'div' );
+					m.className = 'Message';
+					m.innerHTML = mess;
+					
+					d.appendChild( t );
+					d.appendChild( m );
+					
+					( function( bt )
+					{
+						let b = bt.querySelector( '.fa-check' );
+						let c = bt.querySelector( '.fa-times' );
+						b.onclick = function()
+						{
+							let m = new Module( 'system' );
+							m.onExecuted = function( ne, nd ){ self.renderOverview(); self.redrawChannels(); }
+							m.execute( 'convos', { 
+								method: 'accept-invite', 
+								inviteId: this.parentNode.getAttribute( 'iid' ) 
+							} );
+						}
+						c.onclick = function()
+						{
+							let m = new Module( 'system' );
+							m.onExecuted = function( ne, nd ){ self.renderOverview(); self.redrawChannels(); }
+							m.execute( 'convos', { 
+								method: 'reject-invite', 
+								inviteId: this.parentNode.getAttribute( 'iid' ) 
+							} );
+						}
+					} )( t );
+					
+					cnt.appendChild( d );
+				}
+			}
+			self.handleResize();
+			
+		}
+		ev.execute( 'convos', { method: 'getevents' } );
     }
     initHome()
     {
@@ -166,75 +244,6 @@ class FUIChatoverview extends FUIElement
     renderOverview()
     {
     	let self = this;
-    	let ev = new Module( 'system' );
-    	ev.onExecuted = function( me, md )
-    	{
-    		if( me == 'ok' )
-    		{
-    			let j = JSON.parse( md );
-    			
-    			let cnt = self.domChatlist.querySelector( '.Online' ).querySelector( '.Content' );
-    			cnt.innerHTML = '';
-    			
-    			for( let a = 0; a < j.length; a++ )
-    			{
-    				let mess = i18n( j[a].Message );
-    				mess = mess.split( '{username}' ).join( '<strong>' + j[a].User + '</strong>' );
-    				mess = mess.split( '{groupname}' ).join( '<strong>#' + ( j[a].Groupname ) + '</strong>' );
-    				
-    				let d = document.createElement( 'div' );
-    				d.className = 'UserEvent';
-    				
-    				let t = document.createElement( 'div' );
-    				t.className = 'Title';
-    				t.innerHTML = '<span>' + i18n( j[a].Title ) + '</span><div class="Buttons" iid="' + j[a].ID + '"><div class="Ball fa fa-check"></div><div class="Ball fa fa-times"></div></div>';
-    				
-    				let m = document.createElement( 'div' );
-    				m.className = 'Message';
-    				m.innerHTML = mess;
-    				
-    				d.appendChild( t );
-    				d.appendChild( m );
-    				
-    				( function( bt )
-    				{
-    					let b = bt.querySelector( '.fa-check' );
-    					let c = bt.querySelector( '.fa-times' );
-    					b.onclick = function()
-    					{
-    						let m = new Module( 'system' );
-    						m.onExecuted = function( ne, nd ){ self.renderOverview(); self.redrawChannels(); }
-    						m.execute( 'convos', { 
-    							method: 'accept-invite', 
-    							inviteId: this.parentNode.getAttribute( 'iid' ) 
-							} );
-    					}
-    					c.onclick = function()
-    					{
-    						let m = new Module( 'system' );
-    						m.onExecuted = function( ne, nd ){ self.renderOverview(); self.redrawChannels(); }
-    						m.execute( 'convos', { 
-    							method: 'reject-invite', 
-    							inviteId: this.parentNode.getAttribute( 'iid' ) 
-							} );
-    					}
-    				} )( t );
-    				
-    				cnt.appendChild( d );
-    			}
-    		}
-    		else
-    		{
-    			let onl = self.domChatlist.querySelector( '.Online' )
-    			if( onl )
-    			{
-    				onl.querySelector( '.Content' ).innerHTML = '<p>' + i18n( 'i18n_no_new_events' ) + '</p>';
-				}
-    		}
-    		self.handleResize();
-    		
-    	}
-    	ev.execute( 'convos', { method: 'getevents' } );
     }
     grabAttributes( domElement )
     {
