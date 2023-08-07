@@ -239,8 +239,25 @@ class FUIChatoverview extends FUIElement
 					}
 				}
 			}
+			
+			// Search element
+			let se = self.domChatlist.querySelector( '.SearchField' );
+			if( !se ) return;
+			se.onkeydown = function()
+			{
+				self.executeSearch( self.value );
+			}
         }
         f.load();
+    }
+    executeSearch( searchString )
+    {
+    	let m = new Module( 'system' );
+    	m.onExecuted = function( e, d )
+    	{
+    		console.log( 'Search: ', e, d );
+    	}
+    	m.execute( 'convos', { method: 'messages', roomType: '*', searchString: searchString } );
     }
     renderOverview()
     {
