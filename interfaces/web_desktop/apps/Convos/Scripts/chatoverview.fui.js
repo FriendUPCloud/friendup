@@ -271,6 +271,15 @@ class FUIChatoverview extends FUIElement
 					let mess = JSON.parse( d );
 					let lsearchString = searchString ? searchString.toLowerCase() : '';
 					if( !lsearchString ) return;
+					str = lsearchString;
+					if( str.indexOf( ',' > 0 )
+					{
+						str = lsearchString.split( ',' );
+					}
+					else
+					{
+						str = [ str ];
+					}
 					let out = [];
 					for( let a = 0; a < mess.messages.length; a++ )
 					{
@@ -281,11 +290,14 @@ class FUIChatoverview extends FUIElement
 						    text = dec;
 						}
 						catch( e ){};
-						if( text && text.toLowerCase().indexOf( lsearchString ) >= 0 )
+						for( let c = 0; c < str.length; c++ )
 						{
-							let m = mess.messages[ a ];
-							m.Message = text;
-							out.push( m );
+							if( text && text.toLowerCase().indexOf( str[ c ] ) >= 0 )
+							{
+								let m = mess.messages[ a ];
+								m.Message = text;
+								out.push( m );
+							}
 						}
 					}
 					if( out.length )
@@ -321,7 +333,6 @@ class FUIChatoverview extends FUIElement
 							avo.classList.add( 'Loaded' );
 						} );
 					} )( data[ a ].FlatUserID, av );
-					console.log( 'Trying: ' + data[ a ].FlatUserID );
 					us.appendChild( av );
 					
 				}
@@ -331,7 +342,7 @@ class FUIChatoverview extends FUIElement
 				}
 				let d = document.createElement( 'div' );
 				d.className = 'SearchedMessage';
-				d.innerHTML = '<p>' + data[a].Message + '</p>';
+				d.innerHTML = '<p>(' + data[a].FlatUserID + ') ' + data[a].Message + '</p>';
 				us.appendChild( d );
 			}
 		} );
