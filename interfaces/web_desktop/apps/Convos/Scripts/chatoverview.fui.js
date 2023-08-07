@@ -350,7 +350,7 @@ class FUIChatoverview extends FUIElement
 					us = par.userList[ data[a].FlatUserID ];
 				}
 				
-				let dat = parseDate( data[ a ].Date );
+				let dat = self.parseDate( data[ a ].Date );
 				
 				let d = document.createElement( 'div' );
 				d.className = 'SearchedMessage';
