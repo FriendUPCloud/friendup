@@ -12,12 +12,15 @@
 .SearchForm
 {
 	transition: filter,opacity 0.2s,0.2s;
+	filter: none;
+	opacity: 1;
 }
 
 .SearchForm.Loading
 {
 	opacity: 0.6;
-	filter: blur(2);
+	filter: blur(2px);
+	pointer-events: none;
 }
 
 /* Search ------------------------------------------------------------------- */
