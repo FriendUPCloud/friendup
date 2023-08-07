@@ -179,20 +179,22 @@ if( isset( $args->args ) )
             		// Pages start on 0, then 1, 2, 3 etc (multiplied by 50)
             		$page = isset( $args->args->page ) ? intval( $args->args->page, 10 ) : 0;
             		$rows = $SqlDatabase->FetchObjects( $q = ( '
-            			SELECT m.*, u.ID AS `FlatUserID`, u.UniqueID FROM Message m, FUser u
+            			SELECT m.*, owner.ID AS `FlatUserID`, owner.UniqueID FROM Message m, FUser u, FUser owner
             			WHERE
             				(
 		        				m.RoomType = \'dm-user\' AND 
 				                ( 
 				                    ( 
 				                        m.UniqueUserID = \'' . $User->UniqueID . '\' AND 
-				                        m.UniqueUserID = u.UniqueID
+				                        m.UniqueUserID = u.UniqueID AND
+				                        owner.UniqueID = m.UniqueUserID
 				                    )
 				                    OR
 				                    (
 				                        m.UniqueUserID != \'' . $User->UniqueID . '\' AND
 				                        m.UniqueUserID = u.UniqueID AND
-				                        m.TargetID = \'' . $User->UniqueID . '\'
+				                        m.TargetID = \'' . $User->UniqueID . '\' AND
+				                        owner.UniqueID = m.UniqueUserID
 				                    )
 				                )
 			                )
@@ -201,7 +203,8 @@ if( isset( $args->args ) )
 			                	m.RoomType = \'chatroom\' AND 
 				                ( 
 				                    m.UniqueUserID = u.UniqueID AND
-				                    m.TargetID != \'' . $User->UniqueID . '\'
+				                    m.TargetID != \'' . $User->UniqueID . '\' AND
+				                    owner.UniqueID = m.UniqueUserID
 				                )
 			                )
             			ORDER BY m.ID DESC LIMIT ' . ( $page * 50 ) . ', 50
