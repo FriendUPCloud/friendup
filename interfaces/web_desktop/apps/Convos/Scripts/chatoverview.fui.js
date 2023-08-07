@@ -208,7 +208,7 @@ class FUIChatoverview extends FUIElement
 		}
 		ev.execute( 'convos', { method: 'getevents' } );
     }
-    initHome()
+    initSearch()
     {
     	// Init content
     	let self = this;
@@ -429,7 +429,7 @@ class FUIChatoverview extends FUIElement
 						ele.innerHTML = '<i class="fa fa-search"></i>';
 						ele.onclick = function()
 						{
-							self.initHome();
+							self.initSearch();
 						}
 					}
 					else if( prop == 'jeanie' )
