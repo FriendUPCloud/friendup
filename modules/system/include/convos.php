@@ -191,7 +191,7 @@ if( isset( $args->args ) )
 				                    OR
 				                    (
 				                        m.UniqueUserID != \'' . $User->UniqueID . '\' AND
-				                        u.UniqueID = m.UniqueUserID AND
+				                        m.UniqueUserID = u.UniqueID AND
 				                        m.TargetID = \'' . $User->UniqueID . '\'
 				                    )
 				                )
