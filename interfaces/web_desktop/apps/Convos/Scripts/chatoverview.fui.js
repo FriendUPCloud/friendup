@@ -272,7 +272,7 @@ class FUIChatoverview extends FUIElement
 					let lsearchString = searchString ? searchString.toLowerCase() : '';
 					if( !lsearchString ) return;
 					str = lsearchString;
-					if( str.indexOf( ',' > 0 )
+					if( str.indexOf( ',' ) > 0 )
 					{
 						str = lsearchString.split( ',' );
 					}
