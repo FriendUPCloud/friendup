@@ -134,6 +134,7 @@ class FUIChatoverview extends FUIElement
     }
     getEvents()
     {
+    	let self = this;
     	let ev = new Module( 'system' );
 		ev.onExecuted = function( me, md )
 		{
@@ -141,7 +142,7 @@ class FUIChatoverview extends FUIElement
 			{
 				let j = JSON.parse( md );
 				
-				let cnt = this.domEvents;
+				let cnt = self.domEvents;
 				
 				for( let a = 0; a < j.length; a++ )
 				{
