@@ -248,7 +248,7 @@ class FUIChatoverview extends FUIElement
 			{
 				self.executeSearch( se.value );
 			}
-			se.onkeydown = function( e 9
+			se.onkeydown = function( e )
 			{
 				if( e.which == 13 )
 				{
