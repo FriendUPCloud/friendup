@@ -12,7 +12,7 @@
 global $SqlDatabase, $Config, $User;
 
 $mode = false;
-if( $args->args->mode )
+if( isset( $args->args->mode ) )
 	$mode = $args->args->mode;
 
 
@@ -91,7 +91,7 @@ if( $mode == 'global_permissions' )
 
 $organizedWorkgroups = array();
 
-if( $wgroupdata = $SqlDatabase->fetchObjects( $wsql ) )
+if( isset( $wsql ) && $wgroupdata = $SqlDatabase->fetchObjects( $wsql ) )
 {
 	if( $mode == 'global_permissions' )
 	{
