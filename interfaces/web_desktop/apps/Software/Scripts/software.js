@@ -29,8 +29,6 @@ Application.run = function( msg, iface )
 		Application.quit();
 	}
 	
-	console.log( 'What is it.' );
-	
 	// Check if you're already a merchant
 	var m = new Module( 'system' )
 	m.onExecuted = function( e, d )
