@@ -266,6 +266,7 @@ class FUIChatoverview extends FUIElement
     executeSearch( searchString )
     {
     	let self = this;
+    	document.querySelector( '.SearchForm' ).classList.add( 'Searching', 'Loading' );
     	let par = document.querySelector( '.SearchResults' );
     	par.innerHTML = '';
     	function fetchNextPage( page = 0, searchString, cbk )
@@ -314,7 +315,9 @@ class FUIChatoverview extends FUIElement
 						cbk( out );
 					}
 					fetchNextPage( page + 1, searchString, cbk );
+					return;
 				}
+				document.querySelector( '.SearchForm' ).classList.remove( 'Searching', 'Loading' );
 			}
 			m.execute( 'convos', { method: 'messages', roomType: '*', searchString: searchString, page: page } );
 		}
