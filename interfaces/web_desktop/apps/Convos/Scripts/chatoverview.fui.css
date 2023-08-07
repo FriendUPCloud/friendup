@@ -53,6 +53,7 @@
     box-shadow: 0px 0px 10px 1px rgba(0,0,0,0.02);
     border-radius: 15px;
     transition: max-height,height 0.2s,0.2s;
+    margin: 0 0 15px 0;
 }
 
 .SearchResults .SearchedUser:before 
