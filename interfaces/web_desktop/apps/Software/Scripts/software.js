@@ -12,9 +12,9 @@
 
 Application.run = function( msg, iface )
 {
-	this.setApplicationName( 'Friend Marketplace' );
+	this.setApplicationName( 'Software' );
 	var v = new View( {
-		title: i18n( 'i18n_software_marketplace' ),
+		title: i18n( 'i18n_software' ),
 		width: 1024,
 		height: 600,
 		id: 'software_administration',
