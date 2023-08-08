@@ -2,7 +2,7 @@ html > body,
 html > body:not(.Inside):not(.Loading)
 {
     background: transparent !important;
-    transform: translate(0,0);
+    transform: translate(0,0) !important;
 }
 
 .Chatlist .FUIContacts .Contacts,
