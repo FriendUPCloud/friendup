@@ -17,6 +17,7 @@ window.Sounds = {};
 Sounds.newMessage = new Audio('/themes/friendup13/sound/new_message.ogg');
 Sounds.sendMessage = new Audio( getImageUrl( 'Progdir:Assets/send.ogg' ) );
 
+// Some events, like refresh and visibility change, ought to refresh messages
 window.addEventListener( 'focus', function()
 {
 	Application.holdConnection( 'refresh' );
@@ -38,6 +39,8 @@ Application.run = function( msg )
 
 Application.receiveMessage = function( msg )
 {
+	// Receiving message on sender
+	// TODO: Make sure sender is unique
     if( msg.sender )
     {
     	if( document.hidden || !document.body.classList.contains( 'activated' ) )
@@ -54,6 +57,7 @@ Application.receiveMessage = function( msg )
         	overview.activateDirectMessage( msg.sender, msg.message );
     	}
     }
+    // User is broadcasting a call
     else if( msg.command == 'broadcast-call' )
     {
 		let messages = FUI.getElementByUniqueId( 'messages' );
@@ -62,6 +66,7 @@ Application.receiveMessage = function( msg )
 			messages.queueMessage( '<videocall type="video" callid="' + msg.peerId + '"/>' );
 		}
     }
+    // User receives a call broadcast
     else if( msg.command == 'broadcast-received' )
     {
     	let contacts = FUI.getElementByUniqueId( 'contacts' );
@@ -77,6 +82,7 @@ Application.receiveMessage = function( msg )
 			} );
 		}
     }
+    // User starts broadcast participation
     else if( msg.command == 'broadcast-start' )
     {
     	let contacts = FUI.getElementByUniqueId( 'contacts' );
@@ -86,6 +92,7 @@ Application.receiveMessage = function( msg )
     		contacts.videoCall.sendMessage( { command: 'initcall', peerId: msg.peerId, remotePeerId: msg.remotePeerId } );
 		}
     }
+    // Polls broadcast
     else if( msg.command == 'broadcast-poll' )
     {
 		let contacts = FUI.getElementByUniqueId( 'contacts' );
@@ -113,6 +120,7 @@ Application.receiveMessage = function( msg )
     }
     else if( msg.type )
     {
+    	// Receiving an invite
     	if( msg.type == 'invite' )
     	{
     		let overview = FUI.getElementByUniqueId( 'convos' );
@@ -124,6 +132,7 @@ Application.receiveMessage = function( msg )
 				overview.initHome();
 			} );
     	}
+    	// Accepting an invite
     	else if( msg.type == 'accept-invite' )
     	{
     		Notify( {
@@ -135,6 +144,7 @@ Application.receiveMessage = function( msg )
 			} );
     	}
     }
+    // Dropping an icon object
     if( msg.command == 'drop' )
     {
     	// Check what we dropped
@@ -175,6 +185,7 @@ Application.receiveMessage = function( msg )
     }
 }
 
+// Send a message to a Friend OS user on the same server
 Application.SendUserMsg = function( opts )
 {
 	if( !opts.recipientId ) return;
