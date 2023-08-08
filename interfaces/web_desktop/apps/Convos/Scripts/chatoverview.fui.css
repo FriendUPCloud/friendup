@@ -117,16 +117,21 @@
 {
 	position: absolute;
 	top: 0;
-	left: 0;
-	width: 300px;
+	left: 100%;
+	width: 0px;
 	height: 100%;
 	pointer-events: none;
 	padding: 15px;
 	box-sizing: border-box;
-	overflow: auto;
+	overflow: hidden;
 	background-color: rgba(0,0,0,0.5);
 	border-left: 1px solid rgba(0,0,0,0.05);
-	transform: translate(100%,0);
+}
+
+.FUIChatoverview > .Events.Showing
+{
+	left: 0;
+	width: 100%;
 }
 
 .FUIChatoverview .Events .UserEvent 
