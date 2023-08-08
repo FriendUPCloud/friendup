@@ -120,6 +120,45 @@ class FUIChatlog extends FUIElement
             this.domTopic.appendChild( vid );
         }
         
+        this.domMessages.addEventListener( 'scroll', function( e )
+        {
+        	if( self.scrollFunction )
+        	{
+        		self.scrollFunction();
+        		return cancelBubble( e );
+        	}
+        	if( self.domMessages.scrollTop == 0 )
+        	{
+        		function fetchHistory()
+        		{
+        			let firstMessage = self.domMessages.querySelector( '.Incoming' ).querySelector( '.Slot' );
+        			if( !firstMessage ) return;
+        			firstMessage = firstMessage.querySelector( '.Message' );
+        			firstMessage = firstMessage.getAttribute( 'slotid' );
+        			if( !firstMessage ) return;
+	    			firstMessage = firstMessage.split( '-' )[1];
+	    			let m = new Module( 'system' );
+	    			m.onExecuted = function( me, md )
+	    			{
+	    				if( me == 'ok' )
+	    				{
+	    					let news = JSON.parse( md );
+	    					self.addMessages( news.messages, { history: true } );
+	    				}
+	    			}
+	    			m.execute( 'convos', { method: 'messages', mode: 'history', startMessage: firstMessage, roomType: self.options.type, cid: self.options.cid } );
+        		}
+        		if( self.scrollTimeo )
+        		{
+        			clearTimeout( self.scrollTimeo );
+        			self.scrollTimeo = setTimeout( function(){ fetchHistory(); }, 250 );
+        			return;
+    			}
+    			self.scrollTimeo = true;
+    			fetchHistory();
+        	}
+        } );
+        
         this.initDomInput();
         
         // Set stuff on this.domElement.innerHTML
@@ -434,11 +473,20 @@ class FUIChatlog extends FUIElement
     		contacts.setVideoCall( data, init );
     }
     // Adds messages to a list locked by sorted timestamps
-    addMessages( messageList )
+    addMessages( messageList, flags = false )
     {
         let self = this;
         
+        let history = false;
+        if( flags && flags.history )
+        	history = true;
+        
         let scrolled = this.checkScrolled();
+       
+       	// Current scroll height
+        let currScrollHeight = self.domMessages.scrollHeight;
+        let newMessages = [];
+        let firstMessage = self.domMessages.querySelector( '.Message' );
         
         for( let a = messageList.length - 1; a >= 0; a-- )
         {
@@ -454,6 +502,9 @@ class FUIChatlog extends FUIElement
             d.className = 'Message';
             d.classList.add( 'Showing' );
             d.setAttribute( 'owner', m.Name );
+            if( history )
+            	d.style.display = 'none';
+        	newMessages.push( d );
             
             let text = m.Message;
             try
@@ -633,15 +684,37 @@ class FUIChatlog extends FUIElement
                             // Insert before previous
                             else
                             {
-                                this.domMessages.querySelector( '.Incoming' ).insertBefore( this.messageList[ this.messageListOrder[ b + 1 ] ], grp );
+                                this.domMessages.querySelector( '.Incoming' ).insertBefore( grp, this.messageList[ this.messageListOrder[ b + 1 ] ] );
                             }
                         }
                     }
                 }
             }
+            
         }
-        if( !scrolled )
-	        this.toBottom();
+        
+        // New scroll height
+        if( history )
+        {
+			self.scrollFunction = function()
+			{	
+				self.domMessages.style.scrollBehavior = 'inherit';
+				self.domMessages.scrollTop = firstMessage.offsetTop - 27;
+				self.domMessages.style.scrollBehavior = '';
+				setTimeout( function()
+				{
+					self.scrollFunction = null;
+				}, 200 );
+			};
+			for( let a = 0; a < newMessages.length; a++ )
+        		newMessages[ a ].style.display = '';
+			self.scrollFunction();
+	    }
+        else
+        {
+		    if( !scrolled )
+			    this.toBottom();
+		}
         this.refreshDom();
     }
     setTopic( topic, type = false )

@@ -173,6 +173,12 @@ if( isset( $args->args ) )
             
             if( isset( $args->args->roomType ) )
             {
+            	$limiter = '';
+            	if( isset( $args->args->startMessage ) && isset( $args->args->mode ) && $args->args->mode == 'history' )
+            	{
+            		$limiter = ' AND m.ID < ' . intval( $args->args->startMessage, 10 );
+            	}
+            
             	// Get all messages by paging
             	if( $args->args->roomType == '*' )
             	{
@@ -217,7 +223,8 @@ if( isset( $args->args ) )
                             m.ID, m.Message, m.Date, u.Name, u.UniqueID FROM `Message` m, FUser u 
                         WHERE
                             m.RoomType = \'jeanie\' AND m.UniqueUserID=\'' . $User->UniqueID . '\' AND
-                            m.ParentID = \'' . ( isset( $args->args->cid ) ? $args->args->cid : '0' ) . '\' AND m.UniqueUserID = u.UniqueID' . $lastId . '
+                            m.ParentID = \'' . ( isset( $args->args->cid ) ? $SqlDatabase->_link->real_escape_string( $args->args->cid ) : '0' ) . '\' AND m.UniqueUserID = u.UniqueID' . $lastId . '
+                        ' . $limiter . '
                         ORDER BY 
                             m.Date DESC, m.ID DESC LIMIT 50
                     ' );
@@ -243,6 +250,7 @@ if( isset( $args->args ) )
                             )
                         )
                         u.ID = m.TargetID' . $lastId . '
+                    ' . $limiter . '
                     ORDER BY 
                         m.Date DESC, m.ID DESC LIMIT 50
                     ' );
@@ -268,6 +276,7 @@ if( isset( $args->args ) )
                                 m.TargetID = \'' . $User->UniqueID . '\'
                             )
                         )' . $lastId . '
+                    ' . $limiter . '
                     ORDER BY 
                         m.Date DESC, m.ID DESC LIMIT 50
                     ' );
@@ -283,6 +292,7 @@ if( isset( $args->args ) )
                             m.UniqueUserID = u.UniqueID AND
                             m.TargetID = \'' . $SqlDatabase->_link->real_escape_string( $args->args->cid ) . '\'
                         )' . $lastId . '
+                    ' . $limiter . '
                     ORDER BY 
                         m.Date DESC, m.ID DESC LIMIT 50
                     ' );
