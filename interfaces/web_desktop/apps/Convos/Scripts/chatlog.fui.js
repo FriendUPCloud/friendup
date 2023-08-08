@@ -477,6 +477,12 @@ class FUIChatlog extends FUIElement
     {
         let self = this;
         
+        if( self.busyMessages )
+        {
+        	return setTimeout( function(){ self.addMessages( messageList, flags ); }, 150 );
+        }
+        self.busyMessages = true;
+        
         let history = false;
         if( flags && flags.history )
         	history = true;
@@ -656,8 +662,11 @@ class FUIChatlog extends FUIElement
                 let grp = document.createElement( 'div' );
                 grp.className = 'Slot';
                 grp.appendChild( d );
+                //let dy = new Date( slot * 1000 );
+                //grp.title = dy.getFullYear() + '-' + ( dy.getMonth() + 1 ) + '-' + dy.getDate() + '(' + slot + ')';
                 this.messageList[ slot ] = grp;
                 
+                // Just holds a list of slot identifiers
                 this.messageListOrder.push( slot );
                 this.messageListOrder.sort();
 
@@ -667,6 +676,7 @@ class FUIChatlog extends FUIElement
                     // Create group
                     this.domMessages.querySelector( '.Incoming' ).appendChild( grp );
                 }
+                // We are looking for a place to add
                 else
                 {
                     for( let b = 0; b < this.messageListOrder.length; b++ )
@@ -677,21 +687,37 @@ class FUIChatlog extends FUIElement
                         if( slotHere == slot )
                         {
                             // Add since we're the last in the list
-                            if( last || b == 0 )
+                            if( last )
                             {
                                  this.domMessages.querySelector( '.Incoming' ).appendChild( grp );
+                            }
+                            else if( b == 0 )
+                            {
+                            	// add to existing slot
+                            	let sl = this.domMessages.querySelector( '.Slot' );
+                            	if( sl )
+                            	{
+                            		sl.parentNode.insertBefore( grp, sl );
+                        	 	}
+                        	 	// First element!
+                        	 	else
+                        	 	{
+                        	 		this.domMessages.querySelector( '.Incoming' ).appendChild( grp );
+                    	 		}
                             }
                             // Insert before previous
                             else
                             {
                                 this.domMessages.querySelector( '.Incoming' ).insertBefore( grp, this.messageList[ this.messageListOrder[ b + 1 ] ] );
                             }
+                            break;
                         }
                     }
                 }
             }
-            
         }
+        
+        //console.log( this.messageListOrder );
         
         // New scroll height
         if( history )
@@ -707,7 +733,10 @@ class FUIChatlog extends FUIElement
 				}, 200 );
 			};
 			for( let a = 0; a < newMessages.length; a++ )
+			{
         		newMessages[ a ].style.display = '';
+        		self.scrollFunction();
+    		}
 			self.scrollFunction();
 	    }
         else
@@ -716,6 +745,8 @@ class FUIChatlog extends FUIElement
 			    this.toBottom();
 		}
         this.refreshDom();
+        
+		self.busyMessages = false;
     }
     setTopic( topic, type = false )
     {
