@@ -99,7 +99,7 @@ if( isset( $args->args ) )
 		                {
 				            $options = new stdClass();
 				            $options->Condition = 'activity';
-				            $options->Seconds = 300; // Five minutes since last activity
+				            $options->Seconds = 150; // 2.5 minutes since last activity
 				            $message = new stdClass();
 				            $message->Title = 'You got a message from ' . $User->FullName;
 				            $message->Body = $out->message;
@@ -501,7 +501,7 @@ if( isset( $args->args ) )
         			$o->UniqueID = $u->UniqueID;
         			$o->OnlineStatus = 'offline';
         			$o->Diff = $now - $u->LastActionTime;
-        			if( $o->Diff <= 300 )
+        			if( $o->Diff <= 150 )
         			{
         				$o->OnlineStatus = 'online';
         			}
