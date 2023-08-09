@@ -216,6 +216,7 @@ Friend.User = {
 					Workspace.loginid = json.loginid;
 					Workspace.userLevel = json.level;
 					Workspace.fullName = json.fullname;
+					Workspace.uniqueId = json.uniqueid;
 					
 					// Silence non-admin user's debug
 					if( Workspace.userLevel != 'admin' )

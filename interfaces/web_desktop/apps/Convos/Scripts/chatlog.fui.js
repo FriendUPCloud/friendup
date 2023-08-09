@@ -382,7 +382,8 @@ class FUIChatlog extends FUIElement
 					{
 						Application.SendChannelMsg( {
 							command: 'signal',
-							signal: 'writing'
+							signal: 'writing',
+							senderId: Application.uniqueId
 						} );
 					}
 				}, 250 );
@@ -394,6 +395,11 @@ class FUIChatlog extends FUIElement
 	    			clearTimeout( s.timeo );
 	    			s.timeo = false;
     			}
+    			Application.SendChannelMsg( {
+					command: 'signal',
+					signal: 'not-writing',
+					senderId: Application.uniqueId
+				} );
     		}
     	} );
     	this.domTextarea.addEventListener( 'keydown', function( e )

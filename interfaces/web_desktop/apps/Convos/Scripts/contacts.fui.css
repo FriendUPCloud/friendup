@@ -52,6 +52,32 @@
 	overflow: auto;
 }
 
+@keyframes pulse-fast
+{
+	0% { opacity: 0; }
+	50% { opacity: 1; }
+	100% { opacity: 0; }
+}
+
+.Contact.User:after 
+{
+    content: "\f141";
+    font-family: 'fontawesome';
+    position: absolute;
+    right: 15px;
+    top: calc(50% - 8px);
+    opacity: 0;
+    transition: opacity 0.2s;
+    pointer-events: none;
+}
+.Contact.User.Writing:after
+{
+	opacity: 1;
+    animation-name: pulse-fast;
+    animation-duration: 1.5s;
+    animation-iteration-count: infinite;
+}
+
 .FUIContacts .Contacts > .Settings
 {
 	position: absolute;

@@ -57,6 +57,44 @@ Application.receiveMessage = function( msg )
         	overview.activateDirectMessage( msg.sender, msg.message );
     	}
     }
+    else if( msg.command == 'signal' )
+    {
+    	if( msg.signal && msg.signal == 'writing' )
+    	{
+    		console.log( 'Writing!' );
+    		let contacts = FUI.getElementByUniqueId( 'contacts' );
+    		if( !contacts ) return;
+    		for( let a in contacts.userList )
+    		{
+    			let slot = contacts.userList[ a ];
+    			let users = slot.getElementsByClassName( 'User' );
+    			for( let b = 0; b < users.length; b++ )
+    			{
+    				if( users[ b ].record.ID == msg.senderId )
+    				{
+    					users[ b ].classList.add( 'Writing' );
+    				}
+    			}
+    		}
+    	}
+    	else if( msg.signal && msg.signal == 'not-writing' )
+    	{
+    		let contacts = FUI.getElementByUniqueId( 'contacts' );
+    		if( !contacts ) return;
+    		for( let a in contacts.userList )
+    		{
+    			let slot = contacts.userList[ a ];
+    			let users = slot.getElementsByClassName( 'User' );
+    			for( let b = 0; b < users.length; b++ )
+    			{
+    				if( users[ b ].record.ID == msg.senderId )
+    				{
+    					users[ b ].classList.remove( 'Writing' );
+    				}
+    			}
+    		}
+    	}
+    }
     // User is broadcasting a call
     else if( msg.command == 'broadcast-call' )
     {
