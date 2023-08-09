@@ -457,5 +457,5 @@ setInterval( function()
 	let conts = FUI.getElementByUniqueId( 'contacts' );
 	if( !conts ) return;
 	conts.checkOnlineState();
-}, 5000 );
+}, 15000 );
 
