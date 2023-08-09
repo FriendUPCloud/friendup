@@ -590,6 +590,7 @@ class FUIChatoverview extends FUIElement
 						ele.innerHTML = '<i class="fa fa-search"></i>';
 						ele.onclick = function()
 						{
+							self.currentType = 'search'
 							self.initSearch();
 						}
 					}

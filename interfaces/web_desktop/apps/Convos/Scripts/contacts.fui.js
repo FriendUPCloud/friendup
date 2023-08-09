@@ -27,7 +27,6 @@ class FUIContacts extends FUIElement
         	// If this is group list, initialize the group chat
         	if( this.options.groupid && this.options.groupname )
         	{
-        		console.log( '[contacts] constructir' );
         		this.setChatView( {
         			Type: 'chatroom',
         			ID: this.options.groupid,
@@ -483,6 +482,7 @@ class FUIContacts extends FUIElement
         FUI.initialize();
         
         self.domElement.classList.add( 'Chat' );
+        document.querySelector( '.FUIChatoverview' ).classList.add( 'Chat' );
 	    
 	    Application.holdConnection( { method: 'messages', roomType: dm, cid: record.ID } );
 	    
