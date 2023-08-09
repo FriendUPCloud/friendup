@@ -478,6 +478,39 @@ if( isset( $args->args ) )
     		}
 			die( 'fail<!--separate-->{"message":"Could not find attachment.","response":-1}' );
         }
+        else if( $args->args->method == 'onlinestatus' )
+        {
+        	$ar = '';
+        	$a = 0;
+        	foreach( $args->args->users as $u )
+        	{
+        		if( $a != 0 )
+        			$ar .= ',';
+        		$a++;
+        		$ar .= '"' . $u . '"';
+        	}
+        	if( $us = $SqlDatabase->fetchObjects( '
+        		SELECT LoginTime, LastActionTime, UniqueID FROM FUser WHERE UniqueID IN ( ' . $ar . ' )
+        	' ) )
+        	{
+        		$status = [];
+        		$now = mktime();
+        		foreach( $us as $u )
+        		{
+        			$o = new stdClass();
+        			$o->UniqueID = $u->UniqueID;
+        			$o->OnlineStatus = 'offline';
+        			$o->Diff = $now - $u->LastActionTime;
+        			if( $o->Diff <= 300 )
+        			{
+        				$o->OnlineStatus = 'online';
+        			}
+    				$status[] = $o;
+        		}
+        		die( 'ok<!--separate-->' . json_encode( $status ) );
+        	}
+        	die( 'fail<!--separate-->' );
+        }
         else if( $args->args->method == 'addupload' )
         {
         	$f = new File( $args->args->path );

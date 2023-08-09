@@ -450,3 +450,12 @@ Application.holdConnection = function( flags )
 	}
 	m.send();
 }
+
+// Things to do on interval
+setInterval( function()
+{
+	let conts = FUI.getElementByUniqueId( 'contacts' );
+	if( !conts ) return;
+	conts.checkOnlineState();
+}, 5000 );
+

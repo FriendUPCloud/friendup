@@ -566,6 +566,56 @@ class FUIContacts extends FUIElement
     	return 'contacts';
     }
     
+    // Check how it is with online status
+    checkOnlineState()
+    {
+    	let self = this;
+    	let us = this.userList;
+    	let pollUsers = [];
+    	for( let a in us )
+    	{
+    		let users = us[ a ].getElementsByClassName( 'User' );
+    		for( let b = 0; b < users.length; b++ )
+    		{
+    			if( users[ b ].record )
+    				pollUsers.push( users[ b ].record.ID );
+    		}
+    	}
+    	let m = new Module( 'system' );
+    	m.onExecuted = function( me, md )
+    	{
+    		if( me != 'ok' )
+    			return;
+    		let lst = JSON.parse( md );
+    		for( let a = 0; a < lst.length; a++ )
+    		{
+    			let found = false;
+    			for( let b in us )
+    			{
+    				let users = us[ b ].getElementsByClassName( 'User' );
+    				for( let c = 0; c < users.length; c++ )
+					{
+						if( users[ c ].record && users[ c ].record.ID == lst[ a ].UniqueID )
+						{
+							found = true;
+							if( lst[ a ].OnlineStatus == 'offline' )
+							{
+								users[ c ].classList.remove( 'Online' );
+							}
+							else if( lst[ a ].OnlineStatus == 'online' )
+							{
+								users[ c ].classList.add( 'Online' );
+							}
+							break;
+						}
+					}
+					if( found ) break;
+    			}
+    		}
+    	}
+    	m.execute( 'convos', { method: 'onlinestatus', users: pollUsers } );
+    }
+    
     // Oh, no contacts, do something about it?
     showNoContactsMenu()
     {
