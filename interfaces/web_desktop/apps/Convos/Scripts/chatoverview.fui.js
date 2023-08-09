@@ -685,28 +685,15 @@ class FUIChatoverview extends FUIElement
         	chat.refreshMessages();
         	return;
         }
-        let tabs = this.domChannels.getElementsByClassName( 'Channel' );
-        for( let a = 0; a < tabs.length; a++ )
-    	{
-    		if( tabs[ a ].classList.contains( 'DM' ) )
-    		{
-    		    // It is already active
-    		    if( tabs[ a ].classList.contains( 'Active' ) )
-    		    {
-    		        let contacts = FUI.getElementByUniqueId( 'contacts' );
-    		        contacts.poll( uniqueId, message );
-    		        return;
-    		    }
-    			tabs[ a ].classList.add( 'Active' );
-    		}
-    		else
-    		{
-    			tabs[ a ].classList.remove( 'Active' );
-    		}
-    	}
+        
+        // Do not reinitialize
+        let chatList = FUI.getElementByUniqueId( 'contacts' );
+        if( chatList && chatList.options.user == uniqueId ) return;
+        
     	let chlist = this.domElement.querySelector( '.Chatlist' );
     	chlist.innerHTML = '<fui-contacts parentelement="convos" uniqueid="contacts" user="' + uniqueId + '"></fui-contacts>';
     	FUI.initialize();
+    	this.currentType = 'dm';
     }
     // Set active channel
     setActiveChannel( label, tab, groupId = false, groupName = false )
@@ -727,17 +714,25 @@ class FUIChatoverview extends FUIElement
 		let chlist = this.domElement.querySelector( '.Chatlist' );
 		if( label == 'jeanie' )
 		{
+			// No reinitializing
+	    	if( this.currentType == 'jeanie' ) return;
 			chlist.innerHTML = '<fui-topics parentelement="convos" uniqueid="topics" name="jeanie"></fui-topics>';
+			this.currentType = 'jeanie';
 	    }
 	    else if( label == 'dm' )
 	    {
+	    	// No reinitializing
+	    	if( this.currentType == 'dm' ) return;
 	        chlist.innerHTML = '<fui-contacts parentelement="convos" uniqueid="contacts"></fui-contacts>';
+	        this.currentType = 'dm';
 	    }
 	    // Initialize a contacts element, with 
 	    else if( label == 'chatroom' )
 	    {
+	    	if( this.currentType == 'chatroom' && this.currentChatroom == groupId ) return;
 	    	let own = tab.getAttribute( 'own' );
 	    	chlist.innerHTML = '<fui-contacts parentelement="convos" uniqueid="contacts" group="' + groupId + '" name="' + groupName + '" own="' + own + '"></fui-contacts>';
+	    	this.currentType = 'chatroom'; this.currentChatroom = groupId;
 	    }
 	    else
 	    {

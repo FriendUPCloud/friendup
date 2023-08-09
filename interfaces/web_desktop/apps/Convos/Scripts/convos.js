@@ -250,7 +250,7 @@ Application.SendChannelMsg = function( msg )
 			{
 				if( !users[ b ].classList || !users[ b ].classList.contains( 'User' ) )
 					continue;
-				Application.sendUserMsg( {
+				Application.SendUserMsg( {
 					recipientId: users[ b ].record.ID,
 					senderId: Application.uniqueId,
 					sender: Application.Fullname,

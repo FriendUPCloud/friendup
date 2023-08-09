@@ -15,7 +15,6 @@ class FUIContacts extends FUIElement
     constructor( options )
     {
         super( options );
-        
         this.initialized = true;
         this.contactFilter = '';
         this.userList = {}; // Dom elements
@@ -28,6 +27,7 @@ class FUIContacts extends FUIElement
         	// If this is group list, initialize the group chat
         	if( this.options.groupid && this.options.groupname )
         	{
+        		console.log( '[contacts] constructir' );
         		this.setChatView( {
         			Type: 'chatroom',
         			ID: this.options.groupid,
@@ -226,7 +226,6 @@ class FUIContacts extends FUIElement
     {
         let self = this;
         
-        // TODO: Replace with UniqueID at one point
         // Only poll active channels
         if( typeof( self.userList[ uniqueId ] ) != 'undefined' )
         {
@@ -248,6 +247,7 @@ class FUIContacts extends FUIElement
 			    catch( e2 ){};
             
                 ele.classList.add( 'NewActivity' );
+                
                 if( text != undefined && ele.record.Fullname != undefined )
                 {
 				    Notify( {
@@ -286,7 +286,7 @@ class FUIContacts extends FUIElement
             d.className += ' User';
         }
         d.record = contact;
-       	let online = ( Math.floor( new Date().getTime() / 1000 ) - parseInt( contact.LastActionTime ) ) <= 600;
+       	let online = ( Math.floor( new Date().getTime() / 1000 ) - parseInt( contact.LastActionTime ) ) <= 150;
        	if( online )
        		d.className += ' Online';
        	
@@ -343,34 +343,18 @@ class FUIContacts extends FUIElement
 		    	cancelBubble( e );
 		    } );
 	    }
-        /*d.addEventListener( 'mousedown', function( e )
-        {
-        	console.log( e.button );
-        	if( e && e.button == 2 )
-        	{
-        		
-        		e.stopPropagation();
-        		cancelBubble( e );
-        		return;
-        	}
-        } );*/
+        
         d.onclick = function( e )
         {
-        	
             self.setChatView( this.record );
             this.classList.remove( 'NewActivity' );
             self.hideUsers();
         }
         
         // Init user
-        if( contact.Fullname == this.options.user )
+        if( contact.ID == this.options.user )
         {
-            self.queuedClick = function()
-            {
-                self.options.user = null;
-                self.queuedClick = null;
-                d.click();
-            }
+        	d.onclick();
         }
         
         // Load avatar
@@ -444,11 +428,43 @@ class FUIContacts extends FUIElement
         }
         return out;
     }
+    
+    setActiveContact( record )
+    {
+    	let self = this;
+    	
+    	if( self.busyRefreshing )
+    	{
+    		return setTimeout( function(){ self.setActiveContact( record ); }, 25 );
+    	}
+    	let contacts = self.domContacts.getElementsByClassName( self.getRowClass() );
+	    if( contacts )
+	    {
+			for( let a = 0; a < contacts.length; a++ )
+			{
+				if( typeof( contacts ) == 'object' && contacts[ a ].record )
+				{
+					if( contacts[a].record.ID == record.ID )
+					{
+					    contacts[a].classList.add( 'Active' );
+					}
+					else
+					{
+					    contacts[a].classList.remove( 'Active' );
+					}
+				}
+			}
+		}
+	}
+		    
     setChatView( record )
     {
     	let self = this;
     	
+    	this.setActiveContact( record );
+    	
     	this.record = record;
+    	
     	if( this.record && this.record.Type && this.record.Type == 'User' )
     	{
     		this.domContacts.classList.add( 'User' );
@@ -463,37 +479,19 @@ class FUIContacts extends FUIElement
         let dm = record.Type == 'User' ? 'dm-user' : ( record.Type == 'chatroom' ? 'chatroom' : 'dm-contact' );
         if( record.RoomType )
         	dm = record.RoomType;
-        this.domChat.innerHTML = '<fui-chatlog parentelement="' + this.options.uniqueid + '" uniqueid="messages" type="' + dm + '" name="' + record.Fullname + '"' + context + '></fui-chatlog>';
+        this.domChat.innerHTML = '<fui-chatlog parentelement="' + this.options.uniqueid + '" uniqueid="messages" cid="' + record.ID + '" type="' + dm + '" name="' + record.Fullname + '"' + context + '></fui-chatlog>';
         FUI.initialize();
         
-        let contacts = this.domContacts.getElementsByClassName( self.getRowClass() );
-        for( let a = 0; a < contacts.length; a++ )
-        {
-            if( contacts[a].record == record )
-            {
-                contacts[a].classList.add( 'Active' );
-            }
-            else
-            {
-                contacts[a].classList.remove( 'Active' );
-            }
-        }
-        
-        this.domElement.classList.add( 'Chat' );
-        
-        if( this.options.parentElement )
-        {
-            let par = FUI.getElementByUniqueId( this.options.parentElement );
-            par.setChat( true, record );
-        }
-        
-        Application.holdConnection( { method: 'messages', roomType: dm, cid: record.ID } );
-        
-        if( !isMobile )
-        {
-		    let ta = document.querySelector( '.Textarea' );
-		    if( ta ) ta.focus();
-	    }
+        self.domElement.classList.add( 'Chat' );
+	    
+	    Application.holdConnection( { method: 'messages', roomType: dm, cid: record.ID } );
+	    
+	    if( !isMobile )
+	    {
+			let ta = document.querySelector( '.Textarea' );
+			if( ta ) ta.focus();
+		}
+		
     }
     getMemberAttribute()
     {
@@ -504,9 +502,12 @@ class FUIContacts extends FUIElement
     {
         super.refreshDom();
         
+        let self = this;
+        
         if( !this.initialized ) return;
         
-        let self = this;
+        if( self.busyRefreshing ) return false;
+        self.busyRefreshing = true;
         
         if( self.contactFilter != '' )
         {
@@ -522,6 +523,8 @@ class FUIContacts extends FUIElement
                     conts[ a ].parentNode.style.display = 'none';
                 }
             }
+            self.busyRefreshing = false;
+            
             if( self.queuedClick )
                 self.queuedClick();
         }
@@ -551,6 +554,8 @@ class FUIContacts extends FUIElement
                 	self.domContacts.classList.add( 'NoContacts' );
                 	self.showNoContactsMenu();
                 }
+                self.busyRefreshing = false;
+                
                 if( self.queuedClick )
                     self.queuedClick();
             }
