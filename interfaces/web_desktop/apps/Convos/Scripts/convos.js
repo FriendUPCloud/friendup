@@ -61,7 +61,6 @@ Application.receiveMessage = function( msg )
     {
     	if( msg.signal && msg.signal == 'writing' )
     	{
-    		console.log( 'Writing!' );
     		let contacts = FUI.getElementByUniqueId( 'contacts' );
     		if( !contacts ) return;
     		for( let a in contacts.userList )
