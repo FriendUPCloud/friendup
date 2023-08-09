@@ -358,11 +358,43 @@ class FUIChatlog extends FUIElement
     	}
     	this.domTextarea.addEventListener( 'keyup', function( e )
     	{
+    	    let s = this;
+    	    
     	    if( e.which == 16 )
     	    {
     	        this.shiftKey = false;
 	        }
 	        this.checkHeight();
+	        
+	        let str = s.innerHTML.split( /\<.*?\>/i ).join( '' ).split( "\n" ).join( '' ).split( ' ' ).join( '' );
+	        
+	        if( str.length > 0 )
+    		{
+    			if( s.timeo )
+    			{
+    				clearTimeout( s.timeo );
+    			}
+				s.timeo = setTimeout( function()
+				{
+					s.timeo = false;
+					let strnow = s.innerHTML.split( /\<.*?\>/i ).join( '' ).split( "\n" ).join( '' ).split( ' ' ).join( '' );
+					if( strnow.length > 0 )
+					{
+						Application.SendChannelMsg( {
+							command: 'signal',
+							signal: 'writing'
+						} );
+					}
+				}, 250 );
+			}
+    		else
+    		{
+    			if( s.timeo )
+    			{
+	    			clearTimeout( s.timeo );
+	    			s.timeo = false;
+    			}
+    		}
     	} );
     	this.domTextarea.addEventListener( 'keydown', function( e )
     	{
@@ -402,6 +434,7 @@ class FUIChatlog extends FUIElement
     				self.queueMessage( val );
 				}
     		}
+    		
     		this.checkHeight();
     	} );
     }

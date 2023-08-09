@@ -185,6 +185,41 @@ Application.receiveMessage = function( msg )
     }
 }
 
+Application.SendChannelMsg = function( msg )
+{
+	if( !msg ) return;
+	
+	// Check which channel we are in
+	let messages = FUI.getElementByUniqueId( 'messages' );
+	if( messages.options.type == 'jeanie' ) return;
+	else if( messages.options.type == 'dm-user' )
+	{
+		Application.SendUserMsg( {
+			recipientId: messages.options.cid,
+			message: msg
+		} );
+	}
+	else if( messages.options.type == 'chatroom' )
+	{
+		let contacts = FUI.getElementByUniqueId( 'contacts' );
+		if( !contacts ) return;
+		for( let a in contacts.userList )
+		{
+			let slot = contacts.userList[ a ];
+			let users = slot.childNodes;
+			for( let b = 0; b < users.length; b++ )
+			{
+				if( !users[ b ].classList || !users[ b ].classList.contains( 'User' ) )
+					continue;
+				Application.sendUserMsg( {
+					recipientId: users[ b ].record.ID,
+					message: msg
+				} );
+			}
+		}
+	}
+}
+
 // Send a message to a Friend OS user on the same server
 Application.SendUserMsg = function( opts )
 {
