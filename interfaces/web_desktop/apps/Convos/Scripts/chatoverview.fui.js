@@ -434,7 +434,7 @@ class FUIChatoverview extends FUIElement
         }
         if( record && record.Type == 'User' )
         {
-        	this.activateDirectMessage( record.Fullname, false );
+        	this.activateDirectMessage( record.ID, false );
         }
     }
     // Get markup for object
@@ -640,10 +640,10 @@ class FUIChatoverview extends FUIElement
     	}
     	m.execute( 'convos', { 'method': 'getrooms' } );
     }
-    pollChatroom( user, uid )
+    pollChatroom( uniqueId, uid )
     {
     	// Just poll myself!
-        if( user == Application.fullName )
+        if( uniqueId == Application.uniqueId )
         {
         	let chat = FUI.getElementByUniqueId( 'messages' );
         	chat.refreshMessages();
@@ -673,13 +673,13 @@ class FUIChatoverview extends FUIElement
     		}
     	}
     	let chlist = this.domElement.querySelector( '.Chatlist' );
-    	chlist.innerHTML = '<fui-contacts parentelement="convos" uniqueid="contacts" user="' + user + '"></fui-contacts>';
+    	chlist.innerHTML = '<fui-contacts parentelement="convos" uniqueid="contacts" user="' + uniqueId + '"></fui-contacts>';
     	FUI.initialize();
     }
-    activateDirectMessage( user, message )
+    activateDirectMessage( uniqueId, message )
     {
     	// Just poll myself!
-        if( user == Application.fullName )
+        if( uniqueId == Application.uniqueId )
         {
         	let chat = FUI.getElementByUniqueId( 'messages' );
         	chat.refreshMessages();
@@ -694,7 +694,7 @@ class FUIChatoverview extends FUIElement
     		    if( tabs[ a ].classList.contains( 'Active' ) )
     		    {
     		        let contacts = FUI.getElementByUniqueId( 'contacts' );
-    		        contacts.poll( user, message );
+    		        contacts.poll( uniqueId, message );
     		        return;
     		    }
     			tabs[ a ].classList.add( 'Active' );
@@ -705,7 +705,7 @@ class FUIChatoverview extends FUIElement
     		}
     	}
     	let chlist = this.domElement.querySelector( '.Chatlist' );
-    	chlist.innerHTML = '<fui-contacts parentelement="convos" uniqueid="contacts" user="' + user + '"></fui-contacts>';
+    	chlist.innerHTML = '<fui-contacts parentelement="convos" uniqueid="contacts" user="' + uniqueId + '"></fui-contacts>';
     	FUI.initialize();
     }
     // Set active channel

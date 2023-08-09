@@ -41,7 +41,7 @@ Application.receiveMessage = function( msg )
 {
 	// Receiving message on sender
 	// TODO: Make sure sender is unique
-    if( msg.sender )
+    if( msg.senderId )
     {
     	if( document.hidden || !document.body.classList.contains( 'activated' ) )
     	{
@@ -50,11 +50,11 @@ Application.receiveMessage = function( msg )
         let overview = FUI.getElementByUniqueId( 'convos' );
         if( msg.type && msg.type == 'chatroom' && msg.uniqueId )
         {
-        	overview.pollChatroom( msg.sender, msg.uniqueId );
+        	overview.pollChatroom( msg.senderId, msg.uniqueId );
         }
         else
         {
-        	overview.activateDirectMessage( msg.sender, msg.message );
+        	overview.activateDirectMessage( msg.senderId, msg.message );
     	}
     }
     else if( msg.command == 'signal' )
@@ -233,6 +233,8 @@ Application.SendChannelMsg = function( msg )
 	{
 		Application.SendUserMsg( {
 			recipientId: messages.options.cid,
+			senderId: Application.uniqueId,
+			sender: Application.Fullname,
 			message: msg
 		} );
 	}
@@ -250,6 +252,8 @@ Application.SendChannelMsg = function( msg )
 					continue;
 				Application.sendUserMsg( {
 					recipientId: users[ b ].record.ID,
+					senderId: Application.uniqueId,
+					sender: Application.Fullname,
 					message: msg
 				} );
 			}
@@ -382,7 +386,7 @@ Application.holdConnection = function( flags )
                     				let amsg = {
 						                'appname': 'Convos',
 						                'dstuniqueid': contacts[ c ].uniqueId,
-						                'msg': '{"sender":"' + Application.fullName + '","message":"' + messages[ b ] + '","type":"chatroom","uniqueId":"' + musers[ b ] + '"}'
+						                'msg': '{"sender":"' + Application.fullName + '","senderId":"' + Application.uniqueId + '","message":"' + messages[ b ] + '","type":"chatroom","uniqueId":"' + musers[ b ] + '"}'
 						            };
 						            if( c == 0 )
 						            {
@@ -399,7 +403,7 @@ Application.holdConnection = function( flags )
 		                        'appname': 'Convos',
 		                        'dstuniqueid': musers[ b ],
 		                        'callback': 'yes',
-		                        'msg': '{"sender":"' + Application.fullName + '","message":"' + messages[ b ] + '"}'
+		                        'msg': '{"sender":"' + Application.fullName + '","senderId":"' + Application.uniqueId + '","message":"' + messages[ b ] + '"}'
 		                    };
 		                    let m = new Library( 'system.library' );
 		                    m.execute( 'user/session/sendmsg', amsg );

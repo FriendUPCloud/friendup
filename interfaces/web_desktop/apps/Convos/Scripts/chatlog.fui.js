@@ -383,6 +383,7 @@ class FUIChatlog extends FUIElement
 						Application.SendChannelMsg( {
 							command: 'signal',
 							signal: 'writing',
+							sender: Application.fullName,
 							senderId: Application.uniqueId
 						} );
 					}
@@ -398,6 +399,7 @@ class FUIChatlog extends FUIElement
     			Application.SendChannelMsg( {
 					command: 'signal',
 					signal: 'not-writing',
+					sender: Application.fullName,
 					senderId: Application.uniqueId
 				} );
     		}

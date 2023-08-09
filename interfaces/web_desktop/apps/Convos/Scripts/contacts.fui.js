@@ -222,15 +222,15 @@ class FUIContacts extends FUIElement
         if( user ) this.options.user = user;
     }
     // Just check the contact
-    poll( contactName, message )
+    poll( uniqueId, message )
     {
         let self = this;
         
         // TODO: Replace with UniqueID at one point
         // Only poll active channels
-        if( typeof( self.userList[ contactName ] ) != 'undefined' )
+        if( typeof( self.userList[ uniqueId ] ) != 'undefined' )
         {
-            let ele = self.userList[ contactName ].querySelector( '.Contact' );
+            let ele = self.userList[ uniqueId ].querySelector( '.Contact' );
             if( ele.classList.contains( 'Active' ) )
             {
                 Application.holdConnection( { method: 'messages', roomType: 'dm-user', cid: ele.record.ID } );
@@ -248,13 +248,16 @@ class FUIContacts extends FUIElement
 			    catch( e2 ){};
             
                 ele.classList.add( 'NewActivity' );
-                Notify( {
-                	title: 'From ' + contactName, 
-                	text: text
-                }, false, function()
+                if( text != undefined && ele.record.Fullname != undefined )
                 {
-                	ele.click();                	
-                } );
+				    Notify( {
+				    	title: 'From ' + ele.record.Fullname, 
+				    	text: text
+				    }, false, function()
+				    {
+				    	ele.click();                	
+				    } );
+			    }
                 
                 // Play a sound when sending
                 Sounds.newMessage.play();
@@ -385,7 +388,6 @@ class FUIContacts extends FUIElement
         // The slot does not exist?
         
         let listKey = this.getListKey();
-       
         if( !this.userList[ contact[ listKey ] ] )
         {
             this.userList[ contact[ listKey ] ] = document.createElement( 'div' );
@@ -398,7 +400,7 @@ class FUIContacts extends FUIElement
     }
     getListKey()
     {
-    	return 'Fullname';
+    	return 'ID';
     }
     contactsMode()
     {

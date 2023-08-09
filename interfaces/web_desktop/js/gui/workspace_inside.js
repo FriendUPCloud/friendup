@@ -11436,25 +11436,32 @@ function handleServerMessage( e )
 		}
 		if( !found )
 		{
-		    // TODO: Support public key decryption
-		    let text = decodeURIComponent( e.message.message );
-            try
-            {
-                let dec = new TextDecoder().decode( base64ToBytes( text ) );
-                text = dec;
-            }
-            catch( e2 ){};
-			Sounds.newMessage.play();
-		    Notify( {
-		            title: 'From ' + e.message.sender,
-		            text: text,
-		        },
-		        null,
-		        function( k )
+			// Check that we have message
+		    if( e.message && e.message.message )
+		    {
+				// TODO: Support public key decryption
+				let text = decodeURIComponent( e.message.message );
+		        try
 		        {
-		            ExecuteApplication( 'Convos', JSON.stringify( e.message ) );
-	            }
-		    );
+		            let dec = new TextDecoder().decode( base64ToBytes( text ) );
+		            text = dec;
+		        }
+		        catch( e2 ){};
+		        if( text != undefined )
+		        {
+					Sounds.newMessage.play();
+					Notify( {
+						    title: 'From ' + e.message.sender,
+						    text: text,
+						},
+						null,
+						function( k )
+						{
+						    ExecuteApplication( 'Convos', JSON.stringify( e.message ) );
+					    }
+					);
+				}
+			}
 		}
 	}
 	else
