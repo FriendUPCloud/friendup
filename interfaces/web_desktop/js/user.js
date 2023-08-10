@@ -211,7 +211,7 @@ Friend.User = {
 		m.onExecuted = function( json, serveranswer )
 		{
 			Friend.User.lastLogin = null;
-			console.log( 'Res: ', json, serveranswer );
+			
 			// We got a real error
 			if( json == null )
 			{
@@ -231,6 +231,9 @@ Friend.User = {
 					Workspace.userLevel = json.level;
 					Workspace.fullName = json.fullname;
 					Workspace.uniqueId = json.uniqueid;
+					
+					if( json.extra && json.extra.length )
+						SetCookie( 'logintoken', json.extra );
 					
 					// Silence non-admin user's debug
 					if( Workspace.userLevel != 'admin' )
@@ -309,7 +312,7 @@ Friend.User = {
 		m.forceHTTP = true;
 		m.forceSend = true;
 		m.loginCall = true;
-		m.execute( 'login' );
+		m.execute( info.logintoken ? 'logintoken' : 'login' );
     },
 	// When session times out, use log in again...
 	ReLogin: function( callback )

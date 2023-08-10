@@ -268,10 +268,13 @@ if( isset( $args->command ) )
 			$f->RowType = 'LoginToken';
 			$f->UserID = $User->ID;
 			// Refresh token
-			if( isset( $args->args->logintoken ) )
+			if( isset( $args->logintoken ) )
 			{
-				$f->UniqueID = $args->args->logintoken;
-				$f->Load();
+				$f->UniqueID = $args->logintoken;
+				if( !$f->Load() )
+				{
+					die( 'fail' );
+				}
 			}
 			else
 			{
@@ -283,6 +286,10 @@ if( isset( $args->command ) )
 			$f->Save();
 			if( $f->ID > 0 )
 			{
+				if( isset( $args->logintoken ) )
+				{
+					die( $f->UniqueID );
+				}
 				die( 'ok<!--separate-->{"token":"' . $f->UniqueID . '"}' );
 			}
 			die( 'fail<!--separate-->' );

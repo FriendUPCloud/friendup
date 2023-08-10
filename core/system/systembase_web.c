@@ -387,7 +387,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 		HashmapElement *sst = GetHEReq( *request, "servertoken" ); // TODO: Only allow this on localhost!
 		HashmapElement *lot = GetHEReq( *request, "logintoken" );
 		
-		if( tst == NULL && ast == NULL && sst == NULL )
+		if( tst == NULL && ast == NULL && sst == NULL && lot == NULL )
 		{			
 			struct TagItem tags[] = {
 				{ HTTP_HEADER_CONTENT_TYPE,(FULONG)StringDuplicate( "text/html" ) },
@@ -747,12 +747,6 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 						{
 							sprintf( sessionid, "%s", loggedSession->us_SessionID );
 							
-							// Renew token
-							int datalen = 0;
-							char argsHere[ 256 ];
-							sprintf( argsHere, "sessionid=%s&command=getlogintoken&logintoken=%s", loggedSession->us_SessionID, ( char *)lot->hme_Data );
-							returnExtra = l->sl_PHPModule->Run( l->sl_PHPModule, "modules/system/module.php", argsHere, &datalen );
-
 							User *usr = UMUserGetByName( l->sl_UM, userName );
 							if( usr == NULL )
 							{
@@ -784,6 +778,38 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 			}
 		}
 		
+		// Use login session
+		if( loggedSession != NULL && lot != NULL )
+		{
+			// Renew token
+			int datalen = 0;
+			char argsHere[ 256 ];
+			sprintf( argsHere, "sessionid=%s&command=getlogintoken&logintoken=%s", loggedSession->us_SessionID, ( char *)lot->hme_Data );
+			returnExtra = l->sl_PHPModule->Run( l->sl_PHPModule, "modules/system/module.php", argsHere, &datalen );
+			
+			DEBUG( "Response: %s\n", returnExtra );
+			
+			char tmp[ 1024 ];
+			snprintf( tmp, sizeof(tmp),
+				"{\"result\":\"%d\",\"sessionid\":\"%s\",\"level\":\"%s\",\"userid\":\"%ld\",\"fullname\":\"%s\",\"loginid\":\"%s\",\"uniqueid\":\"%s\",\"extra\":\"%s\"}",
+				0, loggedSession->us_SessionID , loggedSession->us_User->u_IsAdmin ? "admin" : "user", loggedSession->us_User->u_ID, loggedSession->us_User->u_FullName,  loggedSession->us_SessionID, loggedSession->us_User->u_UUID, returnExtra != NULL ? returnExtra : "" );
+			DEBUG("---->[SysWebRequest] logincall logintoken answer: %s\n", tmp );
+			
+			if( returnExtra )
+				FFree( returnExtra );
+			
+			struct TagItem tags[] = {
+				{ HTTP_HEADER_CONTENT_TYPE,(FULONG)StringDuplicate( "text/html" ) },
+				{ HTTP_HEADER_CONNECTION,(FULONG)StringDuplicate( "close" ) },
+				{ TAG_DONE, TAG_DONE }
+			};
+			
+			response = HttpNewSimple( HTTP_200_OK, tags );
+			HttpAddTextContent( response, tmp );
+			if( sessionid )
+				FFree( sessionid );
+			return response;
+		}
 		
 		{
 			char *deviceid = NULL;
