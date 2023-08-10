@@ -1161,7 +1161,6 @@ Workspace = {
 						let m = new Module( 'system' );
 						m.onExecuted = function( e, d )
 						{
-							console.log( 'Here we have user settings: ', e, d );
 							let m = new Module( 'system' );
 							m.onExecuted = function( ee, dd )
 							{

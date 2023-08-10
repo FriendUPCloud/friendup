@@ -250,11 +250,33 @@ Friend.User = {
 					}
 				
 					// Remember login info for next login
-					// But removed for security
-					// TODO: Figure out a better way!
-					if( info.remember )
+					if( info.remember && info.username && info.password )
 					{
-						// Nothing
+						let hashed = ( 'HASHED' + Sha256.hash( info.password ) );
+						
+						let m = new XMLHttpRequest();
+						let args = JSON.stringify( { username: info.username, password: hashed } );
+						m.open( 'POST', '/system.library/module/?module=system&command=getlogintoken&args=' + encodeURIComponent( args ) + '&sessionid=' + Workspace.sessionId, true );
+						m.onload = function( response )
+						{
+							let spli = this.responseText.split( '<!--separate-->' );
+							if( spli.length > 0 )
+							{
+								if( spli[0] == 'ok' )
+								{
+									let res = JSON.parse( spli[1] );
+									if( res && res.token )
+									{
+										SetCookie( 'logintoken', res.token );
+									}
+								}
+							}
+						}
+						m.send();
+					}
+					else
+					{
+						console.log( '[Login] Not possible.' );
 					}
 				}
 				else

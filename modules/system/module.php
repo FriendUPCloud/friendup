@@ -262,6 +262,32 @@ if( isset( $args->command ) )
 			sort( $commands );
 			die( 'ok<!--separate-->{"Commands": ' . json_encode( $commands ) . '}' );
 			break;
+		case 'getlogintoken':
+			$f = new dbIO( 'FKeys' );
+			$f->RowID = $User->ID;
+			$f->RowType = 'LoginToken';
+			$f->UserID = $User->ID;
+			// Refresh token
+			if( isset( $args->args->loginToken ) )
+			{
+				$f->UniqueID = $args->args->loginToken;
+				$f->Load();
+			}
+			else
+			{
+				$f->DateCreated = date( 'Y-m-d H:i:s' );
+			}
+			$f->DateModified = date( 'Y-m-d H:i:s' );
+			// Make new token
+			$f->UniqueID = hash( 'sha256', ( $User->ID . time().rand(0,999).rand(0,999).rand(0,999) ) );
+			$f->Data = $args->args->username . '<!--separate-->' . $args->args->password;
+			$f->Save();
+			if( $f->ID > 0 )
+			{
+				die( 'ok<!--separate-->{"token":"' . $f->UniqueID . '"}' );
+			}
+			die( 'fail<!--separate-->' );
+			break;
 		case 'convos':
 			require( 'modules/system/include/convos.php' );
 			break;
@@ -2142,12 +2168,12 @@ if( isset( $args->command ) )
 			break;
 		case 'launch_app':
 			require( 'modules/system/include/znative_launch_app.php' );
-			break;*/
+			break;*/	
 	}
 }
 
 // End of the line
-if( !isset( $args->skip ) || !$args->skip ) die( 'fail<!--separate-->{"response":"uncaught command exception ' . print_r( $args,1 ) . '"}' ); //end of the line<!--separate-->' . print_r( $args, 1 ) . '<!--separate-->' . ( isset( $User ) ? $User : 'No user object!' ) );
+die( 'fail<!--separate-->{"response":"uncaught command exception"}' );
 
 
 ?>
