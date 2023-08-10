@@ -1505,7 +1505,6 @@ int HttpParsePartialRequest( Http* http, char* data, FQUAD length )
 					if( size > 0 )
 					{
 						http->http_ExpectBody = TRUE;
-						DEBUG("Size %ld\n", size );
 				
 						HttpReleaseContent( http );
 						
