@@ -789,8 +789,8 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 			
 			DEBUG( "Response: %s\n", returnExtra );
 			
-			char tmp[ 2048 ];
-			snprintf( tmp, sizeof( tmp ),
+			char tmp[ 1024 ];
+			snprintf( tmp, 1024,
 				"{\"result\":\"%d\",\"sessionid\":\"%s\",\"level\":\"%s\",\"userid\":\"%ld\",\"fullname\":\"%s\",\"loginid\":\"%s\",\"uniqueid\":\"%s\",\"extra\":\"%s\"}",
 				0, loggedSession->us_SessionID , loggedSession->us_User->u_IsAdmin ? "admin" : "user", loggedSession->us_User->u_ID, loggedSession->us_User->u_FullName,  loggedSession->us_SessionID, loggedSession->us_User->u_UUID, returnExtra != NULL ? returnExtra : "" );
 			DEBUG("---->[SysWebRequest] logincall logintoken answer: %s\n", tmp );
