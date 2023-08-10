@@ -514,13 +514,14 @@ class FUIContacts extends FUIElement
             let conts = self.domContacts.getElementsByClassName( self.getRowClass() );
             for( let a = 0; a < conts.length; a++ )
             {
-                if( conts[ a ].querySelector( '.Name' ).innerText.toLowerCase().indexOf( self.contactFilter ) >= 0 )
+            	let nam = conts[ a ].querySelector( '.Name' );
+                if( nam.innerText.toLowerCase().indexOf( self.contactFilter ) >= 0 )
                 {
-                    conts[ a ].parentNode.style.display = '';
+                    nam.parentNode.style.display = '';
                 }
                 else
                 {
-                    conts[ a ].parentNode.style.display = 'none';
+                    nam.parentNode.style.display = 'none';
                 }
             }
             self.busyRefreshing = false;
