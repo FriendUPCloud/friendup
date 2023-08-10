@@ -1537,7 +1537,8 @@ void *FriendCoreProcessSockNonBlock( void *fcv )
 				retryContentNotFull = 0;
 				DEBUG("[FriendCoreProcessSockNonBlock] received bytes: %d\n", res );
 				
-				int err = BufStringDiskAddSize( resultString, locBuffer, res );
+				// No error handling needed
+				BufStringDiskAddSize( resultString, locBuffer, res );
 				
 				if( headerFound == FALSE )
 				{
@@ -1546,7 +1547,7 @@ void *FriendCoreProcessSockNonBlock( void *fcv )
 					if(  headEnd != NULL )
 					{
 						// get length of header
-						headerLen = ((headEnd+4) - resultString->bsd_Buffer);
+						headerLen = ( headEnd + 4 ) - resultString->bsd_Buffer;
 						
 						char *conLen = strstr( resultString->bsd_Buffer, "Content-Length:" );
 						DEBUG("[FriendCoreProcessSockNonBlock] Pointer to conLen %p headerLen %d\n", conLen, headerLen );
