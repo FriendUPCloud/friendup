@@ -1013,7 +1013,7 @@ static inline int FriendCoreAcceptPhase3( int fd, FriendCoreInstance *fc )
 		if( bio != NULL )
 		{
 			DEBUG("[FriendCoreAcceptPhase3] Read buffer will be changed!\n");
-			BIO_set_read_buffer_size( bio, 81920 );
+			BIO_set_read_buffer_size( bio, 65536 );
 		}
 
 		srl = SSL_set_fd( s_Ssl, fd );
