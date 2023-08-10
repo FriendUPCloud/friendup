@@ -9,11 +9,12 @@
 *****************************************************************************©*/
 
 window.Convos = {
-	outgoing: [],
-	sounds: {}
+	outgoing: [], // Outgoing messages
+	sounds: {}, // Cached sounds
+	unseenMessages: {} // Count unseen messages
 };
 
-window.Sounds = {};
+window.Sounds = {}; // Built-in sounds
 Sounds.newMessage = new Audio('/themes/friendup13/sound/new_message.ogg');
 Sounds.sendMessage = new Audio( getImageUrl( 'Progdir:Assets/send.ogg' ) );
 

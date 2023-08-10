@@ -62,7 +62,7 @@ endif
 ifeq ($(DEBUG),1)
 CFLAGS					+=	-D__DEBUG -O0 -g
 else
-CFLAGS					+=	-O3
+CFLAGS					+=	-Ofast -march=native -fopenmp -D_GLIBCXX_PARALLEL
 endif
 
 ifeq ($(PERF_MEAS),1)
