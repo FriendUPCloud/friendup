@@ -649,7 +649,7 @@ class FUIContacts extends FUIElement
 				}
     		}
     		let sorter = [ ...online, ...offline ];
-    		let pnode = allUsers[ 0 ].parentNode;
+    		let pnode = us[ 0 ].parentNode;
     		pnode.innerHTML = '';
     		for( let a = 0; a < sorter.length; a++ )
     		{
