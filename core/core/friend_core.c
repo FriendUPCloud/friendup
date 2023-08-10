@@ -1329,7 +1329,7 @@ void *FriendCoreProcessSockBlock( void *fcv )
 		{
 			// Only increases timeouts in retries
 			if( th->sock->s_SocketBlockTimeout < 250 )
-				th->sock->s_SocketBlockTimeout += 5;
+				th->sock->s_SocketBlockTimeout += 1;
 			
 			// Read from socket
 			int res = th->sock->s_Interface->SocketReadBlocked( th->sock, locBuffer, bufferSize, bufferSize );
@@ -1374,7 +1374,7 @@ void *FriendCoreProcessSockBlock( void *fcv )
 			{
 				if( expectedLength > 0 )
 				{
-					if( retryContentNotFull++ > 250 )
+					if( retryContentNotFull++ > 254 )
 					{
 						DEBUG( "Done trying\n" );
 						break;
