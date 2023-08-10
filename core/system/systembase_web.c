@@ -787,16 +787,17 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 			sprintf( argsHere, "sessionid=%s&command=getlogintoken&logintoken=%s", loggedSession->us_SessionID, ( char *)lot->hme_Data );
 			returnExtra = l->sl_PHPModule->Run( l->sl_PHPModule, "modules/system/module.php", argsHere, &datalen );
 			
-			DEBUG( "Response: %s\n", returnExtra );
+			//DEBUG( "Response: %s\n", returnExtra );
 			
 			// Make sure we do it when we don't fail!
 			if( returnExtra[0] != 'f' && returnExtra[1] != 'a' && returnExtra[2] != 'i' )
 			{
-				char tmp[ 1024 ];
-				snprintf( tmp, 1024,
+				int len = 1024 + strlen( returnExtra );
+				char tmp[ len ];
+				snprintf( tmp, len,
 					"{\"result\":\"%d\",\"sessionid\":\"%s\",\"level\":\"%s\",\"userid\":\"%ld\",\"fullname\":\"%s\",\"loginid\":\"%s\",\"uniqueid\":\"%s\",\"extra\":\"%s\"}",
 					0, loggedSession->us_SessionID , loggedSession->us_User->u_IsAdmin ? "admin" : "user", loggedSession->us_User->u_ID, loggedSession->us_User->u_FullName, loggedSession->us_SessionID, loggedSession->us_User->u_UUID, returnExtra != NULL ? returnExtra : "" );
-				DEBUG("---->[SysWebRequest] logincall logintoken answer: %s\n", tmp );
+				//DEBUG("---->[SysWebRequest] logincall logintoken answer: %s\n", tmp );
 				
 				if( returnExtra )
 					FFree( returnExtra );
