@@ -21,12 +21,16 @@ Sounds.sendMessage = new Audio( getImageUrl( 'Progdir:Assets/send.ogg' ) );
 window.addEventListener( 'focus', function()
 {
 	Application.holdConnection( 'refresh' );
+	let cnts = FUI.getElementByUniqueId( 'contacts' );
+	if( cnts ) cnts.refreshDom();
 } );
 window.addEventListener( 'visibilitychange', function()
 {
 	if( document.visibilityState == 'visible' )
 	{
 		Application.holdConnection( 'refresh' );
+		let cnts = FUI.getElementByUniqueId( 'contacts' );
+		if( cnts ) cnts.refreshDom();
 	}
 } );
 
