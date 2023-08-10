@@ -633,22 +633,28 @@ class FUIContacts extends FUIElement
     		// Sort by online state
     		let online = [];
     		let offline = [];
-    		for( let a = 0; a < allUsers.length; a++ )
+    		for( let a = 0; a < us.length; a++ )
     		{
-    			if( allUsers[ a ].classList.contains( 'Online' ) )
+    			let usr = us[ a ].querySelector( '.User' );
+    			if( usr )
     			{
-    				online.push( allUsers[ a ] );
-    			}
-    			else
-    			{
-    				offline.push( allUsers[ a ] );
-    			}
+					if( usr.classList.contains( 'Online' ) )
+					{
+						online.push( us[ a ] );
+					}
+					else
+					{
+						offline.push( us[ a ] );
+					}
+				}
     		}
     		let sorter = [ ...online, ...offline ];
     		let pnode = allUsers[ 0 ].parentNode;
     		pnode.innerHTML = '';
     		for( let a = 0; a < sorter.length; a++ )
+    		{
     			pnode.appendChild( sorter[ a ] );
+    		}
     	}
     	m.execute( 'convos', { method: 'onlinestatus', users: pollUsers } );
     }
