@@ -1331,9 +1331,13 @@ void *FriendCoreProcessSockBlock( void *fcv )
 			// Only increases timeouts in retries
 			if( retryContentNotFull == 1 )
 			{
-				th->sock->s_SocketBlockTimeout = 100;
+				th->sock->s_SocketBlockTimeout = 25;
 			}
 			else if( retryContentNotFull > 1 )
+			{
+				th->sock->s_SocketBlockTimeout = 100;
+			}
+			else if( retryContentNotFull > 2 )
 			{
 				th->sock->s_SocketBlockTimeout = 250;
 			}
@@ -1346,8 +1350,8 @@ void *FriendCoreProcessSockBlock( void *fcv )
 				DEBUG("[FriendCoreProcessSockBlock] received bytes: %d, current buffer size: %lu\n", res, resultString->bsd_Size );
 				
 				// add received string to buffer.
-				// If 
-				int err = BufStringDiskAddSize( resultString, locBuffer, res );
+				// (no error handling here)
+				BufStringDiskAddSize( resultString, locBuffer, res );
 
 				if( headerFound == FALSE )
 				{
@@ -1356,7 +1360,7 @@ void *FriendCoreProcessSockBlock( void *fcv )
 					if(  headEnd != NULL )
 					{
 						// get length of header
-						headerLen = ((headEnd+4) - resultString->bsd_Buffer);
+						headerLen = ( headEnd + 4 ) - resultString->bsd_Buffer;
 						
 						char *conLen = strstr( resultString->bsd_Buffer, "Content-Length:" );
 						DEBUG("[FriendCoreProcessSockBlock] Pointer to conLen %p headerLen %d\n", conLen, headerLen );
