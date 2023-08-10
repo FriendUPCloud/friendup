@@ -556,11 +556,12 @@ class FUIContacts extends FUIElement
                     }
                     self.domContacts.classList.remove( 'NoContacts' );
                 }
-                else
+                else if( me == 'fail' )
                 {
                 	self.domContacts.classList.add( 'NoContacts' );
                 	self.showNoContactsMenu();
                 }
+                
                 self.busyRefreshing = false;
                 
                 if( self.queuedClick )
