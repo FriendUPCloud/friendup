@@ -279,6 +279,9 @@ if( isset( $args->command ) )
 			else
 			{
 				$f->DateCreated = date( 'Y-m-d H:i:s' );
+				
+				// Delete old tokens (housekeeping)
+				$SqlDatabase->query( 'DELETE FROM `FKeys` WHERE UserID=\'' . $User->ID . '\' AND DateModified < NOW() - INTERVAL 8 DAY' );
 			}
 			$f->DateModified = date( 'Y-m-d H:i:s' );
 			// Make new token
