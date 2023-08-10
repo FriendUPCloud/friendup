@@ -1331,11 +1331,11 @@ void *FriendCoreProcessSockBlock( void *fcv )
 			// Only increases timeouts in retries
 			if( retryContentNotFull == 1 )
 			{
-				th->sock->s_SocketBlockTimeout = 25;
+				th->sock->s_SocketBlockTimeout = 100;
 			}
 			else if( retryContentNotFull == 2 )
 			{
-				th->sock->s_SocketBlockTimeout = 100;
+				th->sock->s_SocketBlockTimeout = 250;
 			}
 			else if( retryContentNotFull > 2 )
 			{
