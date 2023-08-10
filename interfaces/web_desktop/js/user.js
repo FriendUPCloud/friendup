@@ -197,7 +197,6 @@ Friend.User = {
 		}
 		else if( info.logintoken )
 		{
-			console.log( 'fop' );
 			m.addVar( 'logintoken', info.logintoken );
 		}
 		else
