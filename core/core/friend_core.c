@@ -1328,18 +1328,8 @@ void *FriendCoreProcessSockBlock( void *fcv )
 		while( TRUE )
 		{
 			// Only increases timeouts in retries
-			if( retryContentNotFull == 1 )
-			{
-				th->sock->s_SocketBlockTimeout = 25;
-			}
-			else if( retryContentNotFull == 2 )
-			{
-				th->sock->s_SocketBlockTimeout = 100;
-			}
-			else if( retryContentNotFull > 5 )
-			{
-				th->sock->s_SocketBlockTimeout = 250;
-			}
+			if( th->sock->s_SocketBlockTimeout < 250 )
+				th->sock->s_SocketBlockTimeout += 25;
 			
 			// Read from socket
 			int res = th->sock->s_Interface->SocketReadBlocked( th->sock, locBuffer, bufferSize, bufferSize );
