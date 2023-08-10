@@ -1329,7 +1329,7 @@ void *FriendCoreProcessSockBlock( void *fcv )
 		{
 			// Only increases timeouts in retries
 			if( th->sock->s_SocketBlockTimeout < 250 )
-				th->sock->s_SocketBlockTimeout += 25;
+				th->sock->s_SocketBlockTimeout += 5;
 			
 			// Read from socket
 			int res = th->sock->s_Interface->SocketReadBlocked( th->sock, locBuffer, bufferSize, bufferSize );
