@@ -1291,7 +1291,7 @@ void *FriendCoreProcessSockBlock( void *fcv )
 	lfds.fd = th->sock->fd;// STDIN_FILENO;
 	lfds.events = POLLIN;
 
-	int err = poll( &lfds, 1, 250 );
+	int err = poll( &lfds, 1, 500 );
 	if( err <= 0 )
 	{
 		if( err == 0 )
@@ -1327,13 +1327,16 @@ void *FriendCoreProcessSockBlock( void *fcv )
 		
 		while( TRUE )
 		{
-			DEBUG( "Waiting!!\n" );
 			// Only increases timeouts in retries
 			if( retryContentNotFull == 1 )
 			{
+				th->sock->s_SocketBlockTimeout = 25;
+			}
+			else if( retryContentNotFull == 2 )
+			{
 				th->sock->s_SocketBlockTimeout = 100;
 			}
-			else if( retryContentNotFull > 1 )
+			else if( retryContentNotFull > 5 )
 			{
 				th->sock->s_SocketBlockTimeout = 250;
 			}
