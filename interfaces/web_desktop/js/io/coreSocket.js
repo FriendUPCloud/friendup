@@ -897,12 +897,10 @@ FriendWebSocket.prototype.handlePong = function( timeSent )
 	
 	// We are receiving pong
 	if( self.keepAliveState != 'setsession' )
-	
-	self.keepAliveState = 'pong';
+		self.keepAliveState = 'pong';
 	
 	// We're ready with pong!
-	//if( this.pongCount++ >= 2 )
-		self.setReady();
+	self.setReady();
 	
 	if( Friend.User )
 	{
