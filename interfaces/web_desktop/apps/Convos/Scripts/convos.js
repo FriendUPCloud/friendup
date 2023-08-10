@@ -20,17 +20,25 @@ Sounds.sendMessage = new Audio( getImageUrl( 'Progdir:Assets/send.ogg' ) );
 // Some events, like refresh and visibility change, ought to refresh messages
 window.addEventListener( 'focus', function()
 {
-	Application.holdConnection( 'refresh' );
-	let cnts = FUI.getElementByUniqueId( 'contacts' );
-	if( cnts ) cnts.refreshDom();
+	if( Convos.focusTimeo ) clearTimeout( Convos.focusTimeo );
+	Convos.focusTimeo = setTimeout( function()
+	{
+		Application.holdConnection( 'refresh' );
+		let cnts = FUI.getElementByUniqueId( 'contacts' );
+		if( cnts ) cnts.refreshDom();
+	}, 25 );
 } );
 window.addEventListener( 'visibilitychange', function()
 {
 	if( document.visibilityState == 'visible' )
 	{
-		Application.holdConnection( 'refresh' );
-		let cnts = FUI.getElementByUniqueId( 'contacts' );
-		if( cnts ) cnts.refreshDom();
+		if( Convos.focusTimeo ) clearTimeout( Convos.focusTimeo );
+		Convos.focusTimeo = setTimeout( function()
+		{
+			Application.holdConnection( 'refresh' );
+			let cnts = FUI.getElementByUniqueId( 'contacts' );
+			if( cnts ) cnts.refreshDom();
+		}, 25 );
 	}
 } );
 
