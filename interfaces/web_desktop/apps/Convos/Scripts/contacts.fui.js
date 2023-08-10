@@ -579,13 +579,17 @@ class FUIContacts extends FUIElement
     	let self = this;
     	let us = this.userList;
     	let pollUsers = [];
+    	let allUsers = [];
     	for( let a in us )
     	{
     		let users = us[ a ].getElementsByClassName( 'User' );
     		for( let b = 0; b < users.length; b++ )
     		{
     			if( users[ b ].record )
+    			{
     				pollUsers.push( users[ b ].record.ID );
+    				allUsers.push( users[ b ] );
+    			}
     		}
     	}
     	let m = new Module( 'system' );
@@ -619,6 +623,25 @@ class FUIContacts extends FUIElement
 					if( found ) break;
     			}
     		}
+    		// Sort by online state
+    		let online = [];
+    		let offline = [];
+    		for( let a = 0; a < allUsers.length; a++ )
+    		{
+    			if( allUsers[ a ].classList.contains( 'Online' ) )
+    			{
+    				online.push( allUsers[ a ] );
+    			}
+    			else
+    			{
+    				offline.push( allUsers[ a ] );
+    			}
+    		}
+    		let sorter = [ ...online, ...offline ];
+    		let pnode = allUsers[ 0 ].parentNode;
+    		pnode.innerHTML = '';
+    		for( let a = 0; a < sorter.length; a++ )
+    			pnode.appendChild( sorter[ a ] );
     	}
     	m.execute( 'convos', { method: 'onlinestatus', users: pollUsers } );
     }
