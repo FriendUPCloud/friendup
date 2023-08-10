@@ -1701,7 +1701,7 @@ static inline void FriendCoreSelect( FriendCoreInstance* fc )
 		
 		DEBUG("[FriendCoreSelect] Before select, maxd %d  pipe %d socket %d\n", maxd, fc->fci_ReadCorePipe, fc->fci_Sockets->fd );
 		
-		int activity = select( maxd+1, &readfds, NULL, NULL, NULL );
+		int activity = select( maxd + 1, &readfds, NULL, NULL, NULL );
 		
 		DEBUG("[FriendCoreSelect] After select\n");
 		
@@ -1714,7 +1714,7 @@ static inline void FriendCoreSelect( FriendCoreInstance* fc )
 		{
 			DEBUG("[FriendCoreSelect] Received from PIPE\n");
 			// read all bytes from read end of pipe
-			char ch;
+			char ch = '\0';
 			int result = 1;
 			
 			DEBUG("[FriendCoreSelect] FC Read from pipe!\n");
