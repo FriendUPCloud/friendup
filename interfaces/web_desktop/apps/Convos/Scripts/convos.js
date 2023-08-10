@@ -160,14 +160,13 @@ Application.receiveMessage = function( msg )
     	// Receiving an invite
     	if( msg.type == 'invite' )
     	{
+    		console.log( 'OK invite' );
     		let overview = FUI.getElementByUniqueId( 'convos' );
+    		overview.getEvents();
     		Notify( {
     			title: i18n( 'i18n_you_got_an_invite' ),
     			text: i18n( 'i18n_please_check_your_messages' )
-			}, false, function( e )
-			{
-				overview.initHome();
-			} );
+			}, false, null );
     	}
     	// Accepting an invite
     	else if( msg.type == 'accept-invite' )
@@ -456,10 +455,11 @@ Application.holdConnection = function( flags )
 }
 
 // Things to do on interval
+let overviewIntr = 0;
 setInterval( function()
 {
 	let conts = FUI.getElementByUniqueId( 'contacts' );
-	if( !conts ) return;
-	conts.checkOnlineState();
+	if( conts )
+		conts.checkOnlineState();
 }, 15000 );
 

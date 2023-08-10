@@ -135,6 +135,8 @@ class FUIChatoverview extends FUIElement
     getEvents()
     {
     	let self = this;
+    	self.domEvents.innerHTML = '';
+    	self.domEvents.classList.remove( 'HasEvents' );
     	let ev = new Module( 'system' );
 		ev.onExecuted = function( me, md )
 		{
@@ -143,6 +145,7 @@ class FUIChatoverview extends FUIElement
 				let j = JSON.parse( md );
 				
 				let cnt = self.domEvents;
+				let count = 0;
 				
 				for( let a = 0; a < j.length; a++ )
 				{
@@ -183,7 +186,7 @@ class FUIChatoverview extends FUIElement
 						b.onclick = function()
 						{
 							let m = new Module( 'system' );
-							m.onExecuted = function( ne, nd ){ self.renderOverview(); self.redrawChannels(); }
+							m.onExecuted = function( ne, nd ){ self.renderOverview(); self.redrawChannels(); self.getEvents(); }
 							m.execute( 'convos', { 
 								method: 'accept-invite', 
 								inviteId: this.parentNode.getAttribute( 'iid' ) 
@@ -192,7 +195,7 @@ class FUIChatoverview extends FUIElement
 						c.onclick = function()
 						{
 							let m = new Module( 'system' );
-							m.onExecuted = function( ne, nd ){ self.renderOverview(); self.redrawChannels(); }
+							m.onExecuted = function( ne, nd ){ self.getEvents(); }
 							m.execute( 'convos', { 
 								method: 'reject-invite', 
 								inviteId: this.parentNode.getAttribute( 'iid' ) 
@@ -201,6 +204,17 @@ class FUIChatoverview extends FUIElement
 					} )( t );
 					
 					cnt.appendChild( d );
+					
+					count++;
+				}
+				
+				if( count > 0 )
+				{
+					self.domEvents.classList.add( 'HasEvents' );
+				}
+				else
+				{
+					self.domEvents.classList.remove( 'HasEvents' );
 				}
 			}
 			self.handleResize();
