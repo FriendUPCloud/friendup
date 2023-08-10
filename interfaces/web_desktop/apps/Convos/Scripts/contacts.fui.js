@@ -506,7 +506,13 @@ class FUIContacts extends FUIElement
         
         if( !this.initialized ) return;
         
-        if( self.busyRefreshing ) return false;
+        if( self.busyRefreshing )
+        {
+        	if( this.refreshTimeo )
+        		clearTimeout( this.refreshTimeo );
+        	this.refreshTimeo = setTimeout( function(){ self.refreshDom( evaluated ); }, 100 );
+        	return;
+        }
         self.busyRefreshing = true;
         
         if( self.contactFilter != '' )
