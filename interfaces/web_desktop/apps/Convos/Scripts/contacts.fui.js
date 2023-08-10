@@ -523,11 +523,11 @@ class FUIContacts extends FUIElement
             	let nam = conts[ a ].querySelector( '.Name' );
                 if( nam.innerText.toLowerCase().indexOf( self.contactFilter ) >= 0 )
                 {
-                    nam.parentNode.style.display = '';
+                    nam.parentNode.parentNode.style.display = '';
                 }
                 else
                 {
-                    nam.parentNode.style.display = 'none';
+                    nam.parentNode.parentNode.style.display = 'none';
                 }
             }
             self.busyRefreshing = false;
