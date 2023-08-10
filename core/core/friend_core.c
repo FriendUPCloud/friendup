@@ -1374,7 +1374,7 @@ void *FriendCoreProcessSockBlock( void *fcv )
 			{
 				if( expectedLength > 0 )
 				{
-					if( retryContentNotFull++ > 500 )
+					if( retryContentNotFull++ > 250 )
 					{
 						DEBUG( "Done trying\n" );
 						break;
