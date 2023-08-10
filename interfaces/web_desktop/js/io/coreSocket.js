@@ -850,6 +850,8 @@ FriendWebSocket.prototype.sendPing = function( msg )
 		self.pingCheck = null;
 	}
 	
+	console.log( 'Sending PING' );
+	
 	self.sendCon( ping );
 	
 	// We are sending ping
