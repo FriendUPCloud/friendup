@@ -984,7 +984,7 @@ if( isset( $args->args ) )
                     	' . $groupContacts . '
                         f.OwnerUserID = \'' . $User->ID . '\'' . $filterB . '
                 )
-                ORDER BY LoginTime DESC, Fullname ASC
+                ORDER BY LastActionTime DESC, LoginTime DESC, Fullname ASC
             ' );
             if( $rows && count( $rows ) > 0 )
             {
