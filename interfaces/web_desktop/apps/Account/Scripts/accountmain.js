@@ -1746,7 +1746,7 @@ function getStorage()
 				if( js[a].Type == 'SQLWorkgroupDrive' && userLevel != 'admin')
 					str += '<div title="' + js[a].Name + '" class="FloatLeft Disk MousePointer NonEditableDisk ' + js[a].Type + '" onclick="Notify({\'title\':\''+ i18n('i18n_account') + '\',\'text\':\'' + i18n('i18n_admin_managed_drive') + '\'})"><div class="Label Ellipsis">' + js[a].Name + '</div></div>';
 				else if( js[a].Mounted != '0' )
-					str += '<div class="FloatLeft Disk MousePointer ' + js[a].Type + '" onclick="editStorage(\'' + js[a].Name + '\', false, \'mounted\' )"><div class="Label Ellipsis">' + js[a].Name + '</div></div>';
+					str += '<div title="' + js[a].Name + '" class="FloatLeft Disk MousePointer ' + js[a].Type + '" onclick="editStorage(\'' + js[a].Name + '\', false, \'mounted\' )"><div class="Label Ellipsis">' + js[a].Name + '</div></div>';
 			}
 			str += '<div onclick="addStorage()" class="MousePointer FloatLeft BigButton IconSmall fa-plus"><div class="Label Ellipsis">' + i18n( 'i18n_add_storage' ) + '</div></div>';
 			ge( 'StorageList' ).innerHTML = str;
