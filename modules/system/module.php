@@ -268,9 +268,9 @@ if( isset( $args->command ) )
 			$f->RowType = 'LoginToken';
 			$f->UserID = $User->ID;
 			// Refresh token
-			if( isset( $args->args->loginToken ) )
+			if( isset( $args->args->logintoken ) )
 			{
-				$f->UniqueID = $args->args->loginToken;
+				$f->UniqueID = $args->args->logintoken;
 				$f->Load();
 			}
 			else
@@ -280,7 +280,6 @@ if( isset( $args->command ) )
 			$f->DateModified = date( 'Y-m-d H:i:s' );
 			// Make new token
 			$f->UniqueID = hash( 'sha256', ( $User->ID . time().rand(0,999).rand(0,999).rand(0,999) ) );
-			$f->Data = $args->args->username . '<!--separate-->' . $args->args->password;
 			$f->Save();
 			if( $f->ID > 0 )
 			{

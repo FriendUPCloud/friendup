@@ -95,6 +95,14 @@ Friend.User = {
 		
 		return 0;
     },
+    // Use login token
+    LoginWithLoginToken: function( loginToken, callback )
+    {
+    	this.State = 'login';
+    	this.SendLoginCall( {
+			logintoken: loginToken
+		}, callback );
+    },
     // Login using a session id
     LoginWithSessionId: function( sessionid, callback, event )
     {
@@ -187,6 +195,11 @@ Friend.User = {
 		{
 			m.addVar( 'sessionid', info.sessionid );
 		}
+		else if( info.logintoken )
+		{
+			console.log( 'fop' );
+			m.addVar( 'logintoken', info.logintoken );
+		}
 		else
 		{
 			this.State = 'offline'; 
@@ -198,6 +211,7 @@ Friend.User = {
 		m.onExecuted = function( json, serveranswer )
 		{
 			Friend.User.lastLogin = null;
+			console.log( 'Res: ', json, serveranswer );
 			// We got a real error
 			if( json == null )
 			{

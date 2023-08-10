@@ -350,6 +350,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 	
 	char *sessionid = FCalloc( DEFAULT_SESSION_ID_SIZE + 16, sizeof(char) );
 	char userName[ 256 ];
+	char *returnExtra = NULL;
 	//char sessionid[ DEFAULT_SESSION_ID_SIZE ];
 	//sessionid[ 0 ] = 0;
     
@@ -384,6 +385,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 		HashmapElement *tst = GetHEReq( *request, "sessionid" );
 		HashmapElement *ast = GetHEReq( *request, "authid" );
 		HashmapElement *sst = GetHEReq( *request, "servertoken" ); // TODO: Only allow this on localhost!
+		HashmapElement *lot = GetHEReq( *request, "logintoken" );
 		
 		if( tst == NULL && ast == NULL && sst == NULL )
 		{			
@@ -400,7 +402,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 			char buffer[ 256 ];
 			snprintf( buffer, sizeof( buffer ), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_SESSIONID_AUTH_MISSING] , DICT_SESSIONID_AUTH_MISSING );
 			HttpAddTextContent( response, buffer );
-			FERROR( "login function miss parameter sessionid or authid\n" );
+			FERROR( "login function missing parameter sessionid or authid\n" );
 			FFree( sessionid );
 			return response;
 		}
@@ -660,6 +662,96 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 						if( loggedSession != NULL )
 						{
 							sprintf( sessionid, "%s", loggedSession->us_SessionID );
+
+							User *usr = UMUserGetByName( l->sl_UM, userName );
+							if( usr == NULL )
+							{
+								usr = UMUserGetByNameDB( l->sl_UM, userName );
+								if( usr != NULL )
+								{
+									UMAddUser( l->sl_UM, usr );
+									UserAddSession( usr, loggedSession );
+								}
+							}
+							else
+							{
+								UserAddSession( usr, loggedSession );
+							}
+
+							if( usr && usr->u_ID )
+							{
+							    loggedSession->us_UserID = usr->u_ID;
+							    loggedSession->us_LastActionTime = time( NULL );
+							    
+							    UGMAssignGroupToUser( l->sl_UGM, usr );
+							    
+							    USMSessionSaveDB( l->sl_USM, loggedSession );
+							    USMUserSessionAddToList( l->sl_USM, loggedSession );
+					        }
+						}
+					}
+				}
+			}
+		}
+		// Login by self-refreshing login token
+		else if( lot )
+		{
+			//
+			// check if request came from WebSockets
+			//
+			
+			DEBUG("LoginToken received\n");
+			
+			if( loggedSession == NULL )
+			{
+				SQLLibrary *sqllib = l->LibrarySQLGet( l );
+
+				// Get authid from mysql
+				if( sqllib != NULL )
+				{
+					char qery[ 1024 ];
+					FULONG uid = 0;
+
+					// TODO: Remove need for existing SessionID (instead generate it if it does not exist)!
+					sqllib->SNPrintF( sqllib, qery, sizeof(qery), "SELECT u.ID, u.Name, k.UniqueID FROM FKeys k, FUser u left outer join FUserSession us on u.ID=us.UserID WHERE k.UserID = u.ID AND k.UniqueID=\"%s\" LIMIT 1", ( char *)lot->hme_Data );
+					
+					void *res = sqllib->Query( sqllib, qery );
+					if( res != NULL )
+					{
+						char **row;
+						if( ( row = sqllib->FetchRow( sqllib, res ) ) )
+						{
+							if( row[ 0 ] != NULL )
+							{
+								char *next;
+								if( row[ 0 ] != NULL )
+								{
+									uid = strtol ( (char *) row[ 0 ], &next, 0);
+								}
+							}
+							
+							if( row[ 1 ] != NULL )
+							{
+								snprintf( userName, 256, "%s", row[ 1 ] );
+							}
+						}
+						sqllib->FreeResult( sqllib, res );
+					}
+					l->LibrarySQLDrop( l, sqllib );
+					
+					loggedSession = USMGetSessionByUserID( l->sl_USM, uid );
+					if( loggedSession == NULL && userName[ 0 ] != 0 )	// only if user exist and it has servertoken
+					{
+						loggedSession = UserSessionNew( NULL, "servertoken", l->fcm->fcm_ID );
+						if( loggedSession != NULL )
+						{
+							sprintf( sessionid, "%s", loggedSession->us_SessionID );
+							
+							// Renew token
+							int datalen = 0;
+							char argsHere[ 256 ];
+							sprintf( argsHere, "sessionid=%s&command=getlogintoken&logintoken=%s", loggedSession->us_SessionID, ( char *)lot->hme_Data );
+							returnExtra = l->sl_PHPModule->Run( l->sl_PHPModule, "modules/system/module.php", argsHere, &datalen );
 
 							User *usr = UMUserGetByName( l->sl_UM, userName );
 							if( usr == NULL )
@@ -2081,8 +2173,8 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 					else
 					{
 						snprintf( tmp, sizeof(tmp),
-						"{\"result\":\"%d\",\"sessionid\":\"%s\",\"level\":\"%s\",\"userid\":\"%ld\",\"fullname\":\"%s\",\"loginid\":\"%s\",\"uniqueid\":\"%s\"}",
-						0, loggedSession->us_SessionID , loggedSession->us_User->u_IsAdmin ? "admin" : "user", loggedSession->us_User->u_ID, loggedSession->us_User->u_FullName,  loggedSession->us_SessionID, loggedSession->us_User->u_UUID );
+						"{\"result\":\"%d\",\"sessionid\":\"%s\",\"level\":\"%s\",\"userid\":\"%ld\",\"fullname\":\"%s\",\"loginid\":\"%s\",\"uniqueid\":\"%s\",\"extra\":\"%s\"}",
+						0, loggedSession->us_SessionID , loggedSession->us_User->u_IsAdmin ? "admin" : "user", loggedSession->us_User->u_ID, loggedSession->us_User->u_FullName,  loggedSession->us_SessionID, loggedSession->us_User->u_UUID, returnExtra != NULL ? returnExtra : "" );
 					}
 				}
 				else
@@ -2381,8 +2473,8 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 									else
 									{
 										snprintf( tmp, sizeof(tmp) ,
-											"{\"result\":\"%d\",\"sessionid\":\"%s\",\"level\":\"%s\",\"userid\":\"%ld\",\"fullname\":\"%s\",\"loginid\":\"%s\",\"username\":\"%s\",\"uniqueid\":\"%s\"}",
-											loggedUser->u_Error, loggedSession->us_SessionID , loggedSession->us_User->u_IsAdmin ? "admin" : "user", loggedUser->u_ID, loggedUser->u_FullName,  loggedSession->us_SessionID, loggedSession->us_User->u_Name, loggedSession->us_User->u_UUID );	// check user.library to display errors
+											"{\"result\":\"%d\",\"sessionid\":\"%s\",\"level\":\"%s\",\"userid\":\"%ld\",\"fullname\":\"%s\",\"loginid\":\"%s\",\"username\":\"%s\",\"uniqueid\":\"%s\",\"extra\":\"%s\"}",
+											loggedUser->u_Error, loggedSession->us_SessionID , loggedSession->us_User->u_IsAdmin ? "admin" : "user", loggedUser->u_ID, loggedUser->u_FullName,  loggedSession->us_SessionID, loggedSession->us_User->u_Name, loggedSession->us_User->u_UUID, returnExtra != NULL ? returnExtra : "" );	// check user.library to display errors
 									}
 								}
 								else
@@ -2472,6 +2564,11 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 			if( deviceid != NULL )
 			{
 				FFree( deviceid );
+			}
+			
+			if( returnExtra != NULL )
+			{
+				FFree( returnExtra );
 			}
 			
 			if( usrname != NULL )

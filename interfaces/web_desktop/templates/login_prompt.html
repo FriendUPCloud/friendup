@@ -284,6 +284,11 @@
 				document.getElementById('LoginElement').style.visibility = 'visible';
 				document.getElementById('Username').focus();
 			}
+			let tk = parent.GetCookie( 'logintoken' );
+			if( tk )
+			{
+				parent.Friend.User.LoginWithLoginToken( tk );
+			}
 		</script>
 	</body>
 </html>
