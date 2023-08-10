@@ -788,57 +788,31 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 			returnExtra = l->sl_PHPModule->Run( l->sl_PHPModule, "modules/system/module.php", argsHere, &datalen );
 			
 			DEBUG( "Response: %s\n", returnExtra );
-			int test = 0;
-			if( loggedSession->us_SessionID )
-			{
-				test = 1;
-			}
-			else if( loggedSession->us_User->u_IsAdmin )
-			{
-				test = 1;
-			}
-			else if( loggedSession->us_User->u_ID )
-			{
-				test = 1;
-			}
-			else if( loggedSession->us_User->u_FullName )
-			{
-				test = 1;
-			}
-			else if( loggedSession->us_SessionID )
-			{
-				test = 1;
-			}
-			else if( loggedSession->us_User->u_UUID )
-			{
-				test = 1;
-			}
-			else if( returnExtra )
-			{
-				test = 1;
-			}
 			
-			DEBUG( "Crashy: %s\n", returnExtra != NULL ? returnExtra : "" );
-			char tmp[ 1024 ];
-			snprintf( tmp, 1024,
-				"{\"result\":\"%d\",\"sessionid\":\"%s\",\"level\":\"%s\",\"userid\":\"%ld\",\"fullname\":\"%s\",\"loginid\":\"%s\",\"uniqueid\":\"%s\",\"extra\":\"%s\"}",
-				0, loggedSession->us_SessionID , loggedSession->us_User->u_IsAdmin ? "admin" : "user", loggedSession->us_User->u_ID, loggedSession->us_User->u_FullName, loggedSession->us_SessionID, loggedSession->us_User->u_UUID, returnExtra != NULL ? returnExtra : "" );
-			DEBUG("---->[SysWebRequest] logincall logintoken answer: %s\n", tmp );
-			
-			if( returnExtra )
-				FFree( returnExtra );
-			
-			struct TagItem tags[] = {
-				{ HTTP_HEADER_CONTENT_TYPE,(FULONG)StringDuplicate( "text/html" ) },
-				{ HTTP_HEADER_CONNECTION,(FULONG)StringDuplicate( "close" ) },
-				{ TAG_DONE, TAG_DONE }
-			};
-			
-			response = HttpNewSimple( HTTP_200_OK, tags );
-			HttpAddTextContent( response, tmp );
-			if( sessionid )
-				FFree( sessionid );
-			return response;
+			// Make sure we do it when we don't fail!
+			if( returnExtra[0] != "f" && returnExtra[1] != "a" && returnExtra[2] != "i" )
+			{
+				char tmp[ 1024 ];
+				snprintf( tmp, 1024,
+					"{\"result\":\"%d\",\"sessionid\":\"%s\",\"level\":\"%s\",\"userid\":\"%ld\",\"fullname\":\"%s\",\"loginid\":\"%s\",\"uniqueid\":\"%s\",\"extra\":\"%s\"}",
+					0, loggedSession->us_SessionID , loggedSession->us_User->u_IsAdmin ? "admin" : "user", loggedSession->us_User->u_ID, loggedSession->us_User->u_FullName, loggedSession->us_SessionID, loggedSession->us_User->u_UUID, returnExtra != NULL ? returnExtra : "" );
+				DEBUG("---->[SysWebRequest] logincall logintoken answer: %s\n", tmp );
+				
+				if( returnExtra )
+					FFree( returnExtra );
+				
+				struct TagItem tags[] = {
+					{ HTTP_HEADER_CONTENT_TYPE,(FULONG)StringDuplicate( "text/html" ) },
+					{ HTTP_HEADER_CONNECTION,(FULONG)StringDuplicate( "close" ) },
+					{ TAG_DONE, TAG_DONE }
+				};
+				
+				response = HttpNewSimple( HTTP_200_OK, tags );
+				HttpAddTextContent( response, tmp );
+				if( sessionid )
+					FFree( sessionid );
+				return response;
+			}
 		}
 		
 		{
