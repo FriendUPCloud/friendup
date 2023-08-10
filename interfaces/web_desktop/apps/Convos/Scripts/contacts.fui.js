@@ -633,7 +633,7 @@ class FUIContacts extends FUIElement
     		// Sort by online state
     		let online = [];
     		let offline = [];
-    		for( let a = 0; a < us.length; a++ )
+    		for( let a in us )
     		{
     			let usr = us[ a ].querySelector( '.User' );
     			if( usr )
