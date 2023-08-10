@@ -1374,7 +1374,7 @@ void *FriendCoreProcessSockBlock( void *fcv )
 			{
 				if( expectedLength > 0 )
 				{
-					if( retryContentNotFull++ > 254 ) // after getting to 250 delay, wait 4 times (250+4)
+					if( retryContentNotFull++ > 500 ) // Keep it going
 					{
 						DEBUG( "Done trying\n" );
 						break;
