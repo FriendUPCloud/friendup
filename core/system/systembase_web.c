@@ -787,8 +787,6 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 			sprintf( argsHere, "sessionid=%s&command=getlogintoken&logintoken=%s", loggedSession->us_SessionID, ( char *)lot->hme_Data );
 			returnExtra = l->sl_PHPModule->Run( l->sl_PHPModule, "modules/system/module.php", argsHere, &datalen );
 			
-			//DEBUG( "Response: %s\n", returnExtra );
-			
 			// Make sure we do it when we don't fail!
 			if( returnExtra[0] != 'f' && returnExtra[1] != 'a' && returnExtra[2] != 'i' )
 			{
@@ -813,6 +811,10 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 				if( sessionid )
 					FFree( sessionid );
 				return response;
+			}
+			else
+			{
+				DEBUG( "Failed logintoken response: %s\n", returnExtra );
 			}
 		}
 		
