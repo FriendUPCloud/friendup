@@ -790,9 +790,8 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 			DEBUG( "Response: %s\n", returnExtra );
 			
 			// Make sure we do it when we don't fail!
-			if( returnExtra[2] != "i" )
+			if( returnExtra[0] != 'f' && returnExtra[1] != 'a' && returnExtra[2] != 'i' )
 			{
-				DEBUG( "What is it: %c%c%c\n", returnExtra[0], returnExtra[1], returnExtra[2] );
 				char tmp[ 1024 ];
 				snprintf( tmp, 1024,
 					"{\"result\":\"%d\",\"sessionid\":\"%s\",\"level\":\"%s\",\"userid\":\"%ld\",\"fullname\":\"%s\",\"loginid\":\"%s\",\"uniqueid\":\"%s\",\"extra\":\"%s\"}",
