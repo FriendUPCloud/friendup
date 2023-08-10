@@ -1333,11 +1333,7 @@ void *FriendCoreProcessSockBlock( void *fcv )
 			{
 				th->sock->s_SocketBlockTimeout = 100;
 			}
-			else if( retryContentNotFull == 2 )
-			{
-				th->sock->s_SocketBlockTimeout = 250;
-			}
-			else if( retryContentNotFull > 2 )
+			else if( retryContentNotFull > 1 )
 			{
 				th->sock->s_SocketBlockTimeout = 250;
 			}
