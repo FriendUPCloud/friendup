@@ -782,7 +782,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 		if( loggedSession != NULL && lot != NULL )
 		{
 			// Renew token
-			int datalen = 0;
+			long unsigned int datalen = 0;
 			char argsHere[ 256 ];
 			sprintf( argsHere, "sessionid=%s&command=getlogintoken&logintoken=%s", loggedSession->us_SessionID, ( char *)lot->hme_Data );
 			returnExtra = l->sl_PHPModule->Run( l->sl_PHPModule, "modules/system/module.php", argsHere, &datalen );
@@ -2085,7 +2085,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 					USMSessionSaveDB( l->sl_USM, us );
 				}
 
-				DEBUG("ADMINADMIN: %d\n", IS_SESSION_ADMIN( loggedSession ) );
+				//DEBUG("ADMINADMIN: %d\n", IS_SESSION_ADMIN( loggedSession ) );
 				
 				if( us != NULL )
 				{
