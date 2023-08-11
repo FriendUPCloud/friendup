@@ -30,6 +30,7 @@ self.addEventListener( 'notificationclick', event => {
 		event.notification.close();
 		const data = event.data?.json() ?? {};
 		let test = encodeURIComponent( event.data );
+		console.log( 'Data: ', data, 'Event: ', event, 'Test: ', test );
 		event.waitUntil( clients.openWindow( data && data.url ? data.url : 'https://intranet.friendup.cloud/webclient/index.html?fallback=true&webpush=' + test ) );
 	}
 	catch( e )
