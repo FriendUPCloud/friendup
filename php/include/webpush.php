@@ -89,6 +89,7 @@ if( isset( $setting ) )
 				if( strpos( $resultString, '410 Gone' ) > 0 )
 				{
 					// Subscription was expired, just remove the push record!
+					$Logger->log( '[webpush] Subscription expired, cleaning up DB.' );
 					$SqlDatabase->query( 'DELETE FROM FSetting WHERE ID=\'' . $setting->ID . '\' LIMIT 1' );
 				}
 			}
