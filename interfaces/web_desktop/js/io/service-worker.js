@@ -11,7 +11,7 @@
 self.addEventListener( 'push', ( event ) => {
 	const data = event.data?.json() ?? {};
 	const title = data.title;
-	const body = '';
+	const body = data.body;
 	const icon = data.icon;
 	const tag = 'friendos-tag';
 	event.waitUntil(
