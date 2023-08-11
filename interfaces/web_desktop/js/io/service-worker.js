@@ -28,7 +28,7 @@ self.addEventListener( 'push', ( event ) => {
 self.addEventListener( 'notificationclick', event => {
 	try
 	{
-		event.waitUntil( async function()
+		event.waitUntil( ( async function()
 		{
 			event.notification.close();
 			const data = event.data?.json() ?? {};
@@ -44,7 +44,7 @@ self.addEventListener( 'notificationclick', event => {
 				console.log( a + ' -> ' + data[ a ] );
 			}
 			clients.openWindow( data && data.url ? data.url : 'https://intranet.friendup.cloud/webclient/index.html?fallback=true&webpush=' + test );
-		}() );
+		} )() );
 	}
 	catch( e )
 	{
