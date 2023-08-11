@@ -35,7 +35,10 @@ self.addEventListener( 'push', ( event ) => {
 			body: text,
 			icon: icon,
 			tag: tag,
-			data: { url: url },
+			data: { 
+				url: url, 
+				status: 'open' 
+			},
 			vibrate: [ 300, 100, 400 ]
 		} )
 	);
