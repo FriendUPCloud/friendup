@@ -19,7 +19,7 @@ self.addEventListener( 'push', ( event ) => {
 			body: body,
 			icon: icon,
 			tag: tag,
-			data: data,
+			data: event.data,
 			vibrate: [ 300, 100, 400 ]
 		} )
 	);
