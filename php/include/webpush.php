@@ -66,7 +66,7 @@ if( isset( $setting ) )
 	$messagePayload->applicationdata = $message->ApplicationData;
 	
 	$msg = new stdClass();
-	$msg->url = $host . '/webclient/index.html?webpush=' . json_encode( $messagePayload );
+	$msg->url = $host . '/webclient/index.html?webpush=' . urlencode( json_encode( $messagePayload ) );
 	$msg->title = $message->Title;
 	$msg->body = $message->Body;
 	$msg->icon = $host . '/graphics/system/friendos192.png';
