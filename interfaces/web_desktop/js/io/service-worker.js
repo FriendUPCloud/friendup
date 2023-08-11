@@ -19,7 +19,7 @@ self.addEventListener( 'push', ( event ) => {
 			body: body,
 			icon: icon,
 			tag: tag,
-			url: data.url,
+			data: data,
 			vibrate: [ 300, 100, 400 ]
 		} )
 	);
@@ -33,6 +33,11 @@ self.addEventListener( 'notificationclick', event => {
 			event.notification.close();
 			const data = event.data?.json() ?? {};
 			
+			console.log( 'Notification debug:' );
+			for( let a in event )
+			{
+				console.log( a + ' -> ' + event[ a ] );
+			}
 			console.log( 'Event debug:' );
 			for( let a in event )
 			{
