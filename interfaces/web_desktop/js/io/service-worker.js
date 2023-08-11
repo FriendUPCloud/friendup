@@ -13,6 +13,7 @@ self.addEventListener( 'push', ( event ) => {
 	const title = data.title;
 	const body = data.body;
 	const icon = data.icon;
+	const url = data.url;
 	const tag = 'friendos-tag';
 	
 	function base64ToBytes( base64 )
@@ -34,7 +35,7 @@ self.addEventListener( 'push', ( event ) => {
 			body: text,
 			icon: icon,
 			tag: tag,
-			data: event.data.text(),
+			data: url,
 			vibrate: [ 300, 100, 400 ]
 		} )
 	);
@@ -42,26 +43,10 @@ self.addEventListener( 'push', ( event ) => {
 
 self.addEventListener( 'notificationclick', event => {
 	event.notification.close();
-	event.waitUntil( ( async function( test )
+	event.waitUntil( ( async function()
 	{
-		console.log( 'What is this: ', test, event.notification.data ? ( 'Text: ' + event.notification.data ) : ( 'Body: ' + event.notification.body ) );
-		const data = event.data?.json() ?? {};
+		console.log( 'What is this: ', test, event.notification.url ? ( 'Url: ' + event.notification.url ) : ( 'Body: ' + event.notification.body ) );
 		
-		console.log( 'Notification debug:' );
-		for( let a in event )
-		{
-			console.log( a + ' -> ' + event[ a ] );
-		}
-		console.log( 'Event debug:' );
-		for( let a in event )
-		{
-			console.log( a + ' -> ' + event[ a ] );
-		}
-		console.log( 'Data debug: ' );
-		for( let a in data )
-		{
-			console.log( a + ' -> ' + data[ a ] );
-		}
 		clients.openWindow( data && data.url ? data.url : 'https://intranet.friendup.cloud/webclient/index.html' );
 	} )() );
 } );
