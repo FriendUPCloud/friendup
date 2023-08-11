@@ -29,9 +29,8 @@ self.addEventListener( 'notificationclick', event => {
 	{
 		event.notification.close();
 		const data = event.data?.json() ?? {};
-		event.waitUntil(
-			clients.openWindow( data && data.url ? data.url : 'https://intranet.friendup.cloud/webclient/index.html' )
-		);
+		if( data && data.url )
+			event.waitUntil( clients.openWindow( data.url ) );
 	}
 	catch( e )
 	{

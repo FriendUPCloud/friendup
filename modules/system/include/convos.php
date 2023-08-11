@@ -103,6 +103,8 @@ if( isset( $args->args ) )
 				            $message = new stdClass();
 				            $message->Title = 'You got a message from ' . $User->FullName;
 				            $message->Body = $out->message;
+				            $message->Application = 'Convos';
+				            $message->ApplicationData = '{"uuid":"' . $User->UniqueID . '","type":"dm-user"}';
 				            $User->WebPush( $targetUser, $options, $message );
 			            }
 		            }

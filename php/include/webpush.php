@@ -61,12 +61,15 @@ if( isset( $setting ) )
 	$ssl = isset( $cf[ 'Core' ][ 'SSLEnable' ] ) && $cf[ 'Core' ][ 'SSLEnable' ] ? true : false;
 	$host = ( $ssl ? 'https://' : 'http://' ) . $cf[ 'FriendCore' ][ 'fchost' ];
 	
+	$messagePayload = new stdClass();
+	$messagePayload->application = $message->Application;
+	$messagePayload->applicationdata = $message->ApplicationData;
+	
 	$msg = new stdClass();
-	$msg->url = $host . '/webclient/index.html';
+	$msg->url = $host . '/webclient/index.html?webpush=' . json_encode( $messagePayload );
 	$msg->title = $message->Title;
 	$msg->body = $message->Body;
 	$msg->icon = $host . '/graphics/system/friendos192.png';
-	$payload = json_encode( $msg );
 	
 	if( $result = $webPush->sendOneNotification( $subscription, $payload ) )
 	{
