@@ -79,17 +79,17 @@ if( isset( $setting ) )
 			//$uri = $request->getUri();
 			if( $result->isSuccess() )
 			{
-				$Logger->log( '[webpush] The message was sent successfully' );
+				//$Logger->log( '[webpush] The message was sent successfully' );
 				return true;
 			}
 			else
 			{
-				$Logger->log( '[webpush] Failed to send message' );
+				//$Logger->log( '[webpush] Failed to send message' );
 				$resultString = $result->getReason();
 				if( strpos( $resultString, '410 Gone' ) > 0 )
 				{
 					// Subscription was expired, just remove the push record!
-					$Logger->log( '[webpush] Subscription expired, cleaning up DB.' );
+					//$Logger->log( '[webpush] Subscription expired, cleaning up DB.' );
 					$SqlDatabase->query( 'DELETE FROM FSetting WHERE ID=\'' . $setting->ID . '\' LIMIT 1' );
 				}
 			}
