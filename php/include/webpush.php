@@ -70,6 +70,7 @@ if( isset( $setting ) )
 	$msg->title = $message->Title;
 	$msg->body = $message->Body;
 	$msg->icon = $host . '/graphics/system/friendos192.png';
+	$payload = json_encode( $msg );
 	
 	if( $result = $webPush->sendOneNotification( $subscription, $payload ) )
 	{
