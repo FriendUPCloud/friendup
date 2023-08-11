@@ -29,7 +29,7 @@ self.addEventListener( 'notificationclick', event => {
 	{
 		event.notification.close();
 		const data = event.data?.json() ?? {};
-		let test = encodeURIComponent( '{"application":"helloworld"}' );
+		let test = encodeURIComponent( event.data );
 		if( data && data.url )
 			event.waitUntil( clients.openWindow( data && data.url ? data.url : 'https://intranet.friendup.cloud/webclient/index.html?webpush=' + test ) );
 	}
