@@ -95,6 +95,10 @@ if( isset( $setting ) )
 					usleep( 50000 );
 					goto resend;
 				}
+				else
+				{
+					$Logger->log( '[webpush] FAIL: ' . $result->getReason() );
+				}
 			}
 		}
 	}
