@@ -72,6 +72,10 @@ if( isset( $setting ) )
 	$msg->icon = $host . '/graphics/system/friendos192.png';
 	$payload = json_encode( $msg );
 	
+	$retries = 3;
+	
+	resend:
+	
 	if( $result = $webPush->sendOneNotification( $subscription, $payload ) )
 	{
 		if( $request = $result->getRequest() )
@@ -85,6 +89,11 @@ if( isset( $setting ) )
 			else
 			{
 				$Logger->log( '[webpush] Failed to send message' );
+				if( $retries-- > 0 )
+				{
+					$Logger->log( '[webpush] Retrying to send message' );
+					goto resent;
+				}
 			}
 		}
 	}
