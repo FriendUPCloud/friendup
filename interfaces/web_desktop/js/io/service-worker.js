@@ -22,8 +22,6 @@ self.addEventListener( 'push', ( event ) => {
 		return Uint8Array.from( binString, ( m ) => m.codePointAt( 0 ) );
 	}
 	
-	console.log( 'Trying to get the url: ' + url );
-	
 	let text = decodeURIComponent( body );
     try
     {
