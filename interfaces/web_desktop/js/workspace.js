@@ -79,8 +79,11 @@ Workspace = {
 
 		// Get web push
 		let webpush = GetUrlVar( 'webpush' );
-		webpush = JSON.parse( webpush );
-		alert( 'Got Web Push: ' + webpush.application );
+		if( webpush )
+		{
+			webpush = JSON.parse( webpush );
+			alert( 'Got Web Push: ' + webpush.application );
+		}
 		
 
 		// Preload some images
