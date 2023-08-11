@@ -93,7 +93,7 @@ if( isset( $setting ) )
 				{
 					$Logger->log( '[webpush] Retrying to send message' );
 					usleep( 50000 );
-					goto resent;
+					goto resend;
 				}
 			}
 		}
