@@ -48,9 +48,6 @@ self.addEventListener( 'notificationclick', event => {
 	event.notification.close();
 	event.waitUntil( ( async function()
 	{
-		for( let a in event.notification )
-			console.log( 'What is not: ', a + ': ', event.notification[ a ] );
-		console.log( 'What is this: ', event.notification.data ? ( 'Url: ' + event.notification.data.url ) : ( 'Body: ' + event.notification.body ) );
 		let url = event.notification.data ? event.notification.data.url : false;
 		clients.openWindow( url ? url : 'https://intranet.friendup.cloud/webclient/index.html' );
 	} )() );
