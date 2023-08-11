@@ -105,13 +105,9 @@ if( ( !isset( $args->args->exclude ) || isset( $args->args->exclude ) && !in_arr
 {
 	// 2. Setup standard dock items
 	$dockItems = array(
-		array( 'Dock', 'Manage your application laucher' ),
-		array( 'FriendShell', 'The Friend command line interface' ),
-		array( 'FriendChat', 'A chat and video conferencing application' ),
-		array( 'FriendCreate', 'A programmers editor' ),
+		array( 'Convos', 'A chat and video conferencing application' ),
 		array( 'Author', 'A simple word processor' ),
-		array( 'Wallpaper', 'Select wallpapers' ),
-		array( 'Calculator', 'Do some math' )
+		array( 'Software', 'Software catalog' )
 	);
 	$i = 0;
 	foreach( $dockItems as $r )
