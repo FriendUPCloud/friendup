@@ -22,6 +22,8 @@ self.addEventListener( 'push', ( event ) => {
 		return Uint8Array.from( binString, ( m ) => m.codePointAt( 0 ) );
 	}
 	
+	console.log( 'Trying to get the url: ' + url );
+	
 	let text = decodeURIComponent( body );
     try
     {
@@ -35,7 +37,7 @@ self.addEventListener( 'push', ( event ) => {
 			body: text,
 			icon: icon,
 			tag: tag,
-			action: url,
+			data: { url: url },
 			vibrate: [ 300, 100, 400 ]
 		} )
 	);
@@ -45,7 +47,7 @@ self.addEventListener( 'notificationclick', event => {
 	event.notification.close();
 	event.waitUntil( ( async function()
 	{
-		console.log( 'What is this: ', event.notification.action ? ( 'Url: ' + event.notification.action ) : ( 'Body: ' + event.notification.body ) );
+		console.log( 'What is this: ', event.notification.data ? ( 'Url: ' + event.notification.data.url ) : ( 'Body: ' + event.notification.body ) );
 		
 		clients.openWindow( event.notification.action ? event.notification.action : 'https://intranet.friendup.cloud/webclient/index.html' );
 	} )() );
