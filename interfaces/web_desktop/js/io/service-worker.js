@@ -8,18 +8,18 @@
 *                                                                              *
 *****************************************************************************©*/
 
-function base64ToBytes( base64 )
-{
-    const binString = atob( base64 );
-    return Uint8Array.from( binString, ( m ) => m.codePointAt( 0 ) );
-}
-
 self.addEventListener( 'push', ( event ) => {
 	const data = event.data?.json() ?? {};
 	const title = data.title;
 	const body = data.body;
 	const icon = data.icon;
 	const tag = 'friendos-tag';
+	
+	function base64ToBytes( base64 )
+	{
+		const binString = atob( base64 );
+		return Uint8Array.from( binString, ( m ) => m.codePointAt( 0 ) );
+	}
 	
 	let text = decodeURIComponent( body );
     try
