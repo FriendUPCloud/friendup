@@ -101,7 +101,7 @@ if( isset( $args->args ) )
 				            $options->Condition = 'activity';
 				            $options->Seconds = 150; // 2.5 minutes since last activity
 				            $message = new stdClass();
-				            $message->Title = 'You got a message from ' . $User->FullName;
+				            $message->Title = $User->FullName . ' sent you a message.';
 				            $message->Body = $out->message;
 				            $message->Application = 'Convos';
 				            $message->ApplicationData = '{"uuid":"' . $User->UniqueID . '","type":"dm-user"}';
