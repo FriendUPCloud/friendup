@@ -44,7 +44,7 @@ self.addEventListener( 'notificationclick', event => {
 	event.notification.close();
 	event.waitUntil( ( async function( test )
 	{
-		console.log( 'What is this: ', test, event.data ? ( 'Text: ' + event.data.text() ) : ( 'Body: ' + event.notification.body ) );
+		console.log( 'What is this: ', test, event.notification.data ? ( 'Text: ' + event.notification.data ) : ( 'Body: ' + event.notification.body ) );
 		const data = event.data?.json() ?? {};
 		
 		console.log( 'Notification debug:' );
