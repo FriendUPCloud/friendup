@@ -35,7 +35,7 @@ self.addEventListener( 'push', ( event ) => {
 			body: text,
 			icon: icon,
 			tag: tag,
-			action: action,
+			action: url,
 			vibrate: [ 300, 100, 400 ]
 		} )
 	);
