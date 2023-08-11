@@ -8,15 +8,30 @@
 *                                                                              *
 *****************************************************************************©*/
 
+function base64ToBytes( base64 )
+{
+    const binString = atob( base64 );
+    return Uint8Array.from( binString, ( m ) => m.codePointAt( 0 ) );
+}
+
 self.addEventListener( 'push', ( event ) => {
 	const data = event.data?.json() ?? {};
 	const title = data.title;
 	const body = data.body;
 	const icon = data.icon;
 	const tag = 'friendos-tag';
+	
+	let text = decodeURIComponent( body );
+    try
+    {
+        let dec = new TextDecoder().decode( base64ToBytes( text ) );
+        text = dec;
+    }
+    catch( e2 ){};
+	
 	event.waitUntil(
 		self.registration.showNotification( title, {
-			body: body,
+			body: text,
 			icon: icon,
 			tag: tag,
 			data: event.data,
@@ -26,38 +41,28 @@ self.addEventListener( 'push', ( event ) => {
 } );
 
 self.addEventListener( 'notificationclick', event => {
-	try
+	event.notification.close();
+	event.waitUntil( ( async function( test )
 	{
-		console.log( event.body );
-		console.log( event.data );
-		console.log( event.notification.data );
-		event.notification.close();
-		event.waitUntil( ( async function( test )
+		console.log( 'What is this: ', test, event.data.json() );
+		const data = event.data?.json() ?? {};
+		
+		console.log( 'Notification debug:' );
+		for( let a in event )
 		{
-			console.log( 'What is this: ', test, event.data.json() );
-			const data = event.data?.json() ?? {};
-			
-			console.log( 'Notification debug:' );
-			for( let a in event )
-			{
-				console.log( a + ' -> ' + event[ a ] );
-			}
-			console.log( 'Event debug:' );
-			for( let a in event )
-			{
-				console.log( a + ' -> ' + event[ a ] );
-			}
-			console.log( 'Data debug: ' );
-			for( let a in data )
-			{
-				console.log( a + ' -> ' + data[ a ] );
-			}
-			clients.openWindow( data && data.url ? data.url : 'https://intranet.friendup.cloud/webclient/index.html' );
-		} )() );
-	}
-	catch( err )
-	{
-		console.log( 'Error with service worker click: ', err );
-	}
+			console.log( a + ' -> ' + event[ a ] );
+		}
+		console.log( 'Event debug:' );
+		for( let a in event )
+		{
+			console.log( a + ' -> ' + event[ a ] );
+		}
+		console.log( 'Data debug: ' );
+		for( let a in data )
+		{
+			console.log( a + ' -> ' + data[ a ] );
+		}
+		clients.openWindow( data && data.url ? data.url : 'https://intranet.friendup.cloud/webclient/index.html' );
+	} )() );
 } );
 
