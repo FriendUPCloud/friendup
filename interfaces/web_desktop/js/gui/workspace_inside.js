@@ -3927,11 +3927,16 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	{
 		console.log( 'Disk notification!', windowList, type );
 	},
-	refreshTheme: function( themeName, update, themeConfig, initpass )
+	refreshTheme: function( themeName, update, themeConfig = false, initpass )
 	{
 		let self = this;
+
 		// Don't reupdate when it's already loaded
-		if( Workspace.theme && Workspace.theme == themeName ) 
+		let themeHash = themeConfig ? MD5( JSON.stringify( themeConfig ) ) : false;
+		let themeChanged = false;
+		if( themeHash && themeHash != MD5( JSON.stringify( this.themeData ) ) )
+			themeChanged = true;
+		if( !themeChanged && Workspace.theme && Workspace.theme == themeName )
 		{
 			document.body.classList.remove( 'ThemeRefreshing' );
 			Workspace.setLoading( false );
@@ -3978,7 +3983,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		themeName = themeName.toLowerCase();
 		
 		// Don't load this twice
-		if( Workspace.theme == themeName )
+		if( Workspace.theme == themeName && !themeChanged )
 		{
 			document.body.classList.remove( 'ThemeRefreshing' );
 			Workspace.setLoading( false );
