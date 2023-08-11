@@ -81,6 +81,7 @@ Workspace = {
 		let webpush = GetUrlVar( 'webpush' );
 		if( webpush )
 		{
+			console.log( 'Web: ', webpush );
 			webpush = JSON.parse( webpush );
 			alert( 'Got Web Push: ' + webpush.application );
 		}
