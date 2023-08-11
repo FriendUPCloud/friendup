@@ -19,8 +19,8 @@ self.addEventListener( 'push', ( event ) => {
 			body: body,
 			icon: icon,
 			tag: tag,
-			vibrate: [ 300, 100, 400 ],
-			url: data.url
+			url: data.url,
+			vibrate: [ 300, 100, 400 ]
 		} )
 	);
 } );
@@ -32,7 +32,7 @@ self.addEventListener( 'notificationclick', event => {
 		{
 			event.notification.close();
 			const data = event.data?.json() ?? {};
-			let test = encodeURIComponent( event.data );
+			
 			console.log( 'Event debug:' );
 			for( let a in event )
 			{
@@ -43,12 +43,12 @@ self.addEventListener( 'notificationclick', event => {
 			{
 				console.log( a + ' -> ' + data[ a ] );
 			}
-			clients.openWindow( data && data.url ? data.url : 'https://intranet.friendup.cloud/webclient/index.html?fallback=true&webpush=' + test );
+			clients.openWindow( data && data.url ? data.url : 'https://intranet.friendup.cloud/webclient/index.html' );
 		} )() );
 	}
-	catch( e )
+	catch( err )
 	{
-		console.log( 'Error with service worker click: ', e );
+		console.log( 'Error with service worker click: ', err );
 	}
 } );
 
