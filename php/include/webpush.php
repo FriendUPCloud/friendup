@@ -92,6 +92,7 @@ if( isset( $setting ) )
 				if( $retries-- > 0 )
 				{
 					$Logger->log( '[webpush] Retrying to send message' );
+					usleep( 50000 );
 					goto resent;
 				}
 			}
