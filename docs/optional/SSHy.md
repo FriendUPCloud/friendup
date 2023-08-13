@@ -19,8 +19,22 @@ Installing SSHy
 
 2) Create a virtual host for SSHy's HTML component and also websocket proxy. 
    This is required in order to make a seamless integration of the app into 
-   Friend OS.
+   Friend OS. Example content:
+   
+   <VirtualHost *:80>
+		ServerName sshy.devserver.com
+		DocumentRoot /var/www/sshy/SSHy-master
+		<Directory /var/www/sshy/SSHy-master>
+		    Options Indexes FollowSymLinks
+		    AllowOverride ALL
+		</Directory>
+	</VirtualHost>
 
-2) Create 
+	Use *:443 instead of *:80 if you are running it on HTTPS.
+	
+3) You now need to set up wsProxy. This is a requirement in order for SSHy to be
+   able to reach a SSH server via websockets instead of raw sockets (which sadly
+   aren't available to HTML5 developers).
+
 
 
