@@ -37,6 +37,17 @@ class FUIPrompt extends FUIElement
         this.cbuf = ''; // Working buffer
         this.bp = 0; // Buffer position
         this.buffer = [ '' ]; // Buffer
+        
+        // Something that handles keyboard
+        let catcher = document.body.querySelector( '.InputCatcher' );
+        if( !catcher )
+        {
+        	catcher = document.createElement( 'input' );
+        	catcher.setAttribute( 'type', 'text' );
+        	catcher.className = 'InputCatcher';
+        	document.body.appendChild( catcher );
+        }
+        this.catcher = catcher;
     }
     attachDomElement()
     {

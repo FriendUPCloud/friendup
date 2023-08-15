@@ -4,6 +4,15 @@
 	--terminal-color: white;
 }
 
+.InputCatcher
+{
+	opacity: 0;
+	pointer-events: none;
+	position: absolute;
+	width: 1px;
+	height: 1px;
+}
+
 .PMenu
 {
     position: absolute;
