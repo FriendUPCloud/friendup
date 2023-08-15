@@ -40,6 +40,7 @@ class FUIPrompt extends FUIElement
         this.mode = 'w'; // w = write, r = read_only, l = locked
         this.fw = 9;  // cell width
         this.fh = 18; // cell height
+        this.iterator = 0;
         
         // Something that handles keyboard
         let catcher = document.body.querySelector( '.InputCatcher' );
@@ -64,6 +65,7 @@ class FUIPrompt extends FUIElement
     			self.drawCursor();
 			}
     		window.requestAnimationFrame( br );
+    		self.iterator++;
     	}
     	br();
     }
@@ -185,9 +187,10 @@ class FUIPrompt extends FUIElement
     }
     drawCursor()
     {
-    	let a = Math.floor( ( new Date() ).getTime() / 5 ) % 512;
-    	let b = a < 256 ? a : ( 512 - a );
-    	this.ctx.fillStyle = 'rgb(' + b + ',' + b + ',100)';
+    	let a = Math.floor( ( new Date() ).getTime() / 2 ) % 512;
+    	let b = a < 256 ? a : ( 512 - a ) / 255 * 128 + 30;
+    	let c = a < 256 ? a : ( 512 - a ) / 255 * 58 + 20;
+    	this.ctx.fillStyle = 'rgb(' + b + ',' + c + ',40)';
     	this.ctx.fillRect( this.cursorPosition[ 0 ] * this.fw, this.cursorPosition[ 1 ] * this.fh, this.fw, this.fh );
     }
     getMarkup( data )
