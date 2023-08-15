@@ -20,6 +20,20 @@ Application.run = function( msg )
     		'Progdir:Markup/main.css',
     		'Progdir:Markup/main.html' 
 		],
+		menu: [ {
+			name: i18n( 'menu_file' ),
+			items: [ {
+				name: i18n( 'menu_quit' ),
+				command: 'quit'
+			} ]
+		},
+		{	
+			name: i18n( 'menu_server' ),
+			items: [ {
+				name: i18n( 'menu_add_server' ),
+				command: 'add_server'
+			} ]
+		} ],
 		transparent: true
     } );
 }

@@ -5456,6 +5456,14 @@ var View = function( args )
 				else this._window.classList.remove( 'NoQuickmenu' );
 				this.flags.noquickmenu = value;
 				break;
+			case 'menu':
+				if( value && value.length && value[0].name )
+				{
+					this.setMenuItems( value );
+					this.flags.menu = value;
+				}
+				this.flags.menu = null;
+				break;
 			case 'singletask':
 				this.flags.singletask = value;
 				break;
