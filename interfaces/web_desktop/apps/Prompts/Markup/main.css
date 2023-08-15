@@ -42,6 +42,12 @@
 {
 	background-color: var(--terminal-background);
 	color: var(--terminal-color);
+	border-radius: 0 10px 0 0;
+}
+
+.PMenu > .PTabs > .PTab + .PTab.Active
+{
+	border-radius: 0 10px 0 10px;
 }
 
 .PTerminalPages
