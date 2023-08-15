@@ -1,10 +1,12 @@
 #!/bin/bash
 
+# TODO: This file may not be needed
+
 # Ask for destination folder
-read -p "Enter destination folder (available to Apache2) to install SSHy: " destination
+read -p "Enter destination folder to install WebSSH2: " destination
 
 # Check if the source folder exists
-source="optional/ssh/SSHy-master"  # Replace with the actual source folder path
+source="optional/ssh/webssh2"  # Replace with the actual source folder path
 if [ ! -d "$source" ]; then
     echo "Source folder does not exist. Exiting..."
     exit 1
@@ -26,5 +28,5 @@ fi
 rsync -av "$source" "$destination"
 
 echo "Installation complete."
-echo "Please check the SSHy.md readme file located in docs/optional/ for what to do next."
+echo "Please check the webssh2.md readme file located in docs/optional/ for what to do next."
 
