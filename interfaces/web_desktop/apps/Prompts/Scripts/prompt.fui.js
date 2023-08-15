@@ -40,7 +40,7 @@ class FUIPrompt extends FUIElement
         this.mode = 'w'; // w = write, r = read_only, l = locked
         this.fw = 9;  // cell width
         this.fh = 18; // cell height
-        this.iterator = 0;
+        this.frames = 0;
         
         // Something that handles keyboard
         let catcher = document.body.querySelector( '.InputCatcher' );
@@ -65,7 +65,7 @@ class FUIPrompt extends FUIElement
     			self.drawCursor();
 			}
     		window.requestAnimationFrame( br );
-    		self.iterator++;
+    		self.frames++;
     	}
     	br();
     }
