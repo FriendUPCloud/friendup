@@ -1604,7 +1604,7 @@ function apiWrapper( event, force )
 						case 'cancelclose':
 							if( win )
 							{
-								console.log( 'What to do here?', win );
+								//console.log( 'What to do here?', win );
 							}
 							break;
 						case 'opencamera':
