@@ -36,7 +36,10 @@ class FUIPrompt extends FUIElement
         this.cpos = 0; // Cursor position
         this.cbuf = ''; // Working buffer
         this.bp = 0; // Buffer position
-        this.buffer = [ '' ]; // Buffer
+        this.buffer = [ 'Welcome to Friend DOS v1.3', '1>' ]; // Buffer
+        this.mode = 'w'; // w = write, r = read_only, l = locked
+        this.fw = 9;  // cell width
+        this.fh = 18; // cell height
         
         // Something that handles keyboard
         let catcher = document.body.querySelector( '.InputCatcher' );
@@ -48,6 +51,22 @@ class FUIPrompt extends FUIElement
         	document.body.appendChild( catcher );
         }
         this.catcher = catcher;
+        this.refreshDom();
+        this.brain();
+    }
+    brain()
+    {
+    	let self = this;
+    	function br()
+    	{
+    		if( self.ctx )
+    		{
+    			self.drawCursor();
+			}
+			console.log( 'Test ..' );
+    		window.requestAnimationFrame( br );
+    	}
+    	br();
     }
     attachDomElement()
     {
@@ -75,13 +94,20 @@ class FUIPrompt extends FUIElement
 				self.canvas.setAttribute( 'height', self.getHeight() );
 				self.refreshDom();
 			}
-    		this.eventListener = window.addEventListener( 'resize', this._resizeFunction );
+			self._keydownFunction = function()
+			{
+				
+			}
+    		this.eventListener = true;
+    		window.addEventListener( 'resize', this._resizeFunction );
+    		window.addEventListener( 'keydown', this._keydownFunction );
     		self._resizeFunction();
     	}
     }
     destroy()
     {
     	window.removeEventListener( 'resize', this._resizeFunction );
+    	window.removeEventListener( 'keydown', this._keydownFunction );
     }
     getWidth()
     {
@@ -102,7 +128,8 @@ class FUIPrompt extends FUIElement
         this.refreshDom();
     }
     refreshDom()
-    {
+    {		
+		if( !this.buffer ) return;
         super.refreshDom();
         
         // Do something with properties on dom
@@ -113,18 +140,56 @@ class FUIPrompt extends FUIElement
 		
 		if( this.ctx )
 		{
-			let fw = 8; 
-			let fh = 12;
-			
-			for( let y = 0; y < this.getHeight(); y += fh )
+			this.ctx.font = '14px monospace';
+			let fw = this.fw;
+			let fh = this.fh;
+			let lc = 0, lr = 0;
+
+			for( let y = 0, r = 0; y < this.getHeight(); y += fh, r++ )
 			{
-				for( let x = 0; x < this.getWidth(); x += fw )
+				if( r < this.buffer.length )
+				{
+					let buf = this.buffer[ r ];
+					lr = r;
+					for( let x = 0, c = 0; x < this.getWidth(); x += fw, c++ )
+					{
+						if( c < buf.length )
+						{
+							let ta = Math.floor( Math.random() * 64 );
+							ta = 'rgb(' + ta + ',0,25)';
+							this.ctx.fillStyle = ta; //pb.getRGB();
+							this.ctx.fillRect( x, y, fw, fh );
+							this.ctx.fillStyle = pc.getRGB();
+							this.ctx.fillText( buf[c], x, y + fh - 4 );
+							lc = c;
+						}
+						// Just fill with empty
+						else
+						{
+							this.ctx.fillStyle = pb.getRGB();
+							this.ctx.fillRect( x, y, this.getWidth() - x, fh );
+						}
+					}
+				}
+				// Just fill with empty
+				else
 				{
 					this.ctx.fillStyle = pb.getRGB();
-					this.ctx.fillRect( x, y, fw, fh );
+					this.ctx.fillRect( 0, y, this.getWidth(), fh );
 				}
 			}
+			if( !this.cursorPosition )
+			{
+				this.cursorPosition = [ lc + 1, lr ];
+			}
 		}
+    }
+    drawCursor()
+    {
+    	let a = Math.floor( ( new Date() ).getTime() / 5 ) % 512;
+    	let b = a < 256 ? a : ( 512 - a );
+    	this.ctx.fillStyle = 'rgb(' + b + ',' + b + ',100)';
+    	this.ctx.fillRect( this.cursorPosition[ 0 ] * this.fw, this.cursorPosition[ 1 ] * this.fh, this.fw, this.fh );
     }
     getMarkup( data )
     {
