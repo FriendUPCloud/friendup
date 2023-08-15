@@ -63,7 +63,6 @@ class FUIPrompt extends FUIElement
     		{
     			self.drawCursor();
 			}
-			console.log( 'Test ..' );
     		window.requestAnimationFrame( br );
     	}
     	br();
