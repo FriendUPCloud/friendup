@@ -87,6 +87,7 @@
 	left: 0;
 	width: 100%;
 	height: calc(100% - 35px);
+	z-index: 3;
 }
 
 .PTerminalPages .PTerminal
