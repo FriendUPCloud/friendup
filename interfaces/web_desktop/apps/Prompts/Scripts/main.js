@@ -16,6 +16,8 @@ Application.run = function( msg )
     	height: 440,
     	quitOnClose: true,
     	assets: [ 
+    		'Progdir:Scripts/prompt.fui.js',
+    		'Progdir:Scripts/prompt.fui.css',
     		'Progdir:Scripts/inside.js', 
     		'Progdir:Markup/main.css',
     		'Progdir:Markup/main.html' 
