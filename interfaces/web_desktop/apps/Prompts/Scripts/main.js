@@ -38,4 +38,37 @@ Application.run = function( msg )
 		} ],
 		transparent: true
     } );
+    
+    this.mainView = v;
+    this.initialized = true;
 }
+
+Application.receiveMessage = function( msg )
+{
+	if( !this.initialized ) return;
+	switch( msg.command )
+	{
+		case 'add_server':
+			return this.addServer();
+		default:
+			this.mainView.sendMessage( msg );
+			break;
+	}
+}
+
+Application.addServer = function()
+{
+	let self = this;
+	
+	if( this.s ) return this.s.activate();
+	this.s = new View( {
+		title: i18n( 'i18n_add_server' ),
+		width: 320,
+		height: 320
+	} );
+	this.s.onClose = function()
+	{
+		self.s = null;
+	}
+}
+

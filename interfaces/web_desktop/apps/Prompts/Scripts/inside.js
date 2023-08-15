@@ -4,7 +4,3 @@ Application.run = function( msg )
 	t.classList.add( 'Active' );
 }
 
-Application.receiveMessage = function( msg )
-{
-	
-}
