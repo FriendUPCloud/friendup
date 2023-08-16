@@ -52,6 +52,8 @@ class FUIGroupsettings extends FUIInvitedialog
 				a.onload = function(e)
 				{
 					document.querySelector( '.AvatarPreview' ).style.backgroundImage = 'url(' + e.target.result + ')';
+					let overView = FUI.getElementByUniqueId( 'convos' );
+					if( overView ) overView.redrawChannels();
 				}
 				a.readAsDataURL( blob );
 			}, 'image/jpeg', 100 );
