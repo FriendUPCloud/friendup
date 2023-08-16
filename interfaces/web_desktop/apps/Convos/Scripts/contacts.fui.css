@@ -127,7 +127,8 @@
 .FUIContacts .Contacts > .Settings .Videocall,
 .FUIContacts .Contacts > .Settings .Add,
 .FUIContacts .Contacts > .Settings .AddConversation,
-.FUIContacts .Contacts > .Settings .Group
+.FUIContacts .Contacts > .Settings .Group,
+.FUIContacts .Contacts > .Settings .LeaveGroup
 {
 	content: " ";
     display: inline-block;
@@ -148,7 +149,8 @@
 .FUIContacts .Contacts > .Settings .Videocall:hover,
 .FUIContacts .Contacts > .Settings .Add:hover,
 .FUIContacts .Contacts > .Settings .AddConversation:hover,
-.FUIContacts .Contacts > .Settings .Group:hover
+.FUIContacts .Contacts > .Settings .Group:hover,
+.FUIContacts .Contacts > .Settings .LeaveGroup:hover
 {
 	outline: 1px solid var(--fui-border-foreground);
     background-color: var(--fui-palette-chan04);
@@ -198,6 +200,12 @@
 .FUIContacts .Contacts > .Settings .Group:before
 {
 	content: "\f013";
+	font-family: FontAwesome;
+}
+
+.FUIContacts .Contacts > .Settings .LeaveGroup:before
+{
+	content: "\f00d";
 	font-family: FontAwesome;
 }
 

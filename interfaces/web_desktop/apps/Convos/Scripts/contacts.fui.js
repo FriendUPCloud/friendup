@@ -44,7 +44,7 @@ class FUIContacts extends FUIElement
         {
         	if( this.options.groupid )
         	{
-        		ex = '';
+        		ex = '<div class="LeaveGroup" title="' + i18n( 'i18n_leave_group' ) + '"></div>';
         		add = '';
     		}
         }

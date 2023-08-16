@@ -42,6 +42,7 @@ i18n_share_image_desc                  : If you add the image to the chat room, 
 
 i18n_group_settings                    : Group settings
 i18n_group_avatar                      : Chat room avatar
+i18n_leave_group                       : Leave group
 i18n_upload                            : Upload
 i18n_chatroom_name                     : Chat room name
 i18n_group_name                        : Name of chat room
