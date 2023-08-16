@@ -527,7 +527,145 @@ DirectoryView.prototype.initToolbar = function( winobj )
 				content: i18n( 'i18n_upload_a_file' ),
 				onclick: function( e )
 				{
-				    Workspace.uploadFile();
+					if( dw.filedialog )
+					{
+						// Clean up
+						if( ge( 'upload-frame' ) )
+						{
+							document.body.removeChild( ge( 'upload-frame' ).form );
+							document.body.removeChild( ge( 'upload-frame' ) );
+						}
+						
+						let uppath = winobj.fileInfo.Path;
+						
+						let uploadForm = document.createElement( 'form' );
+						uploadForm.method = 'post';
+						uploadForm.target = 'upload-frame';
+						uploadForm.enctype = 'multipart/form-data';
+						uploadForm.action = '/system.library/file/upload';
+						uploadForm.className = 'Hidden';
+						
+						let hiddens = [ 'sessionid', 'module', 'command', 'path' ];
+						let hiddatt = [ Workspace.sessionId, 'files', 'uploadfile', uppath ];
+						for( let b in hiddens )
+						{
+							let i = document.createElement( 'input' );
+							i.type = 'hidden'; i.name = hiddens[ b ]; i.value = hiddatt[ b ];
+							uploadForm.appendChild( i );
+						}
+						
+						let uploadElement = document.createElement( 'input' );
+						uploadElement.type = 'file';
+						uploadElement.multiple = 'multiple';
+						uploadElement.name = 'file';
+						uploadForm.appendChild( uploadElement );
+						
+						let resultfr = document.createElement( 'iframe' );
+						resultfr.id = 'upload-frame';
+						resultfr.name = 'upload-frame';
+						resultfr.className = 'Hidden';
+						resultfr.form = uploadForm;
+						document.body.appendChild( resultfr );
+						document.body.appendChild( uploadForm );
+						
+						uploadElement.click();
+						uploadElement.onchange = function()
+						{
+							resultfr.addEventListener( 'load', function()
+							{
+								Workspace.refreshWindowByPath( uppath );
+								// TODO: Check 
+								let check = new Library( 'system.library' );
+								check.onExecuted = function( ee, dd )
+								{
+									if( ee == 'ok' )
+									{
+										for( let a in movableWindows )
+										{
+											let w = movableWindows[a];
+											if( w.content ) w = w.content;
+											if( w.fileInfo )
+											{
+												if( w.fileInfo.Path == uppath )
+												{
+													Workspace.diskNotification( [ w ], 'refresh' );
+												}
+											}
+										}
+									
+										Notify( { title: i18n( 'i18n_upload_completed' ), text: i18n( 'i18n_upload_completed_description' ) } );
+										Workspace.refreshWindowByPath( uppath );
+									}
+									else
+									{
+										Notify( { title: i18n( 'i18n_upload_failed' ), text: i18n( 'i18n_upload_failed_description' ) } );
+									}
+								}
+								check.execute( 'file/info', { path: uppath + uploadElement.value.split( '\\' ).pop() } );
+							} );
+							uploadForm.submit();
+						}
+						/*
+						
+						<form method="post" id="fileUpload" target="uploadFrame" enctype="multipart/form-data" action="/system.library/file/upload">
+						
+						
+						// Need target frame to complete job
+						if( resultfr && uppath.length )
+						{
+							// We are busy!
+							if( winobj.classList.contains( 'Busy' ) )
+							{
+								return;
+							}
+							winobj.classList.add( 'Busy' );
+							
+							form.submit();
+							let f = function( e )
+							{
+								winobj.classList.remove( 'Busy' );
+								
+								let check = new Library( 'system.library' );
+								check.onExecuted = function( ee, dd )
+								{
+									if( ee == 'ok' )
+									{
+										for( let a in movableWindows )
+										{
+											let w = movableWindows[a];
+											if( w.content ) w = w.content;
+											if( w.fileInfo )
+											{
+												if( w.fileInfo.Path == uppath )
+												{
+													Workspace.diskNotification( [ w ], 'refresh' );
+												}
+											}
+										}
+									
+										Notify( { title: i18n( 'i18n_upload_completed' ), text: i18n( 'i18n_upload_completed_description' ) } );
+										if( typeof Workspace.uploadWindow.close == 'function' ) Workspace.uploadWindow.close();
+										Workspace.refreshWindowByPath( uppath );
+									}
+									else
+									{
+										Notify( { title: i18n( 'i18n_upload_failed' ), text: i18n( 'i18n_upload_failed_description' ) } );
+									}
+								
+									resultfr.removeEventListener( 'load', f );
+								}
+								check.execute( 'file/info', { path: uppath + uploadFileField.value.split( '\\' ).pop() } );
+								
+								ge( 'uploadFileField' ).value = '';
+							};
+							resultfr.addEventListener( 'load', f );
+						*/
+						
+					}
+					else
+					{
+				    	Workspace.uploadFile();
+			    	}
 				}
 			},
 			]
