@@ -742,6 +742,8 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 									}
 
 									BufStringAdd( sql, num );
+									
+									BufStringAdd( sql, ")" );
 						
 									// Create output "JSON"
 									BufStringAdd( result, "ok<!--separate-->[" );
