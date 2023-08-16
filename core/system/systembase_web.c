@@ -406,8 +406,100 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 			FFree( sessionid );
 			return response;
 		}
+		
+		// Login by self-refreshing login token
+		if( lot )
+		{
+			//
+			// check if request came from WebSockets
+			//
+			
+			DEBUG("[lot] LoginToken received\n");
+			
+			if( loggedSession == NULL )
+			{
+				//DEBUG("[lot] No logged session!\n");
+				
+				SQLLibrary *sqllib = l->LibrarySQLGet( l );
+
+				// Get authid from mysql
+				if( sqllib != NULL )
+				{
+					char qery[ 1024 ];
+					FULONG uid = 0;
+
+					// TODO: Remove need for existing SessionID (instead generate it if it does not exist)!
+					sqllib->SNPrintF( sqllib, qery, sizeof(qery), "SELECT u.ID, u.Name, k.UniqueID FROM FKeys k, FUser u left outer join FUserSession us on u.ID=us.UserID WHERE k.UserID = u.ID AND k.UniqueID=\"%s\" LIMIT 1", ( char *)lot->hme_Data );
+					
+					void *res = sqllib->Query( sqllib, qery );
+					if( res != NULL )
+					{
+						char **row;
+						if( ( row = sqllib->FetchRow( sqllib, res ) ) )
+						{
+							if( row[ 0 ] != NULL )
+							{
+								char *next;
+								if( row[ 0 ] != NULL )
+								{
+									uid = strtol ( (char *) row[ 0 ], &next, 0);
+								}
+							}
+							
+							if( row[ 1 ] != NULL )
+							{
+								snprintf( userName, 256, "%s", row[ 1 ] );
+							}
+						}
+						sqllib->FreeResult( sqllib, res );
+					}
+					l->LibrarySQLDrop( l, sqllib );
+					
+					// We need a valid UID
+					if( uid > 0 )
+					{
+						loggedSession = USMGetSessionByUserID( l->sl_USM, uid );
+						if( loggedSession == NULL && userName[ 0 ] != 0 )	// only if user exist and it has servertoken
+						{
+							loggedSession = UserSessionNew( NULL, "servertoken", l->fcm->fcm_ID );
+							if( loggedSession != NULL )
+							{
+								sprintf( sessionid, "%s", loggedSession->us_SessionID );
+								
+								User *usr = UMUserGetByName( l->sl_UM, userName );
+								if( usr == NULL )
+								{
+									usr = UMUserGetByNameDB( l->sl_UM, userName );
+									if( usr != NULL )
+									{
+										UMAddUser( l->sl_UM, usr );
+										UserAddSession( usr, loggedSession );
+									}
+								}
+								else
+								{
+									UserAddSession( usr, loggedSession );
+								}
+
+								if( usr && usr->u_ID )
+								{
+									//DEBUG( "[lot] Trying to save!\n" );
+									loggedSession->us_UserID = usr->u_ID;
+									loggedSession->us_LastActionTime = time( NULL );
+									
+									UGMAssignGroupToUser( l->sl_UGM, usr );
+									
+									USMSessionSaveDB( l->sl_USM, loggedSession );
+									USMUserSessionAddToList( l->sl_USM, loggedSession );
+							    }
+							}
+						}
+					}
+				}
+			}
+		}
 		// Ah, we got our session
-		if( tst )
+		else if( tst )
 		{
 			char tmp[ DEFAULT_SESSION_ID_SIZE ];
 			UrlDecode( tmp, (char *)tst->hme_Data );
@@ -691,101 +783,6 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 						}
 					}
 				}
-			}
-		}
-		// Login by self-refreshing login token
-		else if( lot )
-		{
-			//
-			// check if request came from WebSockets
-			//
-			
-			DEBUG("[lot] LoginToken received\n");
-			
-			if( loggedSession == NULL )
-			{
-				//DEBUG("[lot] No logged session!\n");
-				
-				SQLLibrary *sqllib = l->LibrarySQLGet( l );
-
-				// Get authid from mysql
-				if( sqllib != NULL )
-				{
-					char qery[ 1024 ];
-					FULONG uid = 0;
-
-					// TODO: Remove need for existing SessionID (instead generate it if it does not exist)!
-					sqllib->SNPrintF( sqllib, qery, sizeof(qery), "SELECT u.ID, u.Name, k.UniqueID FROM FKeys k, FUser u left outer join FUserSession us on u.ID=us.UserID WHERE k.UserID = u.ID AND k.UniqueID=\"%s\" LIMIT 1", ( char *)lot->hme_Data );
-					
-					void *res = sqllib->Query( sqllib, qery );
-					if( res != NULL )
-					{
-						char **row;
-						if( ( row = sqllib->FetchRow( sqllib, res ) ) )
-						{
-							if( row[ 0 ] != NULL )
-							{
-								char *next;
-								if( row[ 0 ] != NULL )
-								{
-									uid = strtol ( (char *) row[ 0 ], &next, 0);
-								}
-							}
-							
-							if( row[ 1 ] != NULL )
-							{
-								snprintf( userName, 256, "%s", row[ 1 ] );
-							}
-						}
-						sqllib->FreeResult( sqllib, res );
-					}
-					l->LibrarySQLDrop( l, sqllib );
-					
-					// We need a valid UID
-					if( uid > 0 )
-					{
-						loggedSession = USMGetSessionByUserID( l->sl_USM, uid );
-						if( loggedSession == NULL && userName[ 0 ] != 0 )	// only if user exist and it has servertoken
-						{
-							loggedSession = UserSessionNew( NULL, "servertoken", l->fcm->fcm_ID );
-							if( loggedSession != NULL )
-							{
-								sprintf( sessionid, "%s", loggedSession->us_SessionID );
-								
-								User *usr = UMUserGetByName( l->sl_UM, userName );
-								if( usr == NULL )
-								{
-									usr = UMUserGetByNameDB( l->sl_UM, userName );
-									if( usr != NULL )
-									{
-										UMAddUser( l->sl_UM, usr );
-										UserAddSession( usr, loggedSession );
-									}
-								}
-								else
-								{
-									UserAddSession( usr, loggedSession );
-								}
-
-								if( usr && usr->u_ID )
-								{
-									//DEBUG( "[lot] Trying to save!\n" );
-									loggedSession->us_UserID = usr->u_ID;
-									loggedSession->us_LastActionTime = time( NULL );
-									
-									UGMAssignGroupToUser( l->sl_UGM, usr );
-									
-									USMSessionSaveDB( l->sl_USM, loggedSession );
-									USMUserSessionAddToList( l->sl_USM, loggedSession );
-							    }
-							}
-						}
-					}
-				}
-			}
-			else
-			{
-				DEBUG("[lot] Seems we got a session: %s\n", loggedSession->us_SessionID );
 			}
 		}
 		
@@ -2649,6 +2646,11 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 			HttpAddTextContent( response, buffer );
 		}
 		*result = 200;
+	}
+	
+	else if( strcmp(  urlpath[ 0 ], "logintoken" ) == 0 )
+	{
+		
 	}
 	
 	//
