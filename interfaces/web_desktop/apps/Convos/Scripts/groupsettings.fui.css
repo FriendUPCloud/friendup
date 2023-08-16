@@ -27,6 +27,21 @@
 	margin: 0 0 15px 0;
 }
 
+.Section .Flex
+{
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+	gap: 5px;
+	margin: 0 0 20px 0;
+}
+
+.Flex div > span 
+{
+    margin: 0px 0 4px 0;
+    display: block;
+}
+
 .Section > p.AvatarBox
 {
 	margin: 0 auto 15px auto;
@@ -67,7 +82,8 @@
 	border: 2px solid var(--fui-border-foreground);
 }
 
-.FUIInvitedialog.FUIGroupsettings > .Dia .TheForm > .Form .Upload
+.FUIInvitedialog.FUIGroupsettings > .Dia .TheForm > .Form .Upload,
+.FUIInvitedialog.FUIGroupsettings > .Dia .TheForm > .Form .Create
 {
 	display: inline-block;
 }
@@ -75,6 +91,12 @@
 .FUIInvitedialog.FUIGroupsettings > .Dia .TheForm > .Form .Upload:before
 {
 	content: "\f0ee";
+	font-family: FontAwesome;
+}
+
+.FUIInvitedialog.FUIGroupsettings > .Dia .TheForm > .Form .Create:before
+{
+	content: "\f2b4";
 	font-family: FontAwesome;
 }
 

@@ -34,9 +34,13 @@
 					<p>
 						{i18n_visibility_desc}
 					</p>
-					<p>
-						<fui-checkbox type="toggle"/>
-					</p>
+					<div class="Flex">
+						<div><span>Private</span></div>
+						<div>
+							<fui-checkbox type="toggle"/>
+						</div>
+						<div><span>Public</span></div>
+					</div>
 				</div>
 				<p>
 					<strong>{i18n_create_invite}</strong>
@@ -45,9 +49,13 @@
 					<p>
 						{i18n_invite_desc}
 					</p>
-					<p>
-						<input type="text" placeholder="" id="inviteHolder"/>
-						<button type="button" class="Upload">{i18n_create}</button>
+					<div class="Flex">
+						<div>
+							<input type="text" placeholder="" id="inviteHolder"/>
+						</div>
+						<div>
+							<button type="button" class="Create">{i18n_create}</button>
+						</div>
 					</p>
 				</div>
 			</div>
