@@ -83,6 +83,24 @@ class FUIPrompt extends FUIElement
         this.resize();
         this.refreshDom();
     }
+    // Execute actions on keycodes
+    keyActions( keyCode )
+    {
+    	if( !this.keyCodeActions )
+    	{
+    		this.keyCodeActions = {
+    			32: function(){ return [ true, ' ' ]; }, // SPACE
+    			16: function(){ return [ false, null ]; }, // SHIFT
+    			8: function(){ return [ false, null ]; }, // Backspace
+    			17: function(){ return [ false, null ]; }, // CTRL
+    			18: function(){ return [ false, null ]; }, // ALT
+    			225: function(){ return [ false, null ]; }, // ALT GR
+    			9: function(){ return [ false, null ]; }, // TAB
+    			93: function(){ return [ false, null ]; }, // MENU
+    		};
+    	}
+    	return this.keyCodeActions[ keyCode ] ? this.keyCodeActions[ keyCode ]() : [ false, null ];
+    }
     resize()
     {	
     	let self = this;
@@ -95,9 +113,40 @@ class FUIPrompt extends FUIElement
 				self.canvas.setAttribute( 'height', self.getHeight() );
 				self.refreshDom();
 			}
-			self._keydownFunction = function()
-			{
+			self._keydownFunction = function( ev )
+			{	
+				console.log( ev.which );
+				let res = self.keyActions( ev.which );
+				if( res && res[0] == true )
+				{
+					self.cbuf += res[1];
+					self.cursorPosition[ 0 ]++;
+				}
+				if( ev.which == 13 )
+				{
+					self.buffer[ self.cursorPosition[ 1 ] ] = self.cbuf;
+					self.cbuf = '';
+					self.cursorPosition[ 1 ]++;
+					self.cursorPosition[ 0 ] = 0;
+				}
+				else if( ev.which == 16 || ev.which == 8 || ev.which == 32 || ev.which == 17 || ev.which == 18 || ev.which == 225 )
+				{
+					return;
+				}
+				else
+				{
+					let k = ev.key.charCodeAt( 0 );
+					if( k < 128 && ev.ctrlKey )
+						k = k & 0x1f;
+					self.cbuf += String.fromCharCode( k );
+					self.cursorPosition[ 0 ]++;
+					
+					
+				}
+				cancelBubble( ev );
+				self.refreshAndFixDamage();
 				
+				console.log( 'Here: ' + self.cbuf );
 			}
     		this.eventListener = true;
     		window.addEventListener( 'resize', this._resizeFunction );
@@ -128,6 +177,12 @@ class FUIPrompt extends FUIElement
         
         this.refreshDom();
     }
+    // Refreshes current line, and all lines affected underneath
+    refreshAndFixDamage()
+    {
+    	// TODO: For now just defer to refreshDom, but later rewrite
+    	this.refreshDom();
+    }
     refreshDom()
     {		
 		if( !this.buffer ) return;
@@ -151,6 +206,10 @@ class FUIPrompt extends FUIElement
 				if( r < this.buffer.length )
 				{
 					let buf = this.buffer[ r ];
+					if( this.cursorPosition && r == this.cursorPosition[ 1 ] )
+					{
+						buf = this.cbuf;
+					}
 					lr = r;
 					for( let x = 0, c = 0; x < this.getWidth(); x += fw, c++ )
 					{
