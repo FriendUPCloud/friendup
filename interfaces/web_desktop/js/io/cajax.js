@@ -454,18 +454,14 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 	this.opened = true;
 	
 	// Move dos calls onto http
-	let dosCall = false;
-	if( 
+	let dosCall = ( 
 		url.indexOf( '/file/read'   ) >= 0 ||
 		url.indexOf( '/file/copy'   ) >= 0 ||
 		url.indexOf( '/file/delete' ) >= 0 ||
 		url.indexOf( '/file/write'  ) >= 0 ||
 		url.indexOf( '/file/dir'    ) >= 0 ||
 		url.indexOf( '/file/expose' )
-	)
-	{
-		dosCall = true;
-	}
+	) != -1;
 	
 	// Try websockets!!
 	if( 
