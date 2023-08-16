@@ -1013,6 +1013,14 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 				loggedSession->us_User->u_LastActionTime = timestamp;
 			}
 			
+			if( strlen( sessionid ) <= 1 && loggedSession->us_SessionID )
+			{
+				sprintf( sessionid, "%s", loggedSession->us_SessionID );
+			}
+			
+			//DEBUG( "What does it look like? Sessionid: %s, And from LoggedSession: %s\n", sessionid, loggedSession->us_SessionID );
+			
+			
 			SQLLibrary *sqllib  = l->LibrarySQLGet( l );
 			if( sqllib != NULL )
 			{
