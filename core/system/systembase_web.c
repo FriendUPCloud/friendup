@@ -700,10 +700,12 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 			// check if request came from WebSockets
 			//
 			
-			DEBUG("LoginToken received\n");
+			DEBUG("[lot] LoginToken received\n");
 			
 			if( loggedSession == NULL )
 			{
+				//DEBUG("[lot] No logged session!\n");
+				
 				SQLLibrary *sqllib = l->LibrarySQLGet( l );
 
 				// Get authid from mysql
@@ -739,42 +741,51 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 					}
 					l->LibrarySQLDrop( l, sqllib );
 					
-					loggedSession = USMGetSessionByUserID( l->sl_USM, uid );
-					if( loggedSession == NULL && userName[ 0 ] != 0 )	// only if user exist and it has servertoken
+					// We need a valid UID
+					if( uid > 0 )
 					{
-						loggedSession = UserSessionNew( NULL, "servertoken", l->fcm->fcm_ID );
-						if( loggedSession != NULL )
+						loggedSession = USMGetSessionByUserID( l->sl_USM, uid );
+						if( loggedSession == NULL && userName[ 0 ] != 0 )	// only if user exist and it has servertoken
 						{
-							sprintf( sessionid, "%s", loggedSession->us_SessionID );
-							
-							User *usr = UMUserGetByName( l->sl_UM, userName );
-							if( usr == NULL )
+							loggedSession = UserSessionNew( NULL, "servertoken", l->fcm->fcm_ID );
+							if( loggedSession != NULL )
 							{
-								usr = UMUserGetByNameDB( l->sl_UM, userName );
-								if( usr != NULL )
+								sprintf( sessionid, "%s", loggedSession->us_SessionID );
+								
+								User *usr = UMUserGetByName( l->sl_UM, userName );
+								if( usr == NULL )
 								{
-									UMAddUser( l->sl_UM, usr );
+									usr = UMUserGetByNameDB( l->sl_UM, userName );
+									if( usr != NULL )
+									{
+										UMAddUser( l->sl_UM, usr );
+										UserAddSession( usr, loggedSession );
+									}
+								}
+								else
+								{
 									UserAddSession( usr, loggedSession );
 								}
-							}
-							else
-							{
-								UserAddSession( usr, loggedSession );
-							}
 
-							if( usr && usr->u_ID )
-							{
-							    loggedSession->us_UserID = usr->u_ID;
-							    loggedSession->us_LastActionTime = time( NULL );
-							    
-							    UGMAssignGroupToUser( l->sl_UGM, usr );
-							    
-							    USMSessionSaveDB( l->sl_USM, loggedSession );
-							    USMUserSessionAddToList( l->sl_USM, loggedSession );
-					        }
+								if( usr && usr->u_ID )
+								{
+									//DEBUG( "[lot] Trying to save!\n" );
+									loggedSession->us_UserID = usr->u_ID;
+									loggedSession->us_LastActionTime = time( NULL );
+									
+									UGMAssignGroupToUser( l->sl_UGM, usr );
+									
+									USMSessionSaveDB( l->sl_USM, loggedSession );
+									USMUserSessionAddToList( l->sl_USM, loggedSession );
+							    }
+							}
 						}
 					}
 				}
+			}
+			else
+			{
+				DEBUG("[lot] Seems we got a session: %s\n", loggedSession->us_SessionID );
 			}
 		}
 		

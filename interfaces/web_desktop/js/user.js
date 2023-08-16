@@ -197,6 +197,7 @@ Friend.User = {
 		}
 		else if( info.logintoken )
 		{
+			console.log( 'Trying login token.. ' + info.logintoken );
 			m.addVar( 'logintoken', info.logintoken );
 		}
 		else
@@ -232,7 +233,10 @@ Friend.User = {
 					Workspace.uniqueId = json.uniqueid;
 					
 					if( json.extra && json.extra.length )
+					{
 						SetCookie( 'logintoken', json.extra );
+					}
+					else DelCookie( 'logintoken' );
 					
 					// Silence non-admin user's debug
 					if( Workspace.userLevel != 'admin' )
