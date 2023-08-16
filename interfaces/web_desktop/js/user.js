@@ -141,7 +141,7 @@ Friend.User = {
 		return 0;
     },
     // Send the actual login call
-    SendLoginCall: function( info, callback )
+    SendLoginCall: function( info, callback = false )
     {	
     	// Already logging in
     	this.State = 'login';
@@ -290,10 +290,6 @@ Friend.User = {
 						}
 						m.send();
 					}
-					else
-					{
-						console.log( '[Login] Not possible.' );
-					}
 				}
 				else
 				{
@@ -305,7 +301,7 @@ Friend.User = {
 			catch( e )
 			{
 				console.log( 'Failed to understand server response.', e );
-				if( callback ) callback( false, serveranswer );
+				if( typeof( callback ) == 'function' ) callback( false, serveranswer );
 			};
 		}
 		m.forceHTTP = true;

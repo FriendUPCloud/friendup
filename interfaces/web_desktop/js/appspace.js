@@ -57,17 +57,95 @@ Workspace = {
 
 		this.mode = mode;
 
-		if( !this.sessionId )
+		// Interpret directive
+		let urlVars = {};
+		let url = document.location.href;
+		if( url.indexOf( '?' ) > 0 )
 		{
-			let v = new View( {
-				id: 'loginprompt',
-				title: 'Please log in',
-				width: 400,
-				height: 300
-			} );
-			return;
+			url = url.split( '?' )[1];
+			if( url.indexOf( '&' ) > 0 )
+			{
+				url = url.split( '&' );
+			}
+			else
+			{
+				url = [ url ];
+			}
+			
+			for( let a = 0; a < url.length; a++ )
+			{
+				let pair = url[a].split( '=' );
+				urlVars[pair[0]] = decodeURIComponent( pair[1] );
+				if( urlVars[pair[0]].indexOf( ':' ) > 0 )
+				{
+					// JSON?
+					try
+					{
+						let o = JSON.parse( urlVars[pair[0]] );
+						if( o ) urlVars[pair[0]] = o;
+					}
+					// No, a path maybe
+					catch( e )
+					{
+						// Good
+					}
+				}
+			}
 		}
-		/*			// Loading remaining scripts
+		this.conf = urlVars;
+		let t = this;
+		let p = 'HASHED' + Sha256.hash( 'apipass' );
+		let j = new cAjax();
+
+		let si = GetUrlVar( 'sessionid' );
+		let au = GetUrlVar( 'authid' );
+		let th = GetUrlVar( 'theme' );
+		if( th )
+			this.themeOverride = th;
+		
+		let authType = si ? 'sessionId' : 'authId';
+		let authValue = si ? si : au;
+
+		if( !au && !si )
+		{
+			j.open( 'POST', '/system.library/login', true, true );
+			j.addVar( 'username', 'apiuser' );
+			j.addVar( 'password', p );
+			j.addVar( 'deviceid', 'loving-crotch-grabbing-espen' );
+		}
+		// TODO: Do something useful here!
+		else
+		{
+			j.open( 'POST', '/system.library/help', true, true );
+			j.addVar( authType.toLowerCase(), authValue );
+		}
+		j.onload = function( r, d )
+		{
+			let error = false;
+			
+			let o = false;
+			if( r )
+			{
+				try
+				{ 
+					o = JSON.parse( r ); 
+				} 
+				catch( e )
+				{ 
+					if( r == 'fail' )
+					{
+						error = 'The Friend API user is unavailable or does not exist.';
+					}
+					console.log( 'Result is not in JSON format.', r, d ); 
+				}
+			}
+
+			// Either guest user or real user
+			if( ( ( si || au ) && r == 'ok' ) || ( r && o ) )
+			{
+				if( ( ( si || au ) && ( !o || typeof( o ) == 'undefined' ) ) || o.result == '0' || o.result == 3 )
+				{
+					// Loading remaining scripts
 					let s = document.createElement( 'script' );
 					s.src = '/webclient/js/api/friendapi.js;' +
 						'webclient/js/gui/workspace_inside.js;' +
@@ -268,7 +346,7 @@ Workspace = {
 
 		// Init security subdomains
 		if( window.SubSubDomains )
-			SubSubDomains.initSubSubDomains();*/
+			SubSubDomains.initSubSubDomains();
 	},
 	// Get a door by path
 	getDoorByPath: function( path )
