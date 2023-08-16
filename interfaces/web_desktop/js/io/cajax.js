@@ -51,8 +51,10 @@ function AddToCajaxQueue( ele )
 		if( t != undefined && t.queue )
 			queueCount += t.queue.length;
 	}
-	if( queueCount > 20 )
-		Friend.User.ReLogin();
+	
+	// TODO: Handle large queues
+	//if( queueCount > 20 )
+	//	Friend.User.ReLogin();
 	
 	let queue = Friend.cajax[ ele.type ].queue;
 	
