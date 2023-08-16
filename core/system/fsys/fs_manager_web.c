@@ -737,18 +737,6 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 											}
 										}
 									}
-							
-									char num[ 32 ];
-									if( loggedSession != NULL )
-									{
-										snprintf( num, sizeof(num),"%ld", (long int)loggedSession->us_UserID );
-									}
-									else
-									{
-										strcpy( num, "0" );
-									}
-
-									BufStringAdd( sql, num );
 									
 									BufStringAdd( sql, ")" );
 						
