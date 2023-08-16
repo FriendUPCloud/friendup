@@ -924,6 +924,17 @@ if( isset( $args->args ) )
 	    	}
 	    	die( 'fail<!--separate-->{"message":"Unknown contact.","response":-1}' );
         }
+        else if( $args->args->method == 'leavegroup' )
+        {
+        	$g = new dbIO( 'FUserGroup' );
+        	$g->UniqueID = $args->args->cid;
+        	if( $g->Load() )
+        	{
+        		if( $g->UserID == $User->ID ) die( 'fail' );
+	        	$SqlDatabase->query( 'DELETE FROM FUserToGroup fug WHERE fug.UserID=\'' . $User->ID . '\' AND fug.UserGroupID=\'' . $g->ID . '\'' );
+        	}
+        	die( 'ok' );
+        }
         else if( $args->args->method == 'deletemessage' )
         {
         	$m = new dbIO( 'Message' );

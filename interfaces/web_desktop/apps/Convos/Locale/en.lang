@@ -51,6 +51,7 @@ i18n_contact                           : Contact
 i18n_remove_user                       : Remove user from group
 i18n_are_you_sure                      : Are you sure?
 i18n_this_will_kick                    : If you confirm, you will remove this user from your group.
+i18n_leaving_group                     : Confirming that you are leaving this group.
 
 
 i18n_no_topics                         : No topics

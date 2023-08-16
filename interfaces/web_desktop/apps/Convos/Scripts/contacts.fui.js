@@ -109,7 +109,24 @@ class FUIContacts extends FUIElement
         {
         	leave.onclick = function()
         	{
-        		console.log( 'Pow' );
+        		Confirm( i18n( 'i18n_are_you_sure' ), i18n( 'i18n_leaving_group' ), function( d )
+        		{
+        			if( d.data != true ) return;
+        			
+        			let m = new Module( 'system' );
+        			m.onExecuted = function( me, md )
+        			{
+        				if( me == 'ok' )
+        				{
+        					self.refreshDom();
+        					let chans = FUI.getElementByUniqueId( 'convos' );
+        					if( !chans ) return;
+        					chans.initialized = false;
+        					chans.redrawChannels();
+        				}
+        			}
+        			m.execute( 'convos', { method: 'leavegroup', cid: self.record.ID } );
+        		} );
         	}
         }
         
