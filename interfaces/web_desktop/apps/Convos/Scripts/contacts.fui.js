@@ -104,6 +104,15 @@ class FUIContacts extends FUIElement
         	}
         }
         
+        let leave = this.domSettings.querySelector( '.LeaveGroup' );
+        if( leave )
+        {
+        	leave.onclick = function()
+        	{
+        		console.log( 'Pow' );
+        	}
+        }
+        
         let cnvbtn = this.domSettings.querySelector( '.AddConversation' );
         if( cnvbtn )
         {
