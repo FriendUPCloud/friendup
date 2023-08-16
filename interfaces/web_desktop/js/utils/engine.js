@@ -799,7 +799,7 @@ function StrPad ( num, len, ch )
 }
 
 // Clean up
-function DirectUpload( uppath = false )
+function DirectUpload( uppath = false, cbk = false )
 {
 	if( !uppath ) uppath = 'Home:';
 	
@@ -816,8 +816,17 @@ function DirectUpload( uppath = false )
 	uploadForm.action = '/system.library/file/upload';
 	uploadForm.className = 'Hidden';
 	
-	let hiddens = [ 'sessionid', 'module', 'command', 'path' ];
-	let hiddatt = [ Workspace.sessionId, 'files', 'uploadfile', uppath ];
+	let hiddens, hiddatt;
+	if( window.Workspace && Workspace.sessionId )
+	{
+		hiddens = [ 'sessionid', 'module', 'command', 'path' ];
+		hiddatt = [ Workspace.sessionId, 'files', 'uploadfile', uppath ];
+	}
+	else
+	{
+		hiddens = [ 'authid', 'module', 'command', 'path' ];
+		hiddatt = [ Application.authId, 'files', 'uploadfile', uppath ];
+	}
 	for( let b in hiddens )
 	{
 		let i = document.createElement( 'input' );
@@ -844,36 +853,55 @@ function DirectUpload( uppath = false )
 	{
 		resultfr.addEventListener( 'load', function()
 		{
+			let checkPath = uppath + uploadElement.value.split( '\\' ).pop();
 			let check = new Library( 'system.library' );
 			check.onExecuted = function( ee, dd )
 			{
-				if( ee == 'ok' )
+				let response = {
+					path: checkPath,
+					result: false
+				};
+				if( window.movableWindows )
 				{
-					for( let a in movableWindows )
+					if( ee == 'ok' )
 					{
-						let w = movableWindows[a];
-						if( w.content ) w = w.content;
-						if( w.fileInfo )
+						response.result = true;
+						for( let a in movableWindows )
 						{
-							if( w.fileInfo.Path == uppath )
+							let w = movableWindows[a];
+							if( w.content ) w = w.content;
+							if( w.fileInfo )
 							{
-								Workspace.diskNotification( [ w ], 'refresh' );
+								if( w.fileInfo.Path == uppath )
+								{
+									Workspace.diskNotification( [ w ], 'refresh' );
+								}
 							}
 						}
+					
+						if( window.Notify )
+							Notify( { title: i18n( 'i18n_upload_completed' ), text: i18n( 'i18n_upload_completed_description' ) } );
+						if( window.Workspace && Workspace.refreshWindowByPath )
+							Workspace.refreshWindowByPath( uppath );
 					}
-				
-					if( window.Notify )
-						Notify( { title: i18n( 'i18n_upload_completed' ), text: i18n( 'i18n_upload_completed_description' ) } );
-					if( window.Workspace && Workspace.refreshWindowByPath )
-						Workspace.refreshWindowByPath( uppath );
+					else
+					{
+						if( window.Notify )
+							Notify( { title: i18n( 'i18n_upload_failed' ), text: i18n( 'i18n_upload_failed_description' ) } );
+					}
+					if( cbk ) cbk( response );
 				}
 				else
 				{
-					if( window.Notify )
-						Notify( { title: i18n( 'i18n_upload_failed' ), text: i18n( 'i18n_upload_failed_description' ) } );
+					if( ee == 'ok' )
+					{
+						response.result = true;
+					}
+					if( cbk ) cbk( response );
+					return;
 				}
 			}
-			check.execute( 'file/info', { path: uppath + uploadElement.value.split( '\\' ).pop() } );
+			check.execute( 'file/info', { path: checkPath } );
 		} );
 		uploadForm.submit();
 	}

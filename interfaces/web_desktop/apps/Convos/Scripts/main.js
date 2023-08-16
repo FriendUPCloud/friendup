@@ -39,6 +39,14 @@ Application.run = function( msg ){
 	        serverQueue.push( msg.args );
 	    }
 	}
+	
+	let s = new Shell();
+	s.onReady = function( data )
+	{
+		this.execute( 'makedir Home:Uploads' );
+		this.close();
+	}
+	
 };
 
 Application.receiveMessage = function( msg )

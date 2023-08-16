@@ -299,6 +299,17 @@ class FUIChatlog extends FUIElement
     	}
     	this.domInput.querySelector( '.Upload' ).onclick = function()
     	{
+    		if( isMobile )
+    		{
+    			DirectUpload( 'Home:Uploads/', function( response )
+    			{
+    				if( response.path && response.result )
+    				{
+    					self.shareImageAndPost( response.path );
+    				}
+    			} );
+    			return;
+    		}
     	    let s = this;
     	    if( this.classList.contains( 'Active' ) )
     	    {
