@@ -75,6 +75,8 @@ class FUIGroupsettings extends FUIInvitedialog
 			element.innerHTML = data;
 			element.classList.remove( 'Loading' );
 			
+			FUI.initialize();
+			
 			let upload = self.domElement.querySelector( '.Upload' );
 			upload.onclick = function()
 			{
