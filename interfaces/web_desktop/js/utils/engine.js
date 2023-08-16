@@ -798,6 +798,88 @@ function StrPad ( num, len, ch )
 	return out;
 }
 
+// Clean up
+function DirectUpload( uppath = false )
+{
+	if( !uppath ) uppath = 'Home:';
+	
+	if( ge( 'upload-frame' ) )
+	{
+		document.body.removeChild( ge( 'upload-frame' ).form );
+		document.body.removeChild( ge( 'upload-frame' ) );
+	}
+	
+	let uploadForm = document.createElement( 'form' );
+	uploadForm.method = 'post';
+	uploadForm.target = 'upload-frame';
+	uploadForm.enctype = 'multipart/form-data';
+	uploadForm.action = '/system.library/file/upload';
+	uploadForm.className = 'Hidden';
+	
+	let hiddens = [ 'sessionid', 'module', 'command', 'path' ];
+	let hiddatt = [ Workspace.sessionId, 'files', 'uploadfile', uppath ];
+	for( let b in hiddens )
+	{
+		let i = document.createElement( 'input' );
+		i.type = 'hidden'; i.name = hiddens[ b ]; i.value = hiddatt[ b ];
+		uploadForm.appendChild( i );
+	}
+	
+	let uploadElement = document.createElement( 'input' );
+	uploadElement.type = 'file';
+	uploadElement.multiple = 'multiple';
+	uploadElement.name = 'file';
+	uploadForm.appendChild( uploadElement );
+	
+	let resultfr = document.createElement( 'iframe' );
+	resultfr.id = 'upload-frame';
+	resultfr.name = 'upload-frame';
+	resultfr.className = 'Hidden';
+	resultfr.form = uploadForm;
+	document.body.appendChild( resultfr );
+	document.body.appendChild( uploadForm );
+	
+	uploadElement.click();
+	uploadElement.onchange = function()
+	{
+		resultfr.addEventListener( 'load', function()
+		{
+			let check = new Library( 'system.library' );
+			check.onExecuted = function( ee, dd )
+			{
+				if( ee == 'ok' )
+				{
+					for( let a in movableWindows )
+					{
+						let w = movableWindows[a];
+						if( w.content ) w = w.content;
+						if( w.fileInfo )
+						{
+							if( w.fileInfo.Path == uppath )
+							{
+								Workspace.diskNotification( [ w ], 'refresh' );
+							}
+						}
+					}
+				
+					if( window.Notify )
+						Notify( { title: i18n( 'i18n_upload_completed' ), text: i18n( 'i18n_upload_completed_description' ) } );
+					if( window.Workspace && Workspace.refreshWindowByPath )
+						Workspace.refreshWindowByPath( uppath );
+				}
+				else
+				{
+					if( window.Notify )
+						Notify( { title: i18n( 'i18n_upload_failed' ), text: i18n( 'i18n_upload_failed_description' ) } );
+				}
+			}
+			check.execute( 'file/info', { path: uppath + uploadElement.value.split( '\\' ).pop() } );
+		} );
+		uploadForm.submit();
+	}
+}
+
+
 function ShowDialog ( width, url, func, endfunc )
 {
 	var d, bg;
