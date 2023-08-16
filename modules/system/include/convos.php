@@ -671,6 +671,10 @@ if( isset( $args->args ) )
 						$o->Mode = 'room-avatar';
 						if( !$o->Load() )
 							$o->DateCreated = date( 'Y-m-d H:i:s' );
+						if( $o->OwnerUserID != $User->ID )
+						{
+							die( 'fail<!--separate-->{"message":"User mismatch bug.","response":-1}' );
+						}
 						$o->Data = $args->args->path;
 						$o->DateTouched = date( 'Y-m-d H:i:s' );
 						$o->Save();
