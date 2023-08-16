@@ -53,6 +53,9 @@ i18n_are_you_sure                      : Are you sure?
 i18n_this_will_kick                    : If you confirm, you will remove this user from your group.
 i18n_leaving_group                     : Confirming that you are leaving this group.
 
+i18n_visibility                        : Group visibility
+i18n_visibility_desc                   : Set group as public or private, to make it visible to search and join by new members or not.
+
 
 i18n_no_topics                         : No topics
 i18n_you_have_no_topics                : You have no chat topics. Add one to start a conversation with your jeanie!
