@@ -661,7 +661,20 @@ if( isset( $args->args ) )
         		$o->UniqueID = $l->UniqueID;
         		$o->Name = $l->Name;
         		$o->Description = $l->Description;
+        		$o->Status = $l->Status;
         		die( 'ok<!--separate-->' . json_encode( $o ) );
+        	}
+        	die( 'fail<!--separate-->{"message":"No such group.","response":-1}' );
+        }
+        else if( $args->args->method == 'chatroom-status' )
+        {
+        	$l = new dbIO( 'FUserGroup' );
+        	$l->UniqueID = $args->args->cid;
+        	if( $l->Load() )
+        	{
+        		$l->Status = $args->args->status;
+        		if( $l->Save() )
+	        		die( 'ok<!--separate-->' . json_encode( $o ) );
         	}
         	die( 'fail<!--separate-->{"message":"No such group.","response":-1}' );
         }

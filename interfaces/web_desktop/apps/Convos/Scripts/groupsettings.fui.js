@@ -77,7 +77,8 @@ class FUIGroupsettings extends FUIInvitedialog
 			let grp = JSON.parse( md );
 			f.replacements = {
 				'room-name': grp.Name,
-				'room-description': grp.Description
+				'room-description': grp.Description,
+				'room-status': grp.Status == '1' ? 'checked' : ''
 			};
 			f.i18n();
 			f.load();
@@ -90,6 +91,11 @@ class FUIGroupsettings extends FUIInvitedialog
 			element.classList.remove( 'Loading' );
 			
 			FUI.initialize();
+			FUI.addCallback( 'toggle-private', function( dt )
+			{ 
+				let m = new Module( 'system' );
+				m.execute( 'convos', { method: 'chatroom-status', status: dt == true ? '1' : '0', cid: self.options.groupId } );
+			} );
 			
 			let groupName = ge( 'groupName' );
 			let ogn = groupName.value;
