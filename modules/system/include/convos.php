@@ -936,8 +936,10 @@ if( isset( $args->args ) )
         	if( $g->Load() )
         	{
         		$g->Name = $args->args->newname;
-        		$g->Save();
-        		die( 'ok<!--separate-->' );
+        		if( $g->Save() )
+        		{
+        			die( 'ok<!--separate-->{"message":"Chatroom renamed.","response":1}' );
+    			}
         	}
         	die( 'fail<!--separate-->' );
         }

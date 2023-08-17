@@ -83,6 +83,7 @@ class FUIGroupsettings extends FUIInvitedialog
 			{
 				if( Trim( this.value ) != Trim( ogn ) )
 				{
+					let newName = this.value;
 					element.querySelector( '.nameChange' ).innerHTML = '<div class="Button IconButton fa-check"></div>';
 					element.querySelector( '.nameChange' ).querySelector( '.Button' ).onclick = function()
 					{
@@ -93,9 +94,11 @@ class FUIGroupsettings extends FUIInvitedialog
 							{
 								let overView = FUI.getElementByUniqueId( 'convos' );
 								if( overView ) overView.redrawChannels();
+								let mess = FUI.getElementByUniqueId( 'messages' );
+								mess.setTopic( Trim( newName ) );
 							}
 						}
-						m.execute( 'convos', { method: 'rename-chatroom', newname: Trim( ogn ), cid: self.options.groupId } );
+						m.execute( 'convos', { method: 'rename-chatroom', newname: Trim( newName ), cid: self.options.groupId } );
 					}
 				}
 				else
