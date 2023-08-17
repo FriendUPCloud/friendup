@@ -5,14 +5,17 @@
 				<p>
 					<strong>{i18n_group_name}</strong>
 				</p>
-				<p>
-					<input type="text" name="name" value="{room-name}" placeholder="{i18n_chatroom_name}"/>
-				</p>
+				<div class="Flex">
+					<div>
+						<input type="text" id="groupName" name="name" value="{room-name}" placeholder="{i18n_chatroom_name}"/>
+					</div>
+					<div class="nameChange"></div>
+				</div>
 				<p>
 					<strong>{i18n_group_desc}</strong>
 				</p>
 				<p>
-					<textarea name="description" rows="8">{room-description}</textarea>
+					<textarea name="description" rows="12">{room-description}</textarea>
 				</p>
 			</div>
 			<div class="Section">

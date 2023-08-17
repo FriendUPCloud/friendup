@@ -77,6 +77,33 @@ class FUIGroupsettings extends FUIInvitedialog
 			
 			FUI.initialize();
 			
+			let groupName = ge( 'groupName' );
+			let ogn = groupName.value;
+			groupName.onkeyup = function()
+			{
+				if( Trim( this.value ) != Trim( ogn ) )
+				{
+					element.querySelector( '.nameChange' ).innerHTML = '<div class="Button IconButton fa-check"></div>';
+					element.querySelector( '.nameChange' ).querySelector( '.Button' ).onclick = function()
+					{
+						let m = new Module( 'system' );
+						m.onExecuted = function( e, d )
+						{
+							if( e == 'ok' )
+							{
+								let overView = FUI.getElementByUniqueId( 'convos' );
+								if( overView ) overView.redrawChannels();
+							}
+						}
+						m.execute( 'convos', { method: 'rename-chatroom', newname: Trim( ogn ), cid: self.options.groupId } );
+					}
+				}
+				else
+				{
+					element.querySelector( '.nameChange' ).innerHTML = '';
+				}
+			}
+			
 			let upload = self.domElement.querySelector( '.Upload' );
 			upload.onclick = function()
 			{

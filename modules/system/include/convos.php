@@ -928,6 +928,19 @@ if( isset( $args->args ) )
 	    	}
 	    	die( 'fail<!--separate-->{"message":"Unknown contact.","response":-1}' );
         }
+        else if( $args->args->method == 'rename-chatroom' )
+        {
+        	$g = new dbIO( 'FUserGroup' );
+        	$g->UserID = $User->ID;
+        	$g->UniqueID = $args->args->cid;
+        	if( $g->Load() )
+        	{
+        		$g->Name = $args->args->newname;
+        		$g->Save();
+        		die( 'ok<!--separate-->' );
+        	}
+        	die( 'fail<!--separate-->' );
+        }
         else if( $args->args->method == 'leavegroup' )
         {
         	$g = new dbIO( 'FUserGroup' );
