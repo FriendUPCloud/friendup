@@ -556,7 +556,7 @@ body:not([mobile=mobile]) .FUIChatoverview > .HoverElement.Showing
 .OverviewUpdates .SearchSelection
 {
 	display: block;
-	margin: auto;
+	margin: 20px auto 10px auto;
 	padding: 15px;
 	width: 400px;
 	max-width: 100%;

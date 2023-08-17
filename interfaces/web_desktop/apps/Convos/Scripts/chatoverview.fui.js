@@ -444,11 +444,16 @@ class FUIChatoverview extends FUIElement
 					us = par.userList[ data[a].FlatUserID ];
 				}
 				
-				let dat = self.parseDate( data[ a ].Date );
+				let dat = '';
+				if( data[a].Date )
+				{
+					dat = self.parseDate( data[ a ].Date );
+					dat = '<span class="Date">' + dat + '</span></em> ';
+				}
 				
 				let d = document.createElement( 'div' );
 				d.className = 'SearchedMessage';
-				d.innerHTML = '<p><em>' + data[a].Name + ', <span class="Date">' + dat + '</span></em> ' + data[a].Message + '</p>';
+				d.innerHTML = '<p><em>' + data[a].Name + ', ' + dat + ( data[a].Message ? data[a].Message : data[a].Description ) + '</p>';
 				us.appendChild( d );
 			}
 		} );

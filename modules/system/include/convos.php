@@ -162,7 +162,6 @@ if( isset( $args->args ) )
     }
     if( isset( $args->args->method ) )
     {
-        //error_log( '[convos.php] Method start.' );
         if( $args->args->method == 'messages' )
         {
             $rows = false;
@@ -328,6 +327,35 @@ if( isset( $args->args ) )
                 die( 'ok<!--separate-->' . json_encode( $response ) );
             }
             die( 'fail<!--separate-->{"response":0,"message":"Failed to retrieve messages."}' . $q );
+        }
+        // Get public groups
+        else if( $args->args->method == 'public_groups' )
+        {
+        	$key = $SqlDatabase->_link->real_escape_string( $args->args->searchString );
+        	$page = intval( $args->args->page, 10 );
+        	if( $rows = $SqlDatabase->fetchObjects( '
+        		SELECT * FROM FUserGroup fug
+        		WHERE
+        			fug.Type = "chatroom" AND
+        			fug.Status = 1 AND
+        			( fug.Name LIKE "%' . $key . '%" OR fug.Description LIKE "%' . $key . '%" )
+    			ORDER BY
+    				fug.Name ASC
+    			LIMIT ' . $page . ',' . ( $page + 100 ) . '
+        	' ) )
+        	{
+        		$out = [];
+        		foreach( $rows as $r )
+        		{
+        			$o = new stdClass();
+        			$o->Name = $r->Name;
+        			$o->Description = $r->Description;
+        			$o->UniqueID = $r->UniqueID;
+        			$out[] = $o;
+        		}
+        		die( 'ok<!--separate-->' . json_encode( $out ) );
+        	}
+        	die( 'fail<!--separate-->' );
         }
         // Get the original file OR
         // Get an attachment on ID
