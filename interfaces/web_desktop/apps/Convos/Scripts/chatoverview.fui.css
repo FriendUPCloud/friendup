@@ -607,7 +607,7 @@ body:not([mobile=mobile]) .FUIChatoverview > .HoverElement.Showing
 
 .OverviewUpdates .SearchForm button
 {
-	flex: 1.5;
+	flex: 1.2;
 }
 
 .FUIChatoverview .OverviewUpdates p

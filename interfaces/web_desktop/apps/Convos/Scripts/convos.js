@@ -50,6 +50,12 @@ Application.run = function( msg )
 	this.sendMessage( { command: 'app-ready' } );
 } 
 
+// Navigate through the application
+Application.navigate = function( path )
+{
+	
+}
+
 Application.receiveMessage = function( msg )
 {
 	// Receiving message on sender

@@ -16,6 +16,8 @@ class FUIChatoverview extends FUIElement
         // Do stuff
         
         let self = this;
+        self.searchMode = 'messages';
+        
         window.addEventListener( 'resize', function()
         {
         	self.handleResize();
@@ -226,6 +228,8 @@ class FUIChatoverview extends FUIElement
     {
     	// Init content
     	let self = this;
+    	self.cancelMode = false;
+    	
     	let f = new File( 'Progdir:Markup/main_updates.html' );
         f.i18n();
         f.onLoad = function( data )
@@ -252,6 +256,12 @@ class FUIChatoverview extends FUIElement
         			{
         				clearCats( this );
         				this.classList.add( 'On' );
+        				self.searchMode = this.getAttribute( 'mode' );
+        				self.cancelMode = true;
+        				setTimeout( function()
+        				{
+        					self.cancelSearch();
+    					}, 50 );
         			}
         		}
         	}
@@ -299,6 +309,13 @@ class FUIChatoverview extends FUIElement
         const binString = atob( base64 );
         return Uint8Array.from( binString, ( m ) => m.codePointAt( 0 ) );
     }
+    cancelSearch()
+    {
+    	let self = this;
+		document.querySelector( '.SearchForm' ).classList.remove( 'Searching', 'Loading' );
+		self.cancelMode = false;
+		document.querySelector( '.SearchResults' ).innerHTML = '';
+    }
     executeSearch( searchString )
     {
     	let self = this;
@@ -308,55 +325,92 @@ class FUIChatoverview extends FUIElement
     	par.innerHTML = '';
     	function fetchNextPage( page = 0, searchString, cbk )
     	{
-			let m = new Module( 'system' );
-			m.onExecuted = function( e, d )
+			if( self.cancelMode ) 
 			{
-				if( e == 'ok' )
+				self.cancelSearch();
+				return;
+			}
+			
+			if( self.searchMode == 'messages' )
+			{
+				let m = new Module( 'system' );
+				m.onExecuted = function( e, d )
 				{
-					let mess = JSON.parse( d );
-					let lsearchString = searchString ? searchString.toLowerCase() : '';
-					if( !lsearchString ) return;
-					let str = lsearchString;
-					if( str.indexOf( ',' ) > 0 )
+					if( self.cancelMode ) 
 					{
-						str = lsearchString.split( ',' );
+						self.cancelSearch();
+						return;
 					}
-					else
+					
+					if( e == 'ok' )
 					{
-						str = [ str ];
-					}
-					let out = [];
-					for( let a = 0; a < mess.messages.length; a++ )
-					{
-						let text = mess.messages[a].Message;
-						try
+						let mess = JSON.parse( d );
+						let lsearchString = searchString ? searchString.toLowerCase() : '';
+						if( !lsearchString ) return;
+						let str = lsearchString;
+						if( str.indexOf( ',' ) > 0 )
 						{
-						    let dec = new TextDecoder().decode( self.base64ToBytes( text ) );
-						    text = dec;
+							str = lsearchString.split( ',' );
 						}
-						catch( e ){};
-						if( !text ) continue;
-						text = text.split( /\<.*?\>/i ).join( '' );
-						for( let c = 0; c < str.length; c++ )
+						else
 						{
-							if( text && text.toLowerCase().indexOf( Trim( str[ c ] ) ) >= 0 )
+							str = [ str ];
+						}
+						let out = [];
+						for( let a = 0; a < mess.messages.length; a++ )
+						{
+							let text = mess.messages[a].Message;
+							try
 							{
-								let m = mess.messages[ a ];
-								m.Message = text;
-								out.push( m );
+								let dec = new TextDecoder().decode( self.base64ToBytes( text ) );
+								text = dec;
+							}
+							catch( e ){};
+							if( !text ) continue;
+							text = text.split( /\<.*?\>/i ).join( '' );
+							for( let c = 0; c < str.length; c++ )
+							{
+								if( text && text.toLowerCase().indexOf( Trim( str[ c ] ) ) >= 0 )
+								{
+									let m = mess.messages[ a ];
+									m.Message = text;
+									out.push( m );
+								}
 							}
 						}
+						if( out.length )
+						{
+							cbk( out );
+						}
+						fetchNextPage( page + 1, searchString, cbk );
+						return;
 					}
-					if( out.length )
-					{
-						cbk( out );
-					}
-					fetchNextPage( page + 1, searchString, cbk );
-					return;
+					document.querySelector( '.SearchForm' ).classList.remove( 'Searching', 'Loading' );
 				}
-				document.querySelector( '.SearchForm' ).classList.remove( 'Searching', 'Loading' );
+				m.execute( 'convos', { method: 'messages', roomType: '*', searchString: searchString, page: page } );
 			}
-			m.execute( 'convos', { method: 'messages', roomType: '*', searchString: searchString, page: page } );
+			else if( self.searchMode == 'groups' )
+			{
+				let m = new Module( 'system' );
+				m.onExecuted = function( e, d )
+				{
+					if( self.cancelMode ) 
+					{
+						self.cancelSearch();
+						return;
+					}
+					
+					if( e == 'ok' )
+					{
+						let mess = JSON.parse( d );
+						cbk( mess );
+						fetchNextPage( page + 1, searchString, cbk );
+						return;
+					}
+					document.querySelector( '.SearchForm' ).classList.remove( 'Searching', 'Loading' );
+				}
+				m.execute( 'convos', { method: 'public_groups', roomType: '*', searchString: searchString, page: page } );
+			}
 		}
 		fetchNextPage( 0, searchString, function( data )
 		{
