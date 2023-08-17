@@ -11137,7 +11137,7 @@ function InitWorkspaceNetwork()
 	// Establish a websocket connection to the core
 	if( !wsp.conn && wsp.sessionId && window.FriendConnection )
 	{
-		//wsp.initWebSocket();
+		wsp.initWebSocket();
 	}
 
 	wsp.checkFriendNetwork();
