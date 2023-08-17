@@ -915,6 +915,9 @@ if( !window.FriendWebSocket )
 
 		wsClose( code, reason )
 		{
+			console.log( '[FriendWebSocket] We are going doen - backtrace:' );
+			console.trace();
+			
 			// This means we have no open connections
 			_cajax_ws_connections = 0;
 			
