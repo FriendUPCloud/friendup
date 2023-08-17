@@ -31,7 +31,9 @@ i18n_invite_to_chatroom_desc           : You were invited to a chat room {groupn
 i18n_news_and_events                   : Search and events
 
 i18n_find_things                       : Keywords...
-i18n_find_button                       : Find messages
+i18n_find_button                       : Search
+i18n_search_groups                     : Find groups
+i18n_search_messages                   : Find messages
 
 i18n_create_invite                     : Create invite
 i18n_invite_desc                       : Click create to generate an invite link. Each time you generate a link, the old one is deleted.

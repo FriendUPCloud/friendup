@@ -553,6 +553,40 @@ body:not([mobile=mobile]) .FUIChatoverview > .HoverElement.Showing
     margin: auto;
 }
 
+.OverviewUpdates .SearchSelection
+{
+	display: block;
+	margin: auto;
+	padding: 15px;
+	width: 400px;
+	max-width: 100%;
+	text-align: center;
+}
+
+.OverviewUpdates .Categories
+{
+	display: flex;
+    gap: 10px;
+    align-items: center;
+    justify-content: center;
+}
+
+.OverviewUpdates .Categories > .Category
+{
+	border-radius: 15px;
+	cursor: pointer;
+	background-color: var(--BackgroundHeavier);
+    color: initial;
+    transition: color,background-color 0.15s,0.15s;
+	padding: 10px;
+}
+
+.OverviewUpdates .Categories > .Category.On
+{
+	background-color: var(--ColorBgButton);
+	color: var(--ColorButton);
+}
+
 .OverviewUpdates .Content 
 {
     position: absolute;

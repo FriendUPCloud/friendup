@@ -234,6 +234,28 @@ class FUIChatoverview extends FUIElement
         	self.renderOverview();
         	FUI.initialize();
         	
+        	let cats = self.domChatlist.querySelector( '.Categories' );
+        	function clearCats( not )
+        	{
+        		for( let a = 0; a < cats.childNodes.length; a++ )
+	        	{
+	        		if( cats.childNodes[ a ] != not && cats.childNodes[ a ].classList )
+	        			cats.childNodes[ a ].classList.remove( 'On' );
+	        	}
+        	}
+        	for( let a = 0; a < cats.childNodes.length; a++ )
+        	{
+        		let cat = cats.childNodes[a];
+        		if( cat.classList && cat.classList.contains( 'Category' ) )
+        		{
+        			cat.onclick = function()
+        			{
+        				clearCats( this );
+        				this.classList.add( 'On' );
+        			}
+        		}
+        	}
+        	
         	// Check channels
 			let chans = self.domChannels.getElementsByClassName( 'Channel' );
 			if( chans && chans.length && chans.length > 0 )
