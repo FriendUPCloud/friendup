@@ -157,6 +157,8 @@ Friend.User = {
 		let m = new FriendLibrary( 'system' );
 		this.lastLogin = m;
 		
+		let usingLoginToken = false;
+		
 		if( info.username && info.password )
 		{
 			Workspace.sessionId = '';
@@ -197,7 +199,7 @@ Friend.User = {
 		}
 		else if( info.logintoken )
 		{
-			console.log( 'Trying login token.. ' + info.logintoken );
+			usingLoginToken = true;
 			m.addVar( 'logintoken', info.logintoken );
 		}
 		else
@@ -298,6 +300,15 @@ Friend.User = {
 				else
 				{
 					Friend.User.SetUserConnectionState( 'offline' );
+					
+					if( usingLoginToken )
+					{
+						// Logintoken expired!
+						if( json.code == 11 )
+						{
+							Friend.User.Logout();
+						}
+					}
 					
 					if( typeof( callback ) == 'function' ) callback( false, serveranswer );
 				}

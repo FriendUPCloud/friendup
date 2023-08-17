@@ -374,6 +374,25 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 		return response;
     }
     
+    if( strcmp( urlpath[ 0 ], "validate" ) == 0 )
+	{
+		struct TagItem tags[] = {
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{TAG_DONE, TAG_DONE}
+		};
+		
+		response = HttpNewSimple( HTTP_200_OK,  tags );
+		
+		HttpAddTextContent( response, "ok<!--separate-->{\"response\":\"true\"}" );
+		
+		*result = 200;
+		
+		FFree( sessionid );
+		
+		return response;
+	}
+    
     if( strcmp( urlpath[ 0 ], "login" ) == 0 )
 	{
 		loginLogoutCalled = TRUE;
@@ -1224,21 +1243,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 	*/
 	/// @endcond
 	
-	if( strcmp( urlpath[ 0 ], "validate" ) == 0 )
-	{
-		struct TagItem tags[] = {
-			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
-			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-			{TAG_DONE, TAG_DONE}
-		};
-		
-		response = HttpNewSimple( HTTP_200_OK,  tags );
-		
-		HttpAddTextContent( response, "ok<!--separate-->{\"response\":\"true\"}" );
-		
-		*result = 200;
-	}
-	else if( strcmp( urlpath[ 0 ], "help" ) == 0 )
+	if( strcmp( urlpath[ 0 ], "help" ) == 0 )
 	{
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
