@@ -593,6 +593,7 @@ span.Emoticon:hover
     overflow: hidden;
     opacity: 0;
     transition: opacity 0.15s;
+    margin: 10px 0 10px 0;
 }
 
 .FUIChatlog .Messages .WebLinkPreview p.WebLinkP,
