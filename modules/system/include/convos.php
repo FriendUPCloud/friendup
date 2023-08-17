@@ -651,6 +651,20 @@ if( isset( $args->args ) )
         	}
         	die( 'fail<!--separate-->{"message":"You have no chat room.","response":-1}' );
         }
+        else if( $args->args->method == 'get-group' )
+        {
+        	$l = new dbIO( 'FUserGroup' );
+        	$l->UniqueID = $args->args->cid;
+        	if( $l->Load() )
+        	{
+        		$o = new stdClass();
+        		$o->UniqueID = $l->UniqueID;
+        		$o->Name = $l->Name;
+        		$o->Description = $l->Description;
+        		die( 'ok<!--separate-->' . json_encode( $o ) );
+        	}
+        	die( 'fail<!--separate-->{"message":"No such group.","response":-1}' );
+        }
         // Sets a share parameter for an image and shares it with the group
         else if( $args->args->method == 'setroomavatar' )
         {
@@ -927,6 +941,21 @@ if( isset( $args->args ) )
 				}
 	    	}
 	    	die( 'fail<!--separate-->{"message":"Unknown contact.","response":-1}' );
+        }
+        else if( $args->args->method == 'room-description' )
+        {
+        	$g = new dbIO( 'FUserGroup' );
+        	$g->UserID = $User->ID;
+        	$g->UniqueID = $args->args->cid;
+        	if( $g->Load() )
+        	{
+        		$g->Description = $args->args->desc;
+        		if( $g->Save() )
+        		{
+        			die( 'ok<!--separate-->{"message":"Chatroom changed.","response":1}' );
+    			}
+        	}
+        	die( 'fail<!--separate-->' );
         }
         else if( $args->args->method == 'rename-chatroom' )
         {

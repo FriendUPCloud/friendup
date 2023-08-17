@@ -65,11 +65,25 @@ class FUIGroupsettings extends FUIInvitedialog
 		let self = this;
 		
 		let f = new File( 'Progdir:Markup/groupsettings.html' );
-		f.replacements = {
-			'room-name': this.options.channelName,
-			'room-description': this.options.description != undefined ? this.options.description : ''
-		};
-		f.i18n();
+		
+		let m = new Module( 'system' );
+		m.onExecuted = function( me, md )
+		{
+			if( me == 'fail' ) 
+			{
+				console.log( 'Impossible no group error.' );
+				return false; // TODO: Make some error
+			}
+			let grp = JSON.parse( md );
+			f.replacements = {
+				'room-name': grp.Name,
+				'room-description': grp.Description
+			};
+			f.i18n();
+			f.load();
+		}
+		m.execute( 'convos', { method: 'get-group', cid: self.options.groupId } );
+		
 		f.onLoad = function( data )
 		{
 			element.innerHTML = data;
@@ -106,6 +120,16 @@ class FUIGroupsettings extends FUIInvitedialog
 					element.querySelector( '.nameChange' ).innerHTML = '';
 				}
 			}
+			let groupDesc = ge( 'groupDescription' );
+			groupDesc.onkeyup = function()
+			{
+				if( this.time ) clearTimeout( this.time );
+				this.time = setTimeout( function()
+				{
+					let m = new Module( 'system' );
+					m.execute( 'convos', { method: 'room-description', desc: groupDesc.value, cid: self.options.groupId } );
+				}, 250 );
+			}
 			
 			let upload = self.domElement.querySelector( '.Upload' );
 			upload.onclick = function()
@@ -139,7 +163,6 @@ class FUIGroupsettings extends FUIInvitedialog
 			
 			self.refreshAvatar();
 		}
-		f.load();
 	}
 }
 

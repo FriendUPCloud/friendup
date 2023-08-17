@@ -15,6 +15,7 @@ class FUIContacts extends FUIElement
     constructor( options )
     {
         super( options );
+        let self = this;
         this.initialized = true;
         this.contactFilter = '';
         this.userList = {}; // Dom elements
@@ -27,11 +28,35 @@ class FUIContacts extends FUIElement
         	// If this is group list, initialize the group chat
         	if( this.options.groupid && this.options.groupname )
         	{
-        		this.setChatView( {
-        			Type: 'chatroom',
-        			ID: this.options.groupid,
-        			Fullname: this.options.groupname
-        		} );
+        		if( !this.options.description )
+        		{
+        			let m = new Module( 'system' );
+        			m.onExecuted = function( me, md )
+        			{
+        				if( me == 'fail' ) 
+        				{
+        					console.log( 'Impossible no group error.' );
+        					return false; // TODO: Make some error
+    					}
+        				let grp = JSON.parse( md );
+        				self.setChatView( {
+							Type: 'chatroom',
+							ID: grp.UniqueID,
+							Fullname: grp.Name,
+							Description: grp.Description
+						} );
+        			}
+        			m.execute( 'convos', { method: 'get-group', cid: this.options.groupid } );
+    			}
+    			else
+    			{
+		    		this.setChatView( {
+		    			Type: 'chatroom',
+		    			ID: this.options.groupid,
+		    			Fullname: this.options.groupname,
+		    			Description: this.options.description
+		    		} );
+	    		}
         	}
         }
     }
