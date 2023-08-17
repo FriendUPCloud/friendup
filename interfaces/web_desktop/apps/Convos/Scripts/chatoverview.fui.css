@@ -47,6 +47,8 @@
 {
 	width: 128px;
 	height: 128px;
+	background-position: center;
+    background-size: cover;
 	border-radius: 128px;
 	border-color: white;
 	border-style: solid;

@@ -432,13 +432,21 @@ class FUIChatoverview extends FUIElement
 					
 					let av = document.createElement( 'div' );
 					av.className = 'Avatar';
-					( function( fuid, avo ) {
-						self.getAvatarFromUser( fuid, function( src )
-						{
-							avo.style.backgroundImage = 'url(' + src + ')';
-							avo.classList.add( 'Loaded' );
-						} );
-					} )( data[ a ].FlatUserID, av );
+					if( data[ a ].Count )
+					{
+						av.id = data[ a ].UniqueID;
+						self.refreshChannelAvatar( av )
+					}
+					else
+					{
+						( function( fuid, avo ) {
+							self.getAvatarFromUser( fuid, function( src )
+							{
+								avo.style.backgroundImage = 'url(' + src + ')';
+								avo.classList.add( 'Loaded' );
+							} );
+						} )( data[ a ].FlatUserID, av );
+					}
 					us.appendChild( av );
 					
 				}
