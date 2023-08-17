@@ -318,6 +318,7 @@ class FUIChatoverview extends FUIElement
     }
     executeSearch( searchString )
     {
+    	if( Trim( searchString ) == "" ) return;
     	let self = this;
     	document.querySelector( '.SearchForm' ).classList.add( 'Searching', 'Loading' );
     	let par = document.querySelector( '.SearchResults' );
