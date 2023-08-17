@@ -351,6 +351,10 @@ if( isset( $args->args ) )
         			$o->Name = $r->Name;
         			$o->Description = $r->Description;
         			$o->UniqueID = $r->UniqueID;
+        			if( $cnt = $SqlDatabase->fetchObject( 'SELECT COUNT(*) AS CNT FROM FUserToGroup fug WHERE fug.UserGroupID=\'' . $r->ID . '\'' ) )
+        			{
+        				$o->Count = $cnt->CNT;
+    				}
         			$out[] = $o;
         		}
         		die( 'ok<!--separate-->' . json_encode( $out ) );

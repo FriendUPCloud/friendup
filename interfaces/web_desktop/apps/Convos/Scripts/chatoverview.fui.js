@@ -404,7 +404,8 @@ class FUIChatoverview extends FUIElement
 					{
 						let mess = JSON.parse( d );
 						cbk( mess );
-						fetchNextPage( page + 1, searchString, cbk );
+						if( mess.length == 100 )
+							fetchNextPage( page + 1, searchString, cbk );
 						return;
 					}
 					document.querySelector( '.SearchForm' ).classList.remove( 'Searching', 'Loading' );
@@ -443,17 +444,24 @@ class FUIChatoverview extends FUIElement
 				{
 					us = par.userList[ data[a].FlatUserID ];
 				}
-				
 				let dat = '';
 				if( data[a].Date )
 				{
 					dat = self.parseDate( data[ a ].Date );
-					dat = '<span class="Date">' + dat + '</span></em> ';
+					dat = '<span class="Date">' + dat + '</span> ';
+				}
+				if( data[a].Count )
+				{
+					dat = '(' + data[a].Count + ' ' + ( data[a].Count == 1 ? i18n( 'i18n_user' ) : i18n( 'i18n_users' ) ) + ') ';
+				}
+				else
+				{
+					data[a].Count = 0;
 				}
 				
 				let d = document.createElement( 'div' );
 				d.className = 'SearchedMessage';
-				d.innerHTML = '<p><em>' + data[a].Name + ', ' + dat + ( data[a].Message ? data[a].Message : data[a].Description ) + '</p>';
+				d.innerHTML = '<p><em><strong>' + data[a].Name + '</strong>, ' + dat + '</em>' + ( data[a].Message ? data[a].Message : data[a].Description ) + '</p>';
 				us.appendChild( d );
 			}
 		} );
