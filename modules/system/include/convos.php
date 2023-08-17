@@ -184,7 +184,7 @@ if( isset( $args->args ) )
             	// Get all messages by paging
             	if( $args->args->roomType == '*' )
             	{
-            		// Pages start on 0, then 1, 2, 3 etc (multiplied by 50)
+            		// Pages start on 0, then 1, 2, 3 etc (multiplied by 100)
             		$page = isset( $args->args->page ) ? intval( $args->args->page, 10 ) : 0;
             		$rows = $SqlDatabase->FetchObjects( $q = ( '
             			SELECT m.*, owner.ID AS `FlatUserID`, owner.UniqueID, owner.FullName AS `Name` FROM Message m, FUser u, FUser owner
@@ -215,7 +215,7 @@ if( isset( $args->args ) )
 				                    owner.UniqueID = m.UniqueUserID
 				                )
 			                )
-            			ORDER BY m.ID DESC LIMIT ' . ( $page * 50 ) . ', 50
+            			ORDER BY m.ID DESC LIMIT ' . ( $page * 100 ) . ', 100
             		' ) );
             	}
                 else if( $args->args->roomType == 'jeanie' )

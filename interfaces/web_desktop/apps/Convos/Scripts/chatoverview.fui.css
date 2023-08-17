@@ -514,10 +514,8 @@ body:not([mobile=mobile]) .FUIChatoverview > .HoverElement.Showing
 	}
 	.OverviewUpdates .SearchForm button:before
 	{
-		content: "\f00d";
-		font-family: fontawesome;
-		color: var(--fui-color);
-		margin: 0;
+		font-size: 15px;
+		color: initial;
 	}
 }
 
