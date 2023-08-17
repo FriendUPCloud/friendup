@@ -352,6 +352,7 @@ if( isset( $args->args ) )
         			$o->Description = $r->Description;
         			$o->UniqueID = $r->UniqueID;
         			$o->FlatUserID = $r->UniqueID;
+        			$o->Type = 'chatroom';
         			if( $cnt = $SqlDatabase->fetchObject( 'SELECT COUNT(*) AS CNT FROM FUserToGroup fug WHERE fug.UserGroupID=\'' . $r->ID . '\'' ) )
         			{
         				$o->Count = $cnt->CNT;

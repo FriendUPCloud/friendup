@@ -472,6 +472,12 @@ class FUIChatoverview extends FUIElement
 				let d = document.createElement( 'div' );
 				d.className = 'SearchedMessage';
 				d.innerHTML = '<p><em><strong>' + data[a].Name + '</strong>, ' + dat + '</em>' + ( data[a].Message ? data[a].Message : data[a].Description ) + '</p>';
+				
+				if( data[a].Type )
+				{
+					d.innerHTML += '<p><button type="botton" class="Button"><span class="fa fa-plus"></span> <span>' + i18n( 'i18n_join_group' ) + '</span></button></p>';
+				}
+				
 				us.appendChild( d );
 			}
 		} );
