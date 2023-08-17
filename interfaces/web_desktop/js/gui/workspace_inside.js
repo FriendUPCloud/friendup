@@ -10311,31 +10311,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	{
 		let self = this;
 
-		// Check for forced websocket renewal (sleepover)
-		if( newState == 'active' )
-		{
-			let now = ( new Date() ).getTime();
-			let interval = 18000000; // 1000 * 60 * 60 * 5;
-			
-			if( this.lastWSPong > 0 && ( now - this.lastWSPong ) > interval )
-			{
-				console.log( 'Timed initializing websocket due to sleepover.' );
-				this.initWebSocket();
-				this.lastWSPong = -1;
-			}
-			// Queue new try!
-			else if( this.lastWSPong == -1 )
-			{
-				setTimeout( function()
-				{
-					if( this.lastWSPong == -1 )
-					{
-						this.lastWSPong = 0;
-					}
-				}, 500 );
-			}
-		}
-
 		// Don't update if not changed
 		if( this.currentViewState == newState )
 		{
@@ -10360,8 +10335,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			Friend.User.ReLogin();
 			return; 
 		}
-		
-		//mobileDebug( 'Starting update view state.' + newState, true );
 		
 		if( newState == 'active' )
 		{
@@ -10404,6 +10377,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					}
 				}
 			}
+			
 			// IMPORTANT:
 			// Sleep in 5 minutes
 			if( this.sleepingTimeout )
