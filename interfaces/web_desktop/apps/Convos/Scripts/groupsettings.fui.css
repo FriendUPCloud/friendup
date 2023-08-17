@@ -57,7 +57,7 @@
 	width: 100%;
 	border: 0;
 	margin: 5px 0 5px 0;
-	background: linear-gradient(90deg,rgba(100,100,100,0),rgba(0,0,0,0.1),rgba(100,100,100,0));
+	background: linear-gradient(90deg,rgba(0,0,0,0),rgba(0,0,0,0.1),rgba(0,0,0,0));
 }
 
 .FUIInvitedialog.FUIGroupsettings > .Dia .TheForm > .Form > .Flow
