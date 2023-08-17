@@ -532,7 +532,8 @@ if( !window.FriendWebSocket )
 			let self = this;
 			
 			// We will now be in ping mode!
-			self.handlePing();
+			// TODO: See why we cannot handle it here
+			// self.handlePing();
 			
 			if( !msg )
 			{
@@ -888,7 +889,8 @@ if( !window.FriendWebSocket )
 			chunks[ index ] = chunk.data;
 			if ( !hasAll( chunks, chunk.total ))
 			{
-				self.handlePing();
+				// TODO: See why we cannot handle it here
+				// self.handlePing();
 				return;
 			}
 			
