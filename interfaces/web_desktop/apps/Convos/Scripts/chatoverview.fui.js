@@ -386,7 +386,8 @@ class FUIChatoverview extends FUIElement
 						fetchNextPage( page + 1, searchString, cbk );
 						return;
 					}
-					document.querySelector( '.SearchForm' ).classList.remove( 'Searching', 'Loading' );
+					let sf = document.querySelector( '.SearchForm' );
+					if( sf ) sf.classList.remove( 'Searching', 'Loading' );
 				}
 				m.execute( 'convos', { method: 'messages', roomType: '*', searchString: searchString, page: page } );
 			}
@@ -411,7 +412,8 @@ class FUIChatoverview extends FUIElement
 							return;
 						}
 					}
-					document.querySelector( '.SearchForm' ).classList.remove( 'Searching', 'Loading' );
+					let sf = document.querySelector( '.SearchForm' );
+					if( sf ) sf.classList.remove( 'Searching', 'Loading' );
 				}
 				m.execute( 'convos', { method: 'public_groups', roomType: '*', searchString: searchString, page: page } );
 			}
