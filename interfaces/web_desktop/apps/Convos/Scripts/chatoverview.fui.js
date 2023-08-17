@@ -405,8 +405,10 @@ class FUIChatoverview extends FUIElement
 						let mess = JSON.parse( d );
 						cbk( mess );
 						if( mess.length == 100 )
+						{
 							fetchNextPage( page + 1, searchString, cbk );
-						return;
+							return;
+						}
 					}
 					document.querySelector( '.SearchForm' ).classList.remove( 'Searching', 'Loading' );
 				}
