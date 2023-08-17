@@ -159,6 +159,9 @@ Friend.User = {
 		
 		let usingLoginToken = false;
 		
+		if( !info.logintoken && GetCookie( 'logintoken' ) )
+			info.logintoken = GetCookie( 'logintoken' );
+		
 		if( info.username && info.password )
 		{
 			Workspace.sessionId = '';
@@ -204,6 +207,7 @@ Friend.User = {
 		}
 		else
 		{
+			console.log( '[User] We are setting state offline' );
 			this.State = 'offline'; 
 			this.lastLogin = null;
 			return false;

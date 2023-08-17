@@ -1422,9 +1422,7 @@ let WorkspaceInside = {
 
 		function onEnd( e )
 		{
-			//console.log( 'Workspace.conn.onEnd', e );
-			// We closed connection
-			Friend.User.SetUserConnectionState( 'offline' );
+			console.log( 'Workspace.conn.onEnd', e );
 		}
 
 		function handleIconChange( e ){ console.log( 'icon-change event', e ); }
