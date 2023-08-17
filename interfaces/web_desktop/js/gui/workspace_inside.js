@@ -4084,7 +4084,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			    
 			    Workspace.refreshUserSettings( function() 
 			    {
-				    console.log( '[Login phase] Done refreshing user settings.' );
+				    //console.log( '[Login phase] Done refreshing user settings.' );
 				    CheckScreenTitle();
 
 				    let h = document.getElementsByTagName( 'head' );
