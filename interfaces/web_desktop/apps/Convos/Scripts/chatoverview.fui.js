@@ -480,22 +480,28 @@ class FUIChatoverview extends FUIElement
 				{
 					// Check if we already joined
 					let found = false;
+					let own = false;
 					let chans = self.domChannels.getElementsByClassName( 'Channel' );
 					for( let j = 0; j < chans.length; j++ )
 					{
 						let uid = chans[j].getAttribute( 'id' );
 						if( uid == data[ a ].UniqueID )
 						{
+							if( chans[j].getAttribute( 'own' ) == true )
+							{
+								own = true;
+							}
 							found = true;
+							break;
 						}
 					}
-					if( !found )
+					if( own || found )
+					{
+						d.innerHTML += '<p><button type="botton" class="Button"><span class="fa fa-arrow-circle-right"></span> <span>' + i18n( 'i18n_go_to_room' ) + '</span></button></p>';
+					}
+					else if( !found )
 					{
 						d.innerHTML += '<p><button type="botton" class="Button"><span class="fa fa-plus"></span> <span>' + i18n( 'i18n_join_room' ) + '</span></button></p>';
-					}
-					else
-					{
-						d.innerHTML += '<p><button type="botton" disabled="disabled" class="Disabled Button"><span class="fa fa-check"></span> <span>' + i18n( 'i18n_joined' ) + '</span></button></p>';
 					}
 				}
 				
