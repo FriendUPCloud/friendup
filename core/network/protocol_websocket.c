@@ -233,6 +233,13 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *userDa
     signal(SIGPIPE, SIG_IGN);
     
 	WSCData *wsd =  (WSCData *)userData;// lws_context_user ( this );
+	
+	if( !wsd || wsd->wsc_Status == WSC_STATUS_TO_BE_REMOVED )
+	{
+		//DEBUG( "WSD IS BEING SHUT DOWN %p\n", wsd );
+		return 0;
+	}
+	
 	int returnError = 0;
 	
 	DEBUG("FC_Callback: reason: %d wsiptr %p fcwdptr %p\n", reason, wsi, userData );
@@ -273,8 +280,6 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *userDa
 						FRIEND_MUTEX_UNLOCK( &( wsd->wsc_Mutex ) );
 					}
 					
-					int tr = 8;
-				
 					while( TRUE )
 					{
 						if( wsd->wsc_InUseCounter <= 0 )
@@ -283,14 +288,6 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *userDa
 							break;
 						}
 						DEBUG("[WS] Closing WS, number: %d\n", wsd->wsc_InUseCounter );
-						//sleep( 1 );
-						usleep( 3500 );	// 0.35 seconds
-					
-						if( tr-- <= 0 )
-						{
-							DEBUG("[WS] Quit after 5\n");
-							break;
-						}
 					
 						if( wsd->wsc_UserSession == NULL )
 						{
