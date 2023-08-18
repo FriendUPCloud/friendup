@@ -308,6 +308,7 @@ Friend.User = {
 				{
 					if( !window.Workspace || !Workspace.theme )
 					{
+						console.log( '[User] Abort login.' );
 						if( callback )
 							return callback( false, serveranswer );
 						return;
