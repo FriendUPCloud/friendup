@@ -175,9 +175,12 @@ if( !window.FriendWebSocket )
 		{
 			let self = this;
 			
+			if( self.pongTimeo ) clearTimeout( self.pongTimeo );
+			console.log( '[FriendWebSocket] Got pong.' );
+			
 			if( self.pingPong == false || self.pingPong == 'ping' )
 			{
-				console.log( '[FriendWebSocket] Got pong - going to ping.' );
+				console.log( '[FriendWebSocket] Pong -> going to ping.' );
 				
 				self.setReady();
 				
