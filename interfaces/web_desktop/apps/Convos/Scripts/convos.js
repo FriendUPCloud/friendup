@@ -67,7 +67,7 @@ Application.navigate = function( path, depth = 0 )
 					let overview = FUI.getElementByUniqueId( 'convos' );
 					if( !overview ) return false;
 					let channels = overview.domChannels.getElementsByClassName( 'Channel' );
-					for( let a = 0p; a < channels.length; a++ )
+					for( let a = 0; a < channels.length; a++ )
 					{
 						if( channels[ a ].id == path[1] )
 						{
