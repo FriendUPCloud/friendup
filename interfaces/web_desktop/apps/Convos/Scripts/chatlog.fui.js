@@ -391,6 +391,9 @@ class FUIChatlog extends FUIElement
 					let strnow = s.innerHTML.split( /\<.*?\>/i ).join( '' ).split( "\n" ).join( '' ).split( ' ' ).join( '' );
 					if( strnow.length > 0 )
 					{
+						if( s.lastMessage == 'writing' ) return;
+						s.lastMessage = 'writing';
+						
 						Application.SendChannelMsg( {
 							command: 'signal',
 							signal: 'writing',
@@ -407,6 +410,9 @@ class FUIChatlog extends FUIElement
 	    			clearTimeout( s.timeo );
 	    			s.timeo = false;
     			}
+    			if( s.lastMessage == 'not-writing' ) return;
+    			s.lastMessage = 'not-writing';
+    			
     			Application.SendChannelMsg( {
 					command: 'signal',
 					signal: 'not-writing',
