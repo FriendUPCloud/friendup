@@ -159,8 +159,11 @@ Friend.User = {
 		
 		let usingLoginToken = false;
 		
-		if( !info.logintoken && GetCookie( 'logintoken' ) )
-			info.logintoken = GetCookie( 'logintoken' );
+		if( !info.username && !info.password )
+		{
+			if( !info.logintoken && GetCookie( 'logintoken' ) )
+				info.logintoken = GetCookie( 'logintoken' );
+		}
 		
 		if( info.username && info.password )
 		{
