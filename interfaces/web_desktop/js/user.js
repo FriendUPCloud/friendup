@@ -308,7 +308,9 @@ Friend.User = {
 				{
 					if( !window.Workspace || !Workspace.theme )
 					{
-						return callback( false, serveranswer );
+						if( callback )
+							return callback( false, serveranswer );
+						return;
 					}
 					console.log( '[User] "fail" to login - Logging out; ' + serveranswer );
 					Friend.User.Logout();
