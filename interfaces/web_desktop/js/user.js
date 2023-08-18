@@ -306,6 +306,10 @@ Friend.User = {
 				}
 				else if( json == 'fail' )
 				{
+					if( !window.Workspace || !Workspace.theme )
+					{
+						return callback( false, serveranswer );
+					}
 					console.log( '[User] "fail" to login - Logging out; ' + serveranswer );
 					Friend.User.Logout();
 				}

@@ -84,3 +84,6 @@ i18n_video_invite_desc                 : is inviting you to a video session.
 i18n_deleting_message                  : Delete message?
 i18n_deleting_message_text             : This will permanently remove this message.
 
+i18n_failed_to_join_room               : Failed to join room
+i18n_failed_to_join_desc               : Could not join chat room due to an unexpected error.
+

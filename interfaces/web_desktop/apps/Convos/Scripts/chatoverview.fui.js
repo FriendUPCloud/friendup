@@ -473,6 +473,7 @@ class FUIChatoverview extends FUIElement
 				}
 				
 				let d = document.createElement( 'div' );
+				d.record = data[a];
 				d.className = 'SearchedMessage';
 				d.innerHTML = '<p><em><strong>' + data[a].Name + '</strong>, ' + dat + '</em></p><p>' + ( data[a].Message ? data[a].Message : data[a].Description ) + '</p>';
 				
@@ -497,11 +498,43 @@ class FUIChatoverview extends FUIElement
 					}
 					if( own || found )
 					{
-						d.innerHTML += '<p><button type="botton" class="Button"><span class="fa fa-arrow-circle-right"></span> <span>' + i18n( 'i18n_go_to_room' ) + '</span></button></p>';
+						d.innerHTML += '<p><button type="button" class="Go Button"><span class="fa fa-arrow-circle-right"></span> <span>' + i18n( 'i18n_go_to_room' ) + '</span></button></p>';
 					}
 					else if( !found )
 					{
-						d.innerHTML += '<p><button type="botton" class="Button"><span class="fa fa-plus"></span> <span>' + i18n( 'i18n_join_room' ) + '</span></button></p>';
+						d.innerHTML += '<p><button type="button" class="Join Button"><span class="fa fa-plus"></span> <span>' + i18n( 'i18n_join_room' ) + '</span></button></p>';
+					}
+				}
+				
+				let btn = d.querySelector( '.Button' );
+				if( btn.classList.contains( 'Go' ) )
+				{
+					btn.onclick = function()
+					{
+						Application.navigate( '/rooms/' + d.record.UniqueID );
+					}
+				}
+				// Join the group
+				else if( btn.classList.contains( 'Join' ) )
+				{
+					btn.onclick = function()
+					{
+						let m = new Module( 'system' );
+						m.onExecuted = function( me, md )
+						{
+							if( me == 'ok' )
+							{
+								self.redrawChannels( function()
+								{
+									Application.navigate( '/rooms/' + d.record.UniqueID );
+								} );
+							}
+							else
+							{
+								Alert( i18n( 'i18n_failed_to_join_room' ), i18n( 'i18n_failed_to_join_desc' ) );
+							}
+						}
+						m.execute( 'convos', { method: 'join-room', cid: d.record.UniqueID } );
 					}
 				}
 				
@@ -640,7 +673,7 @@ class FUIChatoverview extends FUIElement
         sm.parentNode.removeChild( sm );
     }
     // Redraw channels
-    redrawChannels()
+    redrawChannels( cbk = false )
     {
     	let self = this;
     	
@@ -784,6 +817,7 @@ class FUIChatoverview extends FUIElement
 				self.initialized = true;
 				self.domElement.querySelector( '.DM' ).click();
 			}
+			if( cbk ) cbk();
     	}
     	m.execute( 'convos', { 'method': 'getrooms' } );
     }

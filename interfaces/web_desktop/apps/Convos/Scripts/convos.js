@@ -51,9 +51,37 @@ Application.run = function( msg )
 } 
 
 // Navigate through the application
-Application.navigate = function( path )
+Application.navigate = function( path, depth = 0 )
 {
-	
+	switch( depth )
+	{
+		case 0:
+			path = path.split( '/' );
+			return this.navigate( path, depth + 1 );
+		case 1:
+		{
+			switch( path[0] )
+			{
+				case 'rooms':
+				{
+					let overview = FUI.getElementByUniqueId( 'convos' );
+					if( !overview ) return false;
+					let channels = overview.domChannels.getElementsByClassName( 'Channel' );
+					for( let a = 0p; a < channels.length; a++ )
+					{
+						if( channels[ a ].id == path[1] )
+						{
+							channels[ a ].click();
+							return true;
+						}
+					}
+					return false;
+				}
+			}
+		}
+		default:
+			return false;
+	}
 }
 
 Application.receiveMessage = function( msg )
