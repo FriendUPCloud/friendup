@@ -306,6 +306,7 @@ Friend.User = {
 				}
 				else if( json == 'fail' )
 				{
+					console.log( '[User] "fail" to login - Logging out; ' + serveranswer );
 					Friend.User.Logout();
 				}
 				// Total failure
