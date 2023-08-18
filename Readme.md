@@ -198,4 +198,13 @@ This is the list of dependencies Friend Core needs to function.
 -    libsmbclient-dev
 -    libwebsockets-dev
 
+Important notes on Friend OS 1.3.x
+==================================
+
+The build-in push notifications system in Friend Core has been disabled by
+default as it can now be handled by the system module. To enable it, add 
+-DUSE_PUSH_NOTIFICATIONS to the CFLAGS. The feature is not depracated, 
+although it may be, if it's use isn't warranted after some time.
+
+
 
