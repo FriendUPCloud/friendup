@@ -176,11 +176,11 @@ if( !window.FriendWebSocket )
 			let self = this;
 			
 			if( self.pongTimeo ) clearTimeout( self.pongTimeo );
-			console.log( '[FriendWebSocket] Got pong.' );
+			//console.log( '[FriendWebSocket] Got pong.' );
 			
 			if( self.pingPong == false || self.pingPong == 'ping' )
 			{
-				console.log( '[FriendWebSocket] Pong -> going to ping.' );
+				//console.log( '[FriendWebSocket] Pong -> going to ping.' );
 				
 				self.setReady();
 				
@@ -195,7 +195,7 @@ if( !window.FriendWebSocket )
 			}
 			else
 			{
-				console.log( '[FriendWebSocket] Got pong, but in weird mode: ' + self.pingPong );
+				//console.log( '[FriendWebSocket] Got pong, but in weird mode: ' + self.pingPong );
 			}
 		}
 		// Send ping
@@ -205,7 +205,7 @@ if( !window.FriendWebSocket )
 			
 			// We are now in ping mode!
 			self.pingPong = 'ping';
-			console.log( '[FriendWebSocket] We are in ping mode.' );
+			//console.log( '[FriendWebSocket] We are in ping mode.' );
 			
 			// Clear previous timeouts
 			if( self.pingTimeo )
@@ -217,7 +217,7 @@ if( !window.FriendWebSocket )
 			{
 				if( self.ws && self.ready )
 				{
-					console.log( '[FriendWebSocket] Sending ping.' );
+					//console.log( '[FriendWebSocket] Sending ping.' );
 					self.pingPong = 'ping';
 					self.sendCon( { type: 'ping', data: null } );
 					if( self.pongTimeo ) clearTimeout( self.pongTimeo );
@@ -226,7 +226,7 @@ if( !window.FriendWebSocket )
 						self.wsClose();
 						if( window.Workspace && Workspace.conn && self == Workspace.conn.ws )
 						{
-							console.log( '[FriendWebSocket] Reinitializing web socket. (1)' );
+							//console.log( '[FriendWebSocket] Reinitializing web socket. (1)' );
 							Workspace.initWebSocket();
 						}
 					}, self.pongTimeout * 1000 );
@@ -237,7 +237,7 @@ if( !window.FriendWebSocket )
 					self.wsClose();
 					if( window.Workspace && Workspace.conn && self == Workspace.conn.ws )
 					{
-						console.log( '[FriendWebSocket] Reinitializing web socket. (2)' );
+						//console.log( '[FriendWebSocket] Reinitializing web socket. (2)' );
 						Workspace.initWebSocket();
 					}
 				}
