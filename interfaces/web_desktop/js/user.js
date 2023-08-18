@@ -219,6 +219,9 @@ Friend.User = {
 		m.addVar( 'deviceid', GetDeviceId() );
 		m.onExecuted = function( json, serveranswer )
 		{
+			// This was already consumed
+			DelCookie( 'logintoken' );
+			
 			Friend.User.lastLogin = null;
 			
 			// We got a real error
