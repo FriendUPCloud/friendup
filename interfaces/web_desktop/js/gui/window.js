@@ -60,6 +60,7 @@ function GetWindowById( id )
 // Save window storage to Friend Core
 function SaveWindowStorage( callback )
 {
+	if( !window.Module ) return callback();
 	let m = new Module( 'system' );
 	m.execute( 'setsetting', { setting: 'windowstorage', data: JSON.stringify( jsonSafeObject( Friend.GUI.view.windowStorage ) ) } );
 	if( callback )
