@@ -266,8 +266,14 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *userDa
 			INFO("[WS] Callback peer session closed wsiptr %p\n", wsi);
 		break;
 		
-		//case LWS_CALLBACK_CLIENT_CLOSED:
-		    //DEBUG("[WS] Callback client closed!\n");
+		case LWS_CALLBACK_CLIENT_CLOSED:
+		    DEBUG("[WS] Callback client closed!\n");
+		    if( FRIEND_MUTEX_LOCK( &( wsd->wsc_Mutex ) ) == 0 )
+			{
+		    	wsd->wsc_Status = WSC_STATUS_TO_BE_REMOVED;
+		    	FRIEND_MUTEX_UNLOCK( &( wsd->wsc_Mutex ) );
+	    	}
+		    break;
 		case LWS_CALLBACK_CLOSED:
 			{
 				UserSession *us = (UserSession *)wsd->wsc_UserSession;
