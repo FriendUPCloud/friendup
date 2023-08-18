@@ -304,6 +304,11 @@ Friend.User = {
 						m.send();
 					}
 				}
+				else if( json == 'fail' )
+				{
+					Friend.User.Logout();
+				}
+				// Total failure
 				else
 				{
 					Friend.User.SetUserConnectionState( 'offline' );
