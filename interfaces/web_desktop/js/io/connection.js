@@ -311,7 +311,7 @@ FriendConnection.prototype.releaseWebSocket = function()
 	let self = this;
 	if ( !self.ws )
 		return;
-	
+	console.log( '[FriendConnection] Releasing websocket.' );
 	self.ws.close();
 	self.ws = null;
 }
