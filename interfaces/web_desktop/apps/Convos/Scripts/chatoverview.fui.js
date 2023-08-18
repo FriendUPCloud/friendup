@@ -511,7 +511,7 @@ class FUIChatoverview extends FUIElement
 				{
 					btn.onclick = function()
 					{
-						Application.navigate( '/rooms/' + d.record.UniqueID );
+						Application.navigate( 'rooms/' + d.record.UniqueID );
 					}
 				}
 				// Join the group
@@ -526,7 +526,7 @@ class FUIChatoverview extends FUIElement
 							{
 								self.redrawChannels( function()
 								{
-									Application.navigate( '/rooms/' + d.record.UniqueID );
+									Application.navigate( 'rooms/' + d.record.UniqueID );
 								} );
 							}
 							else

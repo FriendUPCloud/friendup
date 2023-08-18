@@ -363,6 +363,21 @@ if( isset( $args->args ) )
         	}
         	die( 'fail<!--separate-->' );
         }
+        else if( $args->args->method == 'join-room' )
+        {
+        	$o = new dbIO( 'FUserGroup' );
+        	$o->UniqueID = $args->args->cid;
+        	if( $o->Load() )
+        	{
+        		// Open group
+        		if( $o->Status == 1 )
+        		{
+        			$SqlDatabase->query( 'INSERT INTO FUserToGroup ( UserID, UserGroupID ) VALUES ( \'' . $User->ID . '\', \'' . $o->ID . '\' )' );
+        			die( 'ok<!--separate-->' );
+        		}
+        	}
+        	die( 'fail<!--separate-->' );
+        }
         // Get the original file OR
         // Get an attachment on ID
         else if( $args->args->method == 'getattachment' || $args->args->method == 'getoriginal' )

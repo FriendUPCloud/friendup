@@ -65,16 +65,26 @@ Application.navigate = function( path, depth = 0 )
 				case 'rooms':
 				{
 					let overview = FUI.getElementByUniqueId( 'convos' );
+					console.log( 'Trying' );
 					if( !overview ) return false;
 					let channels = overview.domChannels.getElementsByClassName( 'Channel' );
-					for( let a = 0; a < channels.length; a++ )
+					if( channels )
 					{
-						if( channels[ a ].id == path[1] )
+						for( let a = 0; a < channels.length; a++ )
 						{
-							channels[ a ].click();
-							return true;
+							if( channels[ a ].id == path[1] )
+							{
+								console.log( 'Found it!' );
+								channels[ a ].click();
+								return true;
+							}
+							else
+							{
+								console.log( 'No match: ' + channels[ a ].id );
+							}
 						}
 					}
+					console.log( 'Found nothing: ', path[1] );
 					return false;
 				}
 			}
