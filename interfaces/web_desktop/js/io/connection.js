@@ -270,9 +270,9 @@ FriendConnection.prototype.onWsMessage = function( msg )
 				}
 				else if( !handler )
 				{
-					console.log( '[FriendConnection] This websocket is defunct. Kill.' );
-					self.onWsEnd();
-					delete self;
+					console.log( '[FriendConnection] This websocket is defunct. (used to kill, now let live).' );
+					//self.onWsEnd();
+					//delete self;
 				}
 			}
 			console.log( '[FriendConnection] Handler or requestId missing...', {
