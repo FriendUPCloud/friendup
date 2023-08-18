@@ -3482,6 +3482,12 @@ body:not([mobile]).ShowTasks #TaskSwitcher .Current .Close
 	z-index: 1;*/
 }
 
+body[mobile] #DoorsScreen > .Offline
+{
+	display: none !important;
+	opacity: 0;
+}
+
 body #OfflineMessage
 {
 	position: absolute;
