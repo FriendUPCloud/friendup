@@ -74,18 +74,16 @@ Application.navigate = function( path, depth = 0 )
 						{
 							if( channels[ a ].id == path[1] )
 							{
-								console.log( 'Found it!' );
 								channels[ a ].click();
 								return true;
 							}
-							else
-							{
-								console.log( 'No match: ' + channels[ a ].id );
-							}
 						}
 					}
-					console.log( 'Found nothing: ', path[1] );
 					return false;
+				}
+				case 'message':
+				{	
+					break;
 				}
 			}
 		}
