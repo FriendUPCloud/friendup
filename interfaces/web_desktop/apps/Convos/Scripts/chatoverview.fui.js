@@ -507,34 +507,37 @@ class FUIChatoverview extends FUIElement
 				}
 				
 				let btn = d.querySelector( '.Button' );
-				if( btn.classList.contains( 'Go' ) )
+				if( btn )
 				{
-					btn.onclick = function()
+					if( btn.classList.contains( 'Go' ) )
 					{
-						Application.navigate( 'rooms/' + d.record.UniqueID );
-					}
-				}
-				// Join the group
-				else if( btn.classList.contains( 'Join' ) )
-				{
-					btn.onclick = function()
-					{
-						let m = new Module( 'system' );
-						m.onExecuted = function( me, md )
+						btn.onclick = function()
 						{
-							if( me == 'ok' )
-							{
-								self.redrawChannels( function()
-								{
-									Application.navigate( 'rooms/' + d.record.UniqueID );
-								} );
-							}
-							else
-							{
-								Alert( i18n( 'i18n_failed_to_join_room' ), i18n( 'i18n_failed_to_join_desc' ) );
-							}
+							Application.navigate( 'rooms/' + d.record.UniqueID );
 						}
-						m.execute( 'convos', { method: 'join-room', cid: d.record.UniqueID } );
+					}
+					// Join the group
+					else if( btn.classList.contains( 'Join' ) )
+					{
+						btn.onclick = function()
+						{
+							let m = new Module( 'system' );
+							m.onExecuted = function( me, md )
+							{
+								if( me == 'ok' )
+								{
+									self.redrawChannels( function()
+									{
+										Application.navigate( 'rooms/' + d.record.UniqueID );
+									} );
+								}
+								else
+								{
+									Alert( i18n( 'i18n_failed_to_join_room' ), i18n( 'i18n_failed_to_join_desc' ) );
+								}
+							}
+							m.execute( 'convos', { method: 'join-room', cid: d.record.UniqueID } );
+						}
 					}
 				}
 				
