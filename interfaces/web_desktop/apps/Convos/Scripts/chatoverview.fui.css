@@ -347,13 +347,14 @@
     bottom: -2px;
     width: 14px;
     height: 15px;
-    background-color: #f0f0f0;
+    background-color: var(--fui-palette-chan03);
     color: black;
     text-align: center;
     border-radius: 100%;
-    border: 1px solid rgba(0,0,0,0.2);
+    border: 2px solid var(--fui-background);
     font-size: 80%;
     transition: opacity 0.2s;
+    z-index: 15;
 }
 
 .FUIChatoverview > .Channels > .Channel .Activity.Showing 
