@@ -115,9 +115,7 @@ Application.receiveMessage = function( msg )
         	if( !unreadMessages.rooms[ msg.uniqueId ] )
         		unreadMessages.rooms[ msg.uniqueId ] = [];
         	unreadMessages.rooms[ msg.uniqueId ].push( { sender: msg.senderId, message: msg.message } );
-        	
-        	overview.updateActivityBubble( 'chatroom', msg.uniqueId );
-        	
+        	overview.updateActivityBubble();
         	overview.pollChatroom( msg.senderId, msg.uniqueId );
         }
         else
@@ -127,9 +125,10 @@ Application.receiveMessage = function( msg )
         		unreadMessages.dms[ msg.senderId ] = [];
         	unreadMessages.dms[ msg.senderId ].push( { message: msg.message } );
         	
-        	overview.updateActivityBubble( 'dm', msg.uniqueId );
-        	
-        	overview.activateDirectMessage( msg.senderId, msg.message );
+        	let contacts = FUI.getElementByUniqueId( 'contacts' );
+    		if( contacts )		
+	        	contacts.updateActivityBubble();
+        	//overview.activateDirectMessage( msg.senderId, msg.message );
     	}
     }
     else if( msg.command == 'signal' )

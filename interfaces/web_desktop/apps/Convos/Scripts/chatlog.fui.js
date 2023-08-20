@@ -600,11 +600,17 @@ class FUIChatlog extends FUIElement
         self.busyMessages = true;
         
         // Fix the unread messages
-        if( window.unreadMessages && unreadMessages.rooms[ self.options.cid ] )
+        if( self.options.type == 'chatroom' && window.unreadMessages && unreadMessages.rooms[ self.options.cid ] )
         {
         	unreadMessages.rooms[ self.options.cid ] = [];
         	let cnvs = FUI.getElementByUniqueId( 'convos' );
         	cnvs.updateActivityBubble();
+        }
+        else if( self.options.type == 'dm-user' && window.unreadMessages && unreadMessages.dms[ self.options.cid ] )
+        {
+        	unreadMessages.dms[ self.options.cid ] = [];
+        	let cts = FUI.getElementByUniqueId( 'contacts' );
+        	cts.updateActivityBubble();
         }
         
         let history = false;

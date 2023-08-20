@@ -82,6 +82,30 @@ class FUIContacts extends FUIElement
         <div class="Chat"><div class="Placeholder"><span>' + i18n( 'i18n_start_conversation' ) + '</span></div></div>\
         ';
     }
+    updateActivityBubble()
+    {
+    	if( !window.unreadMessages ) return;
+    	let self = this;
+    	let dms = unreadMessages.dms;
+    	let conts = self.domContacts.getElementsByClassName( 'Contact' );
+    	for( let a = 0; a < conts.length; a++ )
+    	{
+    		if( !conts[ a ].bubble )
+			{
+				let b = document.createElement( 'div' );
+				b.className = 'Activity';
+				b.innerHTML = '<span>0</span>';
+				conts[ a ].bubble = b;
+				conts[ a ].appendChild( b );
+			}
+			if( dms[ conts[ a ].record.ID ] && dms[ conts[ a ].record.ID ].length > 0 )
+			{
+				conts[ a ].bubble.classList.add( 'Showing' );
+				conts[ a ].bubble.innerHTML = '<span>' + dms[ conts[ a ].record.ID ].length + '</span>';
+			}
+			else conts[ a ].bubble.classList.remove( 'Showing' );
+    	}
+    }
     setVideoCall( data = false, init = false )
     {
     	let vid = this.domSettings.querySelector( '.Videocall' );
