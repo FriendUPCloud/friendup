@@ -25,7 +25,7 @@
 
 /* Search ------------------------------------------------------------------- */
 
-.SearchResults
+.FUIChatoverview .OverviewUpdates .Search > .SearchResults
 {
 	position: absolute;
 	top: 180px;
@@ -480,7 +480,27 @@ body:not([mobile=mobile]) .FUIChatoverview > .HoverElement.Showing
 	top: 0;
 	left: 0;
 	position: absolute;
-	backgroud-image: url(/webclient/apps/Convos/Assets/fun2.png);
+	background-image: url(/webclient/apps/Convos/Assets/fun2.png);
+}
+
+.FUIChatoverview .OverviewUpdates .Search:after 
+{
+    content: " ";
+    background-color: var(--fui-module-background);
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0.2;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.FUIChatoverview .OverviewUpdates .Search > div
+{
+	z-index: 2;
+	position: relative;
 }
 
 .FUIChatoverview .OverviewUpdates
@@ -578,16 +598,18 @@ body:not([mobile=mobile]) .FUIChatoverview > .HoverElement.Showing
 {
 	border-radius: 15px;
 	cursor: pointer;
-	background-color: var(--BackgroundHeavier);
-    color: initial;
+	color: var(--fui-menu-background);
+    background-color: var(--fui-module-color);
+    font-weight: normal;
     transition: color,background-color 0.15s,0.15s;
 	padding: 10px;
 }
 
 .OverviewUpdates .Categories > .Category.On
 {
-	background-color: var(--ColorBgButton);
-	color: var(--ColorButton);
+	color: var(--fui-module-color);
+    background-color: var(--fui-menu-background);
+    font-weight: bold;
 }
 
 .OverviewUpdates .Content 
