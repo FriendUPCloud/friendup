@@ -249,10 +249,6 @@ class FUIChatoverview extends FUIElement
     			}
     			else chans[ a ].bubble.classList.remove( 'Showing' );
     		}
-    		else
-    		{
-    			console.log( 'Not this:; ', chans[ a ] );
-    		}
     	}
     }
     initSearch()

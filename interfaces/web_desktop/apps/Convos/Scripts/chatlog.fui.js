@@ -599,6 +599,14 @@ class FUIChatlog extends FUIElement
         }
         self.busyMessages = true;
         
+        // Fix the unread messages
+        if( window.unreadMessages && unreadMessages.rooms[ self.options.cid ] )
+        {
+        	unreadMessages.rooms[ self.options.cid ] = [];
+        	let cnvs = FUI.getElementByUniqueId( 'convos' );
+        	cnvs.updateActivityBubble();
+        }
+        
         let history = false;
         if( flags && flags.history )
         	history = true;
