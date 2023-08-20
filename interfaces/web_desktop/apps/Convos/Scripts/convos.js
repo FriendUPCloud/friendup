@@ -91,10 +91,17 @@ Application.navigate = function( path, depth = 0 )
 	}
 }
 
+// Log of unread messages
+let unreadMessages = {
+	rooms: {
+	},
+	dms: {
+	}
+};
+
 Application.receiveMessage = function( msg )
 {
 	// Receiving message on sender
-	// TODO: Make sure sender is unique
     if( msg.senderId )
     {
     	if( document.hidden || !document.body.classList.contains( 'activated' ) )
@@ -104,10 +111,24 @@ Application.receiveMessage = function( msg )
         let overview = FUI.getElementByUniqueId( 'convos' );
         if( msg.type && msg.type == 'chatroom' && msg.uniqueId )
         {
+        	// Log
+        	if( !unreadMessages.rooms[ msg.uniqueId ] )
+        		unreadMessages.rooms[ msg.uniqueId ] = [];
+        	unreadMessages.rooms[ msg.uniqueId ].push( { sender: msg.senderId, message: msg.message } );
+        	
+        	overview.updateActivityBubble( 'chatroom', msg.uniqueId );
+        	
         	overview.pollChatroom( msg.senderId, msg.uniqueId );
         }
         else
         {
+        	// Log
+        	if( !unreadMessages.dms[ msg.senderId ] )
+        		unreadMessages.dms[ msg.senderId ] = [];
+        	unreadMessages.rooms[ msg.senderId ].push( { message: msg.message } );
+        	
+        	overview.updateActivityBubble( 'dm', msg.uniqueId );
+        	
         	overview.activateDirectMessage( msg.senderId, msg.message );
     	}
     }
@@ -214,7 +235,6 @@ Application.receiveMessage = function( msg )
     	// Receiving an invite
     	if( msg.type == 'invite' )
     	{
-    		console.log( 'OK invite' );
     		let overview = FUI.getElementByUniqueId( 'convos' );
     		overview.getEvents();
     		Notify( {
