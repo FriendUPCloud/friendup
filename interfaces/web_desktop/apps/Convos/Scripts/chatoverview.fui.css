@@ -353,7 +353,7 @@
     border-radius: 100%;
     border: 2px solid var(--fui-background);
     font-size: 80%;
-    transition: opacity 0.2s;
+    transition: opacity 0.8s;
     z-index: 15;
 }
 
