@@ -480,6 +480,7 @@ body:not([mobile=mobile]) .FUIChatoverview > .HoverElement.Showing
 	top: 0;
 	left: 0;
 	position: absolute;
+	backgroud-image: url(/webclient/apps/Convos/Assets/fun2.png);
 }
 
 .FUIChatoverview .OverviewUpdates
