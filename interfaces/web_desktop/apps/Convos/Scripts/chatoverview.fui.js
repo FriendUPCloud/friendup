@@ -224,6 +224,37 @@ class FUIChatoverview extends FUIElement
 		}
 		ev.execute( 'convos', { method: 'getevents' } );
     }
+    updateActivityBubble()
+    {
+    	if( !window.unreadMessages ) return;
+    	let self = this;
+    	let rooms = unreadMessages.rooms;
+    	let chans = self.domChannels.getElementsByClassName( 'Channel' );
+    	for( let a = 0; a < chans.length; a++ )
+    	{
+    		if( chans[ a ].classList.contains( 'Group' ) && rooms[ chans[ a ].id ] )
+    		{
+    			if( !chans[ a ].bubble )
+    			{
+    				let b = document.createElement( 'div' );
+    				b.className = 'Activity';
+    				b.innerHTML = '<span>0</span>';
+    				chans[ a ].bubble = b;
+    				chans[ a ].appendChild( b );
+    			}
+    			if( rooms[ chans[ a ].id ].length > 0 )
+    			{
+    				chans[ a ].bubble.classList.add( 'Showing' );
+    				chans[ a ].bubble.innerHTML = '<span>' + rooms[ chans[ a ].id ].length + '</span>';
+    			}
+    			else chans[ a ].bubble.classList.remove( 'Showing' );
+    		}
+    		else
+    		{
+    			console.log( 'Not this:; ', chans[ a ] );
+    		}
+    	}
+    }
     initSearch()
     {
     	// Init content

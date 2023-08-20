@@ -92,7 +92,7 @@ Application.navigate = function( path, depth = 0 )
 }
 
 // Log of unread messages
-let unreadMessages = {
+window.unreadMessages = {
 	rooms: {
 	},
 	dms: {
@@ -125,7 +125,7 @@ Application.receiveMessage = function( msg )
         	// Log
         	if( !unreadMessages.dms[ msg.senderId ] )
         		unreadMessages.dms[ msg.senderId ] = [];
-        	unreadMessages.rooms[ msg.senderId ].push( { message: msg.message } );
+        	unreadMessages.dms[ msg.senderId ].push( { message: msg.message } );
         	
         	overview.updateActivityBubble( 'dm', msg.uniqueId );
         	

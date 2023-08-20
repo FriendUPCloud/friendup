@@ -333,11 +333,32 @@
     border-color: var(--fui-background);
     box-shadow: inset 0px 0px 15px rgba(255,255,255,0.4);
     position: relative;
-    overflow: hidden;
     transition: opacity,filter,box-shadow 1.5s,2.25s,0.45s;
     filter: drop-shadow(0px 0px 0px rgba(255,255,255,0.0));
     box-shadow: 0px 0px 0px 1px rgba(0,0,0,0.0);
     opacity: 0;
+}
+
+.FUIChatoverview > .Channels > .Channel .Activity
+{
+    position: absolute;
+    opacity: 0;
+    right: -2px;
+    bottom: -2px;
+    width: 14px;
+    height: 15px;
+    background-color: #f0f0f0;
+    color: black;
+    text-align: center;
+    border-radius: 100%;
+    border: 1px solid rgba(0,0,0,0.2);
+    font-size: 80%;
+    transition: opacity 0.2s;
+}
+
+.FUIChatoverview > .Channels > .Channel .Activity.Showing 
+{
+	opacity: 1;
 }
 
 .FUIChatoverview > .Channels > .Channel.Loaded
@@ -348,6 +369,7 @@
 .FUIChatoverview > .Channels > .Channel::after
 {
 	content: " ";
+	border-radius: 100%;
 	position: absolute;
 	top: 0;
 	left: 0;
