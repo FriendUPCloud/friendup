@@ -463,7 +463,10 @@ class FUIChatlog extends FUIElement
     				self.queueMessage( val );
 				}
     		}
-    		
+    		this.checkHeight();
+		} );
+    	this.domTextarea.addEventListener( 'keyup', function( e )
+    	{
     		if( self.domElement.classList.contains( 'Search' ) )
     		{
     			self.executeSearchFilter();
@@ -474,7 +477,6 @@ class FUIChatlog extends FUIElement
 				self.clearSearchFilter();
 			}
     		
-    		this.checkHeight();
     	} );
     }
     executeSearchFilter()
@@ -492,10 +494,12 @@ class FUIChatlog extends FUIElement
 				if( messages[ a ].querySelector( '.Text' ).innerText.toLowerCase().indexOf( searchString ) < 0 )
 				{
 					messages[ a ].style.display = 'none';
+					messages[ a ].setAttribute( 'hidden', 'hidden' );
 				}
 				else
 				{
 					messages[ a ].style.display = '';
+					messages[ a ].removeAttribute( 'hidden' );
 				}
 			}
 			self.refreshDom();
@@ -512,6 +516,7 @@ class FUIChatlog extends FUIElement
 			for( let a = 0; a < messages.length; a++ )
 			{
 				messages[ a ].style.display = '';
+				messages[ a ].removeAttribute( 'hidden' );
 			}
 			self.refreshDom();
 		}, 250 );
@@ -1007,12 +1012,14 @@ class FUIChatlog extends FUIElement
         for( let a = 0; a < source.length; a++ )
         {
         	// Skip hiddens
-        	if( source[ a ].style.display == 'none' ) continue;
+        	if( source[ a ].getAttribute( 'hidden' ) ) 
+        		continue;
         	
         	messages.push( source[ a ] );
         }
         
         let lastOwner = false;
+        
         for( let a = 0; a < messages.length; a++ )
         {
         	let date = messages[ a ].querySelector( '.Date' );
@@ -1027,16 +1034,14 @@ class FUIChatlog extends FUIElement
             let powner = a > 0 ? messages[ a - 1 ].getAttribute( 'owner' ) : false; // previous user
             let nowner = a + 1 < messages.length ? messages[ a + 1 ].getAttribute( 'owner' ) : false; // next user
             
+            messages[a].classList.remove( 'FirstForOwner', 'LastForOwner', 'ConceilOwner', 'OnlyMessage' );
+            
             if( owner == lastOwner ) // Don't show owner name twice
             {
                 messages[ a ].classList.add( 'ConceilOwner' );
                 if( a + 1 < messages.length && nowner != owner )
                 {
                     messages[ a ].classList.add( 'LastForOwner' );
-                }
-                else
-                {
-                    messages[ a ].classList.remove( 'LastForOwner' );
                 }
             }
             else if( a + 1 < messages.length && nowner == owner && ( !powner || powner != owner ) )
