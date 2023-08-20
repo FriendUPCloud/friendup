@@ -258,7 +258,6 @@ body:not([mobile]) .FUIChatlog .Input .MobileMen:hover,
 	color: var(--fui-color);
 	padding: 0 15px;
 	box-sizing: border-box;
-	border-radius: 10px;
 	margin: 10px 0 0 0;
 	opacity: 0;
 	transition: opacity 0.15s;
@@ -357,18 +356,18 @@ body:not([mobile]) .FUIChatlog .Input .MobileMen:hover,
 .Message.FirstForOwner
 {
 	padding-top: 15px;
-    border-radius: 10px 10px 0 0;
-}
-
-.Message.ConceilOwner
-{
-    border-radius: 0;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
 }
 
 .Message.OnlyMessage 
 {
     padding-top: 15px;
     padding-bottom: 15px;
+    border-top-left-radius: 10px;
+	border-top-right-radius: 10px;
+	border-bottom-left-radius: 10px;
+	border-bottom-right-radius: 10px;
 }
 
 .Message.FirstForOwner .Date, .Message.ConceilOwner:not(.LastForOwner) .Date,
@@ -380,7 +379,8 @@ body:not([mobile]) .FUIChatlog .Input .MobileMen:hover,
 .Message.ConceilOwner.LastForOwner
 {
 	padding-bottom: 15px;
-    border-radius: 0 0 10px 10px;
+	border-bottom-left-radius: 10px;
+	border-bottom-right-radius: 10px;
 }
 
 .FUIChatlog .Message p

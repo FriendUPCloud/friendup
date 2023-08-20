@@ -345,13 +345,17 @@ class FUIChatlog extends FUIElement
     	}
     	this.domInput.querySelector( '.Search' ).onclick = function()
     	{
-    	    if( self.domInput.querySelector( '.Search' ).classList.contains( 'Active' ) )
+    	    if( this.classList.contains( 'Active' ) )
     	    {
+    	    	self.domElement.classList.remove( 'Search' );
     	        this.classList.remove( 'Active' );
+    	        self.clearSearchFilter();
     	    }
     	    else
     	    {
+    	        self.domElement.classList.add( 'Search' );
     	        clearActive( this );
+    	        self.executeSearchFilter();
     	    }   
     	}
     	this.domTextarea.checkHeight = function()
@@ -460,8 +464,57 @@ class FUIChatlog extends FUIElement
 				}
     		}
     		
+    		if( self.domElement.classList.contains( 'Search' ) )
+    		{
+    			self.executeSearchFilter();
+			}
+			else
+			{
+				self.domElement.searchString = '';
+				self.clearSearchFilter();
+			}
+    		
     		this.checkHeight();
     	} );
+    }
+    executeSearchFilter()
+    {
+    	let self = this;
+    	let searchString = Trim( self.domTextarea.innerText ).toLowerCase();
+			self.domElement.searchString = searchString;
+    	if( this.esfTimeo ) clearTimeout( this.esfTimeo );
+    	this.esfTimeo = setTimeout( function()
+    	{
+			let searchString = self.domElement.searchString;
+			let messages = self.domElement.querySelector( '.Messages' ).getElementsByClassName( 'Message' );
+			for( let a = 0; a < messages.length; a++ )
+			{
+				if( messages[ a ].querySelector( '.Text' ).innerText.toLowerCase().indexOf( searchString ) < 0 )
+				{
+					messages[ a ].style.display = 'none';
+				}
+				else
+				{
+					messages[ a ].style.display = '';
+				}
+			}
+			self.refreshDom();
+		}, 250 );
+    }
+    clearSearchFilter()
+    {
+    	let self = this;
+    	if( this.csfTimeo ) clearTimeout( this.csfTimeo );
+    	this.csfTimeo = setTimeout( function()
+    	{
+    		self.csfTimeo = null;
+			let messages = self.domElement.querySelector( '.Messages' ).getElementsByClassName( 'Message' );
+			for( let a = 0; a < messages.length; a++ )
+			{
+				messages[ a ].style.display = '';
+			}
+			self.refreshDom();
+		}, 250 );
     }
     parseDate( instr )
     {
@@ -949,11 +1002,20 @@ class FUIChatlog extends FUIElement
         let self = this;
         
         // Let's do some message owner management for styling
-        let messages = this.domElement.getElementsByClassName( 'Message' );
+        let source = this.domElement.getElementsByClassName( 'Message' );
+        let messages = [];
+        for( let a = 0; a < source.length; a++ )
+        {
+        	// Skip hiddens
+        	if( source[ a ].style.display == 'none' ) continue;
+        	
+        	messages.push( source[ a ] );
+        }
+        
         let lastOwner = false;
         for( let a = 0; a < messages.length; a++ )
         {
-            let date = messages[ a ].querySelector( '.Date' );
+        	let date = messages[ a ].querySelector( '.Date' );
             let tstm = messages[ a ].getAttribute( 'slotid' );
             if( tstm )
             {
@@ -961,11 +1023,11 @@ class FUIChatlog extends FUIElement
                 date.innerHTML = newDate;
             }
             
-            let owner = messages[ a ].getAttribute( 'owner' );
-            let powner = a > 0 ? messages[ a - 1 ].getAttribute( 'owner' ) : false;
-            let nowner = a + 1 < messages.length ? messages[ a + 1 ].getAttribute( 'owner' ) : false;
+            let owner = messages[ a ].getAttribute( 'owner' ); // current user
+            let powner = a > 0 ? messages[ a - 1 ].getAttribute( 'owner' ) : false; // previous user
+            let nowner = a + 1 < messages.length ? messages[ a + 1 ].getAttribute( 'owner' ) : false; // next user
             
-            if( owner == lastOwner )
+            if( owner == lastOwner ) // Don't show owner name twice
             {
                 messages[ a ].classList.add( 'ConceilOwner' );
                 if( a + 1 < messages.length && nowner != owner )
@@ -977,13 +1039,13 @@ class FUIChatlog extends FUIElement
                     messages[ a ].classList.remove( 'LastForOwner' );
                 }
             }
-            else if( a + 1 < messages.length && nowner == owner )
+            else if( a + 1 < messages.length && nowner == owner && ( !powner || powner != owner ) )
             {
                 messages[ a ].classList.add( 'FirstForOwner' );
             }
             
             // First message
-            if( !powner && !nowner )
+            if( ( !powner && !nowner ) || ( !powner && !lastOwner && nowner && nowner != owner ) )
             {
             	messages[ a ].classList.add( 'OnlyMessage' );
             }
