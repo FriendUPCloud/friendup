@@ -65,7 +65,6 @@ Application.navigate = function( path, depth = 0 )
 				case 'rooms':
 				{
 					let overview = FUI.getElementByUniqueId( 'convos' );
-					console.log( 'Trying' );
 					if( !overview ) return false;
 					let channels = overview.domChannels.getElementsByClassName( 'Channel' );
 					if( channels )
