@@ -524,24 +524,27 @@ class FUIChatlog extends FUIElement
     parseDate( instr )
     {
         let now = new Date();
-        let test = now.getFullYear() + '-' + StrPad( now.getMonth() + 1, 2, '0' ) + '-' + StrPad( now.getDate(), 2, '0' );
         let time = new Date( instr );
-        let diff = ( now.getTime() / 1000 ) - ( time.getTime() / 1000 );
-        if( diff < 60 )
+        let test = time.getFullYear() + '-' + StrPad( time.getMonth() + 1, 2, '0' ) + '-' + StrPad( time.getDate(), 2, '0' ) + 
+        	' ' + StrPad( time.getHours(), 2, '0' ) + ':' + StrPad( time.getMinutes(), 2, '0' ) + ':' + StrPad( time.getSeconds(), 2, '0' );
+        let secs = Math.floor( now.getTime() / 1000 ) - Math.floor( time.getTime() / 1000 );
+        let mins = Math.floor( secs / 60 );
+        
+        if( secs <= 60 )
         {
-            if( diff < 1 )
+            if( secs < 1 )
             {
                 return i18n( 'i18n_just_now' );
             }
-            return Math.floor( diff ) + ' ' + i18n( 'i18n_seconds_ago' ) + '.';
+            return secs.toFixed( 0 ) + ' ' + i18n( 'i18n_seconds_ago' ) + '.';
         }
-        else if( diff < 3600 )
+        else if( secs <= 3600 )
         {
-            return Math.floor( diff / 60 ) + ' ' + i18n( 'i18n_minutes_ago' ) + '.';
+            return mins + ' ' + i18n( 'i18n_minutes_ago' ) + '.';
         }
-        else if( diff < 86400 )
+        else if( secs <= 86400 )
         {
-            return Math.floor( diff / 60 / 24 ) + ' ' + i18n( 'i18n_hours_ago' ) + '.';
+            return Math.floor( secs / 60 / 60 ) + ' ' + i18n( 'i18n_hours_ago' );
         }
         instr = time.getFullYear() + '-' + StrPad( time.getMonth() + 1, 2, '0' ) + '-' + StrPad( time.getDate(), 2, '0' );
         if( test == instr.substr( 0, test.length ) )
@@ -1033,6 +1036,7 @@ class FUIChatlog extends FUIElement
         }
         
         let lastOwner = false;
+        let lastDate = false;
         
         for( let a = 0; a < messages.length; a++ )
         {
