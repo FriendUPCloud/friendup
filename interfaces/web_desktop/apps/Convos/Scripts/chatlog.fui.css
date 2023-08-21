@@ -417,7 +417,7 @@ body:not([mobile]) .FUIChatlog .Input .MobileMen:hover,
 
 body.Charcoal .FUIChatlog .Message.Own[seen=yes] .Date:before 
 {
-	color: white;
+	color: var(--fui-palette-chan05);
 }
 
 .FUIChatlog .Message .Text::after 
