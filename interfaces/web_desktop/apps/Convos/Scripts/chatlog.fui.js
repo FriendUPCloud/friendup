@@ -546,10 +546,19 @@ class FUIChatlog extends FUIElement
         {
             return Math.floor( secs / 60 / 60 ) + ' ' + i18n( 'i18n_hours_ago' );
         }
-        instr = time.getFullYear() + '-' + StrPad( time.getMonth() + 1, 2, '0' ) + '-' + StrPad( time.getDate(), 2, '0' );
+        instr = this.getMonthName( time.getMonth() ) + ' ' + this.getDay( time.getDate() ) + ', ' + time.getFullYear();
         if( test == instr.substr( 0, test.length ) )
             return instr.substr( test.length, instr.length - test.length );
         return instr;
+    }
+    getMonthName( num )
+    {
+    	let months = [ 'january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december' ];
+    	return i18n( 'i18n_' + months[ num ] );
+    }
+    getDay( num )
+    {
+    	return num;
     }
     // Share an image and post it
     shareImageAndPost( path )

@@ -87,3 +87,17 @@ i18n_deleting_message_text             : This will permanently remove this messa
 i18n_failed_to_join_room               : Failed to join room
 i18n_failed_to_join_desc               : Could not join chat room due to an unexpected error.
 
+
+i18n_january                           : January
+i18n_february                          : February
+i18n_march                             : March
+i18n_april                             : April
+i18n_may                               : May
+i18n_june                              : June
+i18n_july                              : July
+i18n_august                            : August
+i18n_september                         : September
+i18n_october                           : October
+i18n_november                          : November
+i18n_december                          : December
+
