@@ -141,7 +141,7 @@ function CancelCajaxOnId( id )
 
 // A simple ajax function
 // Can have a cancellable series
-_cajax_timeout = 10000;
+_cajax_timeout = 20000;
 cAjax = function()
 {
 	let self = this;
