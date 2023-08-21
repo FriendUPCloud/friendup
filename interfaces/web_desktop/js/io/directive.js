@@ -517,7 +517,15 @@ function ExecuteApplication( app, args, callback, retries, flags )
 						{
 							ws = this.rawData;
 						}
-						ifr.src = URL.createObjectURL(new Blob([ws],{type:'text/html'}));
+						if( ws.length )
+						{
+							ifr.src = URL.createObjectURL(new Blob([ws],{type:'text/html'}));
+						}
+						else
+						{
+							console.log( '[Directive] Error loading blob. Retry.' );
+							j.send();
+						}
 					}
 					j.send();
 				}
