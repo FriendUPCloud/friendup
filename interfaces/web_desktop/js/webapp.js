@@ -31,6 +31,7 @@ Workspace = {
 		buttonSchemeText: "windows",
 		colorSchemeText: "default"
 	},
+	serverConfig: {},
 	exitMobileMenu: function()
 	{
 		document.body.classList.remove( 'WorkspaceMenuOpen' );
@@ -480,9 +481,65 @@ Workspace = {
 			return this.showLoginPrompt();
 		}
 	},
-	initUserWorkspace: function()
+	initUserWorkspace: function( json )
 	{
 		let t = this;
+		let _this = t;
+		
+		// Once we are done
+		function SetupWorkspaceData( json, cb )
+		{
+			// Ok, we're in
+			_this.sessionId = json.sessionid ? json.sessionid : null;
+			_this.userId    = json.userid;
+			_this.fullName  = json.fullname;
+			if( json.username ) _this.loginUsername = json.username;
+
+			// After a user has logged in we want to prepare the workspace for him.
+			
+			// Store user data in localstorage for later verification encrypted
+			let userdata = ApplicationStorage.load( { applicationName : 'Workspace' } );
+
+			if( userdata )
+			{
+				userdata.sessionId     = _this.sessionId;
+				userdata.userId        = _this.userId;
+				userdata.loginUsername = _this.loginUsername;
+				userdata.fullName      = _this.fullName;
+
+				ApplicationStorage.save( userdata, { applicationName : 'Workspace' } );
+			}
+
+			// Only renew session..
+			if( ge( 'SessionBlock' ) )
+			{
+				// Could be many
+				while( ge( 'SessionBlock' ) )
+				{
+					document.body.removeChild( ge( 'SessionBlock' ) );
+				}
+				
+				// We have renewed our session, make sure to set it and run ajax queue
+				Friend.User.RenewAllSessionIds( _this.sessionId );
+
+				// Call back!
+				if( cb ) cb();
+				return;
+			}
+
+			// Set server key
+			// TODO: Find a better place to set server publickey earlier in the process, temporary ... again time restraints makes delivery fast and sloppy ...
+			if( !_this.encryption.keys.server )
+			{
+				_this.encryption.getServerKey( function( server )
+				{
+					_this.encryption.keys.server = ( server ? { publickey: server } : false );
+				} );
+			}
+
+			// Call back!
+			if( cb ) cb();
+		}
 		
 		// Loading remaining scripts
 		let s = document.createElement( 'script' );
@@ -543,6 +600,8 @@ Workspace = {
 			Workspace.loginPrompt.close();
 			Workspace.loginPrompt = null;
 			
+			t.getMountlist(); // Just init structures
+			
 			// Setup default Doors screen
 			let wbscreen = new Screen( {
 					title: GetUrlVar( 'app' ) ? GetUrlVar( 'app' ) : 'Friend OS',
@@ -576,7 +635,10 @@ Workspace = {
 				}
 			}, true );
 
+			SetupWorkspaceData( json );
+
 			document.body.style.visibility = 'visible';
+			
 			// Loading notice
 			let loading = document.createElement( 'div' );
 			loading.className = 'LoadingMessage';
@@ -679,8 +741,38 @@ Workspace = {
 		return false;
 	},
 	// Fetch mountlist from database
-	getMountlist: function( callback )
+	getMountlist: function( callback = false )
 	{
+		let self = this;
+		if( !Friend.dosDrivers )
+		{
+			let d = new Module( 'system' );
+			d.onExecuted = function( res, dat )
+			{
+				if( res != 'ok' )
+				{
+					self.getMountlist( callback );
+					return;
+				}
+				let types = null;
+				try
+				{
+					let types = JSON.parse( dat );
+					Friend.dosDrivers = {};
+					for( let a = 0; a < types.length; a++ )
+					{
+						Friend.dosDrivers[ types[ a ].type ] = types[a];
+					}
+				}
+				catch( e )
+				{
+					return Friend.dosDrivers = null;
+				}
+				self.getMountlist( callback );
+			}
+			d.execute( 'types', { mode: 'all' } );
+			return;
+		}
 		let t = this;
 		let m = new Module( 'system' );
 		m.onExecuted = function( e, dat )
