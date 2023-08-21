@@ -143,7 +143,6 @@ Friend.User = {
     // Send the actual login call
     SendLoginCall: function( info, callback = false )
     {	
-    	console.trace();
     	// Already logging in
     	this.State = 'login';
     	
