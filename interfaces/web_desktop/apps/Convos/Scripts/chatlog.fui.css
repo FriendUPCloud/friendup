@@ -405,6 +405,16 @@ body:not([mobile]) .FUIChatlog .Input .MobileMen:hover,
     transition: opacity 0.15s;
 }
 
+.FUIChatlog .Message[seen=yes] .Date:before 
+{
+    content: "\f00c";
+    font-family: 'fontawesome';
+    float: right;
+    margin: 0 0 0 2px;
+    clear: both;
+    color: var(--fui-palette-chan01);
+}
+
 .FUIChatlog .Message .Text::after 
 {
     display: inline-block;

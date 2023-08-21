@@ -122,6 +122,7 @@ class FUIChatlog extends FUIElement
         
         this.domMessages.addEventListener( 'scroll', function( e )
         {
+        	self.checkSeen();
         	if( self.scrollFunction )
         	{
         		self.scrollFunction();
@@ -650,6 +651,7 @@ class FUIChatlog extends FUIElement
             d.className = 'Message';
             d.classList.add( 'Showing' );
             d.setAttribute( 'owner', m.Name );
+	        d.setAttribute( 'seen', m.Seen == 1 ? 'yes' : 'no' );
             if( history )
             	d.style.display = 'none';
         	newMessages.push( d );
@@ -714,6 +716,7 @@ class FUIChatlog extends FUIElement
             
             let mess = md5( m.Message );
             d.setAttribute( 'message-hash', mess );
+            d.setAttribute( 'mid', m.ID );
             
             // Get toolbar to handle own messages
             let toolbar = FUI.getFragment( 'chat-message-toolbar' );
@@ -1027,10 +1030,63 @@ class FUIChatlog extends FUIElement
         let parentElement = domElement.getAttribute( 'parentelement' );
         if( parentElement ) this.options.parentElement = parentElement;
     }
+    // Check if a message was seen
+    checkSeen( setYes = false )
+    {
+    	let self = this;
+    	if( this.seenTimeo )
+    		clearTimeout( this.seenTimeo );
+    	this.seenTimeo = setTimeout( function()
+    	{
+    		let messages = self.domMessages.getElementsByClassName( 'Message' );
+    		let top = self.domMessages.scrollTop;
+    		let bottom = self.domMessages.offsetHeight + top;
+    		let updates = [];
+    		for( let a = 0; a < messages.length; a++ )
+    		{
+    			// We are setting seen
+    			if( setYes )
+    			{
+    				let found = false;
+    				for( let b = 0; b < setYes.length; b++ )
+    				{
+						if( messages[ a ].getAttribute( 'mid' ) == setYes[ b ] )
+						{
+							messages[ a ].setAttribute( 'seen', 'yes' );
+							found = true;
+							break;
+						}
+					}
+					if( found ) continue;
+				}
+    			// These are invisible
+    			if( messages[ a ].offsetTop > bottom || messages[ a ].offsetTop + messages[ a ].offsetHeight < top )
+    			{
+    				continue;
+    			}
+    			// These are visible
+    			else
+    			{
+    				if( messages[ a ].getAttribute( 'seen' ) == 'no' )
+    				{
+    					if( !messages[ a ].classList.contains( 'Own' ) )
+    					{
+							messages[ a ].setAttribute( 'seen', 'yes' );
+							updates.push( messages[ a ].getAttribute( 'mid' ) );
+						}
+    				}
+    			}
+    		}
+    		let m = new Module( 'system' );
+    		m.execute( 'convos', { method: 'message-seen', messages: updates } );
+    	}, 250 );
+    }
     refreshDom( evaluated = false )
     {
         super.refreshDom();
         let self = this;
+        
+        self.checkSeen();
         
         // Let's do some message owner management for styling
         let source = this.domElement.getElementsByClassName( 'Message' );

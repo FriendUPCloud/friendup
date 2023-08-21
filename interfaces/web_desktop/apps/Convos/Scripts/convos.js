@@ -252,6 +252,13 @@ Application.receiveMessage = function( msg )
 				overview.pollChatroom( false, msg.groupId );
 			} );
     	}
+    	// Accepting an invite
+    	else if( msg.type == 'update-seen' )
+    	{
+    		let msgs = FUI.getElementByUniqueId( 'messages' );
+    		if( msgs )
+    			msgs.checkSeen( msg.messages );
+    	}
     }
     // Dropping an icon object
     if( msg.command == 'drop' )

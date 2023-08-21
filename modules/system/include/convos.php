@@ -221,7 +221,7 @@ if( isset( $args->args ) )
                 {
                     $rows = $SqlDatabase->FetchObjects( '
                         SELECT 
-                            m.ID, m.Message, m.Date, u.Name, u.UniqueID FROM `Message` m, FUser u 
+                            m.ID, m.Seen, m.Message, m.Date, u.Name, u.UniqueID FROM `Message` m, FUser u 
                         WHERE
                             m.RoomType = \'jeanie\' AND m.UniqueUserID=\'' . $User->UniqueID . '\' AND
                             m.ParentID = \'' . ( isset( $args->args->cid ) ? $SqlDatabase->_link->real_escape_string( $args->args->cid ) : '0' ) . '\' AND m.UniqueUserID = u.UniqueID' . $lastId . '
@@ -234,7 +234,7 @@ if( isset( $args->args ) )
                 {
                     $rows = $SqlDatabase->FetchObjects( '
                     SELECT 
-                        m.ID, m.Message, m.Date, u.Name, u.UniqueID FROM `Message` m, FContact u 
+                        m.ID, m.Seen, m.Message, m.Date, u.Name, u.UniqueID FROM `Message` m, FContact u 
                     WHERE
                         m.RoomType = \'dm-contact\' AND 
                         ( 
@@ -260,7 +260,7 @@ if( isset( $args->args ) )
                 {
                     $rows = $SqlDatabase->FetchObjects( '
                     SELECT 
-                        m.ID, m.Message, m.Date, u.Name, u.UniqueID FROM `Message` m, FUser u 
+                        m.ID, m.Seen, m.Message, m.Date, u.Name, u.UniqueID FROM `Message` m, FUser u 
                     WHERE
                         m.RoomType = \'dm-user\' AND 
                         ( 
@@ -286,7 +286,7 @@ if( isset( $args->args ) )
                 {
                 	$rows = $SqlDatabase->FetchObjects( '
                     SELECT 
-                        m.ID, m.Message, m.Date, u.Name, u.UniqueID FROM `Message` m, FUser u 
+                        m.ID, m.Seen, m.Message, m.Date, u.Name, u.UniqueID FROM `Message` m, FUser u 
                     WHERE
                         m.RoomType = \'chatroom\' AND 
                         ( 
@@ -314,6 +314,7 @@ if( isset( $args->args ) )
                     $out->Message = $v->Message;
                     $out->Date = $v->Date;
                     $out->Own = false;
+                    $out->Seen = $v->Seen;
                     if( isset( $v->UniqueID ) )
 	                    if( $v->UniqueID == $User->UniqueID )
     	                    $out->Own = true;
@@ -327,6 +328,43 @@ if( isset( $args->args ) )
                 die( 'ok<!--separate-->' . json_encode( $response ) );
             }
             die( 'fail<!--separate-->{"response":0,"message":"Failed to retrieve messages."}' . $q );
+        }
+        else if( $args->args->method == 'message-seen' )
+        {
+        	$vet = [];
+        	foreach( $args->args->messages as $m )
+        		$vet[] = intval( $m, 10 );
+        	
+        	if( count( $vet ) > 0 )
+        	{
+        		// Get users
+        		if( $users = $SqlDatabase->fetchObjects( '
+        			SELECT u.* FROM FUser u, `Message` m 
+        			WHERE 
+        				u.UniqueID = m.UniqueUserID AND 
+        				m.ID IN ( ' . implode( ',', $vet ) . ' )
+        		' ) )
+        		{
+        			foreach( $users as $user )
+        			{
+        				// Notify user that we invited them!
+						$msg = new stdClass();
+						$msg->appname = 'Convos';
+						$msg->dstuniqueid = $user->UniqueID;
+						$sub = new stdClass();
+						$sub->type = 'update-seen';
+						$sub->messages = $vet;
+						$msg->msg = json_encode( $sub );
+						sendUserMsg( $msg );
+        			}
+    			}
+        		
+		    	$outstr = 'UPDATE `Message` SET `Seen`=\'1\' WHERE `Seen` != \'1\' AND `ID` IN ( ' . implode( ',', $vet ) . ' )';
+		    	$SqlDatabase->query( $outstr );
+		    	
+		    	die( 'ok' );
+	    	}
+	    	die( 'fail' );
         }
         // Get public groups
         else if( $args->args->method == 'public_groups' )
