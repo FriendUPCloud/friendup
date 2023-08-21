@@ -405,7 +405,7 @@ body:not([mobile]) .FUIChatlog .Input .MobileMen:hover,
     transition: opacity 0.15s;
 }
 
-.FUIChatlog .Message[seen=yes] .Date:before 
+.FUIChatlog .Message.Own[seen=yes] .Date:before 
 {
     content: "\f00c";
     font-family: 'fontawesome';
