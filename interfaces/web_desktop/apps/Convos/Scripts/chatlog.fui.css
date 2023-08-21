@@ -49,6 +49,8 @@
 	box-sizing: border-box;
     padding: 15px 15px 95px 15px;
 	background-color: var(--fui-background-foreground);
+	mask-image: linear-gradient(180deg, rgba(0,0,0,0.5) 0px, black 8px, black calc(100% - 95px), transparent calc(100% - 60px));
+	-webkit-mask-image: linear-gradient(180deg, rgba(0,0,0,0.5) 0px, black 8px, black calc(100% - 95px), transparent calc(100% - 60px));
 }
 
 
