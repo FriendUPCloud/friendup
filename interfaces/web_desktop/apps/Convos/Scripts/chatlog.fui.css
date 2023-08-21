@@ -415,6 +415,11 @@ body:not([mobile]) .FUIChatlog .Input .MobileMen:hover,
     color: var(--fui-palette-chan01);
 }
 
+body.Charcoal .FUIChatlog .Message.Own[seen=yes] .Date:before 
+{
+	color: white;
+}
+
 .FUIChatlog .Message .Text::after 
 {
     display: inline-block;
