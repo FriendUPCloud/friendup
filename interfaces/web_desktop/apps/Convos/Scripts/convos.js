@@ -128,7 +128,7 @@ Application.receiveMessage = function( msg )
         	let contacts = FUI.getElementByUniqueId( 'contacts' );
     		if( contacts )		
 	        	contacts.updateActivityBubble();
-        	//overview.activateDirectMessage( msg.senderId, msg.message );
+        	overview.activateDirectMessage( msg.senderId, msg.message );
     	}
     }
     else if( msg.command == 'signal' )
