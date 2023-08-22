@@ -579,7 +579,7 @@ if( isset( $args->args ) )
         		$ar .= '"' . $u . '"';
         	}
         	if( $us = $SqlDatabase->fetchObjects( '
-        		SELECT LoginTime, LastActionTime, UniqueID FROM FUser WHERE UniqueID IN ( ' . $ar . ' )
+        		SELECT FullName, LoginTime, LastActionTime, UniqueID FROM FUser WHERE UniqueID IN ( ' . $ar . ' )
         	' ) )
         	{
         		$status = [];
@@ -587,6 +587,7 @@ if( isset( $args->args ) )
         		foreach( $us as $u )
         		{
         			$o = new stdClass();
+        			$o->Name = $->FullName;
         			$o->UniqueID = $u->UniqueID;
         			$o->OnlineStatus = 'offline';
         			$o->Diff = $now - $u->LastActionTime;
