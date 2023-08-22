@@ -308,7 +308,8 @@ Friend.User = {
 				{
 					if( !window.Workspace || !Workspace.theme )
 					{
-						console.log( '[User] Abort login.' );
+						self.State = 'online'
+						console.log( json, serveranswer );
 						if( callback )
 							return callback( false, serveranswer );
 						return;
