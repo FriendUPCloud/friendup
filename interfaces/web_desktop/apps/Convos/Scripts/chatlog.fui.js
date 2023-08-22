@@ -1110,7 +1110,7 @@ class FUIChatlog extends FUIElement
             let tstm = messages[ a ].getAttribute( 'slotid' );
             if( tstm )
             {
-                let newDate = self.parseDate( parseInt( tstm.split( '-' )[0] ) );
+                let newDate = self.parseDate( parseInt( tstm.split( '-' )[0] * 1000 ) );
                 date.innerHTML = newDate;
             }
             
