@@ -768,9 +768,8 @@ class FUIChatlog extends FUIElement
             if( m.Own ) d.classList.add( 'Own' );
             
             // Get slot
-            let slot = timestamp;
-            let mid = StrPad( m.ID, 16, '0' );
-            let slotId = mid + '-' + m.ID + '-' + timestamp;
+            let slot = StrPad( m.ID, 16, '0' );
+            let slotId = slot + '-' + m.ID + '-' + timestamp;
             d.setAttribute( 'slotId', slotId ); // If we will use this new element, give slotid
             
             // Update a message in a time slot
