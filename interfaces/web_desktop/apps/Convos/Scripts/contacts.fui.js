@@ -677,7 +677,6 @@ class FUIContacts extends FUIElement
 					if( now - users[ b ].lastActive <= 3 )
 					{
 						users[ b ].classList.add( 'Online' );
-						console.log( 'Online by event' );
 						continue;
 					}
 	    			// Check online state			
