@@ -244,13 +244,7 @@ Friend.User = {
 					if( usingLoginToken )
 					{
 						if( json.extra && json.extra.length )
-						{
 							SetCookie( 'logintoken', json.extra );
-						}
-						else 
-						{
-							DelCookie( 'logintoken' );
-						}
 					}
 					
 					// Silence non-admin user's debug
