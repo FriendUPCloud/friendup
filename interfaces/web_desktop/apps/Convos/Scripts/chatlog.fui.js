@@ -769,7 +769,8 @@ class FUIChatlog extends FUIElement
             
             // Get slot
             let slot = timestamp;
-            let slotId = slot + '-' + m.ID;
+            let mid = StrPad( m.ID, 16, '0' );
+            let slotId = mid + '-' + m.ID + '-' + timestamp;
             d.setAttribute( 'slotId', slotId ); // If we will use this new element, give slotid
             
             // Update a message in a time slot
@@ -1109,7 +1110,7 @@ class FUIChatlog extends FUIElement
             let tstm = messages[ a ].getAttribute( 'slotid' );
             if( tstm )
             {
-                let newDate = self.parseDate( parseInt( tstm.split( '-' )[0] ) * 1000 );
+                let newDate = self.parseDate( parseInt( tstm.split( '-' )[2] ) * 1000 );
                 date.innerHTML = newDate;
             }
             
