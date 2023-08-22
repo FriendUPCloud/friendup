@@ -128,8 +128,8 @@ Application.receiveMessage = function( msg )
         	let contacts = FUI.getElementByUniqueId( 'contacts' );
     		if( contacts )		
 	        	contacts.updateActivityBubble();
-        	overview.activateDirectMessage( msg.senderId, msg.message );
-        	console.log( 'We got message: ', msg );
+        	Application.holdConnection( 'refresh' );
+        	//overview.activateDirectMessage( msg.senderId, msg.message );
     	}
     }
     else if( msg.command == 'signal' )
