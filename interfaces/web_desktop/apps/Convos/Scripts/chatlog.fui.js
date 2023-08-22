@@ -728,7 +728,7 @@ class FUIChatlog extends FUIElement
                 message: self.replaceUrls( self.replaceEmojis( text ) ),
                 i18n_date: i18n( 'i18n_date' ),
                 i18n_fullname: i18n( 'i18n_fullname' ),
-                date: self.parseDate( m.Timestamp ),
+                date: self.parseDate( m.Timestamp * 1000 ),
                 signature: '',
                 fullname: m.Own ? i18n( 'i18n_you' ) : m.Name,
                 toolbar: toolbar
@@ -766,8 +766,6 @@ class FUIChatlog extends FUIElement
             
             // TODO: Grab timezone from server config
             let timestamp = parseInt( m.Timestamp );
-            let i = new Date( timestamp );
-            console.log( 'Oh: ' + timestamp, i.getFullYear() + '/' + (i.getMonth()+1) + '/' + i.getDate() );
             if( m.Own ) d.classList.add( 'Own' );
             
             // Get slot
