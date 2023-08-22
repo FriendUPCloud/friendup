@@ -764,7 +764,7 @@ class FUIChatlog extends FUIElement
 		        }
 	        } )( m, d );
             
-            let timestamp = Math.floor( ( new Date( m.Date ) ).getTime() / 1000 );
+            let timestamp = Math.floor( ( new Date( m.Date.toLocaleString( 'en-US', { timezone: 'Europe/Oslo' } ) ) ).getTime() / 1000 );
             if( m.Own ) d.classList.add( 'Own' );
             
             // Get slot
