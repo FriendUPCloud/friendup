@@ -728,7 +728,7 @@ class FUIChatlog extends FUIElement
                 message: self.replaceUrls( self.replaceEmojis( text ) ),
                 i18n_date: i18n( 'i18n_date' ),
                 i18n_fullname: i18n( 'i18n_fullname' ),
-                date: self.parseDate( m.Timestamp * 1000 ),
+                date: self.parseDate( m.Date ),
                 signature: '',
                 fullname: m.Own ? i18n( 'i18n_you' ) : m.Name,
                 toolbar: toolbar
@@ -764,14 +764,12 @@ class FUIChatlog extends FUIElement
 		        }
 	        } )( m, d );
             
-            // TODO: Grab timezone from server config
-            let timestamp = parseInt( m.Timestamp );
+            let timestamp = Math.floor( ( new Date( m.Date ) ).getTime() / 1000 );
             if( m.Own ) d.classList.add( 'Own' );
             
             // Get slot
             let slot = timestamp;
             let slotId = slot + '-' + m.ID;
-            console.log( 'Slot: ' + slot + ' ' + replacements.message );
             d.setAttribute( 'slotId', slotId ); // If we will use this new element, give slotid
             
             // Update a message in a time slot
@@ -1111,7 +1109,7 @@ class FUIChatlog extends FUIElement
             let tstm = messages[ a ].getAttribute( 'slotid' );
             if( tstm )
             {
-                let newDate = self.parseDate( parseInt( tstm.split( '-' )[0] * 1000 ) );
+                let newDate = self.parseDate( parseInt( tstm.split( '-' )[0] ) * 1000 );
                 date.innerHTML = newDate;
             }
             
