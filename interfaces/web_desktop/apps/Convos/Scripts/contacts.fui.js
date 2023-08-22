@@ -706,10 +706,12 @@ class FUIContacts extends FUIElement
 							found = true;
 							if( lst[ a ].OnlineStatus == 'offline' )
 							{
+								console.log( 'User ' + users[ c ].record.Name + ' is offline.', lst[ a ] );
 								users[ c ].classList.remove( 'Online' );
 							}
 							else if( lst[ a ].OnlineStatus == 'online' )
 							{
+								console.log( 'User ' + users[ c ].record.Name + ' is online.', lst[ a ] );
 								users[ c ].classList.add( 'Online' );
 							}
 							break;
