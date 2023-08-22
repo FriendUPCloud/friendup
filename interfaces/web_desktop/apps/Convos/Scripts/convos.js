@@ -102,7 +102,7 @@ window.unreadMessages = {
 Application.receiveMessage = function( msg )
 {
 	// Receiving message on sender
-    if( msg.senderId )
+    if( msg.senderId && !msg.command )
     {
     	if( document.hidden || !document.body.classList.contains( 'activated' ) )
     	{
