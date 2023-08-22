@@ -219,9 +219,6 @@ Friend.User = {
 		m.addVar( 'deviceid', GetDeviceId() );
 		m.onExecuted = function( json, serveranswer )
 		{
-			// This was already consumed
-			DelCookie( 'logintoken' );
-			
 			Friend.User.lastLogin = null;
 			
 			// We got a real error
@@ -244,11 +241,17 @@ Friend.User = {
 					Workspace.fullName = json.fullname;
 					Workspace.uniqueId = json.uniqueid;
 					
-					if( json.extra && json.extra.length )
+					if( usingLoginToken )
 					{
-						SetCookie( 'logintoken', json.extra );
+						if( json.extra && json.extra.length )
+						{
+							SetCookie( 'logintoken', json.extra );
+						}
+						else 
+						{
+							DelCookie( 'logintoken' );
+						}
 					}
-					else DelCookie( 'logintoken' );
 					
 					// Silence non-admin user's debug
 					if( Workspace.userLevel != 'admin' )
