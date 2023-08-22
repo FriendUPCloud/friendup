@@ -111,6 +111,8 @@ Application.receiveMessage = function( msg )
         let overview = FUI.getElementByUniqueId( 'convos' );
         if( msg.type && msg.type == 'chatroom' && msg.uniqueId )
         {
+        	console.log( 'Bubble 2: ', msg );
+        	
         	// Log
         	if( !unreadMessages.rooms[ msg.uniqueId ] )
         		unreadMessages.rooms[ msg.uniqueId ] = [];
@@ -120,6 +122,7 @@ Application.receiveMessage = function( msg )
         }
         else
         {
+        	console.log( 'Bubble: ', msg );
         	// Log
         	if( !unreadMessages.dms[ msg.senderId ] )
         		unreadMessages.dms[ msg.senderId ] = [];
@@ -128,8 +131,14 @@ Application.receiveMessage = function( msg )
         	let contacts = FUI.getElementByUniqueId( 'contacts' );
     		if( contacts )		
 	        	contacts.updateActivityBubble();
-        	Application.holdConnection( 'refresh' );
-        	//overview.activateDirectMessage( msg.senderId, msg.message );
+        	let messages = FUI.getElementByUniqueId( 'messages' );
+        	if( messages )
+        	{
+        		if( messages.type == 'dm-user' && messages.options.cid == msg.senderId )
+        		{
+        			Application.holdConnection( 'refresh' );
+        		}
+        	}
     	}
     }
     else if( msg.command == 'signal' )
