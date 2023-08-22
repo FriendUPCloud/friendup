@@ -587,7 +587,7 @@ if( isset( $args->args ) )
         		foreach( $us as $u )
         		{
         			$o = new stdClass();
-        			$o->Name = $->FullName;
+        			$o->Name = $u->FullName;
         			$o->UniqueID = $u->UniqueID;
         			$o->OnlineStatus = 'offline';
         			$o->Diff = $now - $u->LastActionTime;
