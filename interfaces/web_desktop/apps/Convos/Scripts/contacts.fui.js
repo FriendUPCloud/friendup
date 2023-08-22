@@ -672,15 +672,15 @@ class FUIContacts extends FUIElement
     		for( let b = 0; b < users.length; b++ )
     		{
     			// Online by event
-    			if( now - users[ b ].lastActive <= 3 )
-    			{
-    				users[ b ].classList.add( 'Online' );
-    				console.log( 'Online by event' );
-    				continue;
-    			}
-    			// Check online state
     			if( users[ b ].record )
     			{
+					if( now - users[ b ].lastActive <= 3 )
+					{
+						users[ b ].classList.add( 'Online' );
+						console.log( 'Online by event' );
+						continue;
+					}
+	    			// Check online state			
     				pollUsers.push( users[ b ].record.ID );
     				allUsers.push( users[ b ] );
     			}

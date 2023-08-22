@@ -590,7 +590,7 @@ if( isset( $args->args ) )
         			$o->UniqueID = $u->UniqueID;
         			$o->OnlineStatus = 'offline';
         			$o->Diff = $now - $u->LastActionTime;
-        			if( $o->Diff <= 150 )
+        			if( $o->Diff <= 300 )
         			{
         				$o->OnlineStatus = 'online';
         			}
