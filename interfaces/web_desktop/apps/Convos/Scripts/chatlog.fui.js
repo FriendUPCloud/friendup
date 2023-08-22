@@ -728,7 +728,7 @@ class FUIChatlog extends FUIElement
                 message: self.replaceUrls( self.replaceEmojis( text ) ),
                 i18n_date: i18n( 'i18n_date' ),
                 i18n_fullname: i18n( 'i18n_fullname' ),
-                date: self.parseDate( m.Date ),
+                date: self.parseDate( m.Timestamp ),
                 signature: '',
                 fullname: m.Own ? i18n( 'i18n_you' ) : m.Name,
                 toolbar: toolbar
@@ -1110,7 +1110,7 @@ class FUIChatlog extends FUIElement
             let tstm = messages[ a ].getAttribute( 'slotid' );
             if( tstm )
             {
-                let newDate = self.parseDate( parseInt( tstm.split( '-' )[0] ) * 1000 );
+                let newDate = self.parseDate( parseInt( tstm.split( '-' )[0] ) );
                 date.innerHTML = newDate;
             }
             
