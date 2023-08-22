@@ -46,7 +46,7 @@ if( !window.FriendWebSocket )
 			self.sendQueue = [];
 			self.pingPong = false; // is false on init, 'pong' on startup, and 'ping' until next 'pong'.
 			self.pingTimeout = 15; // Seconds
-			self.pongTimeout = 2; // Time for server to respond
+			self.pongTimeout = 6; // Time for server to respond
 			
 			/*
 				length / size check: if str.length is above maxStrLength, its turned into a blob and rechecked.
