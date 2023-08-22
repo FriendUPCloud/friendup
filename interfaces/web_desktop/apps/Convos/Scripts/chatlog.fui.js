@@ -765,7 +765,7 @@ class FUIChatlog extends FUIElement
 	        } )( m, d );
             
             // TODO: Grab timezone from server config
-            let timestamp = Math.floor( ( new Date( m.Date.toLocaleString( 'en-US', { timezone: 'Europe/Oslo' } ) ) ).getTime() / 1000 );
+            let timestamp = m.Timestamp;
             if( m.Own ) d.classList.add( 'Own' );
             
             // Get slot

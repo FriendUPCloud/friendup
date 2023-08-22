@@ -313,6 +313,7 @@ if( isset( $args->args ) )
 	                    $out->Name = $v->Name;
                     $out->Message = $v->Message;
                     $out->Date = $v->Date;
+                    $out->Timestamp = strtotime( $v->Data );
                     $out->Own = false;
                     $out->Seen = $v->Seen;
                     if( isset( $v->UniqueID ) )
