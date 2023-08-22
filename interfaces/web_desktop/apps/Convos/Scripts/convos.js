@@ -134,7 +134,7 @@ Application.receiveMessage = function( msg )
         	let messages = FUI.getElementByUniqueId( 'messages' );
         	if( messages )
         	{
-        		if( messages.type == 'dm-user' && messages.options.cid == msg.senderId )
+        		if( messages.options.type == 'dm-user' && messages.options.cid == msg.senderId )
         		{
         			Application.holdConnection( 'refresh' );
         		}
