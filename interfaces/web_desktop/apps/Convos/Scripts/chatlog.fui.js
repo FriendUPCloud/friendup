@@ -137,7 +137,7 @@ class FUIChatlog extends FUIElement
         			firstMessage = firstMessage.querySelector( '.Message' );
         			firstMessage = firstMessage.getAttribute( 'slotid' );
         			if( !firstMessage ) return;
-	    			firstMessage = firstMessage.split( '-' )[1];
+	    			firstMessage = firstMessage.split( '-' )[0];
 	    			let m = new Module( 'system' );
 	    			m.onExecuted = function( me, md )
 	    			{
@@ -768,8 +768,8 @@ class FUIChatlog extends FUIElement
             if( m.Own ) d.classList.add( 'Own' );
             
             // Get slot
-            let slot = timestamp;
-            let slotId = slot + '-' + m.ID;
+            let slot = m.ID;
+            let slotId = slot + '-' + timestamp;
             d.setAttribute( 'slotId', slotId ); // If we will use this new element, give slotid
             
             // Update a message in a time slot
@@ -1109,7 +1109,7 @@ class FUIChatlog extends FUIElement
             let tstm = messages[ a ].getAttribute( 'slotid' );
             if( tstm )
             {
-                let newDate = self.parseDate( parseInt( tstm.split( '-' )[0] ) * 1000 );
+                let newDate = self.parseDate( parseInt( tstm.split( '-' )[1] ) * 1000 );
                 date.innerHTML = newDate;
             }
             
