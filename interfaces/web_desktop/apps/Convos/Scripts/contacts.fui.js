@@ -690,6 +690,7 @@ class FUIContacts extends FUIElement
     	let m = new Module( 'system' );
     	m.onExecuted = function( me, md )
     	{
+    		console.log( 'List: ', me, md );
     		if( me != 'ok' )
     			return;
     		let lst = JSON.parse( md );
