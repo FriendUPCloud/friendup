@@ -766,8 +766,8 @@ class FUIChatlog extends FUIElement
             
             // TODO: Grab timezone from server config
             let timestamp = parseInt( m.Timestamp );
-            let d = new Date( timestamp );
-            console.log( 'Oh: ' + timestamp, d.getFullYear() + '/' + (d.getMonth()+1) + '/' + d.getDate() );
+            let i = new Date( timestamp );
+            console.log( 'Oh: ' + timestamp, i.getFullYear() + '/' + (i.getMonth()+1) + '/' + i.getDate() );
             if( m.Own ) d.classList.add( 'Own' );
             
             // Get slot
