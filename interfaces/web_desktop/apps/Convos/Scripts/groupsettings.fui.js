@@ -74,12 +74,19 @@ class FUIGroupsettings extends FUIInvitedialog
 				console.log( 'Impossible no group error.' );
 				return false; // TODO: Make some error
 			}
-			let grp = JSON.parse( md );
-			f.replacements = {
-				'room-name': grp.Name,
-				'room-description': grp.Description,
-				'room-status': grp.Status == '1' ? 'checked' : ''
-			};
+			try
+			{
+				let grp = JSON.parse( md );
+				f.replacements = {
+					'room-name': grp.Name,
+					'room-description': grp.Description,
+					'room-status': grp.Status == '1' ? 'checked' : ''
+				};
+			}
+			catch( e )
+			{
+				console.log( 'Error with JSON: ', e );
+			}
 			f.i18n();
 			f.load();
 		}
