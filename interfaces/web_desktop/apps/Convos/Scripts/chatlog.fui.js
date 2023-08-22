@@ -771,7 +771,7 @@ class FUIChatlog extends FUIElement
             // Get slot
             let slot = timestamp;
             let slotId = slot + '-' + m.ID;
-            console.log( 'Slot: ' + slot );
+            console.log( 'Slot: ' + slot + ' ' + replacements.message );
             d.setAttribute( 'slotId', slotId ); // If we will use this new element, give slotid
             
             // Update a message in a time slot
