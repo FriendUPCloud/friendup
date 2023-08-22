@@ -100,8 +100,10 @@ class FUIContacts extends FUIElement
 			}
 			if( dms[ conts[ a ].record.ID ] && dms[ conts[ a ].record.ID ].length > 0 )
 			{
+				let meslist = dms[ conts[ a ].record.ID ];
 				conts[ a ].bubble.classList.add( 'Showing' );
-				conts[ a ].bubble.innerHTML = '<span>' + dms[ conts[ a ].record.ID ].length + '</span>';
+				conts[ a ].bubble.innerHTML = '<span>' + meslist.length + '</span>';
+				conts[ a ].lastActive = Math.floor( meslist[ meslist.length - 1 ].time / 60000 );
 			}
 			else conts[ a ].bubble.classList.remove( 'Showing' );
     	}
@@ -663,11 +665,20 @@ class FUIContacts extends FUIElement
     	let us = this.userList;
     	let pollUsers = [];
     	let allUsers = [];
+    	let now = Math.floor( ( new Date() ).getTime() / 60000 );
     	for( let a in us )
     	{
     		let users = us[ a ].getElementsByClassName( 'User' );
     		for( let b = 0; b < users.length; b++ )
     		{
+    			// Online by event
+    			if( now - users[ b ].lastActive <= 3 )
+    			{
+    				users[ b ].classList.add( 'Online' );
+    				console.log( 'Online by event' );
+    				continue;
+    			}
+    			// Check online state
     			if( users[ b ].record )
     			{
     				pollUsers.push( users[ b ].record.ID );
@@ -675,6 +686,8 @@ class FUIContacts extends FUIElement
     			}
     		}
     	}
+    	// First check that we didn't get a message already
+    	// Get info from database
     	let m = new Module( 'system' );
     	m.onExecuted = function( me, md )
     	{

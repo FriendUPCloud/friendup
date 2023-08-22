@@ -110,23 +110,20 @@ Application.receiveMessage = function( msg )
     	}
         let overview = FUI.getElementByUniqueId( 'convos' );
         if( msg.type && msg.type == 'chatroom' && msg.uniqueId )
-        {
-        	console.log( 'Bubble 2: ', msg );
-        	
+        {	
         	// Log
         	if( !unreadMessages.rooms[ msg.uniqueId ] )
         		unreadMessages.rooms[ msg.uniqueId ] = [];
-        	unreadMessages.rooms[ msg.uniqueId ].push( { sender: msg.senderId, message: msg.message } );
+        	unreadMessages.rooms[ msg.uniqueId ].push( { sender: msg.senderId, message: msg.message, time: ( new Date() ).getTime() } );
         	overview.updateActivityBubble();
         	overview.pollChatroom( msg.senderId, msg.uniqueId );
         }
         else
         {
-        	console.log( 'Bubble: ', msg );
         	// Log
         	if( !unreadMessages.dms[ msg.senderId ] )
         		unreadMessages.dms[ msg.senderId ] = [];
-        	unreadMessages.dms[ msg.senderId ].push( { message: msg.message } );
+        	unreadMessages.dms[ msg.senderId ].push( { message: msg.message, time: ( new Date() ).getTime() } );
         	
         	let contacts = FUI.getElementByUniqueId( 'contacts' );
     		if( contacts )		
