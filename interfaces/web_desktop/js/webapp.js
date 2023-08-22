@@ -674,42 +674,6 @@ Workspace = {
 								}
 							}, 500 );
 						}
-						function showThankyou()
-						{
-							if( !ge( 'Thanks' ) )
-							{
-								// Wait till we have windows!
-								let count = 0;
-								for( let a in window.movableWindows ){ count++; }
-								if( count <= 0 )
-									return setTimeout( showThankyou, 500 );
-							
-								// Open the thank you template
-								let jo = new cAjax();
-								let templPath = '/webclient/templates/thankyou.html';
-								if ( -1 != document.location.host.indexOf( 'jeanie' ))
-									templPath = '/webclient/templates/thankyoujeanie.html';
-								
-								jo.open( 'get', templPath, true, false );
-								jo.onload = function()
-								{
-									if( ge( 'Thanks' ) ) return;
-									let ele = document.createElement( 'div' );
-									ele.id = 'Thanks';
-									ele.className = 'ThankYou Padding';
-									ele.innerHTML = this.responseText();
-									let s = GeByClass( 'ScreenContent' );
-									if( s )
-									{
-										if( s.length ) s = s[0];
-										s.appendChild( ele );
-									}
-									else document.body.appendChild( s );
-								}
-								jo.send();
-							}
-						}
-						showThankyou();
 					} );
 				} );
 			}
