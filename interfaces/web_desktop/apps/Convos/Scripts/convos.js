@@ -129,6 +129,7 @@ Application.receiveMessage = function( msg )
     		if( contacts )		
 	        	contacts.updateActivityBubble();
         	overview.activateDirectMessage( msg.senderId, msg.message );
+        	console.log( 'We got message: ', msg );
     	}
     }
     else if( msg.command == 'signal' )
