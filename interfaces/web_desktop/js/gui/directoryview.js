@@ -4211,7 +4211,6 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 		    {
 		    	if( this.directoryView.window.scrolling ) 
 		    	{
-		    		console.log( 'Not clicking, scrolling' );
 		    		return;
 	    		}
 		    	
