@@ -4,7 +4,9 @@ Friend OS v1.3.0, "Helium"
 ---
 **Release notes**
 
-COMING SOON
+This is a work in progress - before the release there may be fluctuations, also 
+in this ReadMe. Full notes coming with the final release of 1.3.0.
+
 ---
 
 The Friend OS leverages the computing power of the Internet to offer many of the features and functionalities of Chrome OS, Windows, Linux, Android, macOS or iOS, without the need to choose a specific hardware platform or proprietary software package. If you have a device that is connected to the Internet, you can use the Friend OS.
@@ -183,7 +185,7 @@ Important notes on Friend OS 1.3.x
 The build-in push notifications system in Friend Core has been disabled by
 default as it can now be handled by the system module. To enable it, add 
 -DUSE_PUSH_NOTIFICATIONS to the CFLAGS. The feature is not deprecated, 
-although it may be, if it's use isn't warranted after some time.
+although it may be, if its use isn't warranted after some time.
 
 
 
