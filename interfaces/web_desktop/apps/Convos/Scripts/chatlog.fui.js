@@ -637,6 +637,7 @@ class FUIChatlog extends FUIElement
     			messages[ a ].parentNode.removeChild( messages[ a ] );
     		}
     	}
+    	this.refreshDom();
     }
     // Adds messages to a list locked by sorted timestamps
     addMessages( messageList, flags = false )
@@ -783,8 +784,8 @@ class FUIChatlog extends FUIElement
 				    	{
 				    		if( response.data == true )
 				    		{
-				    			let m = new Module( 'system' );
-				    			m.onExecuted = function( me, md )
+				    			let mo = new Module( 'system' );
+				    			mo.onExecuted = function( me, md )
 				    			{
 				    				if( me == 'ok' )
 				    				{
@@ -802,7 +803,7 @@ class FUIChatlog extends FUIElement
 										} );
 									}
 				    			}
-				    			m.execute( 'convos', { method: 'deletemessage', mid: message.ID } );
+				    			mo.execute( 'convos', { method: 'deletemessage', mid: message.ID } );
 				    		}
 				    	} );
 				    }
@@ -839,7 +840,6 @@ class FUIChatlog extends FUIElement
 			    			if( candidate.length )
 			    			{
 								let text = self.bytesToBase64( new TextEncoder().encode( val ) );
-								text = encodeURIComponent( text );
 								
 								let mo = new Module( 'system' );
 								mo.onExecuted = function( mm, mr )
@@ -1433,7 +1433,7 @@ class FUIChatlog extends FUIElement
         
         for( let a = 0; a < smilies.length; a++ )
         {
-            string = string.split( smilies[a] ).join( '<span class="Emoji">' + emotes[a] + '</span>' );
+            string = string.split( smilies[a] ).join( '<span contenteditable="false" class="Emoji">' + emotes[a] + '</span>' );
         }
         
         while( 1 )
@@ -1465,7 +1465,7 @@ class FUIChatlog extends FUIElement
             case 'fire': s = '🔥'; break;
             default: break;
         }
-        return '<span class="Emoji">' + s + '</span>';
+        return '<span contenteditable="false" class="Emoji">' + s + '</span>';
     }
 }
 FUI.registerClass( 'chatlog', FUIChatlog );
