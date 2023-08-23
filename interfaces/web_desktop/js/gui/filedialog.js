@@ -873,11 +873,19 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 						dialog.saveinput.value = cand;
 					}
 				},
-				doubleclickfiles:    function( element, event )
+				doubleclickfiles: function( element, event )
 				{
-				    if( element.classList.contains( 'Selected' ) )
-				        element.classList.remove( 'Selected' );
-					else element.classList.add( 'Selected' );
+					if( isMobile )
+					{
+						if( element.classList.contains( 'Selected' ) )
+						    element.classList.remove( 'Selected' );
+						else element.classList.add( 'Selected' );
+					}
+					else
+					{
+						element.classList.add( 'Selected' );
+						w.choose( element );
+					}
 					if( event ) return cancelBubble( event );
 				}
 			} );
