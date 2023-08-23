@@ -934,7 +934,7 @@ function receiveEvent( event, queued )
 					document.body.classList.add( 'Loaded' );
 				}
 				
-				if( themeName && themeName != 'default' )
+				if( themeName && themeName != 'default' && themeName != 'friendup13' )
 				{
 					AddCSSByUrl( '/themes/' + themeName + '/scrollbars.css' );
 					styles.href = '/system.library/module/?module=system&command=theme&args=' +
@@ -942,9 +942,8 @@ function receiveEvent( event, queued )
 				}
 				else
 				{
-					AddCSSByUrl( '/themes/friendup12/scrollbars.css' );
-					styles.href = '/system.library/module/?module=system&command=theme&args=' +
-						encodeURIComponent( '{"theme":"friendup12"}' ) + '&authid=' + Application.authId;
+					AddCSSByUrl( '/themes/friendup13/scrollbars.css' );
+				    styles.href = '/themes/friendup13/theme.css';
 				}
 				
 				// Remove old one
