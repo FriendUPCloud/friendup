@@ -171,32 +171,11 @@ List of dependencies
 
 This is the list of dependencies Friend Core needs to function.
 
--    bash
--    libssh2-1-dev
--    libssh-dev
--    libssl-dev
--    libaio-dev
--    mysql-server
--    php7-cli
--    php7-gd
--    php7-imap
--    php7-mysql
--    php7-curl
--    libmysqlclient-dev
--    build-essential
--    libmatheval-dev
--    libmagic-dev
--    libgd-dev
--    libuv
--    rsync
--    valgrind-dbg
--    libxml2-dev
--    php7-readline
--    cmake
--    ssh
--    make
--    libsmbclient-dev
--    libwebsockets-dev
+Below, to install for Ubuntu:
+
+```
+sudo apt-get install bash libssh2-1-dev libssh-dev libssl-dev libaio-dev mysql-server php7-cli php7-gd php7-imap php7-mysql php7-curl libmysqlclient-dev build-essential libmatheval-dev libmagic-dev libgd-dev libuv rsync valgrind-dbg libxml2-dev php7-readline cmake ssh make libsmbclient-dev libwebsockets-dev
+```
 
 Important notes on Friend OS 1.3.x
 ==================================
