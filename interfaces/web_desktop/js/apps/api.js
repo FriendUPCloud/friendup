@@ -2413,10 +2413,14 @@ function View( flags )
 	            if( templateSrc )
                 {
                     let f = new File( templateSrc );
+                    if( flags[ 'replacements' ] )
+                    	f.replacements = flags[ 'replacements' ];
                     f.i18n(); // Always perform translations
                     f.onLoad = function( data )
                     {
                         self.setContent( data + templateStr );
+                        if( flags[ 'onready' ] )
+                        	flags[ 'onready' ]();
                     }
                     f.load();
                 }

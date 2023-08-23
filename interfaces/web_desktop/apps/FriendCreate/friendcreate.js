@@ -19,7 +19,26 @@ Application.run = function( msg )
 		width: 900,
 		height: 700,
 		'min-width': 400,
-		'min-height': 400
+		'min-height': 400,
+		assets: [
+			'Progdir:Templates/main.html',
+			'Progdir:Templates/main.css',
+			'Progdir:Scripts/preload.js',
+			'Progdir:Libraries/Ace/src-min-noconflict/ace.js',
+			'Progdir:Libraries/Ace/src-min-noconflict/ext-language_tools.js',
+			'System:js/gui/filebrowser.js',
+			'Progdir:Scripts/main.js'
+		],
+		replacements: {
+			launchwith: msg.args ? msg.args : ''
+		},
+		onready: function()
+		{
+			if( msg.args && msg.args.indexOf( ':' ) > 0 )
+			{
+				mainWindow.sendMessage( { command: 'launchwith', file: msg.args } );
+			}
+		}
 	} );
 	
 	mainWindow.onClose = function()
@@ -32,7 +51,7 @@ Application.run = function( msg )
 		}
 	}
 	
-	var m = new File( 'Progdir:Templates/main.html' );
+	/*var m = new File( 'Progdir:Templates/main.html' );
 	m.replacements = {
 		launchwith: msg.args ? msg.args : ''
 	};
@@ -47,7 +66,7 @@ Application.run = function( msg )
 			}
 		} );
 	}
-	m.load();
+	m.load();*/
 	
 	// Set up the quick menu items ---------------------------------------------
 	mainWindow.setQuickMenu( [ {
