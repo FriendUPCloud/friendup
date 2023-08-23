@@ -818,9 +818,10 @@ class FUIChatlog extends FUIElement
 			    		let t = d.querySelector( '.Text' );
 			    		t.setAttribute( 'contenteditable', 'true' );
 			    		t.focus();
+			    		let original = t.innerHTML;
 			    		let edited = false;
 			    		t.onblur = function(){ edt(); }
-			    		t.onkeydown = function( e ){ if( !e.shiftKey && e.which == 13 ){ edt(); return cancelBubble( e ); } }
+			    		t.onkeydown = function( e ){ if( e.which == 27 ){ t.removeAttribute( 'contenteditable' ); t.innerHTML = original; return cancelBubble( e ); }; if( !e.shiftKey && e.which == 13 ){ edt(); return cancelBubble( e ); } }
 			    		function edt()
 			    		{
 			    			if( edited ) return;
