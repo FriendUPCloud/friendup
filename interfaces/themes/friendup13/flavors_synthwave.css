@@ -4,21 +4,21 @@
 
 :root body.Synthwave
 {
-    --fui-background-foreground: #262626;
-    --fui-background-foreground-dim: #26262688;
+    --fui-background-foreground: #081d30;
+    --fui-background-foreground-dim: #081d3088;
     --fui-background: #1d0b25;
     --fui-background-dim: #1d0b2588;
     --fui-color: #e6e6e6;
     --fui-button-background: #333333;
     --fui-button-color: #e8e8e8;
     --fui-menu-background: #333333;
-    --fui-list-background: #1c1c1c;
-    --fui-list-item-background: #212121;
-    --fui-list-item-background-alternate: #2c2c2c;
+    --fui-list-background: #130b23;
+    --fui-list-item-background: #130b23;
+    --fui-list-item-background-alternate: #150c27;
     --fui-list-item-color: #afafaf;
     --fui-list-item-color-alternate: #c9c9c9;
-    --fui-module-background-darker: #242424;
-    --fui-module-background: #333333;   
+    --fui-module-background-darker: #281033;
+    --fui-module-background: #2f123b;   
     
     --fui-tab-border-color-active: #0e767f;
 	--fui-tab-background-active: #0e767f;
