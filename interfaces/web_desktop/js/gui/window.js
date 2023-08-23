@@ -60,6 +60,7 @@ function GetWindowById( id )
 // Save window storage to Friend Core
 function SaveWindowStorage( callback )
 {
+	if( !window.Module ) return callback();
 	let m = new Module( 'system' );
 	m.execute( 'setsetting', { setting: 'windowstorage', data: JSON.stringify( jsonSafeObject( Friend.GUI.view.windowStorage ) ) } );
 	if( callback )
@@ -5455,6 +5456,14 @@ var View = function( args )
 					this._window.classList.add( 'NoQuickmenu' );
 				else this._window.classList.remove( 'NoQuickmenu' );
 				this.flags.noquickmenu = value;
+				break;
+			case 'menu':
+				if( value && value.length && value[0].name )
+				{
+					this.setMenuItems( value );
+					this.flags.menu = value;
+				}
+				this.flags.menu = null;
 				break;
 			case 'singletask':
 				this.flags.singletask = value;

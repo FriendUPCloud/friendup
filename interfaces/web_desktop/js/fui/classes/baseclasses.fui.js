@@ -229,7 +229,7 @@ class FUICheckbox extends FUIElement
     	return str;
     }
 }
-FUI.registerClass( 'checkbox' );
+FUI.registerClass( 'checkbox', FUICheckbox );
 
 class FUIItembox extends FUIElement
 {

@@ -305,6 +305,10 @@ File = function( filename )
 					}
 				}
 			}
+			jax.onerror = function( err )
+			{
+				console.log( '[File] Error: ', err );
+			}
 			jax.send();
 		}
 	}

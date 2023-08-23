@@ -49,6 +49,8 @@
 	box-sizing: border-box;
     padding: 15px 15px 95px 15px;
 	background-color: var(--fui-background-foreground);
+	mask-image: linear-gradient(180deg, rgba(0,0,0,0.5) 0px, black 8px, black calc(100% - 95px), transparent calc(100% - 60px));
+	-webkit-mask-image: linear-gradient(180deg, rgba(0,0,0,0.5) 0px, black 8px, black calc(100% - 95px), transparent calc(100% - 60px));
 }
 
 
@@ -258,27 +260,46 @@ body:not([mobile]) .FUIChatlog .Input .MobileMen:hover,
 	color: var(--fui-color);
 	padding: 0 15px;
 	box-sizing: border-box;
-	border-radius: 10px;
 	margin: 10px 0 0 0;
 	opacity: 0;
 	transition: opacity 0.15s;
 	position: relative;
+	overflow: hidden;
+}
+
+.FUIChatlog .Message:after
+{
+	content: " ";
+	position: absolute;
+	z-index: 100;
+	width: 100%;
+	height: 100%;
+	top: 0;
+	left: 0;
+	pointer-events: none;
+	background-color: rgba(0,0,0,0);
+	transition: background-color 0.3s;
+}
+.FUIChatlog .Message:hover:after
+{
+	background-color: rgba(0,0,0,0.05);
 }
 
 .FUIChatlog .Message > .Toolbar
 {
 	position: absolute;
 	z-index: 5;
-	right: 15px;
-	top: 15px;
+	right: 16px;
+	top: 1px;
 	background-color: var(--fui-button-background);
     color: var(--fui-button-color);
-	padding: 5px;
+	padding: 1px;
 	border-radius: 15px;
 	display: flex;
 	opacity: 0;
 	pointer-events: none;
 	transition: opacity 0.2s;
+	overflow: hidden;
 }
 
 .FUIChatlog .Message:hover > .Toolbar
@@ -293,6 +314,12 @@ body:not([mobile]) .FUIChatlog .Input .MobileMen:hover,
 	cursor: pointer;
 	min-width: 16px;
 	text-align: center;
+	border-radius: 100%;
+}
+.FUIChatlog .Message > .Toolbar > .ToolbarButton:hover
+{
+	color: var(--fui-button-background);
+    background-color: var(--fui-button-color);
 }
 
 .FUIChatlog .Message > .Toolbar > .ToolbarButton.Delete:before
@@ -331,18 +358,18 @@ body:not([mobile]) .FUIChatlog .Input .MobileMen:hover,
 .Message.FirstForOwner
 {
 	padding-top: 15px;
-    border-radius: 10px 10px 0 0;
-}
-
-.Message.ConceilOwner
-{
-    border-radius: 0;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
 }
 
 .Message.OnlyMessage 
 {
     padding-top: 15px;
     padding-bottom: 15px;
+    border-top-left-radius: 10px;
+	border-top-right-radius: 10px;
+	border-bottom-left-radius: 10px;
+	border-bottom-right-radius: 10px;
 }
 
 .Message.FirstForOwner .Date, .Message.ConceilOwner:not(.LastForOwner) .Date,
@@ -354,7 +381,8 @@ body:not([mobile]) .FUIChatlog .Input .MobileMen:hover,
 .Message.ConceilOwner.LastForOwner
 {
 	padding-bottom: 15px;
-    border-radius: 0 0 10px 10px;
+	border-bottom-left-radius: 10px;
+	border-bottom-right-radius: 10px;
 }
 
 .FUIChatlog .Message p
@@ -375,6 +403,21 @@ body:not([mobile]) .FUIChatlog .Input .MobileMen:hover,
     font-size: 13px;
     opacity: 1;
     transition: opacity 0.15s;
+}
+
+.FUIChatlog .Message.Own[seen=yes] .Date:before 
+{
+    content: "\f00c";
+    font-family: 'fontawesome';
+    float: right;
+    margin: 0 0 0 2px;
+    clear: both;
+    color: var(--fui-palette-chan01);
+}
+
+body.Charcoal .FUIChatlog .Message.Own[seen=yes] .Date:before 
+{
+	color: var(--fui-palette-chan05);
 }
 
 .FUIChatlog .Message .Text::after 
@@ -567,6 +610,7 @@ span.Emoticon:hover
     overflow: hidden;
     opacity: 0;
     transition: opacity 0.15s;
+    margin: 10px 0 10px 0;
 }
 
 .FUIChatlog .Messages .WebLinkPreview p.WebLinkP,
@@ -624,18 +668,26 @@ span.Emoticon:hover
 
 @media (max-width: 768px)
 {
-    .FUIChatlog .Topic > .ParentLink 
+	.FUIChatlog .Topic > .ParentLink,
+	.FUIChatlog .Topic > .Video,
+	.FUIChatlog .Topic > .Users 
+	{
+		cursor: pointer;
+		position: absolute;
+		top: 4px;
+		height: 25px;
+		border-radius: 13px;
+	}
+   
+    .FUIChatlog .Topic > .ParentLink
     {
 		background: var(--fui-module-background-darker);
-		position: absolute;
 		left: 15px;
-		top: 4px;
 		width: 22px;
 		text-align: center;
-		height: 25px;
 		line-height: 26px;
 		padding: 0px 5px 0 2px;
-		border-radius: 13px;
+		
     }
 
     .FUIChatlog .Topic > .ParentLink::before
@@ -647,18 +699,33 @@ span.Emoticon:hover
         font-weight: 100;
     }
     
+    .FUIChatlog .Topic > .Video
+    {
+        background: var(--fui-module-background-darker);
+		left: calc(100% - 80px);
+		width: 22px;
+		text-align: center;
+		line-height: 26px;
+		padding: 0px 4px 0 4px;
+    }
+    
+    .FUIChatlog .Topic > .Video::before
+    {
+        display: static;
+        margin: 0;
+        content: "\f03d";
+        font-family: fontawesome;
+        font-weight: 100;
+    }
+    
     .FUIChatlog .Topic > .Users 
     {
 		background: var(--fui-module-background-darker);
-		position: absolute;
 		left: calc(100% - 47px);
-		top: 4px;
 		width: 22px;
 		text-align: center;
-		height: 25px;
 		line-height: 22px;
 		padding: 0px 4px 0 4px;
-		border-radius: 13px;
     }
 
     .FUIChatlog .Topic > .Users::before

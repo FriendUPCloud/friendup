@@ -14,3 +14,15 @@ Start FriendUp using standard systemd commands:
     sudo systemctl stop friendup
     sudo systemctl enable friendup
 
+
+Certificates 
+============
+
+If you are testing on "localhost" or a local device, and you want to use SSL,
+then you need certs. Create your self-signed certificates:
+
+```
+   openssl req -new -x509 -days 365 -nodes -out self.pem -keyout self.pem
+
+```
+

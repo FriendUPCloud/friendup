@@ -1,0 +1,38 @@
+
+i18n_software_marketplace          : Friend Marché
+
+
+#Menu
+i18n_file                          : Fichier
+i18n_quit                          : Quitter
+i18n_no_desc                       : Pas de description disponible pour ce titre.
+i18n_no_software                   : Pas d'application disponible.
+i18n_install                       : Installer
+i18n_uninstall                     : Désinstaller
+
+i18n_page_name                     : Alphabétiquement
+i18n_page_by_date                  : Dernier logiciel
+i18n_page_all                      : Tous les logiciels
+i18n_page_rating                   : Par évaluation
+i18n_page_your_apps                : Votre logiciel
+
+i18n_register_as_merchant          : S'inscrire en tant que marchand
+i18n_merchants                     : Marchands
+
+i18n_cancel                        : Annuler
+i18n_register                      : Registre
+
+i18n_company_or_name               : Société ou éditeur
+i18n_description_of                : Expliquez votre entreprise ou votre entreprise dans un paragraphe
+i18n_categories                    : Catégories décrivant vos logiciels ou services
+i18n_country                       : Pays
+
+i18n_launch                        : Lancer
+
+i18n_are_you_sure_uninstall        : Confirmation de la désinstallation
+i18n_are_you_sure_uninstall_ds     : Si vous désinstallez cette application, elle sera enlevée de votre compte. Vous pourrez la ré-installer plus tard ici-même.
+i18n_are_you_sure_install          : Confirmation de l'installation
+i18n_are_you_sure_install_ds       : Si vous installez cette application, elle sera ajoutée à votre compte.
+
+
+

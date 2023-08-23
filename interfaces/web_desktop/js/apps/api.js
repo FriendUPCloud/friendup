@@ -1301,6 +1301,7 @@ function receiveEvent( event, queued )
 			Application.filePath      = dataPacket.filePath;
 			Application.applicationId = dataPacket.applicationId;
 			Application.userId        = dataPacket.userId;
+			Application.uniqueId      = dataPacket.uniqueId;
 			Application.fullName      = dataPacket.fullName;
 			Application.username      = dataPacket.username;
 
@@ -1349,6 +1350,7 @@ function receiveEvent( event, queued )
 						authId:        dataPacket.authId,
 						sessionId:     dataPacket.sessionId,
 						userId:        dataPacket.userId,
+						uniqueId:      dataPacket.uniqueId,
 						fullName:      dataPacket.fullName,
 						username:      dataPacket.username
 					} ), event.origin );
@@ -1379,6 +1381,7 @@ function receiveEvent( event, queued )
 					authId:        dataPacket.authId,
 					sessionId:     dataPacket.sessionId,
 					userId:        dataPacket.userId,
+					uniqueId:      dataPacket.uniqueId,
 					fullName:      dataPacket.fullName,
 					username:      dataPacket.username
 				} ), event.origin );
@@ -1408,6 +1411,7 @@ function receiveEvent( event, queued )
 					authId:        dataPacket.authId,
 					sessionId:     dataPacket.sessionId,
 					userId:        dataPacket.userId,
+					uniqueId:      dataPacket.uniqueId,
 					fullName:      dataPacket.fullName,
 					username:      dataPacket.username
 				} ), event.origin );
@@ -1423,6 +1427,7 @@ function receiveEvent( event, queued )
 			Application.filePath      = dataPacket.filePath;
 			Application.applicationId = dataPacket.applicationId;
 			Application.userId        = dataPacket.userId;
+			Application.uniqueId      = dataPacket.uniqueId;
 			Application.fullName      = dataPacket.fullName;
 			Application.username      = dataPacket.username;
 			Application.workspaceMode = dataPacket.workspaceMode;
@@ -5791,6 +5796,10 @@ function setupMessageFunction( dataPacket, origin )
 		if( !msg.userLevel )
 		{
 			msg.userLevel = dataPacket.userLevel;
+		}
+		if( !msg.uniqueId )
+		{
+			msg.uniqueId = dataPacket.uniqueId;
 		}
 		if( !msg.viewId )
 		{

@@ -32,27 +32,20 @@
 								<input type="password" id="Password" class="FullWidth" onkeydown="Application.checkKeys(event)"  tabindex="2" />
 							</p>
 						</div>
-						<div class="HRow MarginTop">
-							<p>
-								<a id="forgotPassword" style="cursor:pointer;" onclick="Application.forgotPassword()" tabindex="-1000">Forgot password</a>
-							</p>
-						</div>
-						<div class="HRow MarginTop">
-							<div class="HContent100">
-								<button id="loginButton" class="IconSmall fa-unlock" tabindex="4" onclick="Application.doLogin()">
-									Sign in
-								</button>
-								<!--<div id="RememberMe">
-									<p class="Layout HideForPass" style="float: right; position: relative; top: 5px">
-										<label id="rememberLabel" for="remember">Remember me</label>
-									</p>
-									<p class="Layout HideForPass" style="float: right; position: relative; top: 7px">
-										<input type="checkbox" id="remember" tabindex="3"/>
-									</p>
-								</div>-->
-								<div id="invalidLogin" class="Padding"><p>&nbsp;</p></div>
+						<div class="HRow MarginTop Spacing">
+							<div class="HContent100 FlexContent">
+								<div class="FlexContent SmallGap">
+									<input tabindex="3" type="checkbox" id="remember"/><label for="remember">Remember</label>
+								</div>
+								<div class="FlexContent Right">
+									<button id="loginButton" class="IconSmall fa-unlock" tabindex="4" onclick="Application.doLogin()">
+										Sign in
+									</button>
+									<button id="forgotPassword" class="IconSmall fa-location-arrow" tabindex="-1000" onclick="Application.forgotPassword()">Forgot login</button>
+								</div>
 							</div>
 						</div>
+						<div id="invalidLogin" class="Padding"><p>&nbsp;</p></div>
 						<input type="hidden" id="publickey" value="{publickey}"/>
 					</form>
 					<hr/>
@@ -117,7 +110,7 @@
 					parent.Friend.User.Init();
 					let us = Trim( ge( 'Username' ).value );
 					let pw = Trim( ge( 'Password' ).value )
-					parent.Friend.User.Login( us, pw, false /*ge( 'remember' ).checked */, function( result, answer )
+					parent.Friend.User.Login( us, pw, ge( 'remember' ).checked, function( result, answer )
 					{
 						let tmp = null;
 						if( answer )
@@ -290,6 +283,11 @@
 				
 				document.getElementById('LoginElement').style.visibility = 'visible';
 				document.getElementById('Username').focus();
+			}
+			let tk = parent.GetCookie( 'logintoken' );
+			if( tk )
+			{
+				parent.Friend.User.LoginWithLoginToken( tk );
 			}
 		</script>
 	</body>

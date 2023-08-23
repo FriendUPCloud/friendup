@@ -527,7 +527,14 @@ DirectoryView.prototype.initToolbar = function( winobj )
 				content: i18n( 'i18n_upload_a_file' ),
 				onclick: function( e )
 				{
-				    Workspace.uploadFile();
+					if( dw.filedialog )
+					{
+						DirectUpload( winobj.fileInfo.Path );
+					}
+					else
+					{
+				    	Workspace.uploadFile();
+			    	}
 				}
 			},
 			]

@@ -97,9 +97,10 @@ class SqlDatabase
 	// Flush done
 	
 	// Query the database
-	function Query( $query )
+	function Query( $query = false )
 	{
 		global $Logger;
+		if( !$query ) return false;
 		if( !$this->_link ) return false;
 		
 		// Delete cache when writing to database

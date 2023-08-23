@@ -109,7 +109,56 @@ class FUIChatlog extends FUIElement
                 p.toggleUsers();
             }
             this.domTopic.appendChild( us );
+            
+            let vid = document.createElement( 'div' );
+            vid.className = 'Video';
+            vid.innerHTML = '';
+            vid.onclick = function()
+            {
+            	self.setVideoCall( false );
+            }
+            this.domTopic.appendChild( vid );
         }
+        
+        this.domMessages.addEventListener( 'scroll', function( e )
+        {
+        	self.checkSeen();
+        	if( self.scrollFunction )
+        	{
+        		self.scrollFunction();
+        		return cancelBubble( e );
+        	}
+        	if( self.domMessages.scrollTop == 0 )
+        	{
+        		function fetchHistory()
+        		{
+        			let firstMessage = self.domMessages.querySelector( '.Incoming' ).querySelector( '.Slot' );
+        			if( !firstMessage ) return;
+        			firstMessage = firstMessage.querySelector( '.Message' );
+        			firstMessage = firstMessage.getAttribute( 'slotid' );
+        			if( !firstMessage ) return;
+	    			firstMessage = firstMessage.split( '-' )[1];
+	    			let m = new Module( 'system' );
+	    			m.onExecuted = function( me, md )
+	    			{
+	    				if( me == 'ok' )
+	    				{
+	    					let news = JSON.parse( md );
+	    					self.addMessages( news.messages, { history: true } );
+	    				}
+	    			}
+	    			m.execute( 'convos', { method: 'messages', mode: 'history', startMessage: firstMessage, roomType: self.options.type, cid: self.options.cid } );
+        		}
+        		if( self.scrollTimeo )
+        		{
+        			clearTimeout( self.scrollTimeo );
+        			self.scrollTimeo = setTimeout( function(){ fetchHistory(); }, 250 );
+        			return;
+    			}
+    			self.scrollTimeo = true;
+    			fetchHistory();
+        	}
+        } );
         
         this.initDomInput();
         
@@ -251,6 +300,17 @@ class FUIChatlog extends FUIElement
     	}
     	this.domInput.querySelector( '.Upload' ).onclick = function()
     	{
+    		if( isMobile )
+    		{
+    			DirectUpload( 'Home:Uploads/', function( response )
+    			{
+    				if( response.path && response.result )
+    				{
+    					self.shareImageAndPost( response.path );
+    				}
+    			} );
+    			return;
+    		}
     	    let s = this;
     	    if( this.classList.contains( 'Active' ) )
     	    {
@@ -286,13 +346,17 @@ class FUIChatlog extends FUIElement
     	}
     	this.domInput.querySelector( '.Search' ).onclick = function()
     	{
-    	    if( self.domInput.querySelector( '.Search' ).classList.contains( 'Active' ) )
+    	    if( this.classList.contains( 'Active' ) )
     	    {
+    	    	self.domElement.classList.remove( 'Search' );
     	        this.classList.remove( 'Active' );
+    	        self.clearSearchFilter();
     	    }
     	    else
     	    {
+    	        self.domElement.classList.add( 'Search' );
     	        clearActive( this );
+    	        self.executeSearchFilter();
     	    }   
     	}
     	this.domTextarea.checkHeight = function()
@@ -310,11 +374,57 @@ class FUIChatlog extends FUIElement
     	}
     	this.domTextarea.addEventListener( 'keyup', function( e )
     	{
+    	    let s = this;
+    	    
     	    if( e.which == 16 )
     	    {
     	        this.shiftKey = false;
 	        }
 	        this.checkHeight();
+	        
+	        let str = s.innerHTML.split( /\<.*?\>/i ).join( '' ).split( "\n" ).join( '' ).split( ' ' ).join( '' );
+	        
+	        if( str.length > 0 )
+    		{
+    			if( s.timeo )
+    			{
+    				clearTimeout( s.timeo );
+    			}
+				s.timeo = setTimeout( function()
+				{
+					s.timeo = false;
+					let strnow = s.innerHTML.split( /\<.*?\>/i ).join( '' ).split( "\n" ).join( '' ).split( ' ' ).join( '' );
+					if( strnow.length > 0 )
+					{
+						if( s.lastMessage == 'writing' ) return;
+						s.lastMessage = 'writing';
+						
+						Application.SendChannelMsg( {
+							command: 'signal',
+							signal: 'writing',
+							sender: Application.fullName,
+							senderId: Application.uniqueId
+						} );
+					}
+				}, 250 );
+			}
+    		else
+    		{
+    			if( s.timeo )
+    			{
+	    			clearTimeout( s.timeo );
+	    			s.timeo = false;
+    			}
+    			if( s.lastMessage == 'not-writing' ) return;
+    			s.lastMessage = 'not-writing';
+    			
+    			Application.SendChannelMsg( {
+					command: 'signal',
+					signal: 'not-writing',
+					sender: Application.fullName,
+					senderId: Application.uniqueId
+				} );
+    		}
     	} );
     	this.domTextarea.addEventListener( 'keydown', function( e )
     	{
@@ -355,34 +465,101 @@ class FUIChatlog extends FUIElement
 				}
     		}
     		this.checkHeight();
+		} );
+    	this.domTextarea.addEventListener( 'keyup', function( e )
+    	{
+    		if( self.domElement.classList.contains( 'Search' ) )
+    		{
+    			self.executeSearchFilter();
+			}
+			else
+			{
+				self.domElement.searchString = '';
+				self.clearSearchFilter();
+			}
+    		
     	} );
+    }
+    executeSearchFilter()
+    {
+    	let self = this;
+    	let searchString = Trim( self.domTextarea.innerText ).toLowerCase();
+			self.domElement.searchString = searchString;
+    	if( this.esfTimeo ) clearTimeout( this.esfTimeo );
+    	this.esfTimeo = setTimeout( function()
+    	{
+			let searchString = self.domElement.searchString;
+			let messages = self.domElement.querySelector( '.Messages' ).getElementsByClassName( 'Message' );
+			for( let a = 0; a < messages.length; a++ )
+			{
+				if( messages[ a ].querySelector( '.Text' ).innerText.toLowerCase().indexOf( searchString ) < 0 )
+				{
+					messages[ a ].style.display = 'none';
+					messages[ a ].setAttribute( 'hidden', 'hidden' );
+				}
+				else
+				{
+					messages[ a ].style.display = '';
+					messages[ a ].removeAttribute( 'hidden' );
+				}
+			}
+			self.refreshDom();
+		}, 250 );
+    }
+    clearSearchFilter()
+    {
+    	let self = this;
+    	if( this.csfTimeo ) clearTimeout( this.csfTimeo );
+    	this.csfTimeo = setTimeout( function()
+    	{
+    		self.csfTimeo = null;
+			let messages = self.domElement.querySelector( '.Messages' ).getElementsByClassName( 'Message' );
+			for( let a = 0; a < messages.length; a++ )
+			{
+				messages[ a ].style.display = '';
+				messages[ a ].removeAttribute( 'hidden' );
+			}
+			self.refreshDom();
+		}, 250 );
     }
     parseDate( instr )
     {
         let now = new Date();
-        let test = now.getFullYear() + '-' + StrPad( now.getMonth() + 1, 2, '0' ) + '-' + StrPad( now.getDate(), 2, '0' );
         let time = new Date( instr );
-        let diff = ( now.getTime() / 1000 ) - ( time.getTime() / 1000 );
-        if( diff < 60 )
+        let test = time.getFullYear() + '-' + StrPad( time.getMonth() + 1, 2, '0' ) + '-' + StrPad( time.getDate(), 2, '0' ) + 
+        	' ' + StrPad( time.getHours(), 2, '0' ) + ':' + StrPad( time.getMinutes(), 2, '0' ) + ':' + StrPad( time.getSeconds(), 2, '0' );
+        let secs = Math.floor( now.getTime() / 1000 ) - Math.floor( time.getTime() / 1000 );
+        let mins = Math.floor( secs / 60 );
+        
+        if( secs <= 60 )
         {
-            if( diff < 1 )
+            if( secs < 1 )
             {
                 return i18n( 'i18n_just_now' );
             }
-            return Math.floor( diff ) + ' ' + i18n( 'i18n_seconds_ago' ) + '.';
+            return secs.toFixed( 0 ) + ' ' + i18n( 'i18n_seconds_ago' ) + '.';
         }
-        else if( diff < 3600 )
+        else if( secs <= 3600 )
         {
-            return Math.floor( diff / 60 ) + ' ' + i18n( 'i18n_minutes_ago' ) + '.';
+            return mins + ' ' + i18n( 'i18n_minutes_ago' ) + '.';
         }
-        else if( diff < 86400 )
+        else if( secs <= 86400 )
         {
-            return Math.floor( diff / 60 / 24 ) + ' ' + i18n( 'i18n_hours_ago' ) + '.';
+            return Math.floor( secs / 60 / 60 ) + ' ' + i18n( 'i18n_hours_ago' );
         }
-        instr = time.getFullYear() + '-' + StrPad( time.getMonth() + 1, 2, '0' ) + '-' + StrPad( time.getDate(), 2, '0' );
+        instr = this.getMonthName( time.getMonth() ) + ' ' + this.getDay( time.getDate() ) + ', ' + time.getFullYear();
         if( test == instr.substr( 0, test.length ) )
             return instr.substr( test.length, instr.length - test.length );
         return instr;
+    }
+    getMonthName( num )
+    {
+    	let months = [ 'january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december' ];
+    	return i18n( 'i18n_' + months[ num ] );
+    }
+    getDay( num )
+    {
+    	return num;
     }
     // Share an image and post it
     shareImageAndPost( path )
@@ -425,9 +602,40 @@ class FUIChatlog extends FUIElement
     		contacts.setVideoCall( data, init );
     }
     // Adds messages to a list locked by sorted timestamps
-    addMessages( messageList )
+    addMessages( messageList, flags = false )
     {
         let self = this;
+        
+        if( self.busyMessages )
+        {
+        	return setTimeout( function(){ self.addMessages( messageList, flags ); }, 150 );
+        }
+        self.busyMessages = true;
+        
+        // Fix the unread messages
+        if( self.options.type == 'chatroom' && window.unreadMessages && unreadMessages.rooms[ self.options.cid ] )
+        {
+        	unreadMessages.rooms[ self.options.cid ] = [];
+        	let cnvs = FUI.getElementByUniqueId( 'convos' );
+        	cnvs.updateActivityBubble();
+        }
+        else if( self.options.type == 'dm-user' && window.unreadMessages && unreadMessages.dms[ self.options.cid ] )
+        {
+        	unreadMessages.dms[ self.options.cid ] = [];
+        	let cts = FUI.getElementByUniqueId( 'contacts' );
+        	cts.updateActivityBubble();
+        }
+        
+        let history = false;
+        if( flags && flags.history )
+        	history = true;
+        
+        let scrolled = this.checkScrolled();
+       
+       	// Current scroll height
+        let currScrollHeight = self.domMessages.scrollHeight;
+        let newMessages = [];
+        let firstMessage = self.domMessages.querySelector( '.Message' );
         
         for( let a = messageList.length - 1; a >= 0; a-- )
         {
@@ -443,6 +651,10 @@ class FUIChatlog extends FUIElement
             d.className = 'Message';
             d.classList.add( 'Showing' );
             d.setAttribute( 'owner', m.Name );
+	        d.setAttribute( 'seen', m.Seen == 1 ? 'yes' : 'no' );
+            if( history )
+            	d.style.display = 'none';
+        	newMessages.push( d );
             
             let text = m.Message;
             try
@@ -504,23 +716,60 @@ class FUIChatlog extends FUIElement
             
             let mess = md5( m.Message );
             d.setAttribute( 'message-hash', mess );
-             
+            d.setAttribute( 'mid', m.ID );
+            
+            // Get toolbar to handle own messages
+            let toolbar = FUI.getFragment( 'chat-message-toolbar' );
+            //let toolbarAdmin = FUI.getFragment( 'chat-message-admin' ); // <- todo
+            if( !m.Own )
+            	toolbar = '';
+            
             let replacements = {
                 message: self.replaceUrls( self.replaceEmojis( text ) ),
                 i18n_date: i18n( 'i18n_date' ),
                 i18n_fullname: i18n( 'i18n_fullname' ),
                 date: self.parseDate( m.Date ),
                 signature: '',
-                fullname: m.Own ? i18n( 'i18n_you' ) : m.Name
+                fullname: m.Own ? i18n( 'i18n_you' ) : m.Name,
+                toolbar: toolbar
             };
             d.innerHTML = FUI.getFragment( 'chat-message-head', replacements );
+            
+            ( function( message, par )
+            {
+		        let td = par.querySelector( '.Delete' );
+		        if( !td ) return;
+		        td.onclick = function()
+		        {
+		        	Confirm( i18n( 'i18n_deleting_message' ), i18n( 'i18n_deleting_message_text' ), function( response )
+		        	{
+		        		if( response.data == true )
+		        		{
+		        			let m = new Module( 'system' );
+		        			m.onExecuted = function( me, md )
+		        			{
+		        				if( me == 'ok' )
+		        				{
+				    				d.parentNode.removeChild( par );
+				    				Application.holdConnection( { 
+										method: 'messages', 
+										roomType: self.options.type ? self.options.type : '', 
+										cid: self.options.cid ? self.options.cid : ''
+									} );
+								}
+		        			}
+		        			m.execute( 'convos', { method: 'deletemessage', mid: message.ID } );
+		        		}
+		        	} );
+		        }
+	        } )( m, d );
             
             let timestamp = Math.floor( ( new Date( m.Date ) ).getTime() / 1000 );
             if( m.Own ) d.classList.add( 'Own' );
             
             // Get slot
-            let slot = timestamp;
-            let slotId = slot + '-' + m.ID;
+            let slot = StrPad( m.ID, 16, '0' );
+            let slotId = slot + '-' + m.ID + '-' + timestamp;
             d.setAttribute( 'slotId', slotId ); // If we will use this new element, give slotid
             
             // Update a message in a time slot
@@ -542,7 +791,7 @@ class FUIChatlog extends FUIElement
                 	// Only update content that changed
                 	if( found.getAttribute( 'message-hash' ) != mess )
                 	{
-		            	console.log( 'Replacing because ' + mess + ' != ' + found.getAttribute( 'message-hash' ) );
+		            	//console.log( 'Replacing because ' + mess + ' != ' + found.getAttribute( 'message-hash' ) );
 		                this.messageList[ slot ].replaceChild( d, found );
 	                }
                 }
@@ -558,8 +807,11 @@ class FUIChatlog extends FUIElement
                 let grp = document.createElement( 'div' );
                 grp.className = 'Slot';
                 grp.appendChild( d );
+                //let dy = new Date( slot * 1000 );
+                //grp.title = dy.getFullYear() + '-' + ( dy.getMonth() + 1 ) + '-' + dy.getDate() + '(' + slot + ')';
                 this.messageList[ slot ] = grp;
                 
+                // Just holds a list of slot identifiers
                 this.messageListOrder.push( slot );
                 this.messageListOrder.sort();
 
@@ -569,6 +821,7 @@ class FUIChatlog extends FUIElement
                     // Create group
                     this.domMessages.querySelector( '.Incoming' ).appendChild( grp );
                 }
+                // We are looking for a place to add
                 else
                 {
                     for( let b = 0; b < this.messageListOrder.length; b++ )
@@ -579,22 +832,66 @@ class FUIChatlog extends FUIElement
                         if( slotHere == slot )
                         {
                             // Add since we're the last in the list
-                            if( last || b == 0 )
+                            if( last )
                             {
                                  this.domMessages.querySelector( '.Incoming' ).appendChild( grp );
+                            }
+                            else if( b == 0 )
+                            {
+                            	// add to existing slot
+                            	let sl = this.domMessages.querySelector( '.Slot' );
+                            	if( sl )
+                            	{
+                            		sl.parentNode.insertBefore( grp, sl );
+                        	 	}
+                        	 	// First element!
+                        	 	else
+                        	 	{
+                        	 		this.domMessages.querySelector( '.Incoming' ).appendChild( grp );
+                    	 		}
                             }
                             // Insert before previous
                             else
                             {
-                                this.domMessages.querySelector( '.Incoming' ).insertBefore( this.messageList[ this.messageListOrder[ b + 1 ] ], grp );
+                                this.domMessages.querySelector( '.Incoming' ).insertBefore( grp, this.messageList[ this.messageListOrder[ b + 1 ] ] );
                             }
+                            break;
                         }
                     }
                 }
             }
         }
-        this.toBottom();
+        
+        //console.log( this.messageListOrder );
+        
+        // New scroll height
+        if( history )
+        {
+			self.scrollFunction = function()
+			{	
+				self.domMessages.style.scrollBehavior = 'inherit';
+				self.domMessages.scrollTop = firstMessage.offsetTop - 27;
+				self.domMessages.style.scrollBehavior = '';
+				setTimeout( function()
+				{
+					self.scrollFunction = null;
+				}, 200 );
+			};
+			for( let a = 0; a < newMessages.length; a++ )
+			{
+        		newMessages[ a ].style.display = '';
+        		self.scrollFunction();
+    		}
+			self.scrollFunction();
+	    }
+        else
+        {
+		    if( !scrolled )
+			    this.toBottom();
+		}
         this.refreshDom();
+        
+		self.busyMessages = false;
     }
     setTopic( topic, type = false )
     {
@@ -614,16 +911,22 @@ class FUIChatlog extends FUIElement
 			this.domTopic.innerHTML = topic;
 		}
     }
-    toBottom( way )
+    // Did we scroll?
+    checkScrolled = function()
     {
-        let self = this;
+    	return  this.domMessages.scrollTop + 50 < this.domMessages.scrollHeight - this.domMessages.offsetHeight;
+    }
+    // Scroll to the bottom of messages
+    toBottom( way = false )
+    {
+    	let self = this;
         if( way == 'smooth' )
         {
-            this.domMessages.scrollTop = this.domMessages.lastChild.offsetHeight + this.domMessages.lastChild.offsetTop;
+            this.domMessages.scrollTop = this.domMessages.scrollHeight;
             return;
         }
         this.domMessages.style.scrollBehavior = 'inherit';
-        this.domMessages.scrollTop = this.domMessages.lastChild.offsetHeight + this.domMessages.lastChild.offsetTop;
+        this.domMessages.scrollTop = this.domMessages.scrollHeight;
         setTimeout( function(){ self.domMessages.style.scrollBehavior = 'smooth'; }, 5 );
     }
     queueMessage( string )
@@ -635,6 +938,8 @@ class FUIChatlog extends FUIElement
         {
             return setTimeout( function(){ self.queueMessage( string ); }, 250 );
         }
+        
+        let scrolled = this.checkScrolled();
         
     	let dom = document.createElement( 'div' );
     	dom.className = 'Message Own';
@@ -657,7 +962,8 @@ class FUIChatlog extends FUIElement
     	        method: 'messages', 
     	        roomType: this.options.type ? this.options.type : '', 
     	        cid: this.options.cid ? this.options.cid : '',
-    	        lastId: this.lastId
+    	        lastId: this.lastId,
+    	        force: true
 	        } );
     	}
     	
@@ -670,7 +976,8 @@ class FUIChatlog extends FUIElement
     		dom.classList.add( 'Showing' );
 		}, 2 );
 		
-		this.toBottom( 'smooth' );
+		if( !scrolled )
+			this.toBottom( 'smooth' );
     }
     refreshMessages()
     {
@@ -723,47 +1030,110 @@ class FUIChatlog extends FUIElement
         let parentElement = domElement.getAttribute( 'parentelement' );
         if( parentElement ) this.options.parentElement = parentElement;
     }
+    // Check if a message was seen
+    checkSeen( setYes = false )
+    {
+    	let self = this;
+    	if( this.seenTimeo )
+    		clearTimeout( this.seenTimeo );
+    	this.seenTimeo = setTimeout( function()
+    	{
+    		let messages = self.domMessages.getElementsByClassName( 'Message' );
+    		let top = self.domMessages.scrollTop;
+    		let bottom = self.domMessages.offsetHeight + top;
+    		let updates = [];
+    		for( let a = 0; a < messages.length; a++ )
+    		{
+    			// We are setting seen
+    			if( setYes )
+    			{
+    				let found = false;
+    				for( let b = 0; b < setYes.length; b++ )
+    				{
+						if( messages[ a ].getAttribute( 'mid' ) == setYes[ b ] )
+						{
+							messages[ a ].setAttribute( 'seen', 'yes' );
+							found = true;
+							break;
+						}
+					}
+					if( found ) continue;
+				}
+    			// These are invisible
+    			if( messages[ a ].offsetTop > bottom || messages[ a ].offsetTop + messages[ a ].offsetHeight < top )
+    			{
+    				continue;
+    			}
+    			// These are visible
+    			else
+    			{
+    				if( messages[ a ].getAttribute( 'seen' ) == 'no' )
+    				{
+    					if( !messages[ a ].classList.contains( 'Own' ) )
+    					{
+							messages[ a ].setAttribute( 'seen', 'yes' );
+							updates.push( messages[ a ].getAttribute( 'mid' ) );
+						}
+    				}
+    			}
+    		}
+    		let m = new Module( 'system' );
+    		m.execute( 'convos', { method: 'message-seen', messages: updates } );
+    	}, 250 );
+    }
     refreshDom( evaluated = false )
     {
         super.refreshDom();
         let self = this;
         
+        self.checkSeen();
+        
         // Let's do some message owner management for styling
-        let messages = this.domElement.getElementsByClassName( 'Message' );
+        let source = this.domElement.getElementsByClassName( 'Message' );
+        let messages = [];
+        for( let a = 0; a < source.length; a++ )
+        {
+        	// Skip hiddens
+        	if( source[ a ].getAttribute( 'hidden' ) ) 
+        		continue;
+        	
+        	messages.push( source[ a ] );
+        }
+        
         let lastOwner = false;
+        let lastDate = false;
+        
         for( let a = 0; a < messages.length; a++ )
         {
-            let date = messages[ a ].querySelector( '.Date' );
+        	let date = messages[ a ].querySelector( '.Date' );
             let tstm = messages[ a ].getAttribute( 'slotid' );
             if( tstm )
             {
-                let newDate = self.parseDate( parseInt( tstm.split( '-' )[0] ) * 1000 );
+                let newDate = self.parseDate( parseInt( tstm.split( '-' )[2] ) * 1000 );
                 date.innerHTML = newDate;
             }
             
-            let owner = messages[ a ].getAttribute( 'owner' );
-            let powner = a > 0 ? messages[ a - 1 ].getAttribute( 'owner' ) : false;
-            let nowner = a + 1 < messages.length ? messages[ a + 1 ].getAttribute( 'owner' ) : false;
+            let owner = messages[ a ].getAttribute( 'owner' ); // current user
+            let powner = a > 0 ? messages[ a - 1 ].getAttribute( 'owner' ) : false; // previous user
+            let nowner = a + 1 < messages.length ? messages[ a + 1 ].getAttribute( 'owner' ) : false; // next user
             
-            if( owner == lastOwner )
+            messages[a].classList.remove( 'FirstForOwner', 'LastForOwner', 'ConceilOwner', 'OnlyMessage' );
+            
+            if( owner == lastOwner ) // Don't show owner name twice
             {
                 messages[ a ].classList.add( 'ConceilOwner' );
                 if( a + 1 < messages.length && nowner != owner )
                 {
                     messages[ a ].classList.add( 'LastForOwner' );
                 }
-                else
-                {
-                    messages[ a ].classList.remove( 'LastForOwner' );
-                }
             }
-            else if( a + 1 < messages.length && nowner == owner )
+            else if( a + 1 < messages.length && nowner == owner && ( !powner || powner != owner ) )
             {
                 messages[ a ].classList.add( 'FirstForOwner' );
             }
             
             // First message
-            if( !powner && !nowner )
+            if( ( !powner && !nowner ) || ( !powner && !lastOwner && nowner && nowner != owner ) )
             {
             	messages[ a ].classList.add( 'OnlyMessage' );
             }

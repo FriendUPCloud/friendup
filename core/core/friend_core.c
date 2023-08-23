@@ -1013,7 +1013,7 @@ static inline int FriendCoreAcceptPhase3( int fd, FriendCoreInstance *fc )
 		if( bio != NULL )
 		{
 			DEBUG("[FriendCoreAcceptPhase3] Read buffer will be changed!\n");
-			BIO_set_read_buffer_size( bio, 81920 );
+			BIO_set_read_buffer_size( bio, 65536 );
 		}
 
 		srl = SSL_set_fd( s_Ssl, fd );
@@ -1327,16 +1327,9 @@ void *FriendCoreProcessSockBlock( void *fcv )
 		
 		while( TRUE )
 		{
-			DEBUG( "Waiting!!\n" );
 			// Only increases timeouts in retries
-			if( retryContentNotFull == 1 )
-			{
-				th->sock->s_SocketBlockTimeout = 100;
-			}
-			else if( retryContentNotFull > 1 )
-			{
-				th->sock->s_SocketBlockTimeout = 250;
-			}
+			if( th->sock->s_SocketBlockTimeout < 250 )
+				th->sock->s_SocketBlockTimeout += 1;
 			
 			// Read from socket
 			int res = th->sock->s_Interface->SocketReadBlocked( th->sock, locBuffer, bufferSize, bufferSize );
@@ -1346,8 +1339,8 @@ void *FriendCoreProcessSockBlock( void *fcv )
 				DEBUG("[FriendCoreProcessSockBlock] received bytes: %d, current buffer size: %lu\n", res, resultString->bsd_Size );
 				
 				// add received string to buffer.
-				// If 
-				int err = BufStringDiskAddSize( resultString, locBuffer, res );
+				// (no error handling here)
+				BufStringDiskAddSize( resultString, locBuffer, res );
 
 				if( headerFound == FALSE )
 				{
@@ -1356,7 +1349,7 @@ void *FriendCoreProcessSockBlock( void *fcv )
 					if(  headEnd != NULL )
 					{
 						// get length of header
-						headerLen = ((headEnd+4) - resultString->bsd_Buffer);
+						headerLen = ( headEnd + 4 ) - resultString->bsd_Buffer;
 						
 						char *conLen = strstr( resultString->bsd_Buffer, "Content-Length:" );
 						DEBUG("[FriendCoreProcessSockBlock] Pointer to conLen %p headerLen %d\n", conLen, headerLen );
@@ -1381,7 +1374,7 @@ void *FriendCoreProcessSockBlock( void *fcv )
 			{
 				if( expectedLength > 0 )
 				{
-					if( retryContentNotFull++ > 500 )
+					if( retryContentNotFull++ > 500 ) // Keep it going
 					{
 						DEBUG( "Done trying\n" );
 						break;
@@ -1533,7 +1526,8 @@ void *FriendCoreProcessSockNonBlock( void *fcv )
 				retryContentNotFull = 0;
 				DEBUG("[FriendCoreProcessSockNonBlock] received bytes: %d\n", res );
 				
-				int err = BufStringDiskAddSize( resultString, locBuffer, res );
+				// No error handling needed
+				BufStringDiskAddSize( resultString, locBuffer, res );
 				
 				if( headerFound == FALSE )
 				{
@@ -1542,7 +1536,7 @@ void *FriendCoreProcessSockNonBlock( void *fcv )
 					if(  headEnd != NULL )
 					{
 						// get length of header
-						headerLen = ((headEnd+4) - resultString->bsd_Buffer);
+						headerLen = ( headEnd + 4 ) - resultString->bsd_Buffer;
 						
 						char *conLen = strstr( resultString->bsd_Buffer, "Content-Length:" );
 						DEBUG("[FriendCoreProcessSockNonBlock] Pointer to conLen %p headerLen %d\n", conLen, headerLen );
@@ -1696,7 +1690,7 @@ static inline void FriendCoreSelect( FriendCoreInstance* fc )
 		
 		DEBUG("[FriendCoreSelect] Before select, maxd %d  pipe %d socket %d\n", maxd, fc->fci_ReadCorePipe, fc->fci_Sockets->fd );
 		
-		int activity = select( maxd+1, &readfds, NULL, NULL, NULL );
+		int activity = select( maxd + 1, &readfds, NULL, NULL, NULL );
 		
 		DEBUG("[FriendCoreSelect] After select\n");
 		
@@ -1709,7 +1703,7 @@ static inline void FriendCoreSelect( FriendCoreInstance* fc )
 		{
 			DEBUG("[FriendCoreSelect] Received from PIPE\n");
 			// read all bytes from read end of pipe
-			char ch;
+			char ch = '\0';
 			int result = 1;
 			
 			DEBUG("[FriendCoreSelect] FC Read from pipe!\n");
@@ -1874,9 +1868,9 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 #endif
 
 	#ifdef SINGLE_SHOT
-	struct epoll_event *pollMask = EPOLLIN | EPOLLET | EPOLLRDHUP | EPOLLHUP | EPOLLERR | EPOLLONESHOT;
+	struct epoll_event *pollMask = ( struct epoll_event * )( EPOLLIN | EPOLLET | EPOLLRDHUP | EPOLLHUP | EPOLLERR | EPOLLONESHOT );
 	#else
-	struct epoll_event *pollMask = EPOLLIN | EPOLLET | EPOLLRDHUP | EPOLLHUP | EPOLLERR;
+	struct epoll_event *pollMask = ( struct epoll_event * )( EPOLLIN | EPOLLET | EPOLLRDHUP | EPOLLHUP | EPOLLERR );
 	#endif
 
 	// All incoming network events go through here
@@ -1960,7 +1954,7 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 				memset( &(fc->fci_EpollEvent), 0, sizeof( fc->fci_EpollEvent ) );
 				fc->fci_EpollEvent.data.ptr = fc->fci_Sockets;
 
-				fc->fci_EpollEvent.events = pollMask;// all flags are necessary, otherwise epoll may not deliver disconnect events and socket descriptors will leak
+				fc->fci_EpollEvent.events = pollMask->events;// all flags are necessary, otherwise epoll may not deliver disconnect events and socket descriptors will leak
 			
 				if( epoll_ctl( fc->fci_Epollfd, EPOLL_CTL_ADD, fc->fci_Sockets->fd, &(fc->fci_EpollEvent) ) == -1 )
 				{

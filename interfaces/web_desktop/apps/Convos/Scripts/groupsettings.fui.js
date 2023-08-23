@@ -52,6 +52,8 @@ class FUIGroupsettings extends FUIInvitedialog
 				a.onload = function(e)
 				{
 					document.querySelector( '.AvatarPreview' ).style.backgroundImage = 'url(' + e.target.result + ')';
+					let overView = FUI.getElementByUniqueId( 'convos' );
+					if( overView ) overView.redrawChannels();
 				}
 				a.readAsDataURL( blob );
 			}, 'image/jpeg', 100 );
@@ -63,15 +65,84 @@ class FUIGroupsettings extends FUIInvitedialog
 		let self = this;
 		
 		let f = new File( 'Progdir:Markup/groupsettings.html' );
-		f.replacements = {
-			'room-name': this.options.channelName,
-			'room-description': this.options.description != undefined ? this.options.description : ''
-		};
-		f.i18n();
+		
+		let m = new Module( 'system' );
+		m.onExecuted = function( me, md )
+		{
+			if( me == 'fail' ) 
+			{
+				console.log( 'Impossible no group error.' );
+				return false; // TODO: Make some error
+			}
+			try
+			{
+				let grp = JSON.parse( md );
+				f.replacements = {
+					'room-name': grp.Name,
+					'room-description': grp.Description,
+					'room-status': grp.Status == '1' ? 'checked' : ''
+				};
+			}
+			catch( e )
+			{
+				console.log( 'Error with JSON: ', e );
+			}
+			f.i18n();
+			f.load();
+		}
+		m.execute( 'convos', { method: 'get-group', cid: self.options.groupId } );
+		
 		f.onLoad = function( data )
 		{
 			element.innerHTML = data;
 			element.classList.remove( 'Loading' );
+			
+			FUI.initialize();
+			FUI.addCallback( 'toggle-private', function( dt )
+			{ 
+				let m = new Module( 'system' );
+				m.execute( 'convos', { method: 'chatroom-status', status: dt == true ? '1' : '0', cid: self.options.groupId } );
+			} );
+			
+			let groupName = ge( 'groupName' );
+			let ogn = groupName.value;
+			groupName.onkeyup = function()
+			{
+				if( Trim( this.value ) != Trim( ogn ) )
+				{
+					let newName = this.value;
+					element.querySelector( '.nameChange' ).innerHTML = '<div class="Button IconButton fa-check"></div>';
+					element.querySelector( '.nameChange' ).querySelector( '.Button' ).onclick = function()
+					{
+						let m = new Module( 'system' );
+						m.onExecuted = function( e, d )
+						{
+							if( e == 'ok' )
+							{
+								let overView = FUI.getElementByUniqueId( 'convos' );
+								if( overView ) overView.redrawChannels();
+								let mess = FUI.getElementByUniqueId( 'messages' );
+								mess.setTopic( Trim( newName ) );
+							}
+						}
+						m.execute( 'convos', { method: 'rename-chatroom', newname: Trim( newName ), cid: self.options.groupId } );
+					}
+				}
+				else
+				{
+					element.querySelector( '.nameChange' ).innerHTML = '';
+				}
+			}
+			let groupDesc = ge( 'groupDescription' );
+			groupDesc.onkeyup = function()
+			{
+				if( this.time ) clearTimeout( this.time );
+				this.time = setTimeout( function()
+				{
+					let m = new Module( 'system' );
+					m.execute( 'convos', { method: 'room-description', desc: groupDesc.value, cid: self.options.groupId } );
+				}, 250 );
+			}
 			
 			let upload = self.domElement.querySelector( '.Upload' );
 			upload.onclick = function()
@@ -105,7 +176,6 @@ class FUIGroupsettings extends FUIInvitedialog
 			
 			self.refreshAvatar();
 		}
-		f.load();
 	}
 }
 

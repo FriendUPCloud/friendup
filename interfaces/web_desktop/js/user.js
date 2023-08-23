@@ -95,6 +95,14 @@ Friend.User = {
 		
 		return 0;
     },
+    // Use login token
+    LoginWithLoginToken: function( loginToken, callback )
+    {
+    	this.State = 'login';
+    	this.SendLoginCall( {
+			logintoken: loginToken
+		}, callback );
+    },
     // Login using a session id
     LoginWithSessionId: function( sessionid, callback, event )
     {
@@ -133,7 +141,7 @@ Friend.User = {
 		return 0;
     },
     // Send the actual login call
-    SendLoginCall: function( info, callback )
+    SendLoginCall: function( info, callback = false )
     {	
     	// Already logging in
     	this.State = 'login';
@@ -148,6 +156,14 @@ Friend.User = {
     	// Create a new library call object
 		let m = new FriendLibrary( 'system' );
 		this.lastLogin = m;
+		
+		let usingLoginToken = false;
+		
+		if( !info.username && !info.password )
+		{
+			if( !info.logintoken && GetCookie( 'logintoken' ) )
+				info.logintoken = GetCookie( 'logintoken' );
+		}
 		
 		if( info.username && info.password )
 		{
@@ -187,8 +203,14 @@ Friend.User = {
 		{
 			m.addVar( 'sessionid', info.sessionid );
 		}
+		else if( info.logintoken )
+		{
+			usingLoginToken = true;
+			m.addVar( 'logintoken', info.logintoken );
+		}
 		else
 		{
+			console.log( '[User] We are setting state offline' );
 			this.State = 'offline'; 
 			this.lastLogin = null;
 			return false;
@@ -198,6 +220,7 @@ Friend.User = {
 		m.onExecuted = function( json, serveranswer )
 		{
 			Friend.User.lastLogin = null;
+			
 			// We got a real error
 			if( json == null )
 			{
@@ -216,6 +239,13 @@ Friend.User = {
 					Workspace.loginid = json.loginid;
 					Workspace.userLevel = json.level;
 					Workspace.fullName = json.fullname;
+					Workspace.uniqueId = json.uniqueid;
+					
+					if( usingLoginToken )
+					{
+						if( json.extra && json.extra.length )
+							SetCookie( 'logintoken', json.extra );
+					}
 					
 					// Silence non-admin user's debug
 					if( Workspace.userLevel != 'admin' )
@@ -249,16 +279,57 @@ Friend.User = {
 					}
 				
 					// Remember login info for next login
-					// But removed for security
-					// TODO: Figure out a better way!
-					if( info.remember )
+					if( info.remember && info.username && info.password )
 					{
-						// Nothing
+						let hashed = ( 'HASHED' + Sha256.hash( info.password ) );
+						
+						let m = new XMLHttpRequest();
+						let args = JSON.stringify( { username: info.username, password: hashed } );
+						m.open( 'POST', '/system.library/module/?module=system&command=getlogintoken&args=' + encodeURIComponent( args ) + '&sessionid=' + Workspace.sessionId, true );
+						m.onload = function( response )
+						{
+							let spli = this.responseText.split( '<!--separate-->' );
+							if( spli.length > 0 )
+							{
+								if( spli[0] == 'ok' )
+								{
+									let res = JSON.parse( spli[1] );
+									if( res && res.token )
+									{
+										SetCookie( 'logintoken', res.token );
+									}
+								}
+							}
+						}
+						m.send();
 					}
 				}
+				else if( json == 'fail' )
+				{
+					if( !window.Workspace || !Workspace.theme )
+					{
+						self.State = 'online'
+						console.log( json, serveranswer );
+						if( callback )
+							return callback( false, serveranswer );
+						return;
+					}
+					console.log( '[User] "fail" to login - Logging out; ' + serveranswer );
+					Friend.User.Logout();
+				}
+				// Total failure
 				else
 				{
 					Friend.User.SetUserConnectionState( 'offline' );
+					
+					if( usingLoginToken )
+					{
+						// Logintoken expired!
+						if( json.code == 11 )
+						{
+							Friend.User.Logout();
+						}
+					}
 					
 					if( typeof( callback ) == 'function' ) callback( false, serveranswer );
 				}
@@ -266,13 +337,13 @@ Friend.User = {
 			catch( e )
 			{
 				console.log( 'Failed to understand server response.', e );
-				if( callback ) callback( false, serveranswer );
+				if( typeof( callback ) == 'function' ) callback( false, serveranswer );
 			};
 		}
 		m.forceHTTP = true;
 		m.forceSend = true;
 		m.loginCall = true;
-		m.execute( 'login' );
+		m.execute( info.logintoken ? 'logintoken' : 'login' );
     },
 	// When session times out, use log in again...
 	ReLogin: function( callback )
@@ -322,7 +393,13 @@ Friend.User = {
 		// Reset cajax http connections (because we lost connection)
 		_cajax_http_connections = 0;
 		
-		if( info.username || info.sessionid )
+		// First try logintoken
+		let lt = GetCookie( 'logintoken' );
+		if( lt )
+		{
+			this.LoginWithLoginToken( lt, callback );
+		}
+		else if( info.username || info.sessionid )
 		{
 			this.SendLoginCall( info, callback, 'relogin' );
 		}
@@ -339,9 +416,9 @@ Friend.User = {
     	if( !cbk ) cbk = false;
     	
     	if( GetCookie( 'remcreds' ) )
-    	{
     	    DelCookie( 'remcreds' );
-    	}
+    	if( GetCookie( 'logintoken' ) )
+			DelCookie( 'logintoken' );
     	
     	// FIXME: Remove this - it is not used anymore
 		window.localStorage.removeItem( 'WorkspaceUsername' );

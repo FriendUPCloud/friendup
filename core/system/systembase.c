@@ -655,11 +655,15 @@ SystemBase *SystemInit( FBOOL skipDBupdParam )
 		return NULL;
 	}
 	
+//#ifdef USE_PUSH_NOTIFICATIONS
 	l->sl_NotificationManager = NotificationManagerNew( l );
 	if( l->sl_NotificationManager == NULL )
 	{
 		Log( FLOG_ERROR, "Cannot initialize sl_NotificationManager\n");
 	}
+//#else
+//	l->sl_NotificationManager = NULL;
+//#endif
 	
 	l->fcm = FriendCoreManagerNew();
 
@@ -1274,10 +1278,12 @@ void SystemClose( SystemBase *l )
 
 	DEBUG("Delete Managers\n");
 	
+//#ifdef USE_PUSH_NOTIFICATIONS
 	if( l->sl_NotificationManager != NULL )
 	{
 		NotificationManagerDelete( l->sl_NotificationManager );
 	}
+//#endif
 	if( l->sl_CalendarManager != NULL )
 	{
 		CalendarManagerDelete( l->sl_CalendarManager );

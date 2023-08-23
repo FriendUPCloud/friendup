@@ -5,24 +5,60 @@
 				<p>
 					<strong>{i18n_group_name}</strong>
 				</p>
-				<p>
-					<input type="text" name="name" value="{room-name}" placeholder="{i18n_chatroom_name}"/>
-				</p>
+				<div class="Flex">
+					<div>
+						<input type="text" id="groupName" name="name" value="{room-name}" placeholder="{i18n_chatroom_name}"/>
+					</div>
+					<div class="nameChange"></div>
+				</div>
 				<p>
 					<strong>{i18n_group_desc}</strong>
 				</p>
 				<p>
-					<textarea name="description" rows="8">{room-description}</textarea>
+					<textarea id="groupDescription" name="description" rows="12">{room-description}</textarea>
 				</p>
 			</div>
 			<div class="Section">
-				<p>
+				<p class="AvatarBox">
 					<strong>{i18n_group_avatar}</strong>
 				</p>
 				<div class="AvatarBox">
 					<div class="AvatarPreview"></div>
 					<p>
 						<button type="button" class="Upload">{i18n_upload}</button>
+					</p>
+				</div>
+			</div>
+			<div class="Section">
+				<p>
+					<strong>{i18n_visibility}</strong>
+				</p>
+				<div>
+					<p>
+						{i18n_visibility_desc}
+					</p>
+					<div class="Flex">
+						<div><span>Private</span></div>
+						<div>
+							<fui-checkbox type="toggle" onchange="toggle-private" checked="{room-status}"/>
+						</div>
+						<div><span>Public</span></div>
+					</div>
+				</div>
+				<p>
+					<strong>{i18n_create_invite}</strong>
+				</p>
+				<div class="InviteBox">
+					<p>
+						{i18n_invite_desc}
+					</p>
+					<div class="Flex">
+						<div>
+							<input type="text" placeholder="" id="inviteHolder"/>
+						</div>
+						<div>
+							<button type="button" class="Create">{i18n_create}</button>
+						</div>
 					</p>
 				</div>
 			</div>

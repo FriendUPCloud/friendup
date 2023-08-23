@@ -233,338 +233,353 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *userDa
     signal(SIGPIPE, SIG_IGN);
     
 	WSCData *wsd =  (WSCData *)userData;// lws_context_user ( this );
+	
+	if( reason == LWS_CALLBACK_ESTABLISHED )
+	{
+		pthread_mutex_init( &(wsd->wsc_Mutex), NULL );
+		wsd->wsc_Status = WSC_STATUS_ACTIVE;
+		#ifdef WS_COMPRESSION
+		lws_set_extension_option( wsi, "permessage-deflate", "rx_buf_size", "16");
+		lws_set_extension_option( wsi, "permessage-deflate", "tx_buf_size", "16");
+		#endif
+		return 0;
+	}
+	
+	if( !wsd || wsd->wsc_Status == WSC_STATUS_TO_BE_REMOVED )
+	{
+		//DEBUG( "WSD IS BEING SHUT DOWN %p\n", wsd );
+		return 0;
+	}
+	
 	int returnError = 0;
 	
-	DEBUG("FC_Callback: reason: %d wsiptr %p fcwdptr %p\n", reason, wsi, userData );
-
-	char *in = NULL;
-
-	DEBUG("[WS] before switch\n");
-	
-	
-	switch( reason )
+	if( FRIEND_MUTEX_LOCK( &( wsd->wsc_Mutex ) ) == 0 )
 	{
-		case LWS_CALLBACK_ESTABLISHED:
-			pthread_mutex_init( &(wsd->wsc_Mutex), NULL );
-			
-			wsd->wsc_Status = WSC_STATUS_ACTIVE;
-			
-			#ifdef WS_COMPRESSION
-			lws_set_extension_option( wsi, "permessage-deflate", "rx_buf_size", "16");
-			lws_set_extension_option( wsi, "permessage-deflate", "tx_buf_size", "16");
-			#endif
-		break;
+		DEBUG("FC_Callback: reason: %d wsiptr %p fcwdptr %p\n", reason, wsi, userData );
+
+		char *in = NULL;
+
+		DEBUG("[WS] before switch\n");
 		
-		case LWS_CALLBACK_WS_PEER_INITIATED_CLOSE:
-			INFO("[WS] Callback peer session closed wsiptr %p\n", wsi);
-		break;
-		
-		//case LWS_CALLBACK_CLIENT_CLOSED:
-		    //DEBUG("[WS] Callback client closed!\n");
-		case LWS_CALLBACK_CLOSED:
-			{
-				UserSession *us = (UserSession *)wsd->wsc_UserSession;
-				
-				if( us != NULL )
-				{
-					if( FRIEND_MUTEX_LOCK( &( wsd->wsc_Mutex ) ) == 0 )
-					{
-						wsd->wsc_Status = WSC_STATUS_TO_BE_REMOVED;
-						FRIEND_MUTEX_UNLOCK( &( wsd->wsc_Mutex ) );
-					}
-					
-					int tr = 8;
-				
-					while( TRUE )
-					{
-						if( wsd->wsc_InUseCounter <= 0 )
-						{
-							DEBUG("[WS] Callback closed!\n");
-							break;
-						}
-						DEBUG("[WS] Closing WS, number: %d\n", wsd->wsc_InUseCounter );
-						//sleep( 1 );
-						usleep( 3500 );	// 0.35 seconds
-					
-						if( tr-- <= 0 )
-						{
-							DEBUG("[WS] Quit after 5\n");
-							break;
-						}
-					
-						if( wsd->wsc_UserSession == NULL )
-						{
-							DEBUG("[WS] wsc_UserSession is equal to NULL\n");
-							break;
-						}
-					}
-					
-					DetachWebsocketFromSession( wsd, wsi );
-					
-					if( wsd->wsc_Buffer != NULL )
-					{
-						BufStringDelete( wsd->wsc_Buffer );
-						wsd->wsc_Buffer = NULL;
-					}
-					Log( FLOG_DEBUG, "[WS] Callback session closed\n");
-				}
-							
-			}
-		break;
-		
-		case LWS_CALLBACK_WSI_DESTROY:
-			INFO("[WS] Destroy WSI!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
+		switch( reason )
+		{
+			case LWS_CALLBACK_WS_PEER_INITIATED_CLOSE:
+				INFO("[WS] Callback peer session closed wsiptr %p\n", wsi);
 			break;
-
-		case LWS_CALLBACK_RECEIVE:
-			{
-				wsd->wsc_Wsi = wsi;
-
-				UserSession *us = (UserSession *)wsd->wsc_UserSession;
-				
-				if( wsd->wsc_Buffer == NULL )
+			
+			/*case LWS_CALLBACK_CLIENT_CLOSED:
+				DEBUG("[WS] Callback client closed!\n");
+				if( FRIEND_MUTEX_LOCK( &( wsd->wsc_Mutex ) ) == 0 )
 				{
-					wsd->wsc_Buffer = BufStringNew();
+					wsd->wsc_Status = WSC_STATUS_TO_BE_REMOVED;
+					FRIEND_MUTEX_UNLOCK( &( wsd->wsc_Mutex ) );
 				}
-				
-				const size_t remaining = lws_remaining_packet_payload( wsi );
-				// if nothing left and this is last message
-				if( !remaining && lws_is_final_fragment( wsi ) )
+				break;*/
+			case LWS_CALLBACK_CLOSED:
 				{
-					BufStringAddSize( wsd->wsc_Buffer, tin, len );
-					
-					if( wsd->wsc_Buffer->bs_Size > 0 )
-					{
-						in = wsd->wsc_Buffer->bs_Buffer;
-						len = wsd->wsc_Buffer->bs_Size;
-						wsd->wsc_Buffer->bs_Buffer = NULL;
-							
-						BufStringDelete( wsd->wsc_Buffer );
-						wsd->wsc_Buffer = BufStringNew();
-					}
-
-					//DEBUG1("[WS] Callback receive (no remaining): %s\n", in );
-				}
-				else // only fragment was received
-				{
-					//DEBUG1("[WS] Only received: %p, %s, %p, %d\n", wsd->wsc_Buffer, (char *)tin, tin, len );
-					BufStringAddSize( wsd->wsc_Buffer, tin, len );
-					return 0;
-				}
-				
-				// if we want to move full calls to WS threads
-				
-#ifdef INPUT_QUEUE
-				WSThreadData *wstd = FCalloc( 1, sizeof( WSThreadData ) );
-				if( wstd != NULL )
-				{
-					DEBUG("[WS] Pass wsd to thread: %p\n", wsd );
-					wstd->wstd_WSD = wsd;
-					wstd->wstd_Msg = in;
-					wstd->wstd_Len = len;
-					wstd->wstd_UserSession = wsd->wsc_UserSession;	// lets be sure that wsd is not released
-
-					//
-					// Using Websocket thread to read/write messages, rest should happen in userspace
-					//
+					UserSession *us = (UserSession *)wsd->wsc_UserSession;
 					
 					if( us != NULL )
 					{
-						if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
+						wsd->wsc_Status = WSC_STATUS_TO_BE_REMOVED;
+						
+						FRIEND_MUTEX_UNLOCK( &(wsd->wsc_Mutex) );
+						while( TRUE )
 						{
-							us->us_LastPingTime = time( NULL );
-							us->us_InUseCounter++; // Increase use (parseandcall)
-							DEBUG( "[WS] Increase for parse and call: %d\n", us->us_InUseCounter );
-							FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
+							if( wsd->wsc_InUseCounter <= 0 )
+							{
+								DEBUG("[WS] Callback closed!\n");
+								break;
+							}
+							DEBUG("[WS] Closing WS, number: %d\n", wsd->wsc_InUseCounter );
+						
+							if( wsd->wsc_UserSession == NULL )
+							{
+								DEBUG("[WS] wsc_UserSession is equal to NULL\n");
+								break;
+							}
+							
+							DEBUG( "[WS] Waiting: %d\n", wsd->wsc_InUseCounter );
 						}
+						
+						DEBUG( "[WS] Detaching websocket from session...\n" );
+						DetachWebsocketFromSession( wsd, wsi );
+						DEBUG( "[WS]  - Detached websocket from session\n" );
+						
+						FRIEND_MUTEX_LOCK( &( wsd->wsc_Mutex ) );
+						
+						if( wsd->wsc_Buffer != NULL )
+						{
+							BufStringDelete( wsd->wsc_Buffer );
+							wsd->wsc_Buffer = NULL;
+						}
+						Log( FLOG_DEBUG, "[WS] Callback session closed\n");
+					}
+								
+				}
+			break;
+			
+			case LWS_CALLBACK_WSI_DESTROY:
+				INFO("[WS] Destroy WSI!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
+				break;
+
+			case LWS_CALLBACK_RECEIVE:
+				{
+					wsd->wsc_Wsi = wsi;
+
+					UserSession *us = (UserSession *)wsd->wsc_UserSession;
+					
+					if( wsd->wsc_Buffer == NULL )
+					{
+						wsd->wsc_Buffer = BufStringNew();
 					}
 					
-					pthread_t t;
-
-					if( pthread_create( &t, NULL, (void *(*)(void *))ParseAndCall, ( void *)wstd ) != 0 )
+					const size_t remaining = lws_remaining_packet_payload( wsi );
+					// if nothing left and this is last message
+					if( !remaining && lws_is_final_fragment( wsi ) )
 					{
-						FERROR("\n\n\nCreate thread failed!: %p\n\n", wsi );
-						// Failed!
+						BufStringAddSize( wsd->wsc_Buffer, tin, len );
 						
-						releaseWSData( wstd );
-						
-						if( wsd->wsc_UserSession != NULL )
+						if( wsd->wsc_Buffer->bs_Size > 0 )
 						{
-							us = (UserSession *)wsd->wsc_UserSession;
-							if( us != NULL )
+							in = wsd->wsc_Buffer->bs_Buffer;
+							len = wsd->wsc_Buffer->bs_Size;
+							wsd->wsc_Buffer->bs_Buffer = NULL;
+								
+							BufStringDelete( wsd->wsc_Buffer );
+							wsd->wsc_Buffer = BufStringNew();
+						}
+
+						//DEBUG1("[WS] Callback receive (no remaining): %s\n", in );
+					}
+					else // only fragment was received
+					{
+						//DEBUG1("[WS] Only received: %p, %s, %p, %d\n", wsd->wsc_Buffer, (char *)tin, tin, len );
+						BufStringAddSize( wsd->wsc_Buffer, tin, len );
+						
+						FRIEND_MUTEX_UNLOCK( &(wsd->wsc_Mutex) );
+						return 0;
+					}
+					
+					// if we want to move full calls to WS threads
+					
+	#ifdef INPUT_QUEUE
+					WSThreadData *wstd = FCalloc( 1, sizeof( WSThreadData ) );
+					if( wstd != NULL )
+					{
+						DEBUG("[WS] Pass wsd to thread: %p\n", wsd );
+						wstd->wstd_WSD = wsd;
+						wstd->wstd_Msg = in;
+						wstd->wstd_Len = len;
+						wstd->wstd_UserSession = wsd->wsc_UserSession;	// lets be sure that wsd is not released
+
+						//
+						// Using Websocket thread to read/write messages, rest should happen in userspace
+						//
+						
+						if( us != NULL )
+						{
+							if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
 							{
-								if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
+								us->us_LastPingTime = time( NULL );
+								us->us_InUseCounter++; // Increase use (parseandcall)
+								DEBUG( "[WS] Increase for parse and call: %d\n", us->us_InUseCounter );
+								FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
+							}
+						}
+						
+						pthread_t t;
+
+						if( pthread_create( &t, NULL, (void *(*)(void *))ParseAndCall, ( void *)wstd ) != 0 )
+						{
+							FERROR("\n\n\nCreate thread failed!: %p\n\n", wsi );
+							// Failed!
+							
+							releaseWSData( wstd );
+							
+							if( wsd->wsc_UserSession != NULL )
+							{
+								us = (UserSession *)wsd->wsc_UserSession;
+								if( us != NULL )
 								{
-									us->us_InUseCounter--;
-									FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
+									if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
+									{
+										us->us_InUseCounter--;
+										FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
+									}
 								}
 							}
 						}
 					}
+	#else
+					ParseAndCall( wsd, tin, len );
+	#endif
+					
+					DEBUG("[WS] Webcall finished!\n");
+					
+					if( wsd->wsc_UserSession != NULL && us != NULL && us->us_MsgQueue.fq_First != NULL )
+					{
+						lws_callback_on_writable( wsi );
+					}
 				}
-#else
-				ParseAndCall( wsd, tin, len );
-#endif
 				
-				DEBUG("[WS] Webcall finished!\n");
-				
-				if( wsd->wsc_UserSession != NULL && us != NULL && us->us_MsgQueue.fq_First != NULL )
+	#ifndef INPUT_QUEUE
+				/*
+				if( len > 0 )
 				{
-					lws_callback_on_writable( wsi );
+					char *c = (char *)tin;
+					c[ 0 ] = 0;
 				}
-			}
+				*/
+	#endif
+			break;
 			
-#ifndef INPUT_QUEUE
-			/*
-			if( len > 0 )
-			{
-				char *c = (char *)tin;
-				c[ 0 ] = 0;
-			}
-			*/
-#endif
-		break;
+			case LWS_CALLBACK_SERVER_WRITEABLE:
+				DEBUG1("[WS] LWS_CALLBACK_SERVER_WRITEABLE\n");
+				
+				if( wsd->wsc_Status == 0 || wsd->wsc_UserSession == NULL || wsd->wsc_Wsi == NULL || wsd->wsc_Status == WSC_STATUS_TO_BE_REMOVED )
+				{
+					DEBUG("[WS] Cannot write message, WS Client is equal to NULL, fcwd %p wsiptr %p\n", wsd, wsi );
+					
+					FRIEND_MUTEX_UNLOCK( &(wsd->wsc_Mutex) );
+					return 0;
+				}
+
+				FQEntry *e = NULL;
+
+				UserSession *us = (UserSession *)wsd->wsc_UserSession;
+				if( us != NULL )
+				{
+					//
+					// User Session messages are stored in UserSession structure. We have to lock session before we want to get message from queue
+					//
+					
+					if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
+					{
+						us->us_InUseCounter++;
+						
+						FQueue *q = &(us->us_MsgQueue);
+						
+						if( q->fq_First != NULL )
+						{
+							e = FQPop( q );
+							
+							us->us_InUseCounter--;
+							FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
+							unsigned char *t = e->fq_Data+LWS_SEND_BUFFER_PRE_PADDING;
+							
+							// Previously was t[ e->fq_Size + 1 ] = 0, but seemed to corrupt the last character
+							t[ e->fq_Size ] = 0;
+
+							lws_write( wsi, e->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, e->fq_Size, LWS_WRITE_TEXT );
+					
+	#ifdef __PERF_MEAS
+							Log( FLOG_INFO, "PERFCHECK: Websocket message sent time: %f\n", ((GetCurrentTimestampD()-e->fq_stime)) );
+	#endif
+
+							int errret = lws_send_pipe_choked( wsi );
+					
+						    // Hogne removed åprinting the entire message
+							//DEBUG1("Sending message, size: %d PRE %d msg %s\n", e->fq_Size, LWS_SEND_BUFFER_PRE_PADDING, e->fq_Data+LWS_SEND_BUFFER_PRE_PADDING );
+							DEBUG1("Sending message, size: %d PRE %d.\n", e->fq_Size, LWS_SEND_BUFFER_PRE_PADDING );
+							if( e != NULL )
+							{
+								DEBUG("[WS] Release: %p\n", e->fq_Data );
+								FFree( e->fq_Data );
+								FFree( e );
+							}
+						
+							if( wsd->wsc_UserSession == NULL )
+							{
+								break;
+							}
+						}
+						else
+						{
+							us->us_InUseCounter--;
+							FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
+						}
+						
+						if( q->fq_First != NULL )
+						{
+							lws_callback_on_writable( wsi );
+						}
+					}
+				}
+
+				DEBUG("[WS] Writable END, wsi ptr %p fcwsptr %p\n", wsi, wsd );
+
+				break;
+			
+			case LWS_CALLBACK_OPENSSL_PERFORM_CLIENT_CERT_VERIFICATION:
+				DEBUG1("[WS] LWS_CALLBACK_OPENSSL_PERFORM_CLIENT_CERT_VERIFICATION\n");
+				break;
+			
+			case LWS_CALLBACK_FILTER_NETWORK_CONNECTION:
+				DEBUG1("[WS] LWS_CALLBACK_FILTER_NETWORK_CONNECTION\n");
+				break;
+			
+			case LWS_CALLBACK_CLIENT_FILTER_PRE_ESTABLISH:
+				DEBUG1("[WS] LWS_CALLBACK_CLIENT_FILTER_PRE_ESTABLISH\n");
+				break;
+			
+			case LWS_CALLBACK_OPENSSL_LOAD_EXTRA_CLIENT_VERIFY_CERTS:
+				DEBUG1("[WS] LWS_CALLBACK_OPENSSL_LOAD_EXTRA_CLIENT_VERIFY_CERTS\n");
+			break;
+
+		//
+		 // this just demonstrates how to use the protocol filter. If you won't
+		 // study and reject connections based on header content, you don't need
+		 // to handle this callback
+		 //
+
+		case LWS_CALLBACK_FILTER_PROTOCOL_CONNECTION:
+			//dump_handshake_info((struct lws_tokens *)(long)user);
+			// you could return non-zero here and kill the connection 
+			//Log( FLOG_INFO, "[WS] Filter protocol\n");
+			break;
 		
-		case LWS_CALLBACK_SERVER_WRITEABLE:
-			DEBUG1("[WS] LWS_CALLBACK_SERVER_WRITEABLE\n");
-			
-			if( wsd->wsc_Status == 0 || wsd->wsc_UserSession == NULL || wsd->wsc_Wsi == NULL || wsd->wsc_Status == WSC_STATUS_TO_BE_REMOVED )
+		case LWS_CALLBACK_PROTOCOL_DESTROY:
+			// protocol will be destroyed
+			if( wsd != NULL )
 			{
-				DEBUG("[WS] Cannot write message, WS Client is equal to NULL, fcwd %p wsiptr %p\n", wsd, wsi );
+				wsd->wsc_Status = WSC_STATUS_DELETED;
+				
+				if( wsd->wsc_Buffer != NULL )
+				{
+					BufStringDelete( wsd->wsc_Buffer );
+					wsd->wsc_Buffer = NULL;
+				}
+				
+				FRIEND_MUTEX_UNLOCK( &(wsd->wsc_Mutex) );
+				pthread_mutex_destroy( &(wsd->wsc_Mutex) );
 				return 0;
 			}
-
-			FQEntry *e = NULL;
-
-			UserSession *us = (UserSession *)wsd->wsc_UserSession;
-			if( us != NULL )
+			break;
+			
+		//case LWS_CALLBACK_GET_THREAD_ID:
+		//	return (uint64_t)pthread_self();
+			
+		default:
 			{
-				//
-				// User Session messages are stored in UserSession structure. We have to lock session before we want to get message from queue
-				//
-				
-				if( FRIEND_MUTEX_LOCK( &(us->us_Mutex) ) == 0 )
+			// disabled for test
+				if( wsd != NULL )
 				{
-					us->us_InUseCounter++;
-					
-					FQueue *q = &(us->us_MsgQueue);
-					
-					if( q->fq_First != NULL )
-					{
-						e = FQPop( q );
-						
-						us->us_InUseCounter--;
-						FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
-						unsigned char *t = e->fq_Data+LWS_SEND_BUFFER_PRE_PADDING;
-						
-						// Previously was t[ e->fq_Size + 1 ] = 0, but seemed to corrupt the last character
-						t[ e->fq_Size ] = 0;
+					UserSession *us = (UserSession *)wsd->wsc_UserSession;
 
-						lws_write( wsi, e->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, e->fq_Size, LWS_WRITE_TEXT );
-				
-#ifdef __PERF_MEAS
-						Log( FLOG_INFO, "PERFCHECK: Websocket message sent time: %f\n", ((GetCurrentTimestampD()-e->fq_stime)) );
-#endif
-
-						int errret = lws_send_pipe_choked( wsi );
-				
-				        // Hogne removed åprinting the entire message
-						//DEBUG1("Sending message, size: %d PRE %d msg %s\n", e->fq_Size, LWS_SEND_BUFFER_PRE_PADDING, e->fq_Data+LWS_SEND_BUFFER_PRE_PADDING );
-						DEBUG1("Sending message, size: %d PRE %d.\n", e->fq_Size, LWS_SEND_BUFFER_PRE_PADDING );
-						if( e != NULL )
-						{
-							DEBUG("[WS] Release: %p\n", e->fq_Data );
-							FFree( e->fq_Data );
-							FFree( e );
-						}
-					
-						if( wsd->wsc_UserSession == NULL )
-						{
-							break;
-						}
-					}
-					else
-					{
-						us->us_InUseCounter--;
-						FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
-					}
-					
-					if( q->fq_First != NULL )
+					if( us != NULL && us->us_MsgQueue.fq_First != NULL )
 					{
 						lws_callback_on_writable( wsi );
 					}
 				}
 			}
-
-			DEBUG("[WS] Writable END, wsi ptr %p fcwsptr %p\n", wsi, wsd );
-
 			break;
-		
-		case LWS_CALLBACK_OPENSSL_PERFORM_CLIENT_CERT_VERIFICATION:
-			DEBUG1("[WS] LWS_CALLBACK_OPENSSL_PERFORM_CLIENT_CERT_VERIFICATION\n");
-			break;
-		
-		case LWS_CALLBACK_FILTER_NETWORK_CONNECTION:
-			DEBUG1("[WS] LWS_CALLBACK_FILTER_NETWORK_CONNECTION\n");
-			break;
-		
-		case LWS_CALLBACK_CLIENT_FILTER_PRE_ESTABLISH:
-			DEBUG1("[WS] LWS_CALLBACK_CLIENT_FILTER_PRE_ESTABLISH\n");
-			break;
-		
-		case LWS_CALLBACK_OPENSSL_LOAD_EXTRA_CLIENT_VERIFY_CERTS:
-			DEBUG1("[WS] LWS_CALLBACK_OPENSSL_LOAD_EXTRA_CLIENT_VERIFY_CERTS\n");
-		break;
-
-	//
-	 // this just demonstrates how to use the protocol filter. If you won't
-	 // study and reject connections based on header content, you don't need
-	 // to handle this callback
-	 //
-
-	case LWS_CALLBACK_FILTER_PROTOCOL_CONNECTION:
-		//dump_handshake_info((struct lws_tokens *)(long)user);
-		// you could return non-zero here and kill the connection 
-		//Log( FLOG_INFO, "[WS] Filter protocol\n");
-		break;
-	
-	case LWS_CALLBACK_PROTOCOL_DESTROY:
-		// protocol will be destroyed
-		if( wsd != NULL )
-		{
-			wsd->wsc_Status = WSC_STATUS_DELETED;
-			
-			if( wsd->wsc_Buffer != NULL )
-			{
-				BufStringDelete( wsd->wsc_Buffer );
-				wsd->wsc_Buffer = NULL;
-			}
-			
-			pthread_mutex_destroy( &(wsd->wsc_Mutex) );
 		}
-		break;
-		
-	//case LWS_CALLBACK_GET_THREAD_ID:
-	//	return (uint64_t)pthread_self();
-		
-	default:
-		{
-		// disabled for test
-			if( wsd != NULL )
-			{
-				UserSession *us = (UserSession *)wsd->wsc_UserSession;
 
-				if( us != NULL && us->us_MsgQueue.fq_First != NULL )
-				{
-					lws_callback_on_writable( wsi );
-				}
-			}
-		}
-		break;
+		DEBUG("[WS] END of callback\n");
+		FRIEND_MUTEX_UNLOCK( &(wsd->wsc_Mutex) );
 	}
-
-	DEBUG("[WS] END of callback\n");
-
+	
 	return returnError;
 }
 

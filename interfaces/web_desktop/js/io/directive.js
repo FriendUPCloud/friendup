@@ -517,7 +517,15 @@ function ExecuteApplication( app, args, callback, retries, flags )
 						{
 							ws = this.rawData;
 						}
-						ifr.src = URL.createObjectURL(new Blob([ws],{type:'text/html'}));
+						if( ws.length )
+						{
+							ifr.src = URL.createObjectURL(new Blob([ws],{type:'text/html'}));
+						}
+						else
+						{
+							console.log( '[Directive] Error loading blob. Retry.' );
+							j.send();
+						}
 					}
 					j.send();
 				}
@@ -541,6 +549,7 @@ function ExecuteApplication( app, args, callback, retries, flags )
 			ifr.fullName = Workspace.fullName;
 			ifr.username = Workspace.loginUsername;
 			ifr.userLevel = Workspace.userLevel;
+			ifr.uniqueId = Workspace.uniqueId;
 			ifr.workspace = workspace;
 			ifr.opensilent = flags && flags.openSilent ? true : false;
 			ifr.applicationId = applicationId;
@@ -751,6 +760,7 @@ function ExecuteApplication( app, args, callback, retries, flags )
 					userId: ifr.userId,
 					fullName: ifr.fullName,
 					userLevel: ifr.userLevel,
+					uniqueId: ifr.uniqueId,
 					username: ifr.username,
 					authId: ifr.authId,
 					args: oargs,
@@ -1446,6 +1456,7 @@ function ExecuteJSX( data, app, args, path, callback, conf, flags )
 			ifr.userId = Workspace.userId;
 			ifr.fullName = Workspace.fullName;
 			ifr.userLevel = Workspace.userLevel;
+			ifr.uniqueId = Workspace.uniqueId;
 			ifr.username = Workspace.loginUsername;
 			ifr.workspace = flags && flags.workspace ? flags.workspace : 0;
 			ifr.opensilent = flags && flags.openSilent == true ? true : false;
@@ -1607,6 +1618,7 @@ function ExecuteJSX( data, app, args, path, callback, conf, flags )
 						userId:           ifr.userId,
 						fullName:         ifr.fullName,
 						userLevel:        ifr.userLevel,
+						uniqueId:         ifr.uniqueId,
 						username:         ifr.username,
 						theme:            Workspace.theme,
 						themeData:        Workspace.themeData,

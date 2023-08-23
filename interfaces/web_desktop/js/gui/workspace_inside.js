@@ -1422,9 +1422,7 @@ let WorkspaceInside = {
 
 		function onEnd( e )
 		{
-			//console.log( 'Workspace.conn.onEnd', e );
-			// We closed connection
-			Friend.User.SetUserConnectionState( 'offline' );
+			console.log( 'Workspace.conn.onEnd', e );
 		}
 
 		function handleIconChange( e ){ console.log( 'icon-change event', e ); }
@@ -3927,11 +3925,16 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	{
 		console.log( 'Disk notification!', windowList, type );
 	},
-	refreshTheme: function( themeName, update, themeConfig, initpass )
+	refreshTheme: function( themeName, update, themeConfig = false, initpass )
 	{
 		let self = this;
+
 		// Don't reupdate when it's already loaded
-		if( Workspace.theme && Workspace.theme == themeName ) 
+		let themeHash = themeConfig ? MD5( JSON.stringify( themeConfig ) ) : false;
+		let themeChanged = false;
+		if( themeHash && themeHash != MD5( JSON.stringify( this.themeData ) ) )
+			themeChanged = true;
+		if( !themeChanged && Workspace.theme && Workspace.theme == themeName )
 		{
 			document.body.classList.remove( 'ThemeRefreshing' );
 			Workspace.setLoading( false );
@@ -3978,7 +3981,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		themeName = themeName.toLowerCase();
 		
 		// Don't load this twice
-		if( Workspace.theme == themeName )
+		if( Workspace.theme == themeName && !themeChanged )
 		{
 			document.body.classList.remove( 'ThemeRefreshing' );
 			Workspace.setLoading( false );
@@ -4079,7 +4082,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			    
 			    Workspace.refreshUserSettings( function() 
 			    {
-				    console.log( '[Login phase] Done refreshing user settings.' );
+				    //console.log( '[Login phase] Done refreshing user settings.' );
 				    CheckScreenTitle();
 
 				    let h = document.getElementsByTagName( 'head' );
@@ -10306,31 +10309,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	{
 		let self = this;
 
-		// Check for forced websocket renewal (sleepover)
-		if( newState == 'active' )
-		{
-			let now = ( new Date() ).getTime();
-			let interval = 18000000; // 1000 * 60 * 60 * 5;
-			
-			if( this.lastWSPong > 0 && ( now - this.lastWSPong ) > interval )
-			{
-				console.log( 'Timed initializing websocket due to sleepover.' );
-				this.initWebSocket();
-				this.lastWSPong = -1;
-			}
-			// Queue new try!
-			else if( this.lastWSPong == -1 )
-			{
-				setTimeout( function()
-				{
-					if( this.lastWSPong == -1 )
-					{
-						this.lastWSPong = 0;
-					}
-				}, 500 );
-			}
-		}
-
 		// Don't update if not changed
 		if( this.currentViewState == newState )
 		{
@@ -10355,8 +10333,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			Friend.User.ReLogin();
 			return; 
 		}
-		
-		//mobileDebug( 'Starting update view state.' + newState, true );
 		
 		if( newState == 'active' )
 		{
@@ -10399,6 +10375,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					}
 				}
 			}
+			
 			// IMPORTANT:
 			// Sleep in 5 minutes
 			if( this.sleepingTimeout )
@@ -11436,25 +11413,32 @@ function handleServerMessage( e )
 		}
 		if( !found )
 		{
-		    // TODO: Support public key decryption
-		    let text = decodeURIComponent( e.message.message );
-            try
-            {
-                let dec = new TextDecoder().decode( base64ToBytes( text ) );
-                text = dec;
-            }
-            catch( e2 ){};
-			Sounds.newMessage.play();
-		    Notify( {
-		            title: 'From ' + e.message.sender,
-		            text: text,
-		        },
-		        null,
-		        function( k )
+			// Check that we have message
+		    if( e.message && e.message.message )
+		    {
+				// TODO: Support public key decryption
+				let text = decodeURIComponent( e.message.message );
+		        try
 		        {
-		            ExecuteApplication( 'Convos', JSON.stringify( e.message ) );
-	            }
-		    );
+		            let dec = new TextDecoder().decode( base64ToBytes( text ) );
+		            text = dec;
+		        }
+		        catch( e2 ){};
+		        if( text != undefined )
+		        {
+					Sounds.newMessage.play();
+					Notify( {
+						    title: 'From ' + e.message.sender,
+						    text: text,
+						},
+						null,
+						function( k )
+						{
+						    ExecuteApplication( 'Convos', JSON.stringify( e.message ) );
+					    }
+					);
+				}
+			}
 		}
 	}
 	else

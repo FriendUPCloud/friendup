@@ -10,6 +10,8 @@
     height: 55px;
     padding: 5px;
     box-sizing: border-box;
+    margin: 5px 5px 0 5px;
+    border-radius: 10px;
 }
 
 .FUIContacts .Contacts .Topic > span.Avatar:first-child

@@ -1,0 +1,38 @@
+
+i18n_software                      : Software catalog
+
+
+#Menu
+i18n_file                          : File
+i18n_quit                          : Quit
+i18n_no_desc                       : No description available for this title.
+i18n_no_software                   : No software available.
+i18n_install                       : Install
+i18n_uninstall                     : Uninstall
+
+i18n_page_name                     : Alphabetical
+i18n_page_by_date                  : Latest software
+i18n_page_all                      : All software
+i18n_page_rating                   : By rating
+i18n_page_your_apps                : Your software
+
+i18n_register_as_merchant          : Register as merchant
+i18n_merchants                     : Merchants
+
+i18n_cancel                        : Cancel
+i18n_register                      : Register
+
+i18n_company_or_name               : Company or publisher
+i18n_description_of                : Please describe your company or publisher in a paragraph
+i18n_categories                    : Categories that describe your software or services
+i18n_country                       : Country
+
+i18n_launch                        : Launch
+
+i18n_are_you_sure_uninstall        : Are you sure you want to uninstall?
+i18n_are_you_sure_uninstall_ds     : If you uninstall this application, it will be removed from your account. You can reinstall it later in this application.
+i18n_are_you_sure_install          : Are you sure you want to install?
+i18n_are_you_sure_install_ds       : If you install this application, it will be added to your account.
+
+
+

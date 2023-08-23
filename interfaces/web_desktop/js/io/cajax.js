@@ -51,8 +51,10 @@ function AddToCajaxQueue( ele )
 		if( t != undefined && t.queue )
 			queueCount += t.queue.length;
 	}
-	if( queueCount > 20 )
-		Friend.User.ReLogin();
+	
+	// TODO: Handle large queues
+	//if( queueCount > 20 )
+	//	Friend.User.ReLogin();
 	
 	let queue = Friend.cajax[ ele.type ].queue;
 	
@@ -139,6 +141,7 @@ function CancelCajaxOnId( id )
 
 // A simple ajax function
 // Can have a cancellable series
+_cajax_timeout = 20000;
 cAjax = function()
 {
 	let self = this;
@@ -151,7 +154,7 @@ cAjax = function()
 	self.life = setTimeout( function()
 	{
 		self.destroy();
-	}, 5000 );
+	}, _cajax_timeout );
 	
 	// Vars to mark success / process count
 	this.decreasedProcessCount = false;
@@ -184,184 +187,170 @@ cAjax = function()
 	// Get AJAX base object
 	this.proxy = new XMLHttpRequest();
 	
-	this.proxy.timeout = 1000;
+	this.proxy.timeout = _cajax_timeout;
 	
 	// State call
 	let jax = this;
-	this.proxy.onreadystatechange = function()
+	this.proxy.onload = function()
 	{
-		// Do nothing unless state is 4
-		if( this.readyState != 4 ) return;
+		// Reset incidents counter
+		if( typeof( Friend.User ) != 'undefined' )
+			Friend.User.ConnectionIncidents = 0;
+			
+		if( this.responseType == 'arraybuffer' )
+		{
+			jax.rawData = this.response;
+		}
+		else if( this.responseType == 'blob' )
+		{
+			jax.rawData = new Blob( [ this.response ] );
+		}
+		else
+		{
+			jax.rawData = this.responseText;
+		}
 		
-		// We're finished handshaking
-		if( this.status == 200 )
+		if( this.responseType != '' )
 		{
-			// Reset incidents counter
-			if( typeof( Friend.User ) != 'undefined' )
-				Friend.User.ConnectionIncidents = 0;
-				
-			if( this.responseType == 'arraybuffer' )
+			jax.returnData = jax.rawData;
+			jax.returnCode = 'ok';
+		}
+		else if( this.hasReturnCode )
+		{
+			let sep = '<!--separate-->';
+			if( this.responseText.indexOf( sep ) > 0)
 			{
-				jax.rawData = this.response;
-			}
-			else if( this.responseType == 'blob' )
-			{
-				jax.rawData = new Blob( [ this.response ] );
-			}
-			else
-			{
-				jax.rawData = this.responseText;
-			}
-			
-			if( this.responseType != '' )
-			{
-				jax.returnData = jax.rawData;
-				jax.returnCode = 'ok';
-			}
-			else if( this.hasReturnCode )
-			{
-				let sep = '<!--separate-->';
-				if( this.responseText.indexOf( sep ) > 0)
-				{
-					jax.returnCode = this.responseText.substr( 0, this.responseText.indexOf( sep ) );
-					jax.returnData = this.responseText.substr( this.responseText.indexOf( sep ) + sep.length );
-				}
-				else
-				{
-					jax.returnData = false;
-					jax.returnCode = this.responseText;
-				}
+				jax.returnCode = this.responseText.substr( 0, this.responseText.indexOf( sep ) );
+				jax.returnData = this.responseText.substr( this.responseText.indexOf( sep ) + sep.length );
 			}
 			else
 			{
-				jax.returnCode = false;
-				jax.returnData = this.responseText;
+				jax.returnData = false;
+				jax.returnCode = this.responseText;
 			}
-			
-			// TODO: This error is general
-			if( this.responseType != 'arraybuffer' && this.responseType != 'blob' )
+		}
+		else
+		{
+			jax.returnCode = false;
+			jax.returnData = this.responseText;
+		}
+		
+		// TODO: This error is general
+		if( this.responseType != 'arraybuffer' && this.responseType != 'blob' )
+		{
+			if( JSON && jax.rawData.charAt( 0 ) == '{' )
 			{
-				if( JSON && jax.rawData.charAt( 0 ) == '{' )
+				try
 				{
-					try
+					let t = JSON.parse( jax.rawData );
+					// Deprecate from 1.0 beta 2 "no user!"
+					let res = t ? t.response.toLowerCase() : '';
+					let lres = res.toLowerCase();
+					if( t && ( lres == 'user not found' || lres == 'user session not found' ) )
 					{
-						let t = JSON.parse( jax.rawData );
-						// Deprecate from 1.0 beta 2 "no user!"
-						let res = t ? t.response.toLowerCase() : '';
-						let lres = res.toLowerCase();
-						if( t && ( lres == 'user not found' || lres == 'user session not found' ) )
+						if( window.Workspace && lres == 'user session not found' ) 
+							Workspace.flushSession();
+						if( window.Workspace )
 						{
-							if( window.Workspace && lres == 'user session not found' ) 
-								Workspace.flushSession();
-							if( window.Workspace )
+							// Drop these (don't retry!) because of remote fs disconnect
+							if( jax.url.indexOf( 'file/info' ) > 0 )
 							{
-								// Drop these (don't retry!) because of remote fs disconnect
-								if( jax.url.indexOf( 'file/info' ) > 0 )
-								{
-									return jax.destroy();
-								}
-								
-								// Add to queue
-								AddToCajaxQueue( jax );
-								return Friend.User.CheckServerConnection();
+								console.log( '[cajax] Destroying ajax, file/info error.' );
+								return jax.destroy();
 							}
-						}
-					}
-					catch( e )
-					{
-						if( !jax.rawData )
-						{
-							console.log( '[cAjax] Can not understand server response: ', jax.rawData );
-							jax.destroy();
-							return;
-						}
-					}
-				}
-				// Respond to old expired sessions!
-				else if( jax.returnCode == 'fail' )
-				{
-					try
-					{
-						let r = JSON.parse( jax.returnData );
-						
-						let res = r ? r.response.toLowerCase() : '';
-						let lres = res.toLowerCase();
-						
-						if( lres == 'user not found' || lres == 'user session not found' )
-						{
-							if( window.Workspace && lres == 'user session not found' ) 
-								Workspace.flushSession();
 							
-							if( window.Workspace && Workspace.postInitialized && Workspace.sessionId )
-							{
-								// Add to queue
-								AddToCajaxQueue( jax );
-								return Friend.User.CheckServerConnection();
-							}
+							// Add to queue
+							AddToCajaxQueue( jax );
+							return Friend.User.CheckServerConnection();
 						}
 					}
-					catch( e )
+				}
+				catch( e )
+				{
+					if( !jax.rawData )
 					{
+						console.log( '[cAjax] Can not understand server response: ', jax.rawData );
+						jax.destroy();
+						return;
 					}
 				}
+			}
+			// Respond to old expired sessions!
+			else if( jax.returnCode == 'fail' )
+			{
+				try
+				{
+					let r = JSON.parse( jax.returnData );
+					
+					let res = r ? r.response.toLowerCase() : '';
+					let lres = res.toLowerCase();
+					
+					if( lres == 'user not found' || lres == 'user session not found' )
+					{
+						if( window.Workspace && lres == 'user session not found' ) 
+							Workspace.flushSession();
+						
+						if( window.Workspace && Workspace.postInitialized && Workspace.sessionId )
+						{
+							// Add to queue
+							AddToCajaxQueue( jax );
+							return Friend.User.CheckServerConnection();
+						}
+					}
+				}
+				catch( e )
+				{
+				}
+			}
+		}
+		else
+		{
+			if( jax.rawData )
+			{
+				this.returnCode = 'ok';
+				this.returnData = this.rawData;
 			}
 			else
 			{
-				if( jax.rawData )
-				{
-					this.returnCode = 'ok';
-					this.returnData = this.rawData;
-				}
-				else
-				{
-					this.returnCode = 'false';
-					this.returnData = null;
-				}
+				this.returnCode = 'false';
+				this.returnData = null;
 			}
-			
-			// Clean up
-			if( jax.mode != 'websocket' )
-			{
-				if( !jax.forceSend )
-				{
-					_cajax_http_connections--;
-					if( _cajax_http_connections < 0 )
-						_cajax_http_connections = 0;
-				}
-			}
-			
-			// End clean queue
-
-			// Execute onload action with appropriate data
-			if( jax.onload )
-			{
-				jax.onload( jax.returnCode, jax.returnData );
-			}
-			jax.destroy();
 		}
-		// Something went wrong!
-		else if( this.status == 503 || this.status == 502 || this.status == 500 || this.status == 0 || this.status == 404 )
+		
+		// Clean up
+		if( jax.mode != 'websocket' )
 		{
-			if( this.status == 502 || this.status == 503  )
+			if( !jax.forceSend )
 			{
-				// Too many successive incidents, could be session id is invalid
-				if( typeof( Friend.User ) != 'undefined' )
-				{
-					Friend.User.ConnectionIncidents++;
-				}
+				_cajax_http_connections--;
+				if( _cajax_http_connections < 0 )
+					_cajax_http_connections = 0;
 			}
-		    // If we have available slots, but we have other ajax calls in pipe, execute them
-		    if( _cajax_http_connections < _cajax_http_max_connections )
-		    {
-		        CleanAjaxCalls();
-		    }
-			// tell our caller...
-			if( jax.onload ) 
-			{
-				jax.onload( 'error', '' );
-			}
-			jax.destroy();
 		}
+		
+		// End clean queue
+
+		// Execute onload action with appropriate data
+		if( jax.onload )
+		{
+			jax.onload( jax.returnCode, jax.returnData );
+		}
+		jax.destroy();
+	}
+	this.proxy.onerror = function( err )
+	{
+		// Something went wrong!
+		console.log( '[cajax] ', err );
+		if( _cajax_http_connections < _cajax_http_max_connections )
+	    {
+	        CleanAjaxCalls();
+	    }
+		// tell our caller...
+		if( jax.onload ) 
+		{
+			jax.onload( 'error', '' );
+		}
+		jax.destroy();
 	}
 }
 
@@ -401,7 +390,6 @@ cAjax.prototype.destroySilent = function()
 	self.method = null;
 	self.onload = null;
 	self.openFunc = null;
-	
 	
 	// finally
 	delete this;
@@ -452,18 +440,14 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 	this.opened = true;
 	
 	// Move dos calls onto http
-	let dosCall = false;
-	if( 
+	let dosCall = ( 
 		url.indexOf( '/file/read'   ) >= 0 ||
 		url.indexOf( '/file/copy'   ) >= 0 ||
 		url.indexOf( '/file/delete' ) >= 0 ||
 		url.indexOf( '/file/write'  ) >= 0 ||
 		url.indexOf( '/file/dir'    ) >= 0 ||
 		url.indexOf( '/file/expose' )
-	)
-	{
-		dosCall = true;
-	}
+	) != -1;
 	
 	// Try websockets!!
 	if( 
@@ -755,49 +739,16 @@ cAjax.prototype.send = function( data, callback )
 				for( let a in this.vars )
 					out.push( a + '=' + this.vars[ a ] );
 
-				new Promise( function( resolve, reject )
+			    // Will throw an error unless we are forcing http for testing!
+				if( window.Friend && Friend.User && Friend.User.State != 'online' && !self.forceHTTP )
+					return;
+				
+				let url = self.url;
+				
+				if( self.proxy != null )
 				{
-				    // Will throw an error unless we are forcing http for testing!
-					if( window.Friend && Friend.User && Friend.User.State != 'online' && !self.forceHTTP )
-					{
-						reject( 'error' );
-						return;
-					}
-					try
-					{
-						res = self.proxy.send( out.join ( '&' ) );
-						resolve( 'success' );
-					}
-					catch( err )
-					{
-						reject( 'error' );
-						if( self.onload )
-						{
-							console.log( 'Error...' );
-							self.onload( false, false );
-							self.destroy();
-						}
-						Friend.User.CheckServerConnection();
-					}
-				} ).catch( function( err )
-				{
-					if( err == 'error' )
-					{
-						if( callback )
-						{
-							console.log( 'Other error' );
-							callback( false, false );
-						}
-						else
-						{
-							//console.log( 'No callback.' );
-						}
-					}
-					else if( err == 'success' );
-					{
-						// success
-					}
-				} );
+					res = self.proxy.send( out.join ( '&' ) );
+				}
 			}
 			// All else fails?
 			else

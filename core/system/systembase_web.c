@@ -350,6 +350,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 	
 	char *sessionid = FCalloc( DEFAULT_SESSION_ID_SIZE + 16, sizeof(char) );
 	char userName[ 256 ];
+	char *returnExtra = NULL;
 	//char sessionid[ DEFAULT_SESSION_ID_SIZE ];
 	//sessionid[ 0 ] = 0;
     
@@ -384,8 +385,9 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 		HashmapElement *tst = GetHEReq( *request, "sessionid" );
 		HashmapElement *ast = GetHEReq( *request, "authid" );
 		HashmapElement *sst = GetHEReq( *request, "servertoken" ); // TODO: Only allow this on localhost!
+		HashmapElement *lot = GetHEReq( *request, "logintoken" );
 		
-		if( tst == NULL && ast == NULL && sst == NULL )
+		if( tst == NULL && ast == NULL && sst == NULL && lot == NULL )
 		{			
 			struct TagItem tags[] = {
 				{ HTTP_HEADER_CONTENT_TYPE,(FULONG)StringDuplicate( "text/html" ) },
@@ -400,12 +402,104 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 			char buffer[ 256 ];
 			snprintf( buffer, sizeof( buffer ), ERROR_STRING_TEMPLATE, l->sl_Dictionary->d_Msg[DICT_SESSIONID_AUTH_MISSING] , DICT_SESSIONID_AUTH_MISSING );
 			HttpAddTextContent( response, buffer );
-			FERROR( "login function miss parameter sessionid or authid\n" );
+			FERROR( "login function missing parameter sessionid or authid\n" );
 			FFree( sessionid );
 			return response;
 		}
+		
+		// Login by self-refreshing login token
+		if( lot )
+		{
+			//
+			// check if request came from WebSockets
+			//
+			
+			DEBUG("[lot] LoginToken received\n");
+			
+			if( loggedSession == NULL )
+			{
+				//DEBUG("[lot] No logged session!\n");
+				
+				SQLLibrary *sqllib = l->LibrarySQLGet( l );
+
+				// Get authid from mysql
+				if( sqllib != NULL )
+				{
+					char qery[ 1024 ];
+					FULONG uid = 0;
+
+					// TODO: Remove need for existing SessionID (instead generate it if it does not exist)!
+					sqllib->SNPrintF( sqllib, qery, sizeof(qery), "SELECT u.ID, u.Name, k.UniqueID FROM FKeys k, FUser u left outer join FUserSession us on u.ID=us.UserID WHERE k.UserID = u.ID AND k.UniqueID=\"%s\" LIMIT 1", ( char *)lot->hme_Data );
+					
+					void *res = sqllib->Query( sqllib, qery );
+					if( res != NULL )
+					{
+						char **row;
+						if( ( row = sqllib->FetchRow( sqllib, res ) ) )
+						{
+							if( row[ 0 ] != NULL )
+							{
+								char *next;
+								if( row[ 0 ] != NULL )
+								{
+									uid = strtol ( (char *) row[ 0 ], &next, 0);
+								}
+							}
+							
+							if( row[ 1 ] != NULL )
+							{
+								snprintf( userName, 256, "%s", row[ 1 ] );
+							}
+						}
+						sqllib->FreeResult( sqllib, res );
+					}
+					l->LibrarySQLDrop( l, sqllib );
+					
+					// We need a valid UID
+					if( uid > 0 )
+					{
+						loggedSession = USMGetSessionByUserID( l->sl_USM, uid );
+						if( loggedSession == NULL && userName[ 0 ] != 0 )	// only if user exist and it has servertoken
+						{
+							loggedSession = UserSessionNew( NULL, "servertoken", l->fcm->fcm_ID );
+							if( loggedSession != NULL )
+							{
+								sprintf( sessionid, "%s", loggedSession->us_SessionID );
+								
+								User *usr = UMUserGetByName( l->sl_UM, userName );
+								if( usr == NULL )
+								{
+									usr = UMUserGetByNameDB( l->sl_UM, userName );
+									if( usr != NULL )
+									{
+										UMAddUser( l->sl_UM, usr );
+										UserAddSession( usr, loggedSession );
+									}
+								}
+								else
+								{
+									UserAddSession( usr, loggedSession );
+								}
+
+								if( usr && usr->u_ID )
+								{
+									//DEBUG( "[lot] Trying to save!\n" );
+									loggedSession->us_UserID = usr->u_ID;
+									loggedSession->us_LastActionTime = time( NULL );
+									
+									UGMAssignGroupToUser( l->sl_UGM, usr );
+									
+									USMSessionSaveDB( l->sl_USM, loggedSession );
+									USMUserSessionAddToList( l->sl_USM, loggedSession );
+							    }
+							}
+						}
+					}
+				}
+			}
+		}
 		// Ah, we got our session
-		if( tst )
+		else if( tst )
 		{
 			char tmp[ DEFAULT_SESSION_ID_SIZE ];
 			UrlDecode( tmp, (char *)tst->hme_Data );
@@ -692,6 +786,45 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 			}
 		}
 		
+		// Use login session
+		if( loggedSession != NULL && lot != NULL )
+		{
+			// Renew token
+			long unsigned int datalen = 0;
+			char argsHere[ 256 ];
+			sprintf( argsHere, "sessionid=%s&command=getlogintoken&logintoken=%s", loggedSession->us_SessionID, ( char *)lot->hme_Data );
+			returnExtra = l->sl_PHPModule->Run( l->sl_PHPModule, "modules/system/module.php", argsHere, &datalen );
+			
+			// Make sure we do it when we don't fail!
+			if( returnExtra[0] != 'f' && returnExtra[1] != 'a' && returnExtra[2] != 'i' )
+			{
+				int len = 1024 + strlen( returnExtra );
+				char tmp[ len ];
+				snprintf( tmp, len,
+					"{\"result\":\"%d\",\"sessionid\":\"%s\",\"level\":\"%s\",\"userid\":\"%ld\",\"fullname\":\"%s\",\"loginid\":\"%s\",\"uniqueid\":\"%s\",\"extra\":\"%s\"}",
+					0, loggedSession->us_SessionID , loggedSession->us_User->u_IsAdmin ? "admin" : "user", loggedSession->us_User->u_ID, loggedSession->us_User->u_FullName, loggedSession->us_SessionID, loggedSession->us_User->u_UUID, returnExtra != NULL ? returnExtra : "" );
+				//DEBUG("---->[SysWebRequest] logincall logintoken answer: %s\n", tmp );
+				
+				if( returnExtra )
+					FFree( returnExtra );
+				
+				struct TagItem tags[] = {
+					{ HTTP_HEADER_CONTENT_TYPE,(FULONG)StringDuplicate( "text/html" ) },
+					{ HTTP_HEADER_CONNECTION,(FULONG)StringDuplicate( "close" ) },
+					{ TAG_DONE, TAG_DONE }
+				};
+				
+				response = HttpNewSimple( HTTP_200_OK, tags );
+				HttpAddTextContent( response, tmp );
+				if( sessionid )
+					FFree( sessionid );
+				return response;
+			}
+			else
+			{
+				DEBUG( "Failed logintoken response: %s\n", returnExtra );
+			}
+		}
 		
 		{
 			char *deviceid = NULL;
@@ -887,6 +1020,14 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 			{
 				loggedSession->us_User->u_LastActionTime = timestamp;
 			}
+			
+			if( strlen( sessionid ) <= 1 && loggedSession->us_SessionID )
+			{
+				sprintf( sessionid, "%s", loggedSession->us_SessionID );
+			}
+			
+			//DEBUG( "What does it look like? Sessionid: %s, And from LoggedSession: %s\n", sessionid, loggedSession->us_SessionID );
+			
 			
 			SQLLibrary *sqllib  = l->LibrarySQLGet( l );
 			if( sqllib != NULL )
@@ -1967,7 +2108,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 					USMSessionSaveDB( l->sl_USM, us );
 				}
 
-				DEBUG("ADMINADMIN: %d\n", IS_SESSION_ADMIN( loggedSession ) );
+				//DEBUG("ADMINADMIN: %d\n", IS_SESSION_ADMIN( loggedSession ) );
 				
 				if( us != NULL )
 				{
@@ -2081,9 +2222,8 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 					else
 					{
 						snprintf( tmp, sizeof(tmp),
-						"{\"result\":\"%d\",\"sessionid\":\"%s\",\"level\":\"%s\",\"userid\":\"%ld\",\"fullname\":\"%s\",\"loginid\":\"%s\"}",
-						0, loggedSession->us_SessionID , loggedSession->us_User->u_IsAdmin ? "admin" : "user", loggedSession->us_User->u_ID, loggedSession->us_User->u_FullName,  loggedSession->us_SessionID
-						);
+						"{\"result\":\"%d\",\"sessionid\":\"%s\",\"level\":\"%s\",\"userid\":\"%ld\",\"fullname\":\"%s\",\"loginid\":\"%s\",\"uniqueid\":\"%s\",\"extra\":\"%s\"}",
+						0, loggedSession->us_SessionID , loggedSession->us_User->u_IsAdmin ? "admin" : "user", loggedSession->us_User->u_ID, loggedSession->us_User->u_FullName,  loggedSession->us_SessionID, loggedSession->us_User->u_UUID, returnExtra != NULL ? returnExtra : "" );
 					}
 				}
 				else
@@ -2382,8 +2522,8 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 									else
 									{
 										snprintf( tmp, sizeof(tmp) ,
-											"{\"result\":\"%d\",\"sessionid\":\"%s\",\"level\":\"%s\",\"userid\":\"%ld\",\"fullname\":\"%s\",\"loginid\":\"%s\",\"username\":\"%s\"}",
-											loggedUser->u_Error, loggedSession->us_SessionID , loggedSession->us_User->u_IsAdmin ? "admin" : "user", loggedUser->u_ID, loggedUser->u_FullName,  loggedSession->us_SessionID, loggedSession->us_User->u_Name );	// check user.library to display errors
+											"{\"result\":\"%d\",\"sessionid\":\"%s\",\"level\":\"%s\",\"userid\":\"%ld\",\"fullname\":\"%s\",\"loginid\":\"%s\",\"username\":\"%s\",\"uniqueid\":\"%s\",\"extra\":\"%s\"}",
+											loggedUser->u_Error, loggedSession->us_SessionID , loggedSession->us_User->u_IsAdmin ? "admin" : "user", loggedUser->u_ID, loggedUser->u_FullName,  loggedSession->us_SessionID, loggedSession->us_User->u_Name, loggedSession->us_User->u_UUID, returnExtra != NULL ? returnExtra : "" );	// check user.library to display errors
 									}
 								}
 								else
@@ -2475,6 +2615,11 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 				FFree( deviceid );
 			}
 			
+			if( returnExtra != NULL )
+			{
+				FFree( returnExtra );
+			}
+			
 			if( usrname != NULL )
 			{
 				FFree( usrname );
@@ -2501,6 +2646,11 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 			HttpAddTextContent( response, buffer );
 		}
 		*result = 200;
+	}
+	
+	else if( strcmp(  urlpath[ 0 ], "logintoken" ) == 0 )
+	{
+		
 	}
 	
 	//

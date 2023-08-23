@@ -30,14 +30,6 @@ body
 	clear: left;
 }
 
-#loginButton
-{
-	float: right;
-	width: 100px;
-	cursor: pointer;
-}
-
-
 #LoginElement label
 { 
 	text-transform: uppercase; 
@@ -122,11 +114,6 @@ html input[type=text]:focus, html input[type=username]:focus, html input[type=pa
 	border: 1px solid #404040;
 }
 
-#forgotPassword
-{
-	font-size: 0.9em;
-}
-
 button
 {
 	display: block;
@@ -141,11 +128,6 @@ button
 	text-transform: uppercase;
 	font-weight: bold;
 	border-radius: 15px;
-}
-
-#loginButton.Forgot
-{
-	width: 200px;
 }
 
 input[type=checkbox]
@@ -237,6 +219,71 @@ html > body[mobile].Login, html > body[mobile].Login .ViewContainer, html > body
 .HContent100 { width: 100%; }
 
 .FloatLeft { float: left; }
+
+.FlexContent
+{
+	display: flex;
+    gap: 10px;
+    justify-content: space-between;
+    align-content: center;
+    align-items: center;
+}
+
+.FlexContent.Right
+{
+	align-content: right;
+}
+
+.FlexContent.SmallGap
+{
+	gap: 8px;
+}
+
+.FlexContent > input
+{
+	margin: 0 !important;;
+}
+
+@media (max-width: 380px)
+{
+	html #LoginElement button
+	{
+		padding: 2px 2px;
+	}
+}
+
+.HRow.Spacing
+{
+	margin-top: 20px;
+}
+
+#LoginElement button
+{
+	padding: 2px 20px;
+	cursor: pointer;
+	position: relative;
+	overflow: hidden;
+	background: #f0e8e0ff;
+}
+
+#LoginElement button:after
+{
+	content: " ";
+	pointer-events: none;
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	opacity: 0;
+	background-color: rgba(0,0,0,0.05);
+	transition: opacity 0.2s;
+}
+
+#LoginElement button:hover:after
+{
+	opacity: 1;
+}
 
 /* Media queries and elements */
 

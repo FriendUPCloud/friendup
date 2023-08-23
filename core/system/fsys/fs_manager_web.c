@@ -680,8 +680,15 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 							if( j->type && ( j->type == JSON_TYPE_ARRAY || j->type == JSON_TYPE_ARRAY_LIST ) )
 							{
 								// Build SQL query
+								char *userId = FCalloc( 64, sizeof( char ) );
+								snprintf( userId, 64, "\'%ld\' AND ", loggedSession->us_User->u_ID );
+								
 								BufString *sql = BufStringNew();
-								BufStringAdd( sql, "SELECT DISTINCT(`Data`) FROM FShared WHERE `Data` IN ( " );
+								BufStringAdd( sql, "SELECT DISTINCT(`Data`) FROM FShared WHERE `OwnerUserID`=" );
+								BufStringAdd( sql, userId );
+								BufStringAdd( sql, "`Data` IN ( " );
+								
+								FFree( userId );
 								
 								SQLLibrary *sqllib = l->LibrarySQLGet( l );
 								
@@ -730,18 +737,8 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 											}
 										}
 									}
-							
-									char num[ 32 ];
-									if( loggedSession != NULL )
-									{
-										snprintf( num, sizeof(num),"%ld", (long int)loggedSession->us_UserID );
-									}
-									else
-									{
-										strcpy( num, "0" );
-									}
-
-									BufStringAdd( sql, num );
+									
+									BufStringAdd( sql, ")" );
 						
 									// Create output "JSON"
 									BufStringAdd( result, "ok<!--separate-->[" );

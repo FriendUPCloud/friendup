@@ -16,6 +16,8 @@ class FUIChatoverview extends FUIElement
         // Do stuff
         
         let self = this;
+        self.searchMode = 'messages';
+        
         window.addEventListener( 'resize', function()
         {
         	self.handleResize();
@@ -119,22 +121,142 @@ class FUIChatoverview extends FUIElement
         let data = '\
         <div class="Channels"></div>\
         <div class="Chatlist"></div>\
+        <div class="Events"></div>\
         ';
         
         this.domElement.innerHTML = data;
         
         this.domChannels = this.domElement.querySelector( '.Channels' );
         this.domChatlist = this.domElement.querySelector( '.Chatlist' );
-        
-        this.initHome();
+        this.domEvents   = this.domElement.querySelector( '.Events'   );
         
         // Set stuff on this.domElement.innerHTML
         this.refreshDom();
+        this.getEvents();
     }
-    initHome()
+    getEvents()
+    {
+    	let self = this;
+    	self.domEvents.innerHTML = '';
+    	self.domEvents.classList.remove( 'HasEvents' );
+    	let ev = new Module( 'system' );
+		ev.onExecuted = function( me, md )
+		{
+			if( me == 'ok' )
+			{
+				let j = JSON.parse( md );
+				
+				let cnt = self.domEvents;
+				let count = 0;
+				
+				for( let a = 0; a < j.length; a++ )
+				{
+					let existing = cnt.getElementsByClassName( 'UserEvent' );
+					let found = false;
+					for( let b = 0; b < existing.length; b++ )
+					{
+						if( existing[ b ].getAttribute( 'mid' ) == j[a].ID )
+						{
+							found = true;
+							break;
+						}
+					}
+					if( found ) continue;
+					
+					let mess = i18n( j[a].Message );
+					mess = mess.split( '{username}' ).join( '<strong>' + j[a].User + '</strong>' );
+					mess = mess.split( '{groupname}' ).join( '<strong>#' + ( j[a].Groupname ) + '</strong>' );
+					
+					let d = document.createElement( 'div' );
+					d.className = 'UserEvent';
+					
+					let t = document.createElement( 'div' );
+					t.className = 'Title';
+					t.innerHTML = '<span>' + i18n( j[a].Title ) + '</span><div class="Buttons" iid="' + j[a].ID + '"><div class="Ball fa fa-check"></div><div class="Ball fa fa-times"></div></div>';
+					
+					let m = document.createElement( 'div' );
+					m.className = 'Message';
+					m.innerHTML = mess;
+					
+					d.appendChild( t );
+					d.appendChild( m );
+					
+					( function( bt )
+					{
+						let b = bt.querySelector( '.fa-check' );
+						let c = bt.querySelector( '.fa-times' );
+						b.onclick = function()
+						{
+							let m = new Module( 'system' );
+							m.onExecuted = function( ne, nd ){ self.renderOverview(); self.redrawChannels(); self.getEvents(); }
+							m.execute( 'convos', { 
+								method: 'accept-invite', 
+								inviteId: this.parentNode.getAttribute( 'iid' ) 
+							} );
+						}
+						c.onclick = function()
+						{
+							let m = new Module( 'system' );
+							m.onExecuted = function( ne, nd ){ self.getEvents(); }
+							m.execute( 'convos', { 
+								method: 'reject-invite', 
+								inviteId: this.parentNode.getAttribute( 'iid' ) 
+							} );
+						}
+					} )( t );
+					
+					cnt.appendChild( d );
+					
+					count++;
+				}
+				
+				if( count > 0 )
+				{
+					self.domEvents.classList.add( 'HasEvents' );
+				}
+				else
+				{
+					self.domEvents.classList.remove( 'HasEvents' );
+				}
+			}
+			self.handleResize();
+			
+		}
+		ev.execute( 'convos', { method: 'getevents' } );
+    }
+    updateActivityBubble()
+    {
+    	if( !window.unreadMessages ) return;
+    	let self = this;
+    	let rooms = unreadMessages.rooms;
+    	let chans = self.domChannels.getElementsByClassName( 'Channel' );
+    	for( let a = 0; a < chans.length; a++ )
+    	{
+    		if( chans[ a ].classList.contains( 'Group' ) && rooms[ chans[ a ].id ] )
+    		{
+    			if( !chans[ a ].bubble )
+    			{
+    				let b = document.createElement( 'div' );
+    				b.className = 'Activity';
+    				b.innerHTML = '<span>0</span>';
+    				chans[ a ].bubble = b;
+    				chans[ a ].appendChild( b );
+    			}
+    			if( rooms[ chans[ a ].id ].length > 0 )
+    			{
+    				chans[ a ].bubble.classList.add( 'Showing' );
+    				chans[ a ].bubble.innerHTML = '<span>' + rooms[ chans[ a ].id ].length + '</span>';
+    			}
+    			else chans[ a ].bubble.classList.remove( 'Showing' );
+    		}
+    	}
+    }
+    initSearch()
     {
     	// Init content
     	let self = this;
+    	self.cancelMode = false;
+    	
     	let f = new File( 'Progdir:Markup/main_updates.html' );
         f.i18n();
         f.onLoad = function( data )
@@ -142,6 +264,34 @@ class FUIChatoverview extends FUIElement
         	self.domChatlist.innerHTML = data;
         	self.renderOverview();
         	FUI.initialize();
+        	
+        	let cats = self.domChatlist.querySelector( '.Categories' );
+        	function clearCats( not )
+        	{
+        		for( let a = 0; a < cats.childNodes.length; a++ )
+	        	{
+	        		if( cats.childNodes[ a ] != not && cats.childNodes[ a ].classList )
+	        			cats.childNodes[ a ].classList.remove( 'On' );
+	        	}
+        	}
+        	for( let a = 0; a < cats.childNodes.length; a++ )
+        	{
+        		let cat = cats.childNodes[a];
+        		if( cat.classList && cat.classList.contains( 'Category' ) )
+        		{
+        			cat.onclick = function()
+        			{
+        				clearCats( this );
+        				this.classList.add( 'On' );
+        				self.searchMode = this.getAttribute( 'mode' );
+        				self.cancelMode = true;
+        				setTimeout( function()
+        				{
+        					self.cancelSearch();
+    					}, 50 );
+        			}
+        		}
+        	}
         	
         	// Check channels
 			let chans = self.domChannels.getElementsByClassName( 'Channel' );
@@ -162,81 +312,309 @@ class FUIChatoverview extends FUIElement
 					}
 				}
 			}
+			
+			// Search element
+			let se = self.domChatlist.querySelector( '.SearchField' );
+			let bt = self.domChatlist.querySelector( '.SearchButton' );
+			if( !se ) return;
+			bt.onclick = function()
+			{
+				self.executeSearch( se.value );
+			}
+			se.onkeydown = function( e )
+			{
+				if( e.which == 13 )
+				{
+					self.executeSearch( se.value );
+				}
+			}
         }
         f.load();
+    }
+    base64ToBytes( base64 )
+    {
+        const binString = atob( base64 );
+        return Uint8Array.from( binString, ( m ) => m.codePointAt( 0 ) );
+    }
+    cancelSearch()
+    {
+    	let self = this;
+		document.querySelector( '.SearchForm' ).classList.remove( 'Searching', 'Loading' );
+		self.cancelMode = false;
+		document.querySelector( '.SearchResults' ).innerHTML = '';
+    }
+    executeSearch( searchString )
+    {
+    	if( Trim( searchString ) == '' ) return;
+    	let self = this;
+    	document.querySelector( '.SearchForm' ).classList.add( 'Searching', 'Loading' );
+    	let par = document.querySelector( '.SearchResults' );
+    	par.userList = [];
+    	par.innerHTML = '';
+    	function fetchNextPage( page = 0, searchString, cbk )
+    	{
+			if( self.cancelMode ) 
+			{
+				self.cancelSearch();
+				return;
+			}
+			
+			if( self.searchMode == 'messages' )
+			{
+				let m = new Module( 'system' );
+				m.onExecuted = function( e, d )
+				{
+					if( self.cancelMode ) 
+					{
+						self.cancelSearch();
+						return;
+					}
+					
+					if( e == 'ok' )
+					{
+						let mess = JSON.parse( d );
+						let lsearchString = searchString ? searchString.toLowerCase() : '';
+						if( !lsearchString ) return;
+						let str = lsearchString;
+						if( str.indexOf( ',' ) > 0 )
+						{
+							str = lsearchString.split( ',' );
+						}
+						else
+						{
+							str = [ str ];
+						}
+						let out = [];
+						for( let a = 0; a < mess.messages.length; a++ )
+						{
+							let text = mess.messages[a].Message;
+							try
+							{
+								let dec = new TextDecoder().decode( self.base64ToBytes( text ) );
+								text = dec;
+							}
+							catch( e ){};
+							if( !text ) continue;
+							text = text.split( /\<.*?\>/i ).join( '' );
+							for( let c = 0; c < str.length; c++ )
+							{
+								if( text && text.toLowerCase().indexOf( Trim( str[ c ] ) ) >= 0 )
+								{
+									let m = mess.messages[ a ];
+									m.Message = text;
+									out.push( m );
+								}
+							}
+						}
+						if( out.length )
+						{
+							cbk( out );
+						}
+						fetchNextPage( page + 1, searchString, cbk );
+						return;
+					}
+					let sf = document.querySelector( '.SearchForm' );
+					if( sf ) sf.classList.remove( 'Searching', 'Loading' );
+				}
+				m.execute( 'convos', { method: 'messages', roomType: '*', searchString: searchString, page: page } );
+			}
+			else if( self.searchMode == 'groups' )
+			{
+				let m = new Module( 'system' );
+				m.onExecuted = function( e, d )
+				{
+					if( self.cancelMode ) 
+					{
+						self.cancelSearch();
+						return;
+					}
+					
+					if( e == 'ok' )
+					{
+						let mess = JSON.parse( d );
+						cbk( mess );
+						if( mess.length == 100 )
+						{
+							fetchNextPage( page + 1, searchString, cbk );
+							return;
+						}
+					}
+					let sf = document.querySelector( '.SearchForm' );
+					if( sf ) sf.classList.remove( 'Searching', 'Loading' );
+				}
+				m.execute( 'convos', { method: 'public_groups', roomType: '*', searchString: searchString, page: page } );
+			}
+		}
+		fetchNextPage( 0, searchString, function( data )
+		{
+			if( !data || !data.length ) return;
+			for( let a = 0; a < data.length; a++ )
+			{
+				if( !par.userList ) par.userList = {};
+				let us;
+				if( !par.userList[ data[a].FlatUserID ] )
+				{	
+					us = document.createElement( 'div' );
+					us.className = 'SearchedUser';
+					us.setAttribute( 'uuid', data[a].UniqueUserID );
+					par.userList[ data[a].FlatUserID ] = us;
+					par.appendChild( us );
+					
+					let av = document.createElement( 'div' );
+					av.className = 'Avatar';
+					if( data[ a ].Count )
+					{
+						av.id = data[ a ].UniqueID;
+						self.refreshChannelAvatar( av )
+					}
+					else
+					{
+						( function( fuid, avo ) {
+							self.getAvatarFromUser( fuid, function( src )
+							{
+								avo.style.backgroundImage = 'url(' + src + ')';
+								avo.classList.add( 'Loaded' );
+							} );
+						} )( data[ a ].FlatUserID, av );
+					}
+					us.appendChild( av );
+					
+				}
+				else
+				{
+					us = par.userList[ data[a].FlatUserID ];
+				}
+				let dat = '';
+				if( data[a].Date )
+				{
+					dat = self.parseDate( data[ a ].Date );
+					dat = '<span class="Date">' + dat + '</span> ';
+				}
+				if( data[a].Count )
+				{
+					dat = '(' + data[a].Count + ' ' + ( data[a].Count == 1 ? i18n( 'i18n_user' ) : i18n( 'i18n_users' ) ) + ') ';
+				}
+				else
+				{
+					data[a].Count = 0;
+				}
+				
+				let d = document.createElement( 'div' );
+				d.record = data[a];
+				d.className = 'SearchedMessage';
+				d.innerHTML = '<p><em><strong>' + data[a].Name + '</strong>, ' + dat + '</em></p><p>' + ( data[a].Message ? data[a].Message : data[a].Description ) + '</p>';
+				
+				if( data[a].Type )
+				{
+					// Check if we already joined
+					let found = false;
+					let own = false;
+					let chans = self.domChannels.getElementsByClassName( 'Channel' );
+					for( let j = 0; j < chans.length; j++ )
+					{
+						let uid = chans[j].getAttribute( 'id' );
+						if( uid == data[ a ].UniqueID )
+						{
+							if( chans[j].getAttribute( 'own' ) == true )
+							{
+								own = true;
+							}
+							found = true;
+							break;
+						}
+					}
+					if( own || found )
+					{
+						d.innerHTML += '<p><button type="button" class="Go Button"><span class="fa fa-arrow-circle-right"></span> <span>' + i18n( 'i18n_go_to_room' ) + '</span></button></p>';
+					}
+					else if( !found )
+					{
+						d.innerHTML += '<p><button type="button" class="Join Button"><span class="fa fa-plus"></span> <span>' + i18n( 'i18n_join_room' ) + '</span></button></p>';
+					}
+				}
+				
+				let btn = d.querySelector( '.Button' );
+				if( btn )
+				{
+					if( btn.classList.contains( 'Go' ) )
+					{
+						btn.onclick = function()
+						{
+							Application.navigate( 'rooms/' + d.record.UniqueID );
+						}
+					}
+					// Join the group
+					else if( btn.classList.contains( 'Join' ) )
+					{
+						btn.onclick = function()
+						{
+							let m = new Module( 'system' );
+							m.onExecuted = function( me, md )
+							{
+								if( me == 'ok' )
+								{
+									self.redrawChannels( function()
+									{
+										Application.navigate( 'rooms/' + d.record.UniqueID );
+									} );
+								}
+								else
+								{
+									Alert( i18n( 'i18n_failed_to_join_room' ), i18n( 'i18n_failed_to_join_desc' ) );
+								}
+							}
+							m.execute( 'convos', { method: 'join-room', cid: d.record.UniqueID } );
+						}
+					}
+				}
+				
+				us.appendChild( d );
+			}
+		} );
+    }
+    parseDate( instr )
+    {
+        let now = new Date();
+        let test = now.getFullYear() + '-' + StrPad( now.getMonth() + 1, 2, '0' ) + '-' + StrPad( now.getDate(), 2, '0' );
+        let time = new Date( instr );
+        let diff = ( now.getTime() / 1000 ) - ( time.getTime() / 1000 );
+        if( diff < 60 )
+        {
+            if( diff < 1 )
+            {
+                return i18n( 'i18n_just_now' );
+            }
+            return Math.floor( diff ) + ' ' + i18n( 'i18n_seconds_ago' ) + '.';
+        }
+        else if( diff < 3600 )
+        {
+            return Math.floor( diff / 60 ) + ' ' + i18n( 'i18n_minutes_ago' ) + '.';
+        }
+        else if( diff < 86400 )
+        {
+            return Math.floor( diff / 60 / 24 ) + ' ' + i18n( 'i18n_hours_ago' ) + '.';
+        }
+        instr = time.getFullYear() + '-' + StrPad( time.getMonth() + 1, 2, '0' ) + '-' + StrPad( time.getDate(), 2, '0' );
+        if( test == instr.substr( 0, test.length ) )
+            return instr.substr( test.length, instr.length - test.length );
+        return instr;
+    }
+    getAvatarFromUser( userid, cbk )
+    {
+        let i = new Image();
+        i.src = '/system.library/module/?module=system&command=getavatar&userid=' + userid + '&width=128&height=128&authid=' + Application.authId;
+        i.onload = function()
+        {
+           	cbk( this.src );
+            document.body.removeChild( i );
+        }
+        i.style.position = 'absolute';
+        i.style.visibility = 'hidden';
+        document.body.appendChild( i );
     }
     renderOverview()
     {
     	let self = this;
-    	let ev = new Module( 'system' );
-    	ev.onExecuted = function( me, md )
-    	{
-    		if( me == 'ok' )
-    		{
-    			let j = JSON.parse( md );
-    			
-    			let cnt = self.domChatlist.querySelector( '.Online' ).querySelector( '.Content' );
-    			cnt.innerHTML = '';
-    			
-    			for( let a = 0; a < j.length; a++ )
-    			{
-    				let mess = i18n( j[a].Message );
-    				mess = mess.split( '{username}' ).join( '<strong>' + j[a].User + '</strong>' );
-    				mess = mess.split( '{groupname}' ).join( '<strong>#' + ( j[a].Groupname ) + '</strong>' );
-    				
-    				let d = document.createElement( 'div' );
-    				d.className = 'UserEvent';
-    				
-    				let t = document.createElement( 'div' );
-    				t.className = 'Title';
-    				t.innerHTML = '<span>' + i18n( j[a].Title ) + '</span><div class="Buttons" iid="' + j[a].ID + '"><div class="Ball fa fa-check"></div><div class="Ball fa fa-times"></div></div>';
-    				
-    				let m = document.createElement( 'div' );
-    				m.className = 'Message';
-    				m.innerHTML = mess;
-    				
-    				d.appendChild( t );
-    				d.appendChild( m );
-    				
-    				( function( bt )
-    				{
-    					let b = bt.querySelector( '.fa-check' );
-    					let c = bt.querySelector( '.fa-times' );
-    					b.onclick = function()
-    					{
-    						let m = new Module( 'system' );
-    						m.onExecuted = function( ne, nd ){ self.renderOverview(); self.redrawChannels(); }
-    						m.execute( 'convos', { 
-    							method: 'accept-invite', 
-    							inviteId: this.parentNode.getAttribute( 'iid' ) 
-							} );
-    					}
-    					c.onclick = function()
-    					{
-    						let m = new Module( 'system' );
-    						m.onExecuted = function( ne, nd ){ self.renderOverview(); self.redrawChannels(); }
-    						m.execute( 'convos', { 
-    							method: 'reject-invite', 
-    							inviteId: this.parentNode.getAttribute( 'iid' ) 
-							} );
-    					}
-    				} )( t );
-    				
-    				cnt.appendChild( d );
-    			}
-    		}
-    		else
-    		{
-    			let onl = self.domChatlist.querySelector( '.Online' )
-    			if( onl )
-    			{
-    				onl.querySelector( '.Content' ).innerHTML = '<p>' + i18n( 'i18n_no_new_events' ) + '</p>';
-				}
-    		}
-    		self.handleResize();
-    		
-    	}
-    	ev.execute( 'convos', { method: 'getevents' } );
     }
     grabAttributes( domElement )
     {
@@ -265,7 +643,7 @@ class FUIChatoverview extends FUIElement
         }
         if( record && record.Type == 'User' )
         {
-        	this.activateDirectMessage( record.Fullname, false );
+        	this.activateDirectMessage( record.ID, false );
         }
     }
     // Get markup for object
@@ -325,7 +703,7 @@ class FUIChatoverview extends FUIElement
         sm.parentNode.removeChild( sm );
     }
     // Redraw channels
-    redrawChannels()
+    redrawChannels( cbk = false )
     {
     	let self = this;
     	
@@ -336,9 +714,9 @@ class FUIChatoverview extends FUIElement
     	
     	// Default
     	self.domChannels.innerHTML = '\
+    	<div class="Channel DM" uniqueid="dm"></div>\
     	<div class="Channel Home" uniqueid="home"></div>\
-    	<div class="Channel Jeanie" uniqueid="jeanie"></div>\
-    	<div class="Channel DM" uniqueid="dm"></div>';
+    	<div class="Channel Jeanie" uniqueid="jeanie"></div>';
     	
     	let m = new Module( 'system' );
     	m.onExecuted = function( me, md )
@@ -418,10 +796,11 @@ class FUIChatoverview extends FUIElement
 				{
 					if( prop == 'home' )
 					{
-						ele.innerHTML = '<i class="fa fa-home"></i>';
+						ele.innerHTML = '<i class="fa fa-search"></i>';
 						ele.onclick = function()
 						{
-							self.initHome();
+							self.currentType = 'search';
+							self.initSearch();
 						}
 					}
 					else if( prop == 'jeanie' )
@@ -434,7 +813,7 @@ class FUIChatoverview extends FUIElement
 					}
 					else if( prop == 'dm' )
 					{
-						ele.style.backgroundImage = 'url(' + getImageUrl( 'Progdir:Assets/dm.png' ) + ')';
+						ele.style.backgroundImage = 'url(' + getImageUrl( 'Progdir:Assets/chat.svg' ) + ')';
 						ele.onclick = function()
 						{
 							self.setActiveChannel( prop, this );
@@ -463,13 +842,19 @@ class FUIChatoverview extends FUIElement
 				} )( chans[ a ], uniqueid, groupId, groupName );
 			}
 			self.handleResize();
+			if( !self.initialized )
+			{
+				self.initialized = true;
+				self.domElement.querySelector( '.DM' ).click();
+			}
+			if( cbk ) cbk();
     	}
     	m.execute( 'convos', { 'method': 'getrooms' } );
     }
-    pollChatroom( user, uid )
+    pollChatroom( uniqueId, uid )
     {
     	// Just poll myself!
-        if( user == Application.fullName )
+        if( uniqueId == Application.uniqueId )
         {
         	let chat = FUI.getElementByUniqueId( 'messages' );
         	chat.refreshMessages();
@@ -499,40 +884,27 @@ class FUIChatoverview extends FUIElement
     		}
     	}
     	let chlist = this.domElement.querySelector( '.Chatlist' );
-    	chlist.innerHTML = '<fui-contacts parentelement="convos" uniqueid="contacts" user="' + user + '"></fui-contacts>';
+    	chlist.innerHTML = '<fui-contacts parentelement="convos" uniqueid="contacts" user="' + uniqueId + '"></fui-contacts>';
     	FUI.initialize();
     }
-    activateDirectMessage( user, message )
+    activateDirectMessage( uniqueId, message )
     {
     	// Just poll myself!
-        if( user == Application.fullName )
+        if( uniqueId == Application.uniqueId )
         {
         	let chat = FUI.getElementByUniqueId( 'messages' );
         	chat.refreshMessages();
         	return;
         }
-        let tabs = this.domChannels.getElementsByClassName( 'Channel' );
-        for( let a = 0; a < tabs.length; a++ )
-    	{
-    		if( tabs[ a ].classList.contains( 'DM' ) )
-    		{
-    		    // It is already active
-    		    if( tabs[ a ].classList.contains( 'Active' ) )
-    		    {
-    		        let contacts = FUI.getElementByUniqueId( 'contacts' );
-    		        contacts.poll( user, message );
-    		        return;
-    		    }
-    			tabs[ a ].classList.add( 'Active' );
-    		}
-    		else
-    		{
-    			tabs[ a ].classList.remove( 'Active' );
-    		}
-    	}
+        
+        // Do not reinitialize
+        let chatList = FUI.getElementByUniqueId( 'contacts' );
+        if( chatList && chatList.options.user == uniqueId ) return;
+        
     	let chlist = this.domElement.querySelector( '.Chatlist' );
-    	chlist.innerHTML = '<fui-contacts parentelement="convos" uniqueid="contacts" user="' + user + '"></fui-contacts>';
+    	chlist.innerHTML = '<fui-contacts parentelement="convos" uniqueid="contacts" user="' + uniqueId + '"></fui-contacts>';
     	FUI.initialize();
+    	this.currentType = 'dm';
     }
     // Set active channel
     setActiveChannel( label, tab, groupId = false, groupName = false )
@@ -553,17 +925,25 @@ class FUIChatoverview extends FUIElement
 		let chlist = this.domElement.querySelector( '.Chatlist' );
 		if( label == 'jeanie' )
 		{
+			// No reinitializing
+	    	if( this.currentType == 'jeanie' ) return;
 			chlist.innerHTML = '<fui-topics parentelement="convos" uniqueid="topics" name="jeanie"></fui-topics>';
+			this.currentType = 'jeanie';
 	    }
 	    else if( label == 'dm' )
 	    {
+	    	// No reinitializing
+	    	if( this.currentType == 'dm' ) return;
 	        chlist.innerHTML = '<fui-contacts parentelement="convos" uniqueid="contacts"></fui-contacts>';
+	        this.currentType = 'dm';
 	    }
 	    // Initialize a contacts element, with 
 	    else if( label == 'chatroom' )
 	    {
+	    	if( this.currentType == 'chatroom' && this.currentChatroom == groupId ) return;
 	    	let own = tab.getAttribute( 'own' );
 	    	chlist.innerHTML = '<fui-contacts parentelement="convos" uniqueid="contacts" group="' + groupId + '" name="' + groupName + '" own="' + own + '"></fui-contacts>';
+	    	this.currentType = 'chatroom'; this.currentChatroom = groupId;
 	    }
 	    else
 	    {

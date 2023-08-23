@@ -39,6 +39,14 @@ Application.run = function( msg ){
 	        serverQueue.push( msg.args );
 	    }
 	}
+	
+	let s = new Shell();
+	s.onReady = function( data )
+	{
+		this.execute( 'makedir Home:Uploads' );
+		this.close();
+	}
+	
 };
 
 Application.receiveMessage = function( msg )
@@ -76,7 +84,6 @@ Application.receiveMessage = function( msg )
         }
         else if( msg.command == 'broadcast-poll-remote' )
         {
-        	console.log( '[Client] Receiving broadcast poll function in main.js' );
         	this.view.sendMessage( msg );
         }
     }

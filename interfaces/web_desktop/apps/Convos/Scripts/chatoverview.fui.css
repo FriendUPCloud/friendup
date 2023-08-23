@@ -1,4 +1,4 @@
-/* Channels */
+
 
 .FUIChatoverview
 {
@@ -8,6 +8,177 @@
     width: 100%;
     height: 100%;
 }
+
+.SearchForm
+{
+	transition: filter,opacity 0.2s,0.2s;
+	filter: none;
+	opacity: 1;
+}
+
+.SearchForm.Loading
+{
+	opacity: 0.6;
+	filter: blur(2px);
+	pointer-events: none;
+}
+
+/* Search ------------------------------------------------------------------- */
+
+.FUIChatoverview .OverviewUpdates .Search > .SearchResults
+{
+	position: absolute;
+	top: 180px;
+	left: 0;
+	width: 100%;
+	height: calc(100% - 180px);
+	overflow: auto;
+	scroll-behavior: smooth-scrolling;
+	display: flex;
+    flex-wrap: wrap;
+    flex-direction: row;
+    justify-content: center;
+    align-items: flex-start;
+	gap: 20px;
+	text-align: center;
+}
+
+.SearchResults .Avatar
+{
+	width: 128px;
+	height: 128px;
+	background-position: center;
+    background-size: cover;
+	border-radius: 128px;
+	border-color: white;
+	border-style: solid;
+	border-width: 3px;
+	background-color: gray;
+	margin: 0 0 15px 0;
+	display: inline-block;
+}
+
+.SearchResults .SearchedUser
+{
+    width: 350px;
+    padding: 15px;
+    box-sizing: border-box;
+    max-height: 440px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0px 0px 10px 1px rgba(0,0,0,0.02);
+    border-radius: 15px;
+    transition: max-height,height 0.2s,0.2s;
+    margin: 0 0 15px 0;
+}
+
+.SearchResults .SearchedUser:before 
+{
+    position: absolute;
+    top: 0;
+    left: 0;
+    content: " ";
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(0deg, rgba(0,0,0,0.2), rgba(0,0,0,0.05));
+    z-index: 2;
+    border-radius: 15px;
+    pointer-events: none;
+    box-shadow: inset 0px 0px 10px 1px rgba(0,0,0,0.1);
+}
+
+
+.SearchResults .SearchedUser > .SearchedMessage
+{
+	box-sizing: border-box;
+	background-color: white;
+	border-radius: 15px;
+	padding: 15px;
+	margin: 0 0 15px 0;
+	color: black;
+	word-wrap: break-word;
+	cursor: pointer;
+	outline: 2px solid rgba(255,255,255,0.0);
+	transition: outline 0.2s;
+}
+
+.SearchResults .SearchedUser > .SearchedMessage:hover
+{
+	outline: 2px solid rgba(255,255,255,0.5);
+}
+
+.SearchResults .SearchedUser:hover
+{
+	max-height: max-content;
+}
+
+
+/* Events ------------------------------------------------------------------- */
+
+.FUIChatoverview > .Events
+{
+	position: absolute;
+	top: 0;
+	left: 100%;
+	width: 0px;
+	height: 100%;
+	pointer-events: none;
+	box-sizing: border-box;
+	overflow: visible;
+}
+
+.FUIChatoverview .Events .UserEvent 
+{
+    background-color: var(--fui-list-background);
+    color: var(--fui-list-item-color);
+    padding: 10px;
+    border-radius: 10px;
+    margin: 0 0 15px 0;
+    pointer-events: all;
+    opacity: 0;
+    left: 0;
+    position: relative;
+    top: 15px;
+    transition: opacity,left 0.2s,0.2s;
+}
+
+.FUIChatoverview .Events.HasEvents .UserEvent 
+{
+    left: -240px;
+    width: 205px;
+    box-shadow: 2px 2px 0px 1px rgba(0,0,0,0.05);
+    opacity: 1;
+}
+
+
+.FUIChatoverview .Events .UserEvent .Title
+{
+    border-bottom: 1px solid rgba(0,0,0,0.1);
+    margin: 0 0 10px 0;
+    padding: 0 0 10px 0;
+    font-weight: 600;
+	display: flex;
+	justify-content: space-between;
+}
+
+.FUIChatoverview .Events .UserEvent .Title > .Buttons
+{
+	width: 40px;
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    align-items: center;
+    flex-direction: row;
+}
+
+.FUIChatoverview .Events .UserEvent .Title > .Buttons > div
+{
+	cursor: pointer;
+}
+
+/* End events */
+
+/* Channels ----------------------------------------------------------------- */
 
 .FUIChatoverview > .Channels
 {
@@ -162,11 +333,33 @@
     border-color: var(--fui-background);
     box-shadow: inset 0px 0px 15px rgba(255,255,255,0.4);
     position: relative;
-    overflow: hidden;
     transition: opacity,filter,box-shadow 1.5s,2.25s,0.45s;
     filter: drop-shadow(0px 0px 0px rgba(255,255,255,0.0));
     box-shadow: 0px 0px 0px 1px rgba(0,0,0,0.0);
     opacity: 0;
+}
+
+.FUIChatoverview > .Channels > .Channel .Activity
+{
+    position: absolute;
+    opacity: 0;
+    right: -2px;
+    bottom: -2px;
+    width: 14px;
+    height: 15px;
+    background-color: var(--fui-palette-chan03);
+    color: black;
+    text-align: center;
+    border-radius: 100%;
+    border: 2px solid var(--fui-background);
+    font-size: 80%;
+    transition: opacity 0.8s;
+    z-index: 15;
+}
+
+.FUIChatoverview > .Channels > .Channel .Activity.Showing 
+{
+	opacity: 1;
 }
 
 .FUIChatoverview > .Channels > .Channel.Loaded
@@ -177,6 +370,7 @@
 .FUIChatoverview > .Channels > .Channel::after
 {
 	content: " ";
+	border-radius: 100%;
 	position: absolute;
 	top: 0;
 	left: 0;
@@ -300,7 +494,85 @@ body:not([mobile=mobile]) .FUIChatoverview > .HoverElement.Showing
     }
 }
 
-/* Overview */
+/* Home / Search ------------------------------------------------------------ */
+
+.FUIChatoverview .OverviewUpdates .Search
+{
+	width: 100%;
+	height: 100%;
+	top: 0;
+	left: 0;
+	position: absolute;
+	background-image: url(/webclient/apps/Convos/Assets/fun2.png);
+}
+
+.FUIChatoverview .OverviewUpdates .Search:after 
+{
+    content: " ";
+    background-color: var(--fui-module-background);
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0.2;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.FUIChatoverview .OverviewUpdates .Search > div
+{
+	z-index: 2;
+	position: relative;
+}
+
+.FUIChatoverview .OverviewUpdates
+{
+	container-name: overview;
+	container-type: inline-size;
+}
+
+@container overview (max-width: 400px)
+{
+	.OverviewUpdates .SearchForm 
+	{
+		padding: 15px;
+		width: calc(100% - 40px);
+		display: block;
+		box-sizing: border-box;
+		margin: 0 20px 0 20px;
+	}
+	
+	.OverviewUpdates .SearchForm button
+	{
+		color: rgba(0,0,0,0);
+		font-size: 0;
+		width: 25px;
+		text-overflow: hidden;
+		text-align: center;
+		overflow: hidden;
+	}
+	.OverviewUpdates .SearchForm button, 
+	.OverviewUpdates .SearchForm input
+	{
+		height: 26px;
+		flex: none;
+	}
+	.OverviewUpdates .SearchForm button:before
+	{
+		font-size: 15px;
+		color: initial;
+	}
+}
+
+.FUIChatoverview .OverviewUpdates .Search h2
+{
+	text-align: center;
+	font-size: 150%;
+	color: var(--fui-color);
+	padding: 50px 10px 20px 10px;
+	font-weight: 600;
+}
 
 .FUIChatoverview .OverviewUpdates 
 {
@@ -314,11 +586,83 @@ body:not([mobile=mobile]) .FUIChatoverview > .HoverElement.Showing
     overflow: auto;
 }
 
+.OverviewUpdates .SearchForm 
+{
+    padding: 15px;
+    background: rgba(0,0,0,0.2);
+    border-radius: 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: stretch;
+    align-content: center;
+    max-width: 330px;
+    margin: auto;
+}
+
+.OverviewUpdates .SearchSelection
+{
+	display: block;
+	margin: 20px auto 10px auto;
+	padding: 15px;
+	width: 400px;
+	max-width: 100%;
+	text-align: center;
+}
+
+.OverviewUpdates .Categories
+{
+	display: flex;
+    gap: 10px;
+    align-items: center;
+    justify-content: center;
+}
+
+.OverviewUpdates .Categories > .Category
+{
+	border-radius: 15px;
+	cursor: pointer;
+	color: var(--fui-menu-background);
+    background-color: var(--fui-module-color);
+    font-weight: normal;
+    transition: color,background-color 0.15s,0.15s;
+	padding: 10px;
+}
+
+.OverviewUpdates .Categories > .Category.On
+{
+	color: var(--fui-module-color);
+    background-color: var(--fui-menu-background);
+    font-weight: bold;
+}
+
+.OverviewUpdates .Content 
+{
+    position: absolute;
+    top: 180px;
+    left: 0;
+    width: 100%;
+    height: calc(100% - 180px);
+    overflow: auto;
+    background: rgba(0,0,0,0.05);
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.OverviewUpdates .SearchForm input
+{
+	flex: 2.5;
+}
+
+.OverviewUpdates .SearchForm button
+{
+	flex: 1.2;
+}
+
 .FUIChatoverview .OverviewUpdates p
 {
 	margin: 0 0 10px 0;
 }
-
+border-radius
 .FUIChatoverview .OverviewUpdates p:last-child
 {
 	margin: 0;
@@ -329,100 +673,8 @@ body:not([mobile=mobile]) .FUIChatoverview > .HoverElement.Showing
     padding: 0 0 15px 0;
 }
 
-.FUIChatoverview .OverviewUpdates .Updates, 
-.FUIChatoverview .OverviewUpdates .Online, 
-.FUIChatoverview .OverviewUpdates .News 
-{
-    position: absolute;
-    width: 50%;
-    height: 50%;
-    top: 15px;
-    left: 0px;
-    background-color: var(--ColorBackground);
-    color: var(--ColorText);
-    box-sizing: border-box;
-    overflow: auto;
-    padding: 15px;
-}
 
-@media (max-width: 640px)
-{
-	html .FUIChatoverview .OverviewUpdates .Updates, 
-	html .FUIChatoverview .OverviewUpdates .Online, 
-	html .FUIChatoverview .OverviewUpdates .News 
-	{
-		position: relative;
-		width: calc(100% - 30px);
-		height: 45px;
-		left: auto;
-		top: auto;
-		margin: 15px;
-		transition: height 0.2s;
-		overflow: hidden;
-	}
-}
-
-.FUIChatoverview .OverviewUpdates .News
-{
-	height: calc(100% - 30px);
-    border-radius: 15px;
-    left: 15px;
-    width: calc(50% - 15px);
-}
-
-.FUIChatoverview .OverviewUpdates .Updates 
-{
-    height: calc(50% - 15px);
-    left: calc(50% + 15px);
-    width: calc(50% - 30px);
-    border-radius: 15px;
-}
-
-.FUIChatoverview .OverviewUpdates .Online
-{
-    height: calc(50% - 30px);
-    top: calc(50% + 15px);
-    width: calc(50% - 30px);
-    left: calc(50% + 15px);
-    border-radius: 15px;
-}
-
-
-.FUIChatoverview .OverviewUpdates .UserEvent 
-{
-    background-color: var(--fui-list-background);
-    color: var(--fui-list-item-color);
-    padding: 10px;
-    border-radius: 10px;
-    margin: 0 0 15px 0;
-}
-
-.FUIChatoverview .OverviewUpdates .UserEvent .Title
-{
-    border-bottom: 1px solid rgba(0,0,0,0.1);
-    margin: 0 0 10px 0;
-    padding: 0 0 10px 0;
-    font-weight: 600;
-	display: flex;
-	justify-content: space-between;
-}
-
-.FUIChatoverview .OverviewUpdates .UserEvent .Title > .Buttons
-{
-	width: 40px;
-    display: flex;
-    flex-wrap: nowrap;
-    justify-content: space-between;
-    align-items: center;
-    flex-direction: row;
-}
-
-.FUIChatoverview .OverviewUpdates .UserEvent .Title > .Buttons > div
-{
-	cursor: pointer;
-}
-
-/* Scrolling */
+/* Scrolling ---------------------------------------------------------------- */
 
 .FUIChatoverview .Channels.Scroll::-webkit-scrollbar, 
 html body .FUIChatoverview .Channels.Scroll::-webkit-scrollbar-track,
@@ -470,4 +722,13 @@ html body.activated .FUIChatoverview .Channels.Scroll::-webkit-scrollbar-track
 	text-align: center;
 	font-size: 30px;
 }
+
+/* Theme exceptions */
+
+.FUIChatoverview > .Channels > .Channel.Active 
+{
+    border-color: #000000bb;
+    box-shadow: 0px 0px 0px 4px rgb(255 255 255 / 80%);
+}
+
 

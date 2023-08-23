@@ -549,7 +549,7 @@ function GetNotificationEvent( uniqueId )
 // The notifications -----------------------------------------------------------
 
 // Notify!
-function Notify( message, callback, clickcallback )
+function Notify( message, callback = false, clickcallback = false )
 {
 	if( !Workspace.notifications ) return;
 	if( !message ) return;
@@ -607,7 +607,8 @@ function Notify( message, callback, clickcallback )
 				not.onclick = function( e )
 				{
 					window.focus();
-					clickcallback( e );
+					if( clickcallback )
+						clickcallback( e );
 				}
 			}
 			if( Notification.permission === 'granted' )

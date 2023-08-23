@@ -99,10 +99,12 @@ if( isset( $args->args ) )
 		                {
 				            $options = new stdClass();
 				            $options->Condition = 'activity';
-				            $options->Seconds = 300; // Five minutes since last activity
+				            $options->Seconds = 150; // 2.5 minutes since last activity
 				            $message = new stdClass();
-				            $message->Title = 'You got a message from ' . $User->FullName;
+				            $message->Title = $User->FullName . ' - Friend OS';
 				            $message->Body = $out->message;
+				            $message->Application = 'Convos';
+				            $message->ApplicationData = '{"uuid":"' . $User->UniqueID . '","type":"dm-user"}';
 				            $User->WebPush( $targetUser, $options, $message );
 			            }
 		            }
@@ -160,7 +162,6 @@ if( isset( $args->args ) )
     }
     if( isset( $args->args->method ) )
     {
-        //error_log( '[convos.php] Method start.' );
         if( $args->args->method == 'messages' )
         {
             $rows = false;
@@ -173,14 +174,58 @@ if( isset( $args->args ) )
             
             if( isset( $args->args->roomType ) )
             {
-                if( $args->args->roomType == 'jeanie' )
+            	$limiter = '';
+            	if( isset( $args->args->startMessage ) && isset( $args->args->mode ) && $args->args->mode == 'history' )
+            	{
+            		$limiter = ' AND m.ID < ' . intval( $args->args->startMessage, 10 );
+            	}
+            
+            	// Get all messages by paging
+            	if( $args->args->roomType == '*' )
+            	{
+            		// Pages start on 0, then 1, 2, 3 etc (multiplied by 100)
+            		$page = isset( $args->args->page ) ? intval( $args->args->page, 10 ) : 0;
+            		$rows = $SqlDatabase->FetchObjects( $q = ( '
+            			SELECT m.*, owner.ID AS `FlatUserID`, owner.UniqueID, owner.FullName AS `Name` FROM Message m, FUser u, FUser owner
+            			WHERE
+            				(
+		        				m.RoomType = \'dm-user\' AND 
+				                ( 
+				                    ( 
+				                        m.UniqueUserID = \'' . $User->UniqueID . '\' AND 
+				                        m.UniqueUserID = u.UniqueID AND
+				                        owner.UniqueID = m.UniqueUserID
+				                    )
+				                    OR
+				                    (
+				                        m.UniqueUserID != \'' . $User->UniqueID . '\' AND
+				                        m.UniqueUserID = u.UniqueID AND
+				                        m.TargetID = \'' . $User->UniqueID . '\' AND
+				                        owner.UniqueID = m.UniqueUserID
+				                    )
+				                )
+			                )
+			                OR
+			                (
+			                	m.RoomType = \'chatroom\' AND 
+				                ( 
+				                    m.UniqueUserID = u.UniqueID AND
+				                    m.TargetID != \'' . $User->UniqueID . '\' AND
+				                    owner.UniqueID = m.UniqueUserID
+				                )
+			                )
+            			ORDER BY m.ID DESC LIMIT ' . ( $page * 100 ) . ', 100
+            		' ) );
+            	}
+                else if( $args->args->roomType == 'jeanie' )
                 {
                     $rows = $SqlDatabase->FetchObjects( '
                         SELECT 
-                            m.ID, m.Message, m.Date, u.Name, u.UniqueID FROM `Message` m, FUser u 
+                            m.ID, m.Seen, m.Message, m.Date, u.Name, u.UniqueID FROM `Message` m, FUser u 
                         WHERE
                             m.RoomType = \'jeanie\' AND m.UniqueUserID=\'' . $User->UniqueID . '\' AND
-                            m.ParentID = \'' . ( isset( $args->args->cid ) ? $args->args->cid : '0' ) . '\' AND m.UniqueUserID = u.UniqueID' . $lastId . '
+                            m.ParentID = \'' . ( isset( $args->args->cid ) ? $SqlDatabase->_link->real_escape_string( $args->args->cid ) : '0' ) . '\' AND m.UniqueUserID = u.UniqueID' . $lastId . '
+                        ' . $limiter . '
                         ORDER BY 
                             m.Date DESC, m.ID DESC LIMIT 50
                     ' );
@@ -189,7 +234,7 @@ if( isset( $args->args ) )
                 {
                     $rows = $SqlDatabase->FetchObjects( '
                     SELECT 
-                        m.ID, m.Message, m.Date, u.Name, u.UniqueID FROM `Message` m, FContact u 
+                        m.ID, m.Seen, m.Message, m.Date, u.Name, u.UniqueID FROM `Message` m, FContact u 
                     WHERE
                         m.RoomType = \'dm-contact\' AND 
                         ( 
@@ -206,6 +251,7 @@ if( isset( $args->args ) )
                             )
                         )
                         u.ID = m.TargetID' . $lastId . '
+                    ' . $limiter . '
                     ORDER BY 
                         m.Date DESC, m.ID DESC LIMIT 50
                     ' );
@@ -214,7 +260,7 @@ if( isset( $args->args ) )
                 {
                     $rows = $SqlDatabase->FetchObjects( '
                     SELECT 
-                        m.ID, m.Message, m.Date, u.Name, u.UniqueID FROM `Message` m, FUser u 
+                        m.ID, m.Seen, m.Message, m.Date, u.Name, u.UniqueID FROM `Message` m, FUser u 
                     WHERE
                         m.RoomType = \'dm-user\' AND 
                         ( 
@@ -231,6 +277,7 @@ if( isset( $args->args ) )
                                 m.TargetID = \'' . $User->UniqueID . '\'
                             )
                         )' . $lastId . '
+                    ' . $limiter . '
                     ORDER BY 
                         m.Date DESC, m.ID DESC LIMIT 50
                     ' );
@@ -239,13 +286,14 @@ if( isset( $args->args ) )
                 {
                 	$rows = $SqlDatabase->FetchObjects( '
                     SELECT 
-                        m.ID, m.Message, m.Date, u.Name, u.UniqueID FROM `Message` m, FUser u 
+                        m.ID, m.Seen, m.Message, m.Date, u.Name, u.UniqueID FROM `Message` m, FUser u 
                     WHERE
                         m.RoomType = \'chatroom\' AND 
                         ( 
                             m.UniqueUserID = u.UniqueID AND
                             m.TargetID = \'' . $SqlDatabase->_link->real_escape_string( $args->args->cid ) . '\'
                         )' . $lastId . '
+                    ' . $limiter . '
                     ORDER BY 
                         m.Date DESC, m.ID DESC LIMIT 50
                     ' );
@@ -259,12 +307,18 @@ if( isset( $args->args ) )
                 {
                     $out = new stdClass();
                     $out->ID = $v->ID;
-                    $out->Name = $v->Name;
+                    if( isset( $v->FlatUserID ) )
+                    	$out->FlatUserID = $v->FlatUserID;
+                	if( isset( $v->Name ) )
+	                    $out->Name = $v->Name;
                     $out->Message = $v->Message;
                     $out->Date = $v->Date;
+                    $out->Timestamp = strtotime( $v->Date );
                     $out->Own = false;
-                    if( $v->UniqueID == $User->UniqueID )
-                        $out->Own = true;
+                    $out->Seen = $v->Seen;
+                    if( isset( $v->UniqueID ) )
+	                    if( $v->UniqueID == $User->UniqueID )
+    	                    $out->Own = true;
                     $outlist[] = $out;
                 }
                 die( 'ok<!--separate-->{"response":1,"messages":' . json_encode( $outlist ) . '}' );
@@ -274,7 +328,94 @@ if( isset( $args->args ) )
             {
                 die( 'ok<!--separate-->' . json_encode( $response ) );
             }
-            die( 'fail<!--separate-->{"response":0,"message":"Failed to retrieve messages."}' );
+            die( 'fail<!--separate-->{"response":0,"message":"Failed to retrieve messages."}' . $q );
+        }
+        else if( $args->args->method == 'message-seen' )
+        {
+        	$vet = [];
+        	foreach( $args->args->messages as $m )
+        		$vet[] = intval( $m, 10 );
+        	
+        	if( count( $vet ) > 0 )
+        	{
+        		// Get users
+        		if( $users = $SqlDatabase->fetchObjects( '
+        			SELECT u.* FROM FUser u, `Message` m 
+        			WHERE 
+        				u.UniqueID = m.UniqueUserID AND 
+        				m.ID IN ( ' . implode( ',', $vet ) . ' )
+        		' ) )
+        		{
+        			foreach( $users as $user )
+        			{
+        				// Notify user that we invited them!
+						$msg = new stdClass();
+						$msg->appname = 'Convos';
+						$msg->dstuniqueid = $user->UniqueID;
+						$sub = new stdClass();
+						$sub->type = 'update-seen';
+						$sub->messages = $vet;
+						$msg->msg = json_encode( $sub );
+						sendUserMsg( $msg );
+        			}
+    			}
+        		
+		    	$outstr = 'UPDATE `Message` SET `Seen`=\'1\' WHERE `Seen` != \'1\' AND `ID` IN ( ' . implode( ',', $vet ) . ' )';
+		    	$SqlDatabase->query( $outstr );
+		    	
+		    	die( 'ok' );
+	    	}
+	    	die( 'fail' );
+        }
+        // Get public groups
+        else if( $args->args->method == 'public_groups' )
+        {
+        	$key = $SqlDatabase->_link->real_escape_string( $args->args->searchString );
+        	$page = intval( $args->args->page, 10 );
+        	if( $rows = $SqlDatabase->fetchObjects( '
+        		SELECT * FROM FUserGroup fug
+        		WHERE
+        			fug.Type = "chatroom" AND
+        			fug.Status = 1 AND
+        			( fug.Name LIKE "%' . $key . '%" OR fug.Description LIKE "%' . $key . '%" )
+    			ORDER BY
+    				fug.Name ASC
+    			LIMIT ' . $page . ',' . ( $page + 100 ) . '
+        	' ) )
+        	{
+        		$out = [];
+        		foreach( $rows as $r )
+        		{
+        			$o = new stdClass();
+        			$o->Name = $r->Name;
+        			$o->Description = $r->Description;
+        			$o->UniqueID = $r->UniqueID;
+        			$o->FlatUserID = $r->UniqueID;
+        			$o->Type = 'chatroom';
+        			if( $cnt = $SqlDatabase->fetchObject( 'SELECT COUNT(*) AS CNT FROM FUserToGroup fug WHERE fug.UserGroupID=\'' . $r->ID . '\'' ) )
+        			{
+        				$o->Count = $cnt->CNT;
+    				}
+        			$out[] = $o;
+        		}
+        		die( 'ok<!--separate-->' . json_encode( $out ) );
+        	}
+        	die( 'fail<!--separate-->' );
+        }
+        else if( $args->args->method == 'join-room' )
+        {
+        	$o = new dbIO( 'FUserGroup' );
+        	$o->UniqueID = $args->args->cid;
+        	if( $o->Load() )
+        	{
+        		// Open group
+        		if( $o->Status == 1 )
+        		{
+        			$SqlDatabase->query( 'INSERT INTO FUserToGroup ( UserID, UserGroupID ) VALUES ( \'' . $User->ID . '\', \'' . $o->ID . '\' )' );
+        			die( 'ok<!--separate-->' );
+        		}
+        	}
+        	die( 'fail<!--separate-->' );
         }
         // Get the original file OR
         // Get an attachment on ID
@@ -427,6 +568,40 @@ if( isset( $args->args ) )
     		}
 			die( 'fail<!--separate-->{"message":"Could not find attachment.","response":-1}' );
         }
+        else if( $args->args->method == 'onlinestatus' )
+        {
+        	$ar = '';
+        	$a = 0;
+        	foreach( $args->args->users as $u )
+        	{
+        		if( $a != 0 )
+        			$ar .= ',';
+        		$a++;
+        		$ar .= '"' . $u . '"';
+        	}
+        	if( $us = $SqlDatabase->fetchObjects( '
+        		SELECT FullName, LoginTime, LastActionTime, UniqueID FROM FUser WHERE UniqueID IN ( ' . $ar . ' )
+        	' ) )
+        	{
+        		$status = [];
+        		$now = mktime();
+        		foreach( $us as $u )
+        		{
+        			$o = new stdClass();
+        			$o->Name = $u->FullName;
+        			$o->UniqueID = $u->UniqueID;
+        			$o->OnlineStatus = 'offline';
+        			$o->Diff = $now - $u->LastActionTime;
+        			if( $o->Diff <= 300 )
+        			{
+        				$o->OnlineStatus = 'online';
+        			}
+    				$status[] = $o;
+        		}
+        		die( 'ok<!--separate-->' . json_encode( $status ) );
+        	}
+        	die( 'fail<!--separate-->' );
+        }
         else if( $args->args->method == 'addupload' )
         {
         	$f = new File( $args->args->path );
@@ -565,6 +740,33 @@ if( isset( $args->args ) )
         	}
         	die( 'fail<!--separate-->{"message":"You have no chat room.","response":-1}' );
         }
+        else if( $args->args->method == 'get-group' )
+        {
+        	$l = new dbIO( 'FUserGroup' );
+        	$l->UniqueID = $args->args->cid;
+        	if( $l->Load() )
+        	{
+        		$o = new stdClass();
+        		$o->UniqueID = $l->UniqueID;
+        		$o->Name = $l->Name;
+        		$o->Description = $l->Description;
+        		$o->Status = $l->Status;
+        		die( 'ok<!--separate-->' . json_encode( $o ) );
+        	}
+        	die( 'fail<!--separate-->{"message":"No such group.","response":-1}' );
+        }
+        else if( $args->args->method == 'chatroom-status' )
+        {
+        	$l = new dbIO( 'FUserGroup' );
+        	$l->UniqueID = $args->args->cid;
+        	if( $l->Load() )
+        	{
+        		$l->Status = $args->args->status;
+        		if( $l->Save() )
+	        		die( 'ok<!--separate-->' . json_encode( $o ) );
+        	}
+        	die( 'fail<!--separate-->{"message":"No such group.","response":-1}' );
+        }
         // Sets a share parameter for an image and shares it with the group
         else if( $args->args->method == 'setroomavatar' )
         {
@@ -585,6 +787,10 @@ if( isset( $args->args ) )
 						$o->Mode = 'room-avatar';
 						if( !$o->Load() )
 							$o->DateCreated = date( 'Y-m-d H:i:s' );
+						if( $o->OwnerUserID != $User->ID )
+						{
+							die( 'fail<!--separate-->{"message":"User mismatch bug.","response":-1}' );
+						}
 						$o->Data = $args->args->path;
 						$o->DateTouched = date( 'Y-m-d H:i:s' );
 						$o->Save();
@@ -838,6 +1044,61 @@ if( isset( $args->args ) )
 	    	}
 	    	die( 'fail<!--separate-->{"message":"Unknown contact.","response":-1}' );
         }
+        else if( $args->args->method == 'room-description' )
+        {
+        	$g = new dbIO( 'FUserGroup' );
+        	$g->UserID = $User->ID;
+        	$g->UniqueID = $args->args->cid;
+        	if( $g->Load() )
+        	{
+        		$g->Description = $args->args->desc;
+        		if( $g->Save() )
+        		{
+        			die( 'ok<!--separate-->{"message":"Chatroom changed.","response":1}' );
+    			}
+        	}
+        	die( 'fail<!--separate-->' );
+        }
+        else if( $args->args->method == 'rename-chatroom' )
+        {
+        	$g = new dbIO( 'FUserGroup' );
+        	$g->UserID = $User->ID;
+        	$g->UniqueID = $args->args->cid;
+        	if( $g->Load() )
+        	{
+        		$g->Name = $args->args->newname;
+        		if( $g->Save() )
+        		{
+        			die( 'ok<!--separate-->{"message":"Chatroom renamed.","response":1}' );
+    			}
+        	}
+        	die( 'fail<!--separate-->' );
+        }
+        else if( $args->args->method == 'leavegroup' )
+        {
+        	$g = new dbIO( 'FUserGroup' );
+        	$g->UniqueID = $args->args->cid;
+        	if( $g->Load() )
+        	{
+        		if( $g->UserID == $User->ID ) die( 'fail' );
+	        	$SqlDatabase->query( 'DELETE FROM FUserToGroup fug WHERE fug.UserID=\'' . $User->ID . '\' AND fug.UserGroupID=\'' . $g->ID . '\'' );
+        	}
+        	die( 'ok' );
+        }
+        else if( $args->args->method == 'deletemessage' )
+        {
+        	$m = new dbIO( 'Message' );
+        	if( $m->Load( $args->args->mid ) )
+        	{
+		    	if( $m->UniqueUserID == $User->UniqueID )
+		    	{
+		    		$m->delete();
+		    		
+		    		die( 'ok<!--separate-->{"message":"Message deleted.","response":1}' );
+		    	}
+	    	}
+        	die( 'fail<!--separate-->{"message":"Message count not be deleted.","response":-1}' );
+        }
         else if( $args->args->method == 'contacts' )
         {
             $filterA = $filterB = $groupSpec = $groupContacts = '';
@@ -886,7 +1147,7 @@ if( isset( $args->args ) )
                     	' . $groupContacts . '
                         f.OwnerUserID = \'' . $User->ID . '\'' . $filterB . '
                 )
-                ORDER BY LoginTime DESC, Fullname ASC
+                ORDER BY LastActionTime DESC, LoginTime DESC, Fullname ASC
             ' );
             if( $rows && count( $rows ) > 0 )
             {

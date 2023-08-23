@@ -52,7 +52,7 @@ LFLAGS					+=	-lstdc++
 endif
 
 ifeq ($(USE_SSH_THREADS_LIB),1)
-LFLAGS					+=      -lssh_threads
+LFLAGS					+=  -lssh_threads
 endif
 
 ifeq ($(ENABLE_SSH),1)
@@ -60,9 +60,13 @@ LFLAGS					+=	-lssh
 endif
 
 ifeq ($(DEBUG),1)
-CFLAGS					+=	-D__DEBUG -O0 -g
+CFLAGS					+=	-D__DEBUG -O0 -g 
+#CFLAGS                  +=  -p -pg -fprofile-generate
+#LFLAGS                  +=  -lgcov
 else
-CFLAGS					+=	-O3
+CFLAGS					+=	-Ofast -march=native -fopenmp -D_GLIBCXX_PARALLEL 
+#CFLAGS                  +=  -fprofile-use
+#LFLAGS                  +=  -lgcov
 endif
 
 ifeq ($(PERF_MEAS),1)
@@ -102,6 +106,10 @@ endif
 
 ifeq ($(LOG_TIMESTAMP),1)
 CFLAGS					+=	-DLOG_TIMESTAMP
+endif
+
+ifeq ($(USE_PUSH_NOTIFICATIONS),1)
+CFLAGS					+=	-DDUSE_PUSH_NOTIFICATIONS
 endif
 
 ifeq ($(COMMUNICATION_SERVICE),1)

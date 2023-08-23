@@ -32,6 +32,35 @@
 	box-sizing: border-box;
 }
 
+@media (max-width: 480px)
+{
+	html body > .FUIInvitedialog > .Dia.Showing
+	{
+		top: 0;
+		left: 0;
+		height: 100%;
+		width: 100%;
+		border-radius: 0;
+		padding: 0;
+	}
+	html body > .FUIInvitedialog.FUIGroupsettings > .Dia .TheForm > .Form
+	{
+		width: 100%;
+	}
+	html body > .FUIInvitedialog.FUIGroupsettings > .Dia .TheForm > .Form > .Flow
+	{
+		position: relative;
+		gap: 15px;
+		display: flex;
+		flex-wrap: wrap;
+		align-content: stretch;
+		justify-content: space-evenly;
+		align-items: stretch;
+		flex-direction: column;
+	}
+	
+}
+
 @media (max-width: 500px)
 {
 	.FUIInvitedialog > .Dia

@@ -1,4 +1,5 @@
-
-
-#
+menu_file                          : File
+menu_server                        : Server
+menu_add_server                    : Add server
+menu_quit                          : Quit
 

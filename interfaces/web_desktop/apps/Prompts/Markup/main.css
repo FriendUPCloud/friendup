@@ -4,6 +4,15 @@
 	--terminal-color: white;
 }
 
+.InputCatcher
+{
+	opacity: 0;
+	pointer-events: none;
+	position: absolute;
+	width: 1px;
+	height: 1px;
+}
+
 .PMenu
 {
     position: absolute;
@@ -36,12 +45,46 @@
     line-height: 25px;
     background-color: rgba(0,0,0,0);
     transition: background-color 0.15s;
+    position: relative;
 }
 
 .PMenu > .PTabs > .PTab.Active
 {
 	background-color: var(--terminal-background);
 	color: var(--terminal-color);
+	border-radius: 0 10px 0 0;
+}
+
+.PTab.Active:after 
+{
+    content: " ";
+    position: absolute;
+    right: -5px;
+    bottom: -5px;
+    width: 10px;
+    height: 10px;
+    background: var(--terminal-background);
+    display: block;
+    border-radius: 100%;
+    z-index: 1;
+}
+.PTab.Active:before
+{
+    content: " ";
+    position: absolute;
+    right: -10px;
+    bottom: 0px;
+    width: 10px;
+    height: 10px;
+    background: var(--fui-menu-background);
+    display: block;
+    border-radius: 100%;
+    z-index: 2;
+}
+
+.PMenu > .PTabs > .PTab + .PTab.Active
+{
+	border-radius: 0 10px 0 10px;
 }
 
 .PTerminalPages
@@ -53,6 +96,16 @@
 	left: 0;
 	width: 100%;
 	height: calc(100% - 35px);
+	z-index: 3;
+}
+
+.PTerminalPages .PTerminal
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
 }
 
 .PButton

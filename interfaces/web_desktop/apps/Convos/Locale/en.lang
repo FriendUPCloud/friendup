@@ -22,19 +22,33 @@ i18n_add_contacts                      : Add contacts
 i18n_find_and_add_contacts             : Find and add contacts...
 i18n_invite_contacts                   : Invite contacts to your chat room
 i18n_invite_contact                    : Invite contact
-i18n_updates                           : Updates
+i18n_search                            : Search
 i18n_events                            : Events
 i18n_no_new_events                     : No new events.
 i18n_history                           : History
 i18n_invite_to_chatroom                : Invited to chat room
 i18n_invite_to_chatroom_desc           : You were invited to a chat room {groupname} by {username}.
-i18n_news_and_events                   : News and events
+i18n_news_and_events                   : Search and events
+
+i18n_find_things                       : Keywords...
+i18n_find_button                       : Search
+i18n_search_groups                     : Find public chatrooms
+i18n_search_messages                   : Find messages
+i18n_users                             : users
+i18n_user                              : user
+i18n_join_room                         : Join room
+i18n_go_to_room                        : Go to room
+
+i18n_create_invite                     : Create invite
+i18n_invite_desc                       : Click create to generate an invite link. Each time you generate a link, the old one is deleted.
+i18n_create                            : Create
 
 i18n_share_image_with_group            : Share image with chat room?
 i18n_share_image_desc                  : If you add the image to the chat room, everyone can see it. Do you want that?
 
 i18n_group_settings                    : Group settings
 i18n_group_avatar                      : Chat room avatar
+i18n_leave_group                       : Leave group
 i18n_upload                            : Upload
 i18n_chatroom_name                     : Chat room name
 i18n_group_name                        : Name of chat room
@@ -43,6 +57,10 @@ i18n_contact                           : Contact
 i18n_remove_user                       : Remove user from group
 i18n_are_you_sure                      : Are you sure?
 i18n_this_will_kick                    : If you confirm, you will remove this user from your group.
+i18n_leaving_group                     : Confirming that you are leaving this group.
+
+i18n_visibility                        : Group visibility
+i18n_visibility_desc                   : Set group as public or private, to make it visible to search and join by new members or not.
 
 
 i18n_no_topics                         : No topics
@@ -50,7 +68,7 @@ i18n_you_have_no_topics                : You have no chat topics. Add one to sta
 i18n_add_topic                         : Add a topic
 
 i18n_you_got_an_invite                 : Chat room invite
-i18n_please_check_your_messages        : Please go to the home screen and check events.
+i18n_please_check_your_messages        : Please check your incoming events in Convos.
 i18n_invite_accepted                   : Invite accepted
 i18n_accepted_invite                   : accepted your invite.
 
@@ -62,3 +80,24 @@ i18n_sharing_screen                    : You are sharing your screen.
 
 i18n_video_invite                      : Video invite
 i18n_video_invite_desc                 : is inviting you to a video session.
+
+i18n_deleting_message                  : Delete message?
+i18n_deleting_message_text             : This will permanently remove this message.
+
+i18n_failed_to_join_room               : Failed to join room
+i18n_failed_to_join_desc               : Could not join chat room due to an unexpected error.
+
+
+i18n_january                           : January
+i18n_february                          : February
+i18n_march                             : March
+i18n_april                             : April
+i18n_may                               : May
+i18n_june                              : June
+i18n_july                              : July
+i18n_august                            : August
+i18n_september                         : September
+i18n_october                           : October
+i18n_november                          : November
+i18n_december                          : December
+

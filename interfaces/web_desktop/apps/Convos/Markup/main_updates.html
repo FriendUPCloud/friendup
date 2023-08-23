@@ -1,30 +1,16 @@
 
 	<div class="OverviewUpdates">
-		<div class="Updates">
-			<div class="Heading">
-				<p>	
-					<strong>{i18n_updates}</strong>
-				</p>
+		<div class="Search">
+			<div class="SearchSelection">
+				<div class="Categories">
+					<div class="Category On" mode="messages">{i18n_search_messages}</div>
+					<div class="Category" mode="groups">{i18n_search_groups}</div>
+				</div>
 			</div>
-			<div class="Content">
+			<div class="SearchForm">
+				<input type="text" class="SearchField" placeholder="{i18n_find_things}"/>
+				<button type="button" class="IconSmall fa-search SearchButton">{i18n_find_button}</button>
 			</div>
-		</div>
-		<div class="Online">
-			<div class="Heading">
-				<p>	
-					<strong>{i18n_events}</strong>
-				</p>
-			</div>
-			<div class="Content">
-			</div>
-		</div>
-		<div class="News">
-			<div class="Heading">
-				<p>	
-					<strong>{i18n_history}</strong>
-				</p>
-			</div>
-			<div class="Content">
-			</div>
+			<div class="SearchResults"></div>
 		</div>
 	</div>

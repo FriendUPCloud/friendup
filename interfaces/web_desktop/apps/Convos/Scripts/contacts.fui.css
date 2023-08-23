@@ -48,8 +48,34 @@
 	left: 0;
 	top: 0;
 	width: 100%;
-	height: calc(100% - 85px);
+	height: calc(100% - 80px);
 	overflow: auto;
+}
+
+@keyframes pulse-fast
+{
+	0% { opacity: 0; }
+	50% { opacity: 1; }
+	100% { opacity: 0; }
+}
+
+.Contact.User:after 
+{
+    content: "\f141";
+    font-family: 'fontawesome';
+    position: absolute;
+    right: 15px;
+    top: calc(50% - 8px);
+    opacity: 0;
+    transition: opacity 0.2s;
+    pointer-events: none;
+}
+.Contact.User.Writing:after
+{
+	opacity: 1;
+    animation-name: pulse-fast;
+    animation-duration: 1.5s;
+    animation-iteration-count: infinite;
 }
 
 .FUIContacts .Contacts > .Settings
@@ -101,7 +127,8 @@
 .FUIContacts .Contacts > .Settings .Videocall,
 .FUIContacts .Contacts > .Settings .Add,
 .FUIContacts .Contacts > .Settings .AddConversation,
-.FUIContacts .Contacts > .Settings .Group
+.FUIContacts .Contacts > .Settings .Group,
+.FUIContacts .Contacts > .Settings .LeaveGroup
 {
 	content: " ";
     display: inline-block;
@@ -122,7 +149,8 @@
 .FUIContacts .Contacts > .Settings .Videocall:hover,
 .FUIContacts .Contacts > .Settings .Add:hover,
 .FUIContacts .Contacts > .Settings .AddConversation:hover,
-.FUIContacts .Contacts > .Settings .Group:hover
+.FUIContacts .Contacts > .Settings .Group:hover,
+.FUIContacts .Contacts > .Settings .LeaveGroup:hover
 {
 	outline: 1px solid var(--fui-border-foreground);
     background-color: var(--fui-palette-chan04);
@@ -171,7 +199,13 @@
 
 .FUIContacts .Contacts > .Settings .Group:before
 {
-	content: "\f0c0";
+	content: "\f013";
+	font-family: FontAwesome;
+}
+
+.FUIContacts .Contacts > .Settings .LeaveGroup:before
+{
+	content: "\f00d";
 	font-family: FontAwesome;
 }
 
@@ -210,6 +244,8 @@
     height: 55px;
     padding: 5px;
     box-sizing: border-box;
+    margin: 5px 5px 0 5px;
+    border-radius: 10px;
 }
 
 .Contact.Online:before 
@@ -235,6 +271,29 @@
 {
     background-color: var(--fui-menu-background);
     color: var(--fui-menu-color);
+}
+
+.FUIContacts .Contacts .Contact .Activity
+{
+    position: absolute;
+    opacity: 0;
+    left: 30px;
+    top: 30px;
+    width: 14px;
+    height: 15px;
+    background-color: var(--fui-palette-chan03);
+    color: black;
+    text-align: center;
+    border-radius: 100%;
+    border: 2px solid var(--fui-background);
+    font-size: 80%;
+    transition: opacity 0.8s;
+    z-index: 15;
+}
+
+.FUIContacts .Contacts .Contact .Activity.Showing 
+{
+	opacity: 1;
 }
 
 .FUIContacts .Contacts .Slot
@@ -263,7 +322,7 @@
     background-repeat: no-repeat;
 }
 
-.FUIContacts .Contacts .Contact > span:first-child
+.FUIContacts .Contacts .Contact .Avatar
 {
     position: absolute;
     top: 10px;
@@ -276,7 +335,7 @@
     box-sizing: border-box;
 }
 
-.FUIContacts .Contacts .Contact > span:last-child
+.FUIContacts .Contacts .Contact .Name
 {
     position: absolute;
     top: 5px;

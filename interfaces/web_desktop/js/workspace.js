@@ -77,6 +77,15 @@ Workspace = {
 		// First things first
 		if( this.initialized ) return;
 
+		// Get web push
+		let webpush = GetUrlVar( 'webpush' );
+		if( webpush )
+		{
+			webpush = JSON.parse( decodeURIComponent( webpush ) );
+			alert( 'Got Web Push: ' + webpush.application );
+		}
+		
+
 		// Preload some images
 		let imgs = [
 			'/webclient/gfx/system/offline_16px.png',
@@ -1161,7 +1170,6 @@ Workspace = {
 						let m = new Module( 'system' );
 						m.onExecuted = function( e, d )
 						{
-							console.log( 'Here we have user settings: ', e, d );
 							let m = new Module( 'system' );
 							m.onExecuted = function( ee, dd )
 							{

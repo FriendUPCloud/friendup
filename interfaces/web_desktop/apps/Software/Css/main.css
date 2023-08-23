@@ -1,0 +1,563 @@
+#Overview
+{
+	transform: translateX(0%);
+	transition: transform 0.25s;
+}
+#Details
+{
+	transform: translateX(100%);
+	transition: transform 0.25s;
+	z-index: 10;
+	outline-left: 2px solid rgba(255,255,255,0.5);
+}
+
+#DtlShortDescription, #DtlScreenshot, #DtlReadme
+{
+	box-sizing: border-box;
+	padding: 0 20px 10px 0;
+}
+#DtlResources
+{
+	box-sizing: border-box;
+	padding: 0 0 10px 20px;
+}
+
+@media (max-width: 850px)
+{
+	#Details .HContent50
+	{
+		width: 100%;
+	}
+	#DtlResources, #DtlShortDescription, #DtlScreenshot, #DtlReadme
+	{
+		padding-left: 0;
+		padding-right: 0;
+	}
+}
+
+#DtlScreenshot img
+{
+	border-radius: 3px;
+	max-width: 100%;
+}
+
+#DtlShortDescription
+{
+	font-size: 18px;
+	line-height: 24px;
+}
+
+#DetailTabs .PageActive
+{
+	height: calc(100% - 28px);
+	overflow: auto;
+}
+
+.Thecontainer
+{
+	box-shadow: inset 0px 11px 50px rgba(0,0,0,0.2);
+}
+
+#Header
+{
+	width: 100%;
+	height: 200px;
+	background-color: #223344;
+	background-size: cover;
+	background-position: center;
+}
+
+.CategoryDivider
+{
+	display: block;
+	margin: 8px;
+	padding: 8px 0 8px 0;
+	text-align: left;
+	text-transform: uppercase;
+}
+
+.CategoryDivider > h2
+{
+	font-size: 13px;
+	padding: 0;
+	margin: 0;
+	color: inherit;
+	font-weight: bold;
+	opacity: 0.6;
+}
+
+/*#Header h1
+{
+	position: absolute;
+	left: 20px;
+	top: 40%;
+	color: white;
+}*/
+
+.Details #Details
+{
+	transform: translateX(0%);
+}
+.Details #Overview
+{
+	transform: translateX(-100%);
+}
+
+.PageScroll
+{
+	padding-right: 8px;
+	box-sizing: border-box;
+}
+
+#SideList
+{
+	position: absolute;
+	right: 0px;
+	width: 40px;
+	top: 0;
+	bottom: 0;
+	overflow: auto;
+}
+
+#SideList button
+{
+	display: block;
+	margin: 0 0 5px 0;
+	width: 100%;
+	box-sizing: border-box;
+	text-align: center;
+}
+
+.PageScroll.SideList
+{
+	width: 100%;
+	height: 100%;
+}
+
+.StageHeader
+{
+	position: relative;
+	width: 100%;
+	height: 180px;
+	background-color: rgba(0,0,0,0.1);
+	margin: 0 0 5px 0;
+	display:none; /* we dont want that for now */
+}
+
+.HBox
+{
+	float: left;
+	margin: 8px 0 8px 8px;
+	width: calc(50% - 8px);
+	height: 80px;
+	text-align: left;
+	position: relative;
+	overflow: hidden;
+}
+
+@media (max-width: 590px) and (min-width: 0px)
+{
+	.HBox
+	{
+		width: calc(100% - 8px);
+		float: none;
+	}
+}
+
+@media (min-width: 1131px)
+{
+	.HBox
+	{
+		width: calc(25% - 8px);
+	}
+}
+
+@media (max-width: 998px) and (min-width: 591px)
+{
+	.HBox
+	{
+		width: calc(50% - 8px);
+	}
+}
+
+@media (max-width: 1130px) and (min-width: 999px)
+{
+	.HBox
+	{
+		width: calc(33.3% - 8px);
+	}
+}
+
+.HBox > *
+{
+	z-index: 2;
+	position: relative;
+}
+
+.HCont:after
+{
+	content: " ";
+	display: block;
+	clear: both;
+}
+
+
+.HBox .TheButton
+{
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	text-align: center;
+	box-sizing: border-box;
+}
+
+.HBox .TheButton *
+{
+	display: inline;
+}
+
+.ProductName
+{
+	font-size: 13px;
+	margin: 0 0 3px 0;
+	text-transform: uppercase;
+}
+
+.Content .ProductName:hover
+{
+	opacity: 0.6;
+}
+
+.Category,
+.ProductName.Invisible
+{
+	opacity: 0.5;
+}
+
+.ProductName.Invisible:before
+{
+	content: "(";
+}
+
+.ProductName.Invisible:after
+{
+	content: ")";
+}
+
+.Content p
+{
+	margin: 0 0 3px 0;
+}
+
+.Content.ScrollBarSmall
+{
+	overflow: hidden;
+	position: absolute;
+	right: 0;
+	width: calc(100% - 80px);
+	height: 100%;
+	top: 0;
+	padding: 10px;
+	box-sizing: border-box;
+}
+
+.Content:after
+{
+	content: " ";
+	position: absolute;
+	width: 100%;
+	height: 100%;
+	top: 0;
+	left: 0;
+	pointer-events: none;
+	background: rgba(255,255,255,0);
+	transition: background 0.2s;
+}
+
+.Content:hover:after
+{
+	background: rgba(255,255,255,0.1);
+}
+
+.ProductImage
+{
+	border: none;
+	box-shadow: none;
+}
+
+.ProductImage .Button
+{
+	padding: 2px 4px;
+}
+
+.ProductImage .Image
+{
+	height: 100%;
+	width: 80px;
+	border-radius: 10px;
+	position: absolute;
+	top: 0;
+	left: 0;
+	z-index: 1;
+	background-size: contain;
+	background-repeat: no-repeat;
+	background-position: top left;
+}
+
+.ProductImage > p, .ProductImage h2
+{
+	width: 100%;
+	position: relative;
+	overflow-x: hidden;
+	text-overflow: ellipsis;
+}
+
+.ProductImage > p.Layout
+{
+	box-sizing: border-box;
+	font-size: 14px;
+}
+
+#SortAlphaNumeric,
+#SortCategory
+{
+	position: relative;
+	width: 100%;
+	overflow: hidden;
+}
+
+#SortAlphaNumeric button,
+#SortCategory button
+{
+	margin-bottom: 5px;
+}
+
+#Search
+{
+	z-index: 2;
+	position: absolute;
+	width: 180px;
+	height: 29px;
+	right: 9px;
+	top: 6px;
+}
+
+#Search input
+{
+	position: absolute;
+	padding: 0 15px 0 15px;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	line-height: 27px;
+	border-radius: 30px;
+	background: #444444;
+	border: 1px solid rgba(0,0,0,0.5);
+	color: white;
+}
+
+#Search input::placeholder
+{
+	color: #cccccc;
+}
+
+#Search input:focus
+{
+	border: 1px solid rgba(255,255,255,0.5);
+	outline: 0px !important;
+}
+
+#Search .IconSmall
+{
+	position: absolute;
+	color: white;
+	right: 15px;
+	top: 4px;
+	z-index: 10;
+}
+
+/* Slideshow */
+
+#Slides
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	overflow: hidden;
+}
+
+#Slides .Slide
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	transition: left 0.5s;
+}
+
+#SlidesArrowLeft
+{
+	position: absolute;
+	z-index: 3;
+	left: 10px;
+	top: calc(50% - 17px);
+	width: 40px;
+	height: 40px;
+	transform: scale(1,2);
+}
+#SlidesArrowLeft:hover
+{
+	opacity: 0.7;
+}
+#SlidesArrowLeft:after
+{
+	content: "<";
+	font-size: 32px;
+}
+
+#SlidesArrowRight
+{
+	position: absolute;
+	z-index: 3;
+	right: 10px;
+	top: calc(50% - 17px);
+	width: 40px;
+	height: 40px;
+	transform: scale(1,2);
+}
+#SlidesArrowRight:hover
+{
+	opacity: 0.7;
+}
+#SlidesArrowRight:after
+{
+	content: ">";
+	font-size: 32px;
+}
+
+#Slides .Slide .Description
+{
+	position: absolute;
+	left: 10%;
+	width: 40%;
+	height: 100%;
+	text-align: left;
+	font-size: 18px;
+	line-height: 26px;
+	box-sizing: border-box;
+	padding-right: 40px;
+}
+
+#Slides .Slide .Description .ProductName
+{
+	font-size: 20px;
+	text-align: left;
+	padding-top: 10px;
+	font-weight: bold;
+	margin-bottom: 5px;
+}
+
+#Slides .Slide .Description .ProductDescription
+{
+	margin-top: 0;
+}
+
+#Slides .Slide .Image
+{
+	background-size: contain;
+	background-repeat: no-repeat;
+	background-position: left center;
+	text-align: left;
+	position: absolute;
+	left: 50%;
+	width: 40%;
+	height: 100%;
+}
+
+@media (max-width: 920px)
+{
+	#Slides .Slide .Description
+	{
+		font-size: 16px;
+		line-height: 24px;
+	}
+}
+
+@media (max-width: 760px)
+{
+	#Slides .Slide .Description .ProductName
+	{
+		font-size: 14px;
+	}
+	#Slides .Slide .Description
+	{
+		font-size: 14px;
+		line-height: 20px;
+	}
+}
+
+@media (max-width: 540px)
+{
+	#Slides .Slide .Image
+	{
+		left: 15%;
+		width: 70%;
+	}
+	#DetailsVisible
+	{
+		display: none;
+	}
+	#DetailsFeatured
+	{
+		display: none;
+	}
+	#Slides .Slide .Description
+	{
+		display: none;
+	}
+	#Search 
+	{
+		display: none;
+	}
+}
+
+#theNotice
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background: rgba(0,0,0,0.8);
+	z-index: 999;
+}
+
+#theNotice > div
+{
+	position: absolute;
+	left: calc(50% - 200px);
+	top: calc(50% - 120px);
+	width: 400px;
+	height: 240px;
+	background: white;
+	color: #333333;
+	padding: 30px;
+	box-sizing: border-box;
+}
+
+@media (max-width: 320px)
+{
+	html #theNotice > div
+	{
+		top: 20px;
+		left: 20px;
+		width: 280px;
+		height: 300px;
+	}
+}
+

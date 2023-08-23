@@ -9,23 +9,37 @@
 *****************************************************************************©*/
 
 window.Convos = {
-	outgoing: [],
-	sounds: {}
+	outgoing: [], // Outgoing messages
+	sounds: {}, // Cached sounds
+	unseenMessages: {} // Count unseen messages
 };
 
-window.Sounds = {};
+window.Sounds = {}; // Built-in sounds
 Sounds.newMessage = new Audio('/themes/friendup13/sound/new_message.ogg');
 Sounds.sendMessage = new Audio( getImageUrl( 'Progdir:Assets/send.ogg' ) );
 
+// Some events, like refresh and visibility change, ought to refresh messages
 window.addEventListener( 'focus', function()
 {
-	Application.holdConnection( 'refresh' );
+	if( Convos.focusTimeo ) clearTimeout( Convos.focusTimeo );
+	Convos.focusTimeo = setTimeout( function()
+	{
+		Application.holdConnection( 'refresh' );
+		let cnts = FUI.getElementByUniqueId( 'contacts' );
+		if( cnts ) cnts.refreshDom();
+	}, 25 );
 } );
 window.addEventListener( 'visibilitychange', function()
 {
 	if( document.visibilityState == 'visible' )
 	{
-		Application.holdConnection( 'refresh' );
+		if( Convos.focusTimeo ) clearTimeout( Convos.focusTimeo );
+		Convos.focusTimeo = setTimeout( function()
+		{
+			Application.holdConnection( 'refresh' );
+			let cnts = FUI.getElementByUniqueId( 'contacts' );
+			if( cnts ) cnts.refreshDom();
+		}, 25 );
 	}
 } );
 
@@ -36,9 +50,59 @@ Application.run = function( msg )
 	this.sendMessage( { command: 'app-ready' } );
 } 
 
+// Navigate through the application
+Application.navigate = function( path, depth = 0 )
+{
+	switch( depth )
+	{
+		case 0:
+			path = path.split( '/' );
+			return this.navigate( path, depth + 1 );
+		case 1:
+		{
+			switch( path[0] )
+			{
+				case 'rooms':
+				{
+					let overview = FUI.getElementByUniqueId( 'convos' );
+					if( !overview ) return false;
+					let channels = overview.domChannels.getElementsByClassName( 'Channel' );
+					if( channels )
+					{
+						for( let a = 0; a < channels.length; a++ )
+						{
+							if( channels[ a ].id == path[1] )
+							{
+								channels[ a ].click();
+								return true;
+							}
+						}
+					}
+					return false;
+				}
+				case 'message':
+				{	
+					break;
+				}
+			}
+		}
+		default:
+			return false;
+	}
+}
+
+// Log of unread messages
+window.unreadMessages = {
+	rooms: {
+	},
+	dms: {
+	}
+};
+
 Application.receiveMessage = function( msg )
 {
-    if( msg.sender )
+	// Receiving message on sender
+    if( msg.senderId && !msg.command )
     {
     	if( document.hidden || !document.body.classList.contains( 'activated' ) )
     	{
@@ -46,14 +110,72 @@ Application.receiveMessage = function( msg )
     	}
         let overview = FUI.getElementByUniqueId( 'convos' );
         if( msg.type && msg.type == 'chatroom' && msg.uniqueId )
-        {
-        	overview.pollChatroom( msg.sender, msg.uniqueId );
+        {	
+        	// Log
+        	if( !unreadMessages.rooms[ msg.uniqueId ] )
+        		unreadMessages.rooms[ msg.uniqueId ] = [];
+        	unreadMessages.rooms[ msg.uniqueId ].push( { sender: msg.senderId, message: msg.message, time: ( new Date() ).getTime() } );
+        	overview.updateActivityBubble();
+        	overview.pollChatroom( msg.senderId, msg.uniqueId );
         }
         else
         {
-        	overview.activateDirectMessage( msg.sender, msg.message );
+        	// Log
+        	if( !unreadMessages.dms[ msg.senderId ] )
+        		unreadMessages.dms[ msg.senderId ] = [];
+        	unreadMessages.dms[ msg.senderId ].push( { message: msg.message, time: ( new Date() ).getTime() } );
+        	
+        	let contacts = FUI.getElementByUniqueId( 'contacts' );
+    		if( contacts )		
+	        	contacts.updateActivityBubble();
+        	let messages = FUI.getElementByUniqueId( 'messages' );
+        	if( messages )
+        	{
+        		if( messages.options.type == 'dm-user' && messages.options.cid == msg.senderId )
+        		{
+        			Application.holdConnection( 'refresh' );
+        		}
+        	}
     	}
     }
+    else if( msg.command == 'signal' )
+    {
+    	if( msg.signal && msg.signal == 'writing' )
+    	{
+    		let contacts = FUI.getElementByUniqueId( 'contacts' );
+    		if( !contacts ) return;
+    		for( let a in contacts.userList )
+    		{
+    			let slot = contacts.userList[ a ];
+    			let users = slot.getElementsByClassName( 'User' );
+    			for( let b = 0; b < users.length; b++ )
+    			{
+    				if( users[ b ].record.ID == msg.senderId )
+    				{
+    					users[ b ].classList.add( 'Writing' );
+    				}
+    			}
+    		}
+    	}
+    	else if( msg.signal && msg.signal == 'not-writing' )
+    	{
+    		let contacts = FUI.getElementByUniqueId( 'contacts' );
+    		if( !contacts ) return;
+    		for( let a in contacts.userList )
+    		{
+    			let slot = contacts.userList[ a ];
+    			let users = slot.getElementsByClassName( 'User' );
+    			for( let b = 0; b < users.length; b++ )
+    			{
+    				if( users[ b ].record.ID == msg.senderId )
+    				{
+    					users[ b ].classList.remove( 'Writing' );
+    				}
+    			}
+    		}
+    	}
+    }
+    // User is broadcasting a call
     else if( msg.command == 'broadcast-call' )
     {
 		let messages = FUI.getElementByUniqueId( 'messages' );
@@ -62,6 +184,7 @@ Application.receiveMessage = function( msg )
 			messages.queueMessage( '<videocall type="video" callid="' + msg.peerId + '"/>' );
 		}
     }
+    // User receives a call broadcast
     else if( msg.command == 'broadcast-received' )
     {
     	let contacts = FUI.getElementByUniqueId( 'contacts' );
@@ -77,6 +200,7 @@ Application.receiveMessage = function( msg )
 			} );
 		}
     }
+    // User starts broadcast participation
     else if( msg.command == 'broadcast-start' )
     {
     	let contacts = FUI.getElementByUniqueId( 'contacts' );
@@ -86,6 +210,7 @@ Application.receiveMessage = function( msg )
     		contacts.videoCall.sendMessage( { command: 'initcall', peerId: msg.peerId, remotePeerId: msg.remotePeerId } );
 		}
     }
+    // Polls broadcast
     else if( msg.command == 'broadcast-poll' )
     {
 		let contacts = FUI.getElementByUniqueId( 'contacts' );
@@ -113,17 +238,17 @@ Application.receiveMessage = function( msg )
     }
     else if( msg.type )
     {
+    	// Receiving an invite
     	if( msg.type == 'invite' )
     	{
     		let overview = FUI.getElementByUniqueId( 'convos' );
+    		overview.getEvents();
     		Notify( {
     			title: i18n( 'i18n_you_got_an_invite' ),
     			text: i18n( 'i18n_please_check_your_messages' )
-			}, false, function( e )
-			{
-				overview.initHome();
-			} );
+			}, false, null );
     	}
+    	// Accepting an invite
     	else if( msg.type == 'accept-invite' )
     	{
     		Notify( {
@@ -134,7 +259,15 @@ Application.receiveMessage = function( msg )
 				overview.pollChatroom( false, msg.groupId );
 			} );
     	}
+    	// Accepting an invite
+    	else if( msg.type == 'update-seen' )
+    	{
+    		let msgs = FUI.getElementByUniqueId( 'messages' );
+    		if( msgs )
+    			msgs.checkSeen( msg.messages );
+    	}
     }
+    // Dropping an icon object
     if( msg.command == 'drop' )
     {
     	// Check what we dropped
@@ -175,6 +308,46 @@ Application.receiveMessage = function( msg )
     }
 }
 
+Application.SendChannelMsg = function( msg )
+{
+	if( !msg ) return;
+	
+	// Check which channel we are in
+	let messages = FUI.getElementByUniqueId( 'messages' );
+	if( messages.options.type == 'jeanie' ) return;
+	else if( messages.options.type == 'dm-user' )
+	{
+		Application.SendUserMsg( {
+			recipientId: messages.options.cid,
+			senderId: Application.uniqueId,
+			sender: Application.Fullname,
+			message: msg
+		} );
+	}
+	else if( messages.options.type == 'chatroom' )
+	{
+		let contacts = FUI.getElementByUniqueId( 'contacts' );
+		if( !contacts ) return;
+		for( let a in contacts.userList )
+		{
+			let slot = contacts.userList[ a ];
+			let users = slot.childNodes;
+			for( let b = 0; b < users.length; b++ )
+			{
+				if( !users[ b ].classList || !users[ b ].classList.contains( 'User' ) )
+					continue;
+				Application.SendUserMsg( {
+					recipientId: users[ b ].record.ID,
+					senderId: Application.uniqueId,
+					sender: Application.Fullname,
+					message: msg
+				} );
+			}
+		}
+	}
+}
+
+// Send a message to a Friend OS user on the same server
 Application.SendUserMsg = function( opts )
 {
 	if( !opts.recipientId ) return;
@@ -299,7 +472,7 @@ Application.holdConnection = function( flags )
                     				let amsg = {
 						                'appname': 'Convos',
 						                'dstuniqueid': contacts[ c ].uniqueId,
-						                'msg': '{"sender":"' + Application.fullName + '","message":"' + messages[ b ] + '","type":"chatroom","uniqueId":"' + musers[ b ] + '"}'
+						                'msg': '{"sender":"' + Application.fullName + '","senderId":"' + Application.uniqueId + '","message":"' + messages[ b ] + '","type":"chatroom","uniqueId":"' + musers[ b ] + '"}'
 						            };
 						            if( c == 0 )
 						            {
@@ -316,7 +489,7 @@ Application.holdConnection = function( flags )
 		                        'appname': 'Convos',
 		                        'dstuniqueid': musers[ b ],
 		                        'callback': 'yes',
-		                        'msg': '{"sender":"' + Application.fullName + '","message":"' + messages[ b ] + '"}'
+		                        'msg': '{"sender":"' + Application.fullName + '","senderId":"' + Application.uniqueId + '","message":"' + messages[ b ] + '"}'
 		                    };
 		                    let m = new Library( 'system.library' );
 		                    m.execute( 'user/session/sendmsg', amsg );
@@ -346,6 +519,10 @@ Application.holdConnection = function( flags )
 				            	return;
 				            mess.addMessages( js.messages );
 				            if( mess.clearQueue ) mess.clearQueue();
+				            if( flags.force )
+				            {
+						        mess.toBottom();
+				            }
 			            }
 		            }
 		        }
@@ -363,3 +540,13 @@ Application.holdConnection = function( flags )
 	}
 	m.send();
 }
+
+// Things to do on interval
+let overviewIntr = 0;
+setInterval( function()
+{
+	let conts = FUI.getElementByUniqueId( 'contacts' );
+	if( conts )
+		conts.checkOnlineState();
+}, 15000 );
+

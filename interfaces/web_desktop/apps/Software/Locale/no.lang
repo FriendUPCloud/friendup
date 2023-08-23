@@ -1,0 +1,37 @@
+
+i18n_software_marketplace          : Friend Markedsplass
+
+
+#Menu
+i18n_file                          : Fil
+i18n_quit                          : Avslutt
+i18n_no_desc                       : Ingen beskrivelse tilgjengelig for dette programmet.
+i18n_no_software                   : Ingen programvare tilgjengelig.
+i18n_install                       : Installer
+i18n_uninstall                     : Avinstaller
+
+i18n_page_name                     : Alfabetisk
+i18n_page_by_date                  : Nyeste programvare
+i18n_page_all                      : All programvare
+i18n_page_rating                   : På rating
+i18n_page_your_apps                : Dine programmer
+
+i18n_register_as_merchant          : Registrer som selger
+i18n_merchants                     : Selgere
+
+i18n_cancel                        : Avbryt
+i18n_register                      : Registrer deg
+
+i18n_company_or_name               : Firma eller utgiver
+i18n_description_of                : Forklar ditt firma eller din virksomhet i en paragraf
+i18n_categories                    : Kategorier som beskriver programvaren eller tjenestene dine
+i18n_country                       : Land
+
+i18n_launch                        : Start
+
+i18n_are_you_sure_uninstall        : Er du sikker på at du ønsker å avinstallere?
+i18n_are_you_sure_uninstall_ds     : Hvis du avinstallerer så fjernes programvaren fra kontoen din. Men du kan hente den frem ved en senere anledning her.
+i18n_are_you_sure_install          : Er du sikker på at du ønsker å installere?
+i18n_are_you_sure_install_ds       : Hvis du installerer denne programvaren så legges den til kontoen din.
+
+

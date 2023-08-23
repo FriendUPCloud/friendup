@@ -239,26 +239,30 @@ int WebsocketThread( FThread *data )
 	
 	Log( FLOG_INFO, "[WS] Service will be started now\n" );
 
-	while( TRUE )
+	int n = 0;
+	while( n >= 0 )
 	{
-		int n = lws_service( ws->ws_Context, -1 );
-		if( ws->ws_Quit == TRUE && ws->ws_NumberCalls <= 0 )
+		n = lws_service( ws->ws_Context, -1 );
+		if( ws->ws_Quit == TRUE )
 		{
-			FINFO("WS Quit!\n");
-			break;
-		}
-		else if( ws->ws_Quit == TRUE )
-		{
-			FINFO("WS Quit! but threads left: %d\n", ws->ws_NumberCalls );
-			cnt++;
-			
-			if( cnt > 100 )
+			if( ws->ws_NumberCalls <= 0 )
 			{
-				Log( FLOG_INFO, "[WS] Service stopping threads: %d\n", ws->ws_NumberCalls );
-				cnt = 0;
+				FINFO("WS Quit!\n");
+				break;
+			}
+			else
+			{
+				FINFO("WS Quit! but threads left: %d\n", ws->ws_NumberCalls );
+				cnt++;
+				
+				if( cnt > 100 )
+				{
+					Log( FLOG_INFO, "[WS] Service stopping threads: %d\n", ws->ws_NumberCalls );
+					cnt = 0;
+				}
 			}
 		}
-		usleep( 25 );
+		usleep( 50 );
 	}
 	Log( FLOG_INFO, "[WS] Service stopped\n" );
 

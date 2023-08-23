@@ -5,14 +5,59 @@
 	width: 800px;
 }
 
-.FUIInvitedialog.FUIGroupsettings > .Dia .TheForm > .Form
+.FUIInvitedialog.FUIGroupsettings > .Dia .TheForm > .Form 
 {
-	position: absolute;
+    box-sizing: border-box;
+    position: absolute;
     top: 0;
-    left: 15px;
+    padding: 15px;
+    left: 0;
     width: calc(100% - 30px);
     height: 100%;
     overflow: auto;
+}
+
+.Section > .AvatarBox 
+{
+    margin: auto;
+}
+
+.Section > p
+{
+	margin: 0 0 15px 0;
+}
+
+.Section .Flex
+{
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+	gap: 5px;
+	margin: 0 0 20px 0;
+}
+
+.Flex div > span 
+{
+    margin: 0px 0 4px 0;
+    display: block;
+}
+
+.Section > p.AvatarBox
+{
+	margin: 0 auto 15px auto;
+}
+
+.IconButton:before { font-family: fontawesome; }
+
+.FUIInvitedialog > .Dia > .Title:after
+{
+	content: " ";
+	display: block;
+	height: 1px;
+	width: 100%;
+	border: 0;
+	margin: 5px 0 5px 0;
+	background: linear-gradient(90deg,rgba(0,0,0,0),rgba(0,0,0,0.1),rgba(0,0,0,0));
 }
 
 .FUIInvitedialog.FUIGroupsettings > .Dia .TheForm > .Form > .Flow
@@ -50,7 +95,8 @@
 	border: 2px solid var(--fui-border-foreground);
 }
 
-.FUIInvitedialog.FUIGroupsettings > .Dia .TheForm > .Form .Upload
+.FUIInvitedialog.FUIGroupsettings > .Dia .TheForm > .Form .Upload,
+.FUIInvitedialog.FUIGroupsettings > .Dia .TheForm > .Form .Create
 {
 	display: inline-block;
 }
@@ -58,6 +104,12 @@
 .FUIInvitedialog.FUIGroupsettings > .Dia .TheForm > .Form .Upload:before
 {
 	content: "\f0ee";
+	font-family: FontAwesome;
+}
+
+.FUIInvitedialog.FUIGroupsettings > .Dia .TheForm > .Form .Create:before
+{
+	content: "\f2b4";
 	font-family: FontAwesome;
 }
 
