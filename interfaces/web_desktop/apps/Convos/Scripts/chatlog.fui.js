@@ -818,19 +818,23 @@ class FUIChatlog extends FUIElement
 			    		let t = d.querySelector( '.Text' );
 			    		t.setAttribute( 'contenteditable', 'true' );
 			    		t.focus();
+			    		let edited = false;
 			    		t.onblur = function(){ edt(); }
 			    		t.onkeydown = function( e ){ if( !e.shiftKey && e.which == 13 ){ edt(); return cancelBubble( e ); } }
 			    		function edt()
 			    		{
+			    			if( edited ) return;
+			    			edited = true;
 			    			t.setAttribute( 'contenteditable', 'false' );
 			    			document.body.classList.remove( 'Editmode' );
 			    			cc.onblur = null;
-			    			t.innerHTML = self.replaceUrls( self.replaceEmojis( t.innerHTML ) );
 			    			
 			    			// Strip scripts and such
 							let val = t.innerHTML.split( /<script.*?\>[\w\W]*?\<\/script\>/i ).join( '' );
 							val = val.split( /<style.*?\>[\w\W]*?\<\/style\>/i ).join( '' );
 							val = val.split( /<link.*?\>/i ).join( '' );
+							
+							t.innerHTML = self.replaceUrls( self.replaceEmojis( val ) );
 							
 							// Check white space
 							let candidate = val.split( /\<.*?\>/ ).join( '' );
@@ -856,7 +860,7 @@ class FUIChatlog extends FUIElement
 										} );
 									}
 								}
-								mo.execute( 'convos', { method: 'message-edit', mid: m.ID, message: text } );
+								mo.execute( 'convos', { method: 'message-edit', mid: m.ID, message: encodeURIComponent( text ) } );
 							} 
 			    		}
 			    	}
