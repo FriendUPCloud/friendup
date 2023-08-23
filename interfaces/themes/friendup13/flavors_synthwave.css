@@ -9,9 +9,10 @@
     --fui-background: #1d0b25;
     --fui-background-dim: #1d0b2588;
     --fui-color: #e6e6e6;
-    --fui-button-background: #333333;
-    --fui-button-color: #e8e8e8;
-    --fui-menu-background: #333333;
+    --fui-button-background: #0e767f;
+    --fui-button-border-color: #0e767f;
+    --fui-button-color: #cde0c0;
+    --fui-menu-background: #2f123b;
     --fui-list-background: #130b23;
     --fui-list-item-background: #130b23;
     --fui-list-item-background-alternate: #150c27;
@@ -37,6 +38,10 @@
 	
 	--fui-selection-background: #0e767f;
 	--fui-selection-color: #cde0c0;
+	
+	--fui-input-border-color: #110a1f;
+    --fui-input-background: #110a1f;
+    --fui-input-color: #6aa9af;
 	
 	/* overrides */
 	
@@ -159,9 +164,9 @@ body.Synthwave input[type=datetime-local], body.Synthwave input[type=password],
 html body.Synthwave textarea, html body.Synthwave select, html body.Synthwave select:hover
 {
     border-radius: 10px;
-    border: 1px solid #202020;
-    background: #242424;
-    color: #e0e0e0;
+    border: 1px solid var(--fui-input-border-color);
+    background: var(--fui-input-background);
+    color: var(--fui-input-color);
 }
 
 html body.Synthwave:not([mobile]) .View, html body.Synthwave .View.Active
@@ -202,9 +207,9 @@ html body.Synthwave
 
 html > body.Synthwave > div button, html > body.Synthwave > div .Button
 {
-	background-color: #3c3c3c;
-    border: 1px solid #3c3c3c;
-    color: #e0e0e0;
+	background-color: var(--fui-button-background);
+    border: 1px solid var(--fui-button-border-color);
+    color: var(--fui-button-color);
 }
 
 html > body.Synthwave > div button:hover, 
@@ -375,38 +380,38 @@ html body.Synthwave #MousePointer .Row.Odd .Column,
 html body.Synthwave .ZebraList > tr, 
 html body.Synthwave .ZebraList > div
 {
-	background-color: #282828;
-	color: #e0e0e0;
+	background-color: var(--fui-list-item-background);
+	color: var(--fui-list-item-color);
 }
 
 html body.Synthwave .ZebraList > tr .PadBorder, 
 html body.Synthwave .ZebraList > div .PadBorder
 {
-	border-color: #282828;
+	border-color: var(--fui-list-item-background);
 }
 
 html body.Synthwave .ZebraList > tr .PadBackground, 
 html body.Synthwave .ZebraList > div .PadBackground
 {
-	background-color: #282828;
+	background-color: var(--fui-list-item-background);
 }
 
 html body.Synthwave .ZebraList.Interactive > tr:hover, 
 html body.Synthwave .ZebraList.Interactive > div:hover
 {
-	background-color: #303030;
+	background-color: var(--fui-list-item-background-alternate);
 }
 
 html body.Synthwave .ZebraList.Interactive > tr:hover .PadBorder, 
 html body.Synthwave .ZebraList.Interactive > div:hover .PadBorder
 {
-	border-color: #303030;
+	border-color: var(--fui-list-item-background-alternate);
 }
 
 html body.Synthwave .ZebraList.Interactive > tr:hover .PadBackground, 
 html body.Synthwave .ZebraList.Interactive > div:hover .PadBackground
 {
-	background-color: #303030;
+	background-color: var(--fui-list-item-background-alternate);
 }
 
 html body.Synthwave .BackgroundLists .sw2,
@@ -420,26 +425,26 @@ html body.Synthwave #MousePointer .Row .Column,
 html body.Synthwave .ZebraList > tr:nth-child(odd), 
 html body.Synthwave .ZebraList > div:nth-child(odd)
 {
-	background-color: #202020;
-	color: #e0e0e0;
+	background-color: var(--fui-list-item-background-alternate);
+	color: var(--fui-list-item-color);
 }
 
 html body.Synthwave .ZebraList > tr:nth-child(odd) .PadBorder, 
 html body.Synthwave .ZebraList > div:nth-child(odd) .PadBorder
 {
-	border-color: #202020;
+	border-color: var(--fui-list-item-background-alternate);
 }
 
 html body.Synthwave .ZebraList > tr:nth-child(odd) .PadBackground, 
 html body.Synthwave .ZebraList > div:nth-child(odd) .PadBackground
 {
-	background-color: #202020;
+	background-color: var(--fui-list-item-background-alternate);
 }
 
 html body.Synthwave .ZebraList.Interactive > tr:nth-child(odd):hover, 
 html body.Synthwave .ZebraList.Interactive > div:nth-child(odd):hover
 {
-	background-color: #282828;
+	background-color: var(--fui-list-item-background);
 }
 
 html body.Synthwave div.Listview > .Icons > .Scroller > .Row.Selected > .Column,
