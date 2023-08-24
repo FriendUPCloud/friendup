@@ -592,37 +592,31 @@ function GetStatusbarHeight( screen )
 // Pop a window up!
 function PopoutWindow( wind, e )
 {
-	let m = new Module( 'system' );
-	m.onExecuted = function( ee, dd )
+	Confirm( i18n( 'i18n_pop_question' ), i18n( 'i18n_pop_description' ), function( response, e )
 	{
-		if( ee == 'ok' )
+		if( response )
 		{
-			let info = JSON.parse( dd );
-			let windowObject = wind.windowObject;
-			let ifr = wind.getElementsByTagName( 'iframe' )[0];
-			let vw = wind.offsetWidth ? wind.offsetWidth : 900;
-			let vh = wind.offsetHeight ? wind.offsetHeight : 900;
-			let v = window.open( '/webclient/webapp.html?app=' + wind.windowObject.applicationName + '&logintoken=' + info.token, '', 'width=' + vw + ',height=' + vh + ',status=no,toolbar=no,topbar=no,windowFeatures=popup' );
-			v.onload = function()
+			let m = new Module( 'system' );
+			m.onExecuted = function( ee, dd )
 			{
-				return;
-				/*let styl = document.createElement( 'style' );
-				styl.innerHTML = 'iframe{position:absolute;top:0;left:0;width:100%;height:100%;margin:0;border:0}';
-				v.document.body.appendChild( styl );
-				wind.parentNode.parentNode.removeChild( wind.parentNode );
-				windowObject.setFlag( 'invisible', true );
-				v.document.title = windowObject.flags.title;
-				setTimeout( function()
+				if( ee == 'ok' )
 				{
-					let ifr = v.document.getElementsByTagName( 'iframe' )[0];
-					ifr.contentWindow.document.body.setAttribute( 'style', '' );
-					ifr.contentWindow.document.body.classList.remove( 'Loading' );
-					ifr.contentWindow.Application.run();
-				}, 250 );*/
+					let info = JSON.parse( dd );
+					let windowObject = wind.windowObject;
+					let ifr = wind.getElementsByTagName( 'iframe' )[0];
+					let vw = wind.offsetWidth ? wind.offsetWidth : 900;
+					let vh = wind.offsetHeight ? wind.offsetHeight : 900;
+					let part = document.location.href.match( /(.*?)\/webclient/i )[1];
+					let ifrsrc = part + '/webclient/webapp.html?app=' + wind.windowObject.applicationName + '&logintoken=' + info.token
+					let v = window.open( ifrsrc, '', 'width=' + vw + ',height=' + vh + ',status=no,toolbar=no,topbar=no,windowFeatures=popup' );
+					
+					v.document.body.innerHTML = '<iframe src="' + ifrsrc + '"></iframe>';
+					wind.windowObject.close();
+				}
 			}
+			m.execute( 'getlogintoken', { name: wind.windowObject.applicationName } );
 		}
-	}
-	m.execute( 'getlogintoken', { name: wind.windowObject.applicationName } );
+	} );
 }
 
 
