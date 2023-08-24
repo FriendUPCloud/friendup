@@ -1815,6 +1815,23 @@ html .View > .Title > div > .Depth:hover
 	opacity: 1;
 }
 
+html .View > .Title > div > .Popout, 
+html body[focusmode=clicktofront] .View > .Title > div > .Popout 
+{
+    border-left: 0;
+    border-right: 0;
+    display: block;
+    background-image: url(/iconthemes/friendup15/popout.svg);
+    background-repeat: no-repeat;
+    background-position: center;
+    margin: 0;
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    right: 8px;
+    top: 3px;
+}
+
 html .View > .Title > div > .Zoom,
 html body[viewlist=docked] .View > .Title > div > .Zoom,
 html body[viewlist=docked] div .View > .Title > div > .Zoom

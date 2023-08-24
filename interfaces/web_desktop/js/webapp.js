@@ -597,8 +597,11 @@ Workspace = {
 			'webclient/js/api/friendAPIv1_2.js';
 		s.onload = function()
 		{
-			Workspace.loginPrompt.close();
-			Workspace.loginPrompt = null;
+			if( Workspace.loginPrompt )
+			{
+				Workspace.loginPrompt.close();
+				Workspace.loginPrompt = null;
+			}
 			
 			t.getMountlist(); // Just init structures
 			

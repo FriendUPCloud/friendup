@@ -14,6 +14,8 @@ Friend.iconsSelectedCount = 0;
 Friend.currentMenuItems = 0;
 Friend.scope = 'API';
 
+FriendScope = window.opener ? window.opener : parent;
+
 Friend.lib = Friend.lib || {};
 Friend.GUI = Friend.GUI || {};
 
@@ -1339,7 +1341,7 @@ function receiveEvent( event, queued )
 				// Just call back
 				if( dataPacket.callback )
 				{
-					parent.postMessage( JSON.stringify( {
+					FriendScope.postMessage( JSON.stringify( {
 						type:          'callback',
 						callback:      dataPacket.callback,
 						applicationId: dataPacket.applicationId,
@@ -1371,7 +1373,7 @@ function receiveEvent( event, queued )
 			// Just call back
 			if( dataPacket.callback )
 			{
-				parent.postMessage( JSON.stringify( {
+				FriendScope.postMessage( JSON.stringify( {
 					type:          'callback',
 					callback:      dataPacket.callback,
 					applicationId: dataPacket.applicationId,
@@ -1401,7 +1403,7 @@ function receiveEvent( event, queued )
 			// Just call back
 			if( dataPacket.callback )
 			{
-				parent.postMessage( JSON.stringify( {
+				FriendScope.postMessage( JSON.stringify( {
 					type:          'callback',
 					callback:      dataPacket.callback,
 					applicationId: dataPacket.applicationId,
@@ -5837,7 +5839,7 @@ function setupMessageFunction( dataPacket, origin )
 		let po = dataPacket.origin ? dataPacket.origin : '*';
 		try
 		{
-			parent.postMessage( JSON.stringify( msg ), origin ? origin : po );
+			FriendScope.postMessage( JSON.stringify( msg ), origin ? origin : po );
 		}
 		catch( e )
 		{

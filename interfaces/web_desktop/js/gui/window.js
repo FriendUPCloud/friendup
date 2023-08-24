@@ -592,23 +592,37 @@ function GetStatusbarHeight( screen )
 // Pop a window up!
 function PopoutWindow( wind, e )
 {
-    let windowObject = wind.windowObject;
-    let ifr = wind.getElementsByTagName( 'iframe' )[0];
-    let v = window.open( '', '', 'width=900,height=900,status=no,topbar=no' );
-    let styl = document.createElement( 'style' );
-    styl.innerHTML = 'iframe{position:absolute;top:0;left:0;width:100%;height:100%;margin:0;border:0}';
-    v.document.body.appendChild( ifr );
-    v.document.body.appendChild( styl );
-    wind.parentNode.parentNode.removeChild( wind.parentNode );
-    windowObject.setFlag( 'invisible', true );
-    v.document.title = windowObject.flags.title;
-    setTimeout( function()
-    {
-        let ifr = v.document.getElementsByTagName( 'iframe' )[0];
-        ifr.contentWindow.document.body.setAttribute( 'style', '' );
-        ifr.contentWindow.document.body.classList.remove( 'Loading' );
-        ifr.contentWindow.Application.run();
-    }, 250 );
+	let m = new Module( 'system' );
+	m.onExecuted = function( ee, dd )
+	{
+		if( ee == 'ok' )
+		{
+			let info = JSON.parse( dd );
+			let windowObject = wind.windowObject;
+			let ifr = wind.getElementsByTagName( 'iframe' )[0];
+			let vw = wind.offsetWidth ? wind.offsetWidth : 900;
+			let vh = wind.offsetHeight ? wind.offsetHeight : 900;
+			let v = window.open( '/webclient/webapp.html?app=' + wind.windowObject.applicationName + '&logintoken=' + info.token, '', 'width=' + vw + ',height=' + vh + ',status=no,toolbar=no,topbar=no,windowFeatures=popup' );
+			v.onload = function()
+			{
+				return;
+				/*let styl = document.createElement( 'style' );
+				styl.innerHTML = 'iframe{position:absolute;top:0;left:0;width:100%;height:100%;margin:0;border:0}';
+				v.document.body.appendChild( styl );
+				wind.parentNode.parentNode.removeChild( wind.parentNode );
+				windowObject.setFlag( 'invisible', true );
+				v.document.title = windowObject.flags.title;
+				setTimeout( function()
+				{
+					let ifr = v.document.getElementsByTagName( 'iframe' )[0];
+					ifr.contentWindow.document.body.setAttribute( 'style', '' );
+					ifr.contentWindow.document.body.classList.remove( 'Loading' );
+					ifr.contentWindow.Application.run();
+				}, 250 );*/
+			}
+		}
+	}
+	m.execute( 'getlogintoken', { name: wind.windowObject.applicationName } );
 }
 
 
@@ -3776,6 +3790,20 @@ var View = function( args )
 			}
 		}
 
+		let popout = false;
+		if( div.windowObject.applicationId )
+		{
+			popout = document.createElement( 'div' );
+			popout.className = 'Popout';
+			popout.onmousedown = function( e ) { return cancelBubble( e ); }
+			popout.ondragstart = function( e ) { return cancelBubble( e ); }
+			popout.onselectstart = function( e ) { return cancelBubble( e ); }
+			popout.onclick = function( e )
+			{
+				PopoutWindow( div, e );
+			}
+		}
+		
 		let close = document.createElement( 'div' );
 		close.className = 'Close';
 		close.onmousedown = function( e ) { return cancelBubble( e ); }
@@ -3839,6 +3867,7 @@ var View = function( args )
 
 		// Add all
 		inDiv.appendChild( depth );
+		if( popout ) inDiv.appendChild( popout );
 		inDiv.appendChild( minimize );
 		if( zoom )
 			inDiv.appendChild( zoom );
@@ -3848,6 +3877,7 @@ var View = function( args )
 		inDiv.appendChild( titleSpan );
 
 		div.depth     = depth;
+		div.popout    = popout;
 		div.zoom      = zoom;
 		div.close     = close;
 		div.titleBar  = title;

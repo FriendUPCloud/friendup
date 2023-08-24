@@ -434,6 +434,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 					void *res = sqllib->Query( sqllib, qery );
 					if( res != NULL )
 					{
+						//DEBUG( "[lot] We got a key via logintoken: %s\n", ( char *)lot->hme_Data );
 						char **row;
 						if( ( row = sqllib->FetchRow( sqllib, res ) ) )
 						{
@@ -452,19 +453,22 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 							}
 						}
 						sqllib->FreeResult( sqllib, res );
+						
+						//DEBUG( "[lot] Did we get user id? %d\n", ( unsigned int )uid );
 					}
 					l->LibrarySQLDrop( l, sqllib );
 					
 					// We need a valid UID
 					if( uid > 0 )
 					{
-						loggedSession = USMGetSessionByUserID( l->sl_USM, uid );
 						if( loggedSession == NULL && userName[ 0 ] != 0 )	// only if user exist and it has servertoken
 						{
-							loggedSession = UserSessionNew( NULL, "servertoken", l->fcm->fcm_ID );
+							// This needs to create a new session
+							loggedSession = UserSessionNew( NULL, ( char *)lot->hme_Data, l->fcm->fcm_ID );
 							if( loggedSession != NULL )
 							{
 								sprintf( sessionid, "%s", loggedSession->us_SessionID );
+								//DEBUG( "[lot] We created new session: %s\n", sessionid );
 								
 								User *usr = UMUserGetByName( l->sl_UM, userName );
 								if( usr == NULL )
@@ -491,7 +495,12 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 									
 									USMSessionSaveDB( l->sl_USM, loggedSession );
 									USMUserSessionAddToList( l->sl_USM, loggedSession );
+									//DEBUG( "[lot] Session saved: %s!\n", loggedSession->us_SessionID );
 							    }
+							}
+							else
+							{
+								DEBUG( "[lot] Could not create new session." );
 							}
 						}
 					}
@@ -789,21 +798,22 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 		// Use login session
 		if( loggedSession != NULL && lot != NULL )
 		{
+			//DEBUG( "[lot] Trying to get new logintoken! %s\n", loggedSession->us_SessionID );
 			// Renew token
 			long unsigned int datalen = 0;
 			char argsHere[ 256 ];
-			sprintf( argsHere, "sessionid=%s&command=getlogintoken&logintoken=%s", loggedSession->us_SessionID, ( char *)lot->hme_Data );
+			sprintf( argsHere, "sessionid=%s&command=getlogintoken&token=%s", loggedSession->us_SessionID, ( char *)lot->hme_Data );
 			returnExtra = l->sl_PHPModule->Run( l->sl_PHPModule, "modules/system/module.php", argsHere, &datalen );
 			
-			// Make sure we do it when we don't fail!
-			if( returnExtra[0] != 'f' && returnExtra[1] != 'a' && returnExtra[2] != 'i' )
+			// Make sure we do it when we don't fail! (third character != 'i' from fa_i_l)
+			if( returnExtra[2] != 'i' )
 			{
 				int len = 1024 + strlen( returnExtra );
 				char tmp[ len ];
 				snprintf( tmp, len,
 					"{\"result\":\"%d\",\"sessionid\":\"%s\",\"level\":\"%s\",\"userid\":\"%ld\",\"fullname\":\"%s\",\"loginid\":\"%s\",\"uniqueid\":\"%s\",\"extra\":\"%s\"}",
 					0, loggedSession->us_SessionID , loggedSession->us_User->u_IsAdmin ? "admin" : "user", loggedSession->us_User->u_ID, loggedSession->us_User->u_FullName, loggedSession->us_SessionID, loggedSession->us_User->u_UUID, returnExtra != NULL ? returnExtra : "" );
-				//DEBUG("---->[SysWebRequest] logincall logintoken answer: %s\n", tmp );
+				//DEBUG("[websocket] ---->[SysWebRequest] logincall logintoken answer: %s\n", tmp );
 				
 				if( returnExtra )
 					FFree( returnExtra );
@@ -822,7 +832,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 			}
 			else
 			{
-				DEBUG( "Failed logintoken response: %s\n", returnExtra );
+				DEBUG( "[lot] Failed logintoken response: %s\n", returnExtra );
 			}
 		}
 		

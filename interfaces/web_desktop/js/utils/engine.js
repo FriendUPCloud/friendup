@@ -243,6 +243,11 @@ function UniqueHash( str )
 // set a cookie
 function SetCookie( key, value, expiry )
 {
+	if( window.Friend && window.Friend.User )
+	{
+		if( Friend.User.CookiePrefix )
+			key = Friend.User.CookiePrefix + '-' + key;
+	}
 	try
 	{
 		var t = new Date ();
@@ -256,12 +261,25 @@ function SetCookie( key, value, expiry )
 	}
 	return false;
 }
-function DelCookie ( key ) { document.cookie = key + '=;'; }
+function DelCookie ( key )
+{ 
+	if( window.Friend && window.Friend.User )
+	{
+		if( Friend.User.CookiePrefix )
+			key = Friend.User.CookiePrefix + '-' + key;
+	}
+	document.cookie = key + '=;'; 
+}
 
 // get a cookie
 function GetCookie( key )
 {
 	if ( !key ) return false;
+	if( window.Friend && window.Friend.User )
+	{
+		if( Friend.User.CookiePrefix )
+			key = Friend.User.CookiePrefix + '-' + key;
+	}
 	try
 	{
 		var c = document.cookie.split ( ';' );

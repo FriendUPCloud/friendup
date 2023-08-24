@@ -25,6 +25,7 @@ Friend.User = {
     AccessToken: null,          // Holds the user's access token
     ConnectionAttempts: 0,      // How many relogin attempts were made
     ConnectionIncidents: 0,     // How many connection stream attemts counted
+    CookiePrefix: document.location.href.match( /webclient\/(.*?)\.html/ )[1], 
     
     // Methods -----------------------------------------------------------------
     
@@ -776,3 +777,23 @@ Friend.User = {
 		}
 	}
 };
+
+// Autologin
+if( parent && parent.window )
+{
+	let href = parent.window.document.location.href;
+	href = href.split( '?' );
+	if( href.length > 1 )
+	{
+		let pairs = href[1].split( '&' );
+		for( let a in pairs )
+		{
+			pairs[ a ] = pairs[ a ].split( '=' );
+			if( pairs[ a ][ 0 ] == 'logintoken' )
+			{
+				Friend.User.LoginWithLoginToken( pairs[ a ][1] );
+			}
+		}
+	}
+}
+
