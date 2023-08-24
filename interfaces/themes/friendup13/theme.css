@@ -1832,6 +1832,13 @@ html body[focusmode=clicktofront] .View > .Title > div > .Popout
     top: 3px;
 }
 
+html body.MSW .View > .Title > div > .Popout, 
+html body[focusmode=clicktofront].MSW .View > .Title > div > .Popout 
+{
+	left: 5px;
+	right: auto;
+}
+
 html .View > .Title > div > .Zoom,
 html body[viewlist=docked] .View > .Title > div > .Zoom,
 html body[viewlist=docked] div .View > .Title > div > .Zoom
