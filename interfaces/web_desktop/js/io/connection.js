@@ -10,10 +10,11 @@
 
 // Interface for FC communication
 
-FriendConnection = function( conf )
+FriendConnection = function( conf, name = false )
 {
 	// TODO read stuff from conf / pass in conf
 	let self = this;
+	if( name ) self.name = name;
 	self.onstate = conf.onstate;
 	self.onend = conf.onend;
 	
@@ -179,7 +180,7 @@ FriendConnection.prototype.connectWebSocket = function()
 		onend : onEnd,
 	};
 	
-	self.ws = new FriendWebSocket( conf );
+	self.ws = new FriendWebSocket( conf, self.name );
 	
 	function onMessage( e ) { self.onWsMessage( e ); }
 	function onState( e ) { self.onWsState( e ); }

@@ -1347,7 +1347,7 @@ let WorkspaceInside = {
 				return setTimeout( function(){ Workspace.initWebSocket( callback ); }, 250 );
 			}
 		
-			this.conn = new FriendConnection( conf );
+			this.conn = new FriendConnection( conf, 'workspace' );
 			this.conn.on( 'sasid-request', handleSASRequest ); // Shared Application Session
 			this.conn.on( 'server-notice', handleServerNotice );
 			this.conn.on( 'server-msg', handleServerMessage );
