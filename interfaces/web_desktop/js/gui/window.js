@@ -154,6 +154,11 @@ function RememberWindowDimensions( div )
 function SetWindowContent( win, data )
 {
 	if( !win ) return;
+	if( win.opener )
+	{
+		win.document.body.querySelector( '.Content' ).innerHTML = Friend.GUI.view.cleanHTMLData( data );
+		return;
+	}
 	if( win.content ) win = win.content;
 	win.innerHTML = Friend.GUI.view.cleanHTMLData( data );
 }
@@ -609,8 +614,6 @@ function PopoutWindow( wind, e )
 					let part = document.location.href.match( /(.*?)\/webclient/i )[1];
 					let ifrsrc = part + '/webclient/webapp.html?app=' + wind.windowObject.applicationName + '&logintoken=' + info.token
 					let v = window.open( ifrsrc, '', 'width=' + vw + ',height=' + vh + ',status=no,toolbar=no,topbar=no,windowFeatures=popup' );
-					
-					v.document.body.innerHTML = '<iframe src="' + ifrsrc + '"></iframe>';
 					wind.windowObject.close();
 				}
 			}
@@ -2590,6 +2593,37 @@ var View = function( args )
 			this.workspace = Math.floor( ws );
 		}
 	}
+	
+	// Create event functions on content
+	this.createContentEventFuncs = function( cont )
+	{
+		// Create event handler for view window
+		if( !cont.events )
+			cont.events = new Array ();
+		cont.AddEvent = function( event, func )
+		{
+			if( typeof(this.events[event]) == 'undefined' )
+				this.events[event] = [];
+			this.events[event].push( func );
+			return func;
+		}
+		cont.RemoveEvent = function( event, func )
+		{
+			if( typeof( this.events[event] ) == 'undefined' ) return false;
+			let o = [];
+			let found = false;
+			for( var a in this.events[event] )
+			{
+				if( this.events[event][a] != func )
+				{
+					o.push( this.events[event][a] );
+				}
+				else found = true;
+			}
+			this.events[event] = o;
+			return found;
+		}
+	}
 
 	// Clean data
 	this.cleanHTMLData = Friend.GUI.view.cleanHTMLData;
@@ -2603,7 +2637,7 @@ var View = function( args )
 	// id = window id
 	// flags = list of constructor flags
 	// applicationId = app id..
-	this.createDomElements = function( div, titleStr, width, height, id, flags, applicationId )
+	this.createDomElements = function( div, titleStr, width, height, id, flags, applicationId, parentOverride = false )
 	{
 		if( this.created ) 
 		{
@@ -2709,13 +2743,12 @@ var View = function( args )
 		let iconSpan;
 		let viewContainer = null;
 
+		// Window is already taken
+		if( id && typeof( movableWindows[ id ] ) != 'undefined' )
+			return false;
+
 		if( id )
 		{
-			// Existing window!
-			if( typeof( movableWindows[ id ] ) != 'undefined' )
-			{
-				return false;
-			}
 			// Make a container to put the view div inside of
 			viewContainer = document.createElement( 'div' );
 			viewContainer.className = 'ViewContainer';
@@ -2809,7 +2842,13 @@ var View = function( args )
 				
 				if( applicationId ) div.applicationId = applicationId;
 				div.parentWindow = false;
-				if( parentWindow )
+				
+				// Native mode probably
+				if( parentOverride )
+				{
+					divParent = parentOverride;
+				}
+				else if( parentWindow )
 				{
 					divParent = parentWindow._window;
 					div.parentWindow = parentWindow;
@@ -2847,7 +2886,12 @@ var View = function( args )
 			div = document.createElement ( 'div' );
 			if( applicationId ) div.applicationId = applicationId;
 			div.parentWindow = false;
-			if( parentWindow )
+			// Native mode probably
+			if( parentOverride )
+			{
+				divParent = parentOverride;
+			}
+			else if( parentWindow )
 			{
 				divParent = parentWindow._window;
 				div.parentWindow = parentWindow;
@@ -3989,31 +4033,8 @@ var View = function( args )
 			document.body.setAttribute( 'windowcount', movableWindowCount );
 		}
 
-		// Create event handler for view window
-		div.content.events = new Array ();
-		div.content.AddEvent = function( event, func )
-		{
-			if( typeof(this.events[event]) == 'undefined' )
-				this.events[event] = [];
-			this.events[event].push( func );
-			return func;
-		}
-		div.content.RemoveEvent = function( event, func )
-		{
-			if( typeof( this.events[event] ) == 'undefined' ) return false;
-			let o = [];
-			let found = false;
-			for( var a in this.events[event] )
-			{
-				if( this.events[event][a] != func )
-				{
-					o.push( this.events[event][a] );
-				}
-				else found = true;
-			}
-			this.events[event] = o;
-			return found;
-		}
+		// Create event funcs on content
+		self.createContentEventFuncs( div.content );
 
 		// Assign the move layer
 		div.moveoverlay = molay;
@@ -6368,7 +6389,52 @@ var View = function( args )
 		args.resize = false;
 	}
 	
-	this.createDomElements( 'CREATE', args.title, args.width, args.height, args.id, args, args.applicationId );
+	// TODO: Native window mode should work!
+	/*let webapp = document.location.href.indexOf( '/webapp.html' ) > 0;
+	if( webapp && !window.windowCount ) window.windowCount = 0;
+	if( webapp && window.windowCount++ > 1 )
+	{
+		let uid = args.id ? args.id : UniqueId();
+		let nw = window.open( '', uid, 'width=' + args.width + ',height=' + args.height + ',status=no,toolbar=no,topbar=no,windowFeatures=popup' );
+		self._nativeWindow = nw;
+		self._type = 'native';
+		
+		let bod = nw.document.body;
+		let elements = [ 'Content', 'Title', 'Leftbar', 'Rightbar', 'Bottombar', 'ViewTitle' ];
+		let content = null;
+		for( let a in elements )
+		{
+			let d = nw.document.createElement( 'div' );
+			d.className = elements[ a ];
+			bod.appendChild( d );
+			if( elements[ a ] == 'Content' )
+			{
+				content = d;
+			}
+			else if( content )
+			{
+				let key = elements[ a ].toLowerCase();
+				if( key == 'title' ) key = 'titleBar';
+				else if( key == 'viewtitle' ) key = 'viewTitle';
+				content[ key ] = d;
+			}
+		}
+		
+		movableWindows[ uid ] = content;
+		
+		bod.querySelector( '.Title' ).innerHTML = '<span></span>';
+		bod.classList.remove( 'Loading' );
+		self.createContentEventFuncs( content );
+		content.windowObject = self;
+		self._window = content;
+		self.content = content;
+		self.content.windowObject = self;
+		self.flags = args;
+	}
+	else 
+	{*/
+		this.createDomElements( 'CREATE', args.title, args.width, args.height, args.id, args, args.applicationId );
+	//}
 
 	if( !self._window || !self._window.parentNode ) return false;
 
