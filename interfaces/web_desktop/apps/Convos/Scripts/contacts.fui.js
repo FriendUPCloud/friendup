@@ -296,6 +296,15 @@ class FUIContacts extends FUIElement
         
         let user = domElement.getAttribute( 'user' );
         if( user ) this.options.user = user;
+        
+        if( !this.record && this.options.groupid )
+        {
+        	this.record = {
+        		Type: 'chatroom',
+        		Fullname: this.options.groupname,
+        		ID: this.options.groupid
+        	};
+        }
     }
     // Just check the contact
     poll( uniqueId, message )
@@ -380,6 +389,7 @@ class FUIContacts extends FUIElement
 	    }
        		
         d.innerHTML = '<span class="Avatar"></span><span class="Name">' + text + '</span>';
+        
         if( this.record && this.record.Type == 'chatroom' )
     	{
     		if( this.options.own == 'true' )
@@ -537,9 +547,15 @@ class FUIContacts extends FUIElement
     {
     	let self = this;
     	
+    	if( this.record && this.record.uniqueid == record.uniqueid && this.record.groupid == record.groupid )
+    	{
+    		return;
+		}
+    		
+    	this.record = record;
+
     	this.setActiveContact( record );
     	
-    	this.record = record;
     	
     	if( this.record && this.record.Type && this.record.Type == 'User' )
     	{
