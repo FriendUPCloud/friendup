@@ -48,8 +48,23 @@ make compile
 make install
 ```
 
-4. Configure config file, located in build/cfg/cfg.ini (<a href="https://github.com/FriendUPCloud/friendup/blob/master/ConfiguringFriendOS.md">Configuring Friend OS</a>)
-5. Run FriendCore
+4. Create database / access
+
+In your Friend folder:
+
+```
+sudo mysql
+create user frienduser@localhost identified by "somepassword";
+create database frienddb;
+use frienddb;
+source db/FriendCoreDatabase.sql;
+grant all privileges on frienddb.* to frienduser@localhost;
+flush privileges;
+exit
+```
+
+5. Configure config file, located in build/cfg/cfg.ini (<a href="https://github.com/FriendUPCloud/friendup/blob/master/ConfiguringFriendOS.md">Configuring Friend OS</a>) 
+6. Run FriendCore
 
 ```
 cd build/
