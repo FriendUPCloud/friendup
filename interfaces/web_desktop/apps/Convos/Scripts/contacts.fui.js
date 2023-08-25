@@ -17,6 +17,7 @@ class FUIContacts extends FUIElement
         super( options );
         let self = this;
         this.initialized = true;
+        this.chatInitialized = false;
         this.contactFilter = '';
         this.userList = {}; // Dom elements
         this.userListOrder = []; // Sorted list
@@ -39,6 +40,7 @@ class FUIContacts extends FUIElement
         					return false; // TODO: Make some error
     					}
         				let grp = JSON.parse( md );
+
         				self.setChatView( {
 							Type: 'chatroom',
 							ID: grp.UniqueID,
@@ -432,7 +434,7 @@ class FUIContacts extends FUIElement
         
         d.onclick = function( e )
         {
-            self.setChatView( this.record );
+            self.setChatView( this.record, e );
             this.classList.remove( 'NewActivity' );
             self.hideUsers();
         }
@@ -543,19 +545,18 @@ class FUIContacts extends FUIElement
 		}
 	}
 		    
-    setChatView( record )
+    setChatView( record, e = false )
     {
     	let self = this;
     	
-    	if( this.record && this.record.uniqueid == record.uniqueid && this.record.groupid == record.groupid )
+    	if( this.record && ( e && e.button ) && this.record.uniqueid == record.uniqueid && this.record.groupid == record.groupid )
     	{
     		return;
 		}
-    		
+		
     	this.record = record;
 
     	this.setActiveContact( record );
-    	
     	
     	if( this.record && this.record.Type && this.record.Type == 'User' )
     	{
@@ -573,6 +574,7 @@ class FUIContacts extends FUIElement
         	dm = record.RoomType;
         this.domChat.innerHTML = '<fui-chatlog parentelement="' + this.options.uniqueid + '" uniqueid="messages" cid="' + record.ID + '" type="' + dm + '" name="' + record.Fullname + '"' + context + '></fui-chatlog>';
         FUI.initialize();
+        console.log( 'Initializing!' );
         
         self.domElement.classList.add( 'Chat' );
         document.querySelector( '.FUIChatoverview' ).classList.add( 'Chat' );
@@ -584,7 +586,6 @@ class FUIContacts extends FUIElement
 			let ta = document.querySelector( '.Textarea' );
 			if( ta ) ta.focus();
 		}
-		
     }
     getMemberAttribute()
     {
