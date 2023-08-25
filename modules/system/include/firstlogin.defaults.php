@@ -105,9 +105,9 @@ if( ( !isset( $args->args->exclude ) || isset( $args->args->exclude ) && !in_arr
 {
 	// 2. Setup standard dock items
 	$dockItems = array(
-		array( 'Convos', 'A chat and video conferencing application' ),
-		array( 'Author', 'A simple word processor' ),
-		array( 'Software', 'Software catalog' )
+		array( 'Convos', 'A chat and video conferencing application', false ),
+		array( 'Author', 'A simple word processor', '.memo' ),
+		array( 'Software', 'Software catalog', false )
 	);
 	$i = 0;
 	foreach( $dockItems as $r )
@@ -119,6 +119,18 @@ if( ( !isset( $args->args->exclude ) || isset( $args->args->exclude ) && !in_arr
 		$d->SortOrder = $i++;
 		$d->Parent = 0;
 		$d->Save();
+		
+		// Mimetype
+		if( $r[2] )
+		{
+			$o = new dbIO( 'FSetting' );
+			$o->UserID = $userid;
+			$o->Type = 'mimetypes';
+			$o->Key = $args->args->type;
+			$o->Load();
+			$o->Data = $r[0];
+			$o->Save();
+		}
 	}
 }
 
