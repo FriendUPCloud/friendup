@@ -19,6 +19,7 @@ if [ -e "build/site.ini" ]; then
     echo "Manifest updated with background color: $background_color"
     sed -i "s/\"description\": \"A web OS for everyone.\"/\"description\": \"$description\"/g" build/resources/manifest.json
     echo "Manifest updated with background color: $description"
+    cp build/resources/manifest.json build/resources/webclient/manifest.json
 else
     echo "site.ini not found in the build directory."
 fi
