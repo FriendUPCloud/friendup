@@ -561,7 +561,7 @@ class FUIContacts extends FUIElement
     	if( this.record && this.record.Type && this.record.Type == 'User' )
     	{
     		let ov = FUI.getElementByUniqueId( 'convos' );
-			ov.activateDirectMessaging();
+			ov.activateDirectMessaging( this.record );
     		this.domContacts.classList.add( 'User' );
     	}
     	else
