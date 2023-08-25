@@ -28,33 +28,33 @@ Distributed and powerful
 Friend OS aims to make the powerful emerging web technologies easy to work with. This is why we reach out to you, to help us enrich this platform with DOS drivers, modules, libraries and apps so that we can cover all of the interesting technologies out there that people use and love.
 In the Future, Friend OS will be to the cloud users what Linux is for machines.
 
-Running the serving kernel manually
------------------------------------
+Installation instructions
+=========================
 
-Friend Core can be installed in any directory you wish, including root directories. The installer creates two global variables, FRIEND_HOME pointing to the cloned friendup directory, and FRIEND_PATH pointing to the directory where Friend Core has been build. After running the installer script, you will need to reboot your machine for these variables to be defined.
+1. Clone this repository into a folder
+2. Install the following dependencies – below, to install for Ubuntu:
 
-When you want to run Friend Core yourself, you enter into its build directory. Like this:
 ```
-cd myfriend/build/
+sudo apt-get install bash libssh2-1-dev libssh-dev libssl-dev libaio-dev mysql-server php7-cli php7-gd php7-imap php7-mysql php7-curl libmysqlclient-dev build-essential libmatheval-dev libmagic-dev libgd-dev libuv1 rsync valgrind-dbg libxml2-dev php7-readline cmake ssh make libsmbclient-dev libwebsockets-dev
+```
+
+3. Build FriendCore
+
+```
+make clean setup
+make compile
+make install
+```
+
+4. Configure config file, located in build/cfg/cfg.ini (<a href="https://github.com/FriendUPCloud/friendup/blob/master/ConfiguringFriendOS.md">Configuring Friend OS</a>)
+5. Run FriendCore
+
+```
+cd build/
 ./FriendCore
 ```
-If you want to run it without debug output in your console, you can use nohup:
-```
-nohup ./FriendCore >> /dev/null &
-```
-If you want to **kill Friend Core and it's dedicated servers** (see later), use the **killfriend.sh script** located in both the build directory and the friendup directory.
-```
-./killfriend.sh
-```
 
-The installation script overwrites the content of the Friend Core configuration file (build/cfg/cfg.ini), and
-will erase the extra data you have entered manually.
-
-If you just want to recompile Friend Core, enter the following command in a shell:
-```
-cd myfriend
-make clean setup release install
-```
+You're done
 
 Configuring your server
 -----------------------
@@ -167,25 +167,4 @@ Tested - a lot
 ==============
 
 We extensively test our platform and use https://www.browserstack.com/ for cross browser testing.
-
-List of dependencies
-====================
-
-This is the list of dependencies Friend Core needs to function.
-
-Below, to install for Ubuntu:
-
-```
-sudo apt-get install bash libssh2-1-dev libssh-dev libssl-dev libaio-dev mysql-server php7-cli php7-gd php7-imap php7-mysql php7-curl libmysqlclient-dev build-essential libmatheval-dev libmagic-dev libgd-dev libuv1 rsync valgrind-dbg libxml2-dev php7-readline cmake ssh make libsmbclient-dev libwebsockets-dev
-```
-
-Important notes on Friend OS 1.3.x
-==================================
-
-The build-in push notifications system in Friend Core has been disabled by
-default as it can now be handled by the system module. To enable it, add 
--DUSE_PUSH_NOTIFICATIONS to the CFLAGS. The feature is not deprecated, 
-although it may be, if its use isn't warranted after some time.
-
-
 
