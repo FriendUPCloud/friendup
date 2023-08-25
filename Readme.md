@@ -71,7 +71,23 @@ cd build/
 ./FriendCore
 ```
 
-You're done
+You're done.
+
+If you're using push notifications, you need to install composer and php Web Push:
+
+```
+sudo apt-get install composer
+cd build/php
+composer require minishlink/web-push
+```
+
+This will allow you to run web push, and enable in the cfg.ini:
+
+```
+[Security]
+push_system = "php-web-push"
+```
+```
 
 Configuring your server
 -----------------------
