@@ -907,7 +907,7 @@ class FUIChatoverview extends FUIElement
     	this.currentType = 'dm';
     }
     // Just activate DM
-    activateDirectMessaging()
+    activateDirectMessaging( record )
     {
     	let tabs = this.domChannels.getElementsByClassName( 'Channel' );
     	for( let a = 0; a < tabs.length; a++ )
@@ -915,7 +915,12 @@ class FUIChatoverview extends FUIElement
     		if( !tabs[ a ].classList.contains( 'Active' ) )
     		{
 				if( tabs[ a ].getAttribute( 'uniqueid' ) == 'dm' )
-					return tabs[ a ].click();
+				{
+					tabs[ a ].click();
+					let f = FUI.getElementByUniqueId( 'contacts' );
+					f.setActiveContact( record );
+					f.setChatView( record );
+				}
 			}
     	}
     }
