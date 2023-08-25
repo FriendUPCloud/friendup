@@ -297,7 +297,6 @@ Application.print = function()
 Application.load = function()
 {
 	if( this.fileDialog ) return;
-	console.log( 'init' );
 	let flags = {
 		multiSelect: false,
 		suffix: 'memo',
@@ -309,10 +308,8 @@ Application.load = function()
 					command: 'loadfiles',
 					files: arr
 				} );
-				console.log( 'Try', arr[0], arr );
 				Application.wholeFilename = arr[0].Path;
 				Application.mainView.setFlag( 'title', 'Author - ' + Application.wholeFilename );
-				console.log( 'Where is the filename: ' + 'Author - ' + Application.wholeFilename );
 			}
 			Application.fileDialog = false;
 		},
@@ -470,10 +467,8 @@ Application.setCorrectTitle = function()
 	}
 	else
 	{
-		console.log( this.currentViewMode + ' ' + Application.wholeFilename );
 		var fn = sanitizeFilename( Application.wholeFilename );
 		Application.mainView.setFlag( 'title', 'Author - ' + ( fn ? fn : i18n( 'menu_new' ) ) );
-		console.log(( fn ? fn : i18n( 'menu_new' ) ) );
 	}
 }
 
