@@ -21,6 +21,41 @@ Application.run = function( msg, iface )
 		'min-height': 300
 	} );
 	
+	// Check mimetypes
+	let m = new Module( 'system' );
+	m.onExecuted = function( rs, rd )
+	{
+		function setMimetype()
+		{
+			let n = new Module( 'system' );
+			n.onExecuted = function()
+			{
+				Application.sendMessage( { command: 'reloadmimetypes', type: 'system' } );
+			}
+			n.execute( 'setmimetype', { type: '.memo', executable: 'Author' } );
+		}
+		if( rs != 'ok' ) 
+		{
+			setMimetype();
+			return;
+		}
+		let list = JSON.parse( rd );
+		let found = false;
+		for( let a = 0; a < list.length; a++ )
+		{
+			if( list[ a ] == '.memo' )
+			{
+				found = true;
+				break;
+			}
+		}
+		if( !found )
+		{
+			setMimetype();
+		}
+	}
+	m.execute( 'getmimetypes' );
+	
 	this.mainView = w;
 	
 	w.onClose = function( closeWindow )
@@ -262,8 +297,8 @@ Application.print = function()
 Application.load = function()
 {
 	if( this.fileDialog ) return;
-	
-	var flags = {
+	console.log( 'init' );
+	let flags = {
 		multiSelect: false,
 		suffix: 'memo',
 		triggerFunction: function( arr )
@@ -274,8 +309,10 @@ Application.load = function()
 					command: 'loadfiles',
 					files: arr
 				} );
+				console.log( 'Try', arr[0], arr );
 				Application.wholeFilename = arr[0].Path;
 				Application.mainView.setFlag( 'title', 'Author - ' + Application.wholeFilename );
+				console.log( 'Where is the filename: ' + 'Author - ' + Application.wholeFilename );
 			}
 			Application.fileDialog = false;
 		},
@@ -286,7 +323,7 @@ Application.load = function()
 		suffix: [ 'memo', 'html', 'htm' ]	
 	};
 	
-	var f = new Filedialog( flags );
+	let f = new Filedialog( flags );
 	this.fileDialog = f;
 }
 
@@ -330,7 +367,7 @@ Application.save = function( mode )
 					path: fname
 				} );
 				Application.wholeFilename = fname;
-				Application.mainView.setFlag( 'title', 'Author - ' + fname );
+				Application.mainView.setFlag( 'title', 'Author - ' +  sanitizeFilename( fname ) );
 			},
 			mainView: this.mainView,
 			title: mode == 'saveas' ? i18n( 'i18n_save_as' ) : i18n( 'i18n_save' ),
@@ -380,20 +417,9 @@ function sanitizeFilename( data )
 {
 	if( !data ) return '';
 	var filename = data.split( ':' )[1];
+	
 	if( !( filename && filename.indexOf ) )
 		return '';
-	if( filename.indexOf( '/' ) > 0 )
-		filename = filename.split( '/' ).join( ' - ' );
-	
-	filename = filename.split( ' - ' );
-	
-	// Special for notes, remove first folder
-	var ar = [];
-	for( var a = 1; a < filename.length; a++ )
-	{
-		ar.push( filename[ a ] );
-	}
-	filename = ar.join( ' - ' );
 	
 	// Join
 	filename = filename.split( '.' );
@@ -444,8 +470,10 @@ Application.setCorrectTitle = function()
 	}
 	else
 	{
+		console.log( this.currentViewMode + ' ' + Application.wholeFilename );
 		var fn = sanitizeFilename( Application.wholeFilename );
 		Application.mainView.setFlag( 'title', 'Author - ' + ( fn ? fn : i18n( 'menu_new' ) ) );
+		console.log(( fn ? fn : i18n( 'menu_new' ) ) );
 	}
 }
 
