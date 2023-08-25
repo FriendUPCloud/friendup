@@ -87,7 +87,6 @@ This will allow you to run web push, and enable in the cfg.ini:
 [Security]
 push_system = "php-web-push"
 ```
-```
 
 Configuring your server
 -----------------------
