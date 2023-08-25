@@ -93,6 +93,8 @@ updatefiles:
 	rsync -ravl repository/* $(FRIEND_PATH)/resources/repository/
 	rsync -ravl services/* $(FRIEND_PATH)/services/
 	cp interfaces/web_desktop/js/io/service-worker.js $(FRIEND_PATH)/resources/
+	
+	bash post_install.sh
 
 libs: $(FRIEND_CORE_BIN)
 	@echo "Generate libraries."
@@ -191,6 +193,8 @@ install:
 	cp scripts/*.sh $(FRIEND_PATH)/
 	cp scripts/bash-ini-parser $(FRIEND_PATH)/
 	cp interfaces/web_desktop/js/io/service-worker.js $(FRIEND_PATH)/resources/
+	
+	bash post_install.sh
 
 goinstall: install
 	rm -f build/resources/webclient/index.html
