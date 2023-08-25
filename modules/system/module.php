@@ -267,10 +267,14 @@ if( isset( $args->command ) )
 			$f->RowID = $User->ID;
 			$f->RowType = 'LoginToken';
 			$f->UserID = $User->ID;
-			// Refresh token
-			if( isset( $args->logintoken ) )
+			if( isset( $args->args->name ) )
 			{
-				$f->UniqueID = $args->logintoken;
+				$f->Name = $args->args->name;
+			}
+			// Refresh token
+			if( isset( $args->token ) )
+			{
+				$f->UniqueID = $args->token;
 				if( !$f->Load() )
 				{
 					die( 'fail' );
@@ -281,7 +285,15 @@ if( isset( $args->command ) )
 				$f->DateCreated = date( 'Y-m-d H:i:s' );
 				
 				// Delete old tokens (housekeeping)
-				$SqlDatabase->query( 'DELETE FROM `FKeys` WHERE UserID=\'' . $User->ID . '\' AND DateModified < NOW() - INTERVAL 8 DAY' );
+				if( $f->Name )
+				{
+					$n = $SqlDatabase->_link->real_escape_string( $f->Name );
+					$SqlDatabase->query( 'DELETE FROM `FKeys` WHERE `Name`="' . $n . '" AND UserID=\'' . $User->ID . '\' AND DateModified < NOW() - INTERVAL 8 DAY' );
+				}
+				else
+				{
+					$SqlDatabase->query( 'DELETE FROM `FKeys` WHERE UserID=\'' . $User->ID . '\' AND DateModified < NOW() - INTERVAL 8 DAY' );
+				}
 			}
 			$f->DateModified = date( 'Y-m-d H:i:s' );
 			// Make new token
@@ -289,7 +301,7 @@ if( isset( $args->command ) )
 			$f->Save();
 			if( $f->ID > 0 )
 			{
-				if( isset( $args->logintoken ) )
+				if( isset( $args->token ) )
 				{
 					die( $f->UniqueID );
 				}

@@ -13,13 +13,14 @@ if( !window.FriendWebSocket )
 {
 	class FriendWebSocket
 	{
-		constructor( conf )
+		constructor( conf, name = false )
 		{
 			if( !conf ) return;
 			if ( !( this instanceof FriendWebSocket ))
 				return new FriendWebSocket( conf );
 			
 			let self = this;
+			self.name = name;
 			
 			/*let uniqueWords = [ 'Ball', 'Jacket', 'Fish', 'Origon', 'Nelson', 'Blue', 'Red', 'Slash' ];
 			let ustr = '';
@@ -89,10 +90,13 @@ if( !window.FriendWebSocket )
 		reconnect()
 		{
 			let self = this;
+			if( this.reconnecting ) return;
+			this.reconnecting = true;
 			
 			if( window.Workspace && !window.Workspace.sessionId )
 			{
 				console.log( 'Not reconnecting websocket due to no sessionId.' );
+				this.reconnecting = false;
 				return;
 			}
 			
@@ -106,6 +110,7 @@ if( !window.FriendWebSocket )
 				self.close();
 				if( Friend.User.State == 'offline' )
 				{
+					this.reconnecting = false;
 					return;
 				}
 			}
@@ -248,12 +253,14 @@ if( !window.FriendWebSocket )
 		{
 			let self = this;
 			
+			//console.log( 'Connecting!' );
+			
 			// Reset
 			self.ready = false;
 			
 			if( window.Friend && Friend.User && Friend.User.State == 'offline' )
 			{
-				//console.log( 'Friend says the user is offline. Bye.' );
+				console.log( 'Friend says the user is offline. Bye.' );
 				return;
 			}
 			
@@ -261,7 +268,7 @@ if( !window.FriendWebSocket )
 			{
 				if( self.pConf )
 				{
-					// console.log( 'We have a previous config. Trying the url there.', self.pConf.url );
+					//console.log( 'We have a previous config. Trying the url there.', self.pConf.url );
 					self.url = self.pConf.url;
 					return self.connect();
 				}
@@ -272,34 +279,45 @@ if( !window.FriendWebSocket )
 			{
 				if( self.state.type == 'open' ) 
 				{
-					// console.log( 'We are already open.' );
+					//console.log( 'We are already open.' );
 					return;
 				}
 				
 				if( self.state.type == 'connecting' ) 
 				{
-					// console.log('ongoing connect. we will wait for this to finish.');
+					//console.log('ongoing connect. we will wait for this to finish.');
 					return;
 				}
 			}
 				
 			self.setState( 'connecting' );
 			
+			// We already have, reconnect
 			if( self.ws )
 			{
-				//console.log( 'Reconnecting..' );
 				let ws = self.ws;
 				self.ws = null;
 				if( ws && ws.cleanup )
 					ws.cleanup();
-				return;
 			}
 				
-			//console.log( 'Connecting a new native websocket!' );
-			
-			self.ws = new window.WebSocket( self.url, 'FC-protocol' );
-			
-			self.attachHandlers();
+			// Validate that we can connect at all..
+			let m = new Library( 'system' );
+			m.onExecuted = function( ret, red )
+			{
+				if( ret == 'ok' )
+				{
+					self.ws = new window.WebSocket( self.url, 'FC-protocol' );
+				
+					// Keep track
+					if( !window.websockets )
+						window.websockets = [];
+					window.websockets.push( self.ws );
+					
+					self.attachHandlers();
+				}
+			}
+			m.execute( 'validate' );
 		}
 
 		attachHandlers()
@@ -364,6 +382,7 @@ if( !window.FriendWebSocket )
 			{
 				if ( self.onend )
 					self.onend();
+				this.reconnecting = false;
 				return false;
 			}
 			
@@ -386,10 +405,10 @@ if( !window.FriendWebSocket )
 			
 			function reconnect()
 			{
+				self.reconnecting = false;
 				self.reconnectTimer = null;
 				self.reconnectAttempt += 1;
 				self.connect();
-				console.log( 'Doing actual reconnect.' );
 			}
 			
 			function reconnectAllowed()
@@ -641,7 +660,7 @@ if( !window.FriendWebSocket )
 					if( window.Workspace )
 					{
 						Workspace.initWebSocket();
-						console.log( 'Forcefully reconnecting websocket.' );
+						//console.log( 'Forcefully reconnecting websocket.' );
 						return;
 					}
 				}
@@ -920,16 +939,15 @@ if( !window.FriendWebSocket )
 
 		wsClose( code, reason )
 		{
-			console.log( '[FriendWebSocket] We are going doen - backtrace:' );
-			console.trace();
-			
 			// This means we have no open connections
 			_cajax_ws_connections = 0;
 			
 			let self = this;
 			
 			if ( !self.ws )
-				return;
+			{
+				return self.reconnect();
+			}
 			
 			code = code || 1000;
 			reason = reason || 'WS connection closed';

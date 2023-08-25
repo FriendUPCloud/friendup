@@ -138,6 +138,16 @@ Application.receiveMessage = function( msg )
         	}
     	}
     }
+    else if( msg.command == 'message-update' )
+    {
+    	let mess = FUI.getElementByUniqueId( 'messages' );
+    	mess.updateMessage( msg.mid, msg.content );
+    }
+    else if( msg.command == 'message-remove' )
+    {
+    	let mess = FUI.getElementByUniqueId( 'messages' );
+    	mess.removeMessage( msg.mid );
+    }
     else if( msg.command == 'signal' )
     {
     	if( msg.signal && msg.signal == 'writing' )

@@ -14,6 +14,8 @@ Friend.iconsSelectedCount = 0;
 Friend.currentMenuItems = 0;
 Friend.scope = 'API';
 
+FriendScope = window.opener ? window.opener : parent;
+
 Friend.lib = Friend.lib || {};
 Friend.GUI = Friend.GUI || {};
 
@@ -934,7 +936,7 @@ function receiveEvent( event, queued )
 					document.body.classList.add( 'Loaded' );
 				}
 				
-				if( themeName && themeName != 'default' )
+				if( themeName && themeName != 'default' && themeName != 'friendup13' )
 				{
 					AddCSSByUrl( '/themes/' + themeName + '/scrollbars.css' );
 					styles.href = '/system.library/module/?module=system&command=theme&args=' +
@@ -942,9 +944,8 @@ function receiveEvent( event, queued )
 				}
 				else
 				{
-					AddCSSByUrl( '/themes/friendup12/scrollbars.css' );
-					styles.href = '/system.library/module/?module=system&command=theme&args=' +
-						encodeURIComponent( '{"theme":"friendup12"}' ) + '&authid=' + Application.authId;
+					AddCSSByUrl( '/themes/friendup13/scrollbars.css' );
+				    styles.href = '/themes/friendup13/theme.css';
 				}
 				
 				// Remove old one
@@ -1340,7 +1341,7 @@ function receiveEvent( event, queued )
 				// Just call back
 				if( dataPacket.callback )
 				{
-					parent.postMessage( JSON.stringify( {
+					FriendScope.postMessage( JSON.stringify( {
 						type:          'callback',
 						callback:      dataPacket.callback,
 						applicationId: dataPacket.applicationId,
@@ -1372,7 +1373,7 @@ function receiveEvent( event, queued )
 			// Just call back
 			if( dataPacket.callback )
 			{
-				parent.postMessage( JSON.stringify( {
+				FriendScope.postMessage( JSON.stringify( {
 					type:          'callback',
 					callback:      dataPacket.callback,
 					applicationId: dataPacket.applicationId,
@@ -1402,7 +1403,7 @@ function receiveEvent( event, queued )
 			// Just call back
 			if( dataPacket.callback )
 			{
-				parent.postMessage( JSON.stringify( {
+				FriendScope.postMessage( JSON.stringify( {
 					type:          'callback',
 					callback:      dataPacket.callback,
 					applicationId: dataPacket.applicationId,
@@ -2414,10 +2415,14 @@ function View( flags )
 	            if( templateSrc )
                 {
                     let f = new File( templateSrc );
+                    if( flags[ 'replacements' ] )
+                    	f.replacements = flags[ 'replacements' ];
                     f.i18n(); // Always perform translations
                     f.onLoad = function( data )
                     {
                         self.setContent( data + templateStr );
+                        if( flags[ 'onready' ] )
+                        	flags[ 'onready' ]();
                     }
                     f.load();
                 }
@@ -5834,7 +5839,7 @@ function setupMessageFunction( dataPacket, origin )
 		let po = dataPacket.origin ? dataPacket.origin : '*';
 		try
 		{
-			parent.postMessage( JSON.stringify( msg ), origin ? origin : po );
+			FriendScope.postMessage( JSON.stringify( msg ), origin ? origin : po );
 		}
 		catch( e )
 		{

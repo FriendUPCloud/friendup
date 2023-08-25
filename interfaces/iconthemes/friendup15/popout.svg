@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   width="10px"
+   height="11px"
+   viewBox="0 0 10 11"
+   version="1.1"
+   id="svg1"
+   sodipodi:docname="popout.svg"
+   inkscape:version="1.3 (1:1.3+202307231459+0e150ed6c4)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#505050"
+     bordercolor="#eeeeee"
+     borderopacity="1"
+     inkscape:showpageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#505050"
+     showgrid="false"
+     inkscape:zoom="26.259375"
+     inkscape:cx="3.9604904"
+     inkscape:cy="5.3504702"
+     inkscape:window-width="1920"
+     inkscape:window-height="995"
+     inkscape:window-x="0"
+     inkscape:window-y="28"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1" />
+  <!-- Generator: Sketch 48.2 (47327) - http://www.bohemiancoding.com/sketch -->
+  <title
+     id="title1">Contract</title>
+  <desc
+     id="desc1">Created with Sketch.</desc>
+  <defs
+     id="defs1" />
+  <g
+     inkscape:groupmode="layer"
+     id="layer1"
+     inkscape:label="Layer 1"
+     style="display:inline">
+    <rect
+       style="fill:#000000;stroke:#ffffff;stroke-width:0.755907;stroke-linecap:round;stroke-linejoin:round;fill-opacity:0;stroke-opacity:0.80000001"
+       id="rect1"
+       width="5.644094"
+       height="5.644094"
+       x="0.59407324"
+       y="1.3633235"
+       rx="1.7136737"
+       ry="1.7136738" />
+    <rect
+       style="display:inline;fill:#ffffff;stroke:none;stroke-width:0.755906;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:0.80000001;fill-opacity:0.80000001"
+       id="rect1-2"
+       width="7.0440936"
+       height="7.0440936"
+       x="2.0825825"
+       y="3.3407044"
+       rx="1.7136736"
+       ry="1.7136736" />
+  </g>
+  <metadata
+     id="metadata1">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:title>Contract</dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+</svg>

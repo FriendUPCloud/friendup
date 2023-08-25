@@ -869,8 +869,8 @@ void *ParseAndCall( WSThreadData *wstd )
 				origSession->us_InUseCounter--;
 				FRIEND_MUTEX_UNLOCK( &(origSession->us_Mutex) );
 			}
-			// Free websocket thread data
-			FFree( wstd );
+			
+			releaseWSData( wstd );
 			
 			// And exit
 			//pthread_exit( NULL );
@@ -1003,6 +1003,7 @@ void *ParseAndCall( WSThreadData *wstd )
 											BufStringDelete( wstd->wstd_Queryrawbs );
 											
 											ParseAndCall( wstd );
+											
 											/*
 											// Increase use for external (parseandcall)
 											

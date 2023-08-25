@@ -330,6 +330,21 @@ if( isset( $args->args ) )
             }
             die( 'fail<!--separate-->{"response":0,"message":"Failed to retrieve messages."}' . $q );
         }
+        else if( $args->args->method == 'message-edit' ) 
+        {
+        	$m = new dbIO( 'Message' );
+        	if( $m->Load( $args->args->mid ) )
+        	{
+        		if( $m->UniqueUserID == $User->UniqueID )
+        		{
+        			$m->Message = urldecode( $args->args->message );
+        			$m->DateUpdated = date( 'Y-m-d H:i:s' );
+        			$m->Save();
+        			die( 'ok<!--separate-->{"message":"Message updated.","response":1}' );
+        		}
+        	}
+        	die( 'fail<!--separate-->{"message":"Could not update message.","response":-1}' );
+        }
         else if( $args->args->method == 'message-seen' )
         {
         	$vet = [];

@@ -171,6 +171,9 @@ invite_a_friend                         : Invite a friend
 i18n_invite_friend                      : Invites
 i18n_account_setup                      : My account - setup
 
+i18n_pop_question                       : Do you want to pop this app?
+i18n_pop_description                    : You will lose any unsaved data if you pop this app out. If you haven't saved, do this first and then pop the app afterwards.
+
 #Invites
 i18n_invite_to_chatroom                 : Chat room invite
 i18n_invite_to_chatroom_desc            : Click here to see the chat invite.

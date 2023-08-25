@@ -601,6 +601,44 @@ class FUIChatlog extends FUIElement
     	if( contacts )
     		contacts.setVideoCall( data, init );
     }
+    // Just updates a message
+    updateMessage( messageId, content )
+    {
+    	let self = this;
+    	let messages = self.domMessages.getElementsByClassName( 'Message' );
+    	for( let a = 0; a < messages.length; a++ )
+    	{
+    		if( messages[ a ].getAttribute( 'mid' ) == messageId )
+    		{
+    			let t = messages[ a ].querySelector( '.Text' );
+    			if( t )
+    			{
+    				let text = content;
+    				try
+				    {
+				        let dec = new TextDecoder().decode( self.base64ToBytes( text ) );
+				        text = dec;
+				    }
+				    catch( e ){};
+    				t.innerHTML = self.replaceUrls( self.replaceEmojis( text ) );
+    			}
+    		}
+    	}
+    }
+    // Just updates a message
+    removeMessage( messageId )
+    {
+    	let self = this;
+    	let messages = self.domMessages.getElementsByClassName( 'Message' );
+    	for( let a = 0; a < messages.length; a++ )
+    	{
+    		if( messages[ a ].getAttribute( 'mid' ) == messageId )
+    		{
+    			messages[ a ].parentNode.removeChild( messages[ a ] );
+    		}
+    	}
+    	this.refreshDom();
+    }
     // Adds messages to a list locked by sorted timestamps
     addMessages( messageList, flags = false )
     {
@@ -738,30 +776,96 @@ class FUIChatlog extends FUIElement
             ( function( message, par )
             {
 		        let td = par.querySelector( '.Delete' );
-		        if( !td ) return;
-		        td.onclick = function()
+		        if( td )
 		        {
-		        	Confirm( i18n( 'i18n_deleting_message' ), i18n( 'i18n_deleting_message_text' ), function( response )
-		        	{
-		        		if( response.data == true )
-		        		{
-		        			let m = new Module( 'system' );
-		        			m.onExecuted = function( me, md )
-		        			{
-		        				if( me == 'ok' )
-		        				{
-				    				d.parentNode.removeChild( par );
-				    				Application.holdConnection( { 
-										method: 'messages', 
-										roomType: self.options.type ? self.options.type : '', 
-										cid: self.options.cid ? self.options.cid : ''
-									} );
+				    td.onclick = function()
+				    {
+				    	Confirm( i18n( 'i18n_deleting_message' ), i18n( 'i18n_deleting_message_text' ), function( response )
+				    	{
+				    		if( response.data == true )
+				    		{
+				    			let mo = new Module( 'system' );
+				    			mo.onExecuted = function( me, md )
+				    			{
+				    				if( me == 'ok' )
+				    				{
+										d.parentNode.removeChild( par );
+										Application.holdConnection( { 
+											method: 'messages', 
+											roomType: self.options.type ? self.options.type : '', 
+											cid: self.options.cid ? self.options.cid : ''
+										} );
+										Application.SendChannelMsg( {
+											command: 'message-remove',
+											mid: m.ID,
+											sender: Application.fullName,
+											senderId: Application.uniqueId
+										} );
+									}
+				    			}
+				    			mo.execute( 'convos', { method: 'deletemessage', mid: message.ID } );
+				    		}
+				    	} );
+				    }
+			    }
+			    let te = par.querySelector( '.Edit' );
+			    if( te )
+			    {
+			    	te.onclick = function()
+			    	{
+			    		let cc = this;
+			    		document.body.classList.add( 'Editmode' );
+			    		let t = d.querySelector( '.Text' );
+			    		t.setAttribute( 'contenteditable', 'true' );
+			    		t.focus();
+			    		let original = t.innerHTML;
+			    		let edited = false;
+			    		t.onblur = function(){ edt(); }
+			    		t.onkeydown = function( e ){ if( e.which == 27 ){ t.removeAttribute( 'contenteditable' ); t.innerHTML = original; return cancelBubble( e ); }; if( !e.shiftKey && e.which == 13 ){ edt(); return cancelBubble( e ); } }
+			    		function edt()
+			    		{
+			    			if( edited ) return;
+			    			edited = true;
+			    			t.setAttribute( 'contenteditable', 'false' );
+			    			document.body.classList.remove( 'Editmode' );
+			    			cc.onblur = null;
+			    			
+			    			// Strip scripts and such
+							let val = t.innerHTML.split( /<script.*?\>[\w\W]*?\<\/script\>/i ).join( '' );
+							val = val.split( /<style.*?\>[\w\W]*?\<\/style\>/i ).join( '' );
+							val = val.split( /<link.*?\>/i ).join( '' );
+							
+							t.innerHTML = self.replaceUrls( self.replaceEmojis( val ) );
+							
+							// Check white space
+							let candidate = val.split( /\<.*?\>/ ).join( '' );
+							candidate = candidate.split( /[\s]/ ).join( '' ).split( '&nbsp;' ).join( '' );
+			    			
+			    			// TODO: If empty, run delete on the method..
+			    			if( candidate.length )
+			    			{
+								let text = self.bytesToBase64( new TextEncoder().encode( val ) );
+								
+								let mo = new Module( 'system' );
+								mo.onExecuted = function( mm, mr )
+								{
+									// Signal others!
+									if( mm == 'ok' )
+									{
+										Application.SendChannelMsg( {
+											command: 'message-update',
+											mid: m.ID,
+											sender: Application.fullName,
+											senderId: Application.uniqueId,
+											content: text
+										} );
+									}
 								}
-		        			}
-		        			m.execute( 'convos', { method: 'deletemessage', mid: message.ID } );
-		        		}
-		        	} );
-		        }
+								mo.execute( 'convos', { method: 'message-edit', mid: m.ID, message: encodeURIComponent( text ) } );
+							} 
+			    		}
+			    	}
+			    }
 	        } )( m, d );
             
             let timestamp = Math.floor( ( new Date( m.Date ) ).getTime() / 1000 );
@@ -1334,7 +1438,7 @@ class FUIChatlog extends FUIElement
         
         for( let a = 0; a < smilies.length; a++ )
         {
-            string = string.split( smilies[a] ).join( '<span class="Emoji">' + emotes[a] + '</span>' );
+            string = string.split( smilies[a] ).join( '<span contenteditable="false" class="Emoji">' + emotes[a] + '</span>' );
         }
         
         while( 1 )
@@ -1366,7 +1470,7 @@ class FUIChatlog extends FUIElement
             case 'fire': s = '🔥'; break;
             default: break;
         }
-        return '<span class="Emoji">' + s + '</span>';
+        return '<span contenteditable="false" class="Emoji">' + s + '</span>';
     }
 }
 FUI.registerClass( 'chatlog', FUIChatlog );

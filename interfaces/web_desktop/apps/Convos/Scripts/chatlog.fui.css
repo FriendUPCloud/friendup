@@ -328,6 +328,17 @@ body:not([mobile]) .FUIChatlog .Input .MobileMen:hover,
 	font-family: fontawesome;
 }
 
+.FUIChatlog .Message > .Toolbar > .ToolbarButton.Edit
+{
+	margin: 0 5px 0 0;
+}
+
+.FUIChatlog .Message > .Toolbar > .ToolbarButton.Edit:before
+{
+	content: "\f14b";
+	font-family: fontawesome;
+}
+
 .FUIChatlog .Message > .Text
 {
 	user-select: text;
