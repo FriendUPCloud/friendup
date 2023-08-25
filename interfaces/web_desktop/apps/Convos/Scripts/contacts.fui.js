@@ -560,6 +560,8 @@ class FUIContacts extends FUIElement
     	
     	if( this.record && this.record.Type && this.record.Type == 'User' )
     	{
+    		let ov = FUI.getElementByUniqueId( 'convos' );
+			ov.activateDirectMessaging();
     		this.domContacts.classList.add( 'User' );
     	}
     	else
@@ -574,7 +576,6 @@ class FUIContacts extends FUIElement
         	dm = record.RoomType;
         this.domChat.innerHTML = '<fui-chatlog parentelement="' + this.options.uniqueid + '" uniqueid="messages" cid="' + record.ID + '" type="' + dm + '" name="' + record.Fullname + '"' + context + '></fui-chatlog>';
         FUI.initialize();
-        console.log( 'Initializing!' );
         
         self.domElement.classList.add( 'Chat' );
         document.querySelector( '.FUIChatoverview' ).classList.add( 'Chat' );
