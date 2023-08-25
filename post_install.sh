@@ -3,10 +3,10 @@
 # Check if site.ini exists
 if [ -e "build/site.ini" ]; then
     # Read SiteName from site.ini
-    site_name=$(awk -F '=' '/^\s*SiteName/ {gsub(/"/, "", $2); print $2}' build/site.ini)
-    site_short_name=$(awk -F '=' '/^\s*SiteShortName/ {gsub(/"/, "", $2); print $2}' build/site.ini)
-    background_color=$(awk -F '=' '/^\s*BackgroundColor/ {gsub(/"/, "", $2); print $2}' build/site.ini)
-    description=$(awk -F '=' '/^\s*Description/ {gsub(/"/, "", $2); print $2}' build/site.ini)
+    site_name=$(awk -F '=' '/^\s*SiteName/ {gsub(/"/, "", $2); gsub(/^[[:space:]]+|[[:space:]]+$/, "", $2); print $2}' build/site.ini)
+    site_short_name=$(awk -F '=' '/^\s*SiteShortName/ {gsub(/"/, "", $2); gsub(/^[[:space:]]+|[[:space:]]+$/, "", $2); print $2}' build/site.ini)
+    background_color=$(awk -F '=' '/^\s*BackgroundColor/ {gsub(/"/, "", $2); gsub(/^[[:space:]]+|[[:space:]]+$/, "", $2); print $2}' build/site.ini)
+    description=$(awk -F '=' '/^\s*Description/ {gsub(/"/, "", $2); gsub(/^[[:space:]]+|[[:space:]]+$/, "", $2); print $2}' build/site.ini)
     
     cp interfaces/web_desktop/manifest.json build/resources/manifest.json
     
@@ -19,6 +19,7 @@ if [ -e "build/site.ini" ]; then
     echo "Manifest updated with background color: $background_color"
     sed -i "s/\"description\": \"A web OS for everyone.\"/\"description\": \"$description\"/g" build/resources/manifest.json
     echo "Manifest updated with background color: $description"
+    cp build/resources/manifest.json build/resources/webclient/manifest.json
 else
     echo "site.ini not found in the build directory."
 fi
