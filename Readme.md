@@ -41,6 +41,8 @@ sudo apt-get install bash libssh2-1-dev libssh-dev libssl-dev libaio-dev mysql-s
 3. Build FriendCore
 
 ```
+echo "USE_SSH_THREADS_LIB=0" >> Config
+echo "OPENSSL_INTERNAL=1" >> Config
 make clean setup
 make compile
 make install
