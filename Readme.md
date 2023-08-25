@@ -1,4 +1,4 @@
-Friend OS v1.3.0, "Helium"
+'Friend OS v1.3.0, "Helium"
 ==========================
 
 ---
@@ -99,9 +99,25 @@ Default login
 Once the installation script is finished and your local FriendCore is up and running use these credentials to log in: 
 ```
     User: fadmin
-Password: securefassword
+    Password: securefassword
 ```
-The first thing you may want to do, is add a new user : run the 'users' application that can be found in the 'System:Software/System' directory.
+The first thing you may want to do, is add a new user : run the 'System' application with "Run command" from the System menu on the Workspace.
+
+Using site.ini
+--------------
+
+Once you have set everything up, you may want to customize your site. Create a file called site.ini in your build/ folder, and populate this ini file with a config like the following:
+
+```
+[Customization]
+SiteName = "My Friend OS Site"
+SiteShortName = "MySite"
+Description = "The cool place to hang out for my organisation!"
+BackgroundColor = "#000088"
+```
+
+The site.ini file can be modified to use your own favicon and other adaptations to give it your own identity or brand.
+
 
 Optional packages
 =================
