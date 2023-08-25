@@ -906,6 +906,19 @@ class FUIChatoverview extends FUIElement
     	FUI.initialize();
     	this.currentType = 'dm';
     }
+    // Just activate DM
+    activateDirectMessaging()
+    {
+    	let tabs = this.domChannels.getElementsByClassName( 'Channel' );
+    	for( let a = 0; a < tabs.length; a++ )
+    	{
+    		if( !tabs[ a ].classList.contains( 'Active' ) )
+    		{
+				if( tabs[ a ].getAttribute( 'uniqueid' ) == 'dm' )
+					return tabs[ a ].click();
+			}
+    	}
+    }
     // Set active channel
     setActiveChannel( label, tab, groupId = false, groupName = false )
     {
