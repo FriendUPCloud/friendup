@@ -2788,7 +2788,28 @@ window.Shell = function( appObject )
 			{
 				if( data && data.length )
 				{
-					return callback( data );
+					let str = '';
+					for( let a = 0; a < data.length; a++ )
+					{
+						console.log( data[a] );
+						let fn = data[a].Path.split( ':' )[1];
+						if( fn.indexOf( '/' ) > 0 )
+						{
+							fn = fn.split( '/' );
+							if( fn[ fn.length - 1 ].length )
+								fn = fn[ fn.length - 1 ];
+							else fn = fn[ fn.length - 2 ];
+						}
+						if( data[a].Type == 'Directory' )
+						{
+							str += fn + '/ ';
+						}
+						else
+						{
+							str += fn + ' ';
+						}
+					}
+					return callback( true, { response: str } );
 				}
 				// We have empty list
 				else if( data )
