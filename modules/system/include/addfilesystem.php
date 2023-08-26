@@ -102,7 +102,7 @@ if( isset( $obj->Name ) && strlen( $obj->Name ) > 0 )
 		if( substr( $k, 0, 5 ) == 'conf.' )
 		{
 			$key = end( explode( '.', $k ) );
-			$config->$key = $v;
+			$config->$key = mysqli_real_escape_string( $SqlDatabase->_link, $v );
 		}
 	}
 
@@ -131,7 +131,7 @@ if( isset( $obj->Name ) && strlen( $obj->Name ) > 0 )
 		$f->Username         = mysqli_real_escape_string( $SqlDatabase->_link, $obj->Username );
 		$f->Password         = mysqli_real_escape_string( $SqlDatabase->_link, $obj->Password );
 		$f->Mounted          = mysqli_real_escape_string( $SqlDatabase->_link, isset( $obj->Mounted ) ? $obj->Mounted : '' );
-		$f->Config           = mysqli_real_escape_string( $SqlDatabase->_link, json_encode( $config ) );
+		$f->Config           = json_encode( $config );
 		$f->Save();
 
 		if( $f->ID > 0 && isset( $obj->EncryptedKey ) )

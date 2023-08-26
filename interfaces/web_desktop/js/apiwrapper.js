@@ -2446,6 +2446,12 @@ function apiWrapper( event, force )
 								// TODO: Finish the test if rmsg has become safe!
 								if( app && app.contentWindow )
 								{
+									let nr = {};
+									for( let a in nmsg )
+									{
+										if( typeof( nr[a] ) != 'object' )
+											nr[ a ] = nmsg[ a ];
+									}
 									var nmsg = {
 										command: 'shell',
 										shellId: msg.shellId,
@@ -2455,7 +2461,7 @@ function apiWrapper( event, force )
 										authId: msg.authId,
 										pipe: shell.applicationPipe,
 										callbackId: msg.callbackId,
-										data: jsonSafeObject( rmsg ) // Make it safe!
+										data: jsonSafeObject( nr ) // Make it safe!
 									};
 									if( returnMessage ) nmsg.returnMessage = returnMessage;
 									// Pass window id down
