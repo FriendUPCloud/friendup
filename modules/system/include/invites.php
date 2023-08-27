@@ -404,7 +404,7 @@ if( $args->command )
 												// Add user to group
 												if( isset( $json->data->workgroups ) )
 												{
-													$user_id = isset( $json->contact->Name ) ? $json->contact->Name : $User->ID;
+													$user_id = isset( $json->contact->ID ) ? $json->contact->ID : $User->ID;
 													
 													foreach( $json->data->workgroups as $wg )
 													{
