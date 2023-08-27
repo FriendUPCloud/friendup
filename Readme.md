@@ -63,8 +63,9 @@ flush privileges;
 exit
 ```
 
-5. Configure config file, located in build/cfg/cfg.ini (<a href="https://github.com/FriendUPCloud/friendup/blob/master/ConfiguringFriendOS.md">Configuring Friend OS</a>) 
-6. Run FriendCore
+5. Configure config file, located in build/cfg/cfg.ini (<a href="https://github.com/FriendUPCloud/friendup/blob/master/ConfiguringFriendOS.md">Configuring Friend OS</a>)
+   Also, note, if you haven't set up this file there's an example installed in build/cfg/cfg.ini.example - which you can rename to cfg.ini once you've set up your settings.
+6. Once you have configured your cfg.ini file, run FriendCore:
 
 ```
 cd build/
