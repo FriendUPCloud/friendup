@@ -229,7 +229,7 @@ if( !function_exists( 'curl_exec_follow' ) )
 
 if( isset( $args->command ) )
 {
-	$args->command = str_replace( array( '.', '/' ), '', $args->command );
+	$args->command = str_replace( array( '.', '/.' ), '', $args->command );
 	switch( $args->command )
 	{
 		case 'init':
@@ -381,7 +381,6 @@ if( isset( $args->command ) )
 			break;
 		// Delete a thumbnail
 		case 'thumbnaildelete':
-			$Logger->log( 'Thumbnaildelete..' );
 			require( 'modules/system/include/thumbnaildelete.php' );
 			break;
 		// Get the app image from repository
