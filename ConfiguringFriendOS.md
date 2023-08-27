@@ -11,8 +11,8 @@ Sections
 ========
 
 The Friend OS configuration file is located in your build/cfg/cfg.ini file. 
-If you do not have such a file, you have got a broken installation. The config
-file is sectioned, so here is a description of configuration options along 
+If you do not have such a file, copy the build/cfg/cfg.ini.example and modify it.
+The config file is sectioned, so here is a description of configuration options along 
 with what they mean. If you wonder about config file formatting rules, please
 take a look here for the *ini* format.
 
