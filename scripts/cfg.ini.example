@@ -1,0 +1,39 @@
+[DatabaseUser]
+login = dbuser
+password = "dbpass"
+host = localhost
+dbname = dbname
+port = 3306
+
+[FriendCore]
+fchost = yourhostname.com
+fcport = 6502
+fcupload = storage/
+fconlocalhost = 1
+workers = 128
+preventWizard = 1
+
+[Core]
+port = 6502
+SSLEnable = 1
+ProxyEnable = 1
+skipDBUpdate=false
+
+[LoginModules]
+use = php.authmod
+
+[Security]
+blocktimeout = 30
+blockattempts = 10
+InvitesEnabled = true
+push_system = "php-web-push"
+
+[FriendNetwork]
+enabled = 0
+
+[ServiceKeys]
+AdminModuleServerToken = ""
+
+[FriendChat]
+enabled = 0
+
