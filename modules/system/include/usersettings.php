@@ -15,6 +15,7 @@ $s = new stdClass();
 
 // The first login test!
 // NB: This is run on every user login
+$doNotDie = true;
 include( 'modules/system/include/firstlogin.php' );
 
 if( isset( $args->args->authid ) && !isset( $args->authid ) )

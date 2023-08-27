@@ -24,7 +24,7 @@ function _get_mimetypes()
 			s.UserID = \'' . $User->ID . '\'
 			AND
 			s.Type = \'mimetypes\'
-		ORDER BY s.Data ASC
+		ORDER BY s.Data ASC, s.ID DESC
 	' ) )
 	{
 		foreach( $rows as $row )

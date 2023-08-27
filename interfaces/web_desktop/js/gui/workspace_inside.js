@@ -2415,6 +2415,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			    	return;
 			    }
 			    Friend.User.prevSettingsHash = Friend.User.settingsHash;
+			    console.log( '[1] Settings hash: ' + Friend.User.settingsHash );
 		        
 				userSettingsFetched = true;
 				
@@ -2433,48 +2434,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					{
 						Workspace.userSettingsLoaded = true;
 						let dat = JSON.parse( d );
-						if( dat.wallpaperdoors && dat.wallpaperdoors.substr )
-						{
-							if( dat.wallpaperdoors.substr(0,5) == 'color' )
-							{
-								Workspace.wallpaperImage = 'color';
-								Workspace.wallpaperImageDecoded = false;
-								document.body.classList.remove( 'NoWallpaper' );
-								document.body.classList.remove( 'DefaultWallpaper' );
-							}
-							else if( dat.wallpaperdoors.length )
-							{
-								Workspace.wallpaperImage = dat.wallpaperdoors;
-								if( 
-									dat.wallpaperdoors.indexOf( ':' ) > 0 && 
-									( dat.wallpaperdoors.indexOf( 'http://' ) != 0 || dat.wallpaperdoors.indexOf( 'https://' ) ) 
-								)
-								{
-									Workspace.wallpaperImageDecoded = getImageUrl( Workspace.wallpaperImage );
-								}
-								document.body.classList.remove( 'NoWallpaper' );
-								document.body.classList.remove( 'DefaultWallpaper' );
-							}
-							else 
-							{
-								document.body.classList.add( 'DefaultWallpaper' );
-								Workspace.wallpaperImage = '/webclient/gfx/theme/default_login_screen.jpg';
-								Workspace.wallpaperImageDecoded = false;
-							}
-						}
-						else
-						{
-							document.body.classList.add( 'NoWallpaper' );
-						}
-						// Check for theme specifics
-						if( dat[ 'themedata_' + Workspace.theme ] )
-						{
-							Workspace.themeData = dat[ 'themedata_' + Workspace.theme ];
-						}
-						else if( !Workspace.themeDataSet )
-						{
-							Workspace.themeData = false;
-						}
+						Workspace.readUserSettings( dat );
 						Workspace.applyThemeConfig();
 						Workspace.loadSystemInfo();
 						
@@ -2495,91 +2455,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						{
 							Workspace.wallpaperImage = '/webclient/gfx/theme/default_login_screen.jpg';
 							Workspace.wallpaperImageDecoded = false;
-						}
-						
-						if( dat.wallpaperwindows )
-						{
-							Workspace.windowWallpaperImage = dat.wallpaperwindows;
-						}
-
-						if( dat.language )
-						{
-							globalConfig.language = dat.language.spokenLanguage;
-							globalConfig.alternateLanguage = dat.language.spokenAlternate ? dat.language.spokenAlternate : 'en-US';
-						}
-						if( dat.menumode )
-						{
-							globalConfig.menuMode = dat.menumode;
-						}
-						if( dat.focusmode )
-						{
-							globalConfig.focusMode = dat.focusmode;
-							document.body.setAttribute( 'focusmode', dat.focusmode ); // Register for styling
-						}
-						if( dat.navigationmode )
-						{
-							globalConfig.navigationMode = dat.navigationmode;
-						}
-						if( dat.hiddensystem )
-						{
-							globalConfig.hiddenSystem = dat.hiddensystem;
-						}
-						if( window.isMobile )
-						{
-							globalConfig.viewList = 'separate';
-						}
-						else if( dat.windowlist )
-						{
-							globalConfig.viewList = dat.windowlist;
-							document.body.setAttribute( 'viewlist', dat.windowlist ); // Register for styling
-						}
-						if( dat.scrolldesktopicons == 1 )
-						{
-							globalConfig.scrolldesktopicons = dat.scrolldesktopicons;
-						}
-						else globalConfig.scrolldesktopicons = 0;
-						
-						if( dat.hidedesktopicons == 1 || Workspace.tabletMode == true )
-						{
-							globalConfig.hidedesktopicons = dat.scrolldesktopicons;
-							document.body.classList.add( 'DesktopIconsHidden' );
-							if( !Workspace.dashboard && typeof( window.TabletDashboard ) != 'undefined' )
-								Workspace.dashboard = new TabletDashboard();
-						}
-						else
-						{
-							globalConfig.hidedesktopicons = 0;
-							document.body.classList.remove( 'DesktopIconsHidden' );
-							if( Workspace.dashboard && !Workspace.desktop && !Workspace.themeData[ 'sidebarEngine' ] )
-								Workspace.dashboard.destroy();
-						}
-						// Can only have workspaces on mobile
-						// TODO: Implement dynamic workspace count for mobile (one workspace per app)
-						if( dat.workspacecount >= 0 && !window.isMobile && !Workspace.tabletMode )
-						{
-							globalConfig.workspacecount = dat.workspacecount;
-						}
-						else
-						{
-							globalConfig.workspacecount = 1;
-						}
-
-						if( dat.workspacemode )
-						{
-							Workspace.workspacemode = dat.workspacemode;
-						}
-						else
-						{
-							Workspace.workspacemode = 'developer';
-						}
-					
-						if( dat.workspace_labels )
-						{
-							globalConfig.workspace_labels = dat.workspace_labels;
-						}
-						else
-						{
-							globalConfig.workspace_labels = [];
 						}
 						
 						// Make sure iOS has the correct information
@@ -2752,6 +2627,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				}
 				
 				// Load application cache's and then init workspace
+				console.log( '[1]Now loading application basics' );
 				loadApplicationBasics( initFriendWorkspace );
 			}
 			m.forceHTTP = true;
@@ -2763,6 +2639,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				'workspacemode', 'workspace_labels'
 			] } );
 		}
+		console.log( '[1]Now getting user settings' );
 		getUserSettings();
 		setTimeout( function()
 		{
@@ -2778,6 +2655,137 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				}, 450 );
 			}
 		}, 450 );
+	},
+	readUserSettings: function( dat )
+	{
+		console.log( '[1] Reading config: ', dat );
+		if( dat.wallpaperdoors && dat.wallpaperdoors.substr )
+		{
+			if( dat.wallpaperdoors.substr(0,5) == 'color' )
+			{
+				Workspace.wallpaperImage = 'color';
+				Workspace.wallpaperImageDecoded = false;
+				document.body.classList.remove( 'NoWallpaper' );
+				document.body.classList.remove( 'DefaultWallpaper' );
+			}
+			else if( dat.wallpaperdoors.length )
+			{
+				Workspace.wallpaperImage = dat.wallpaperdoors;
+				if( 
+					dat.wallpaperdoors.indexOf( ':' ) > 0 && 
+					( dat.wallpaperdoors.indexOf( 'http://' ) != 0 || dat.wallpaperdoors.indexOf( 'https://' ) ) 
+				)
+				{
+					Workspace.wallpaperImageDecoded = getImageUrl( Workspace.wallpaperImage );
+				}
+				document.body.classList.remove( 'NoWallpaper' );
+				document.body.classList.remove( 'DefaultWallpaper' );
+			}
+			else 
+			{
+				document.body.classList.add( 'DefaultWallpaper' );
+				Workspace.wallpaperImage = '/webclient/gfx/theme/default_login_screen.jpg';
+				Workspace.wallpaperImageDecoded = false;
+			}
+		}
+		else
+		{
+			document.body.classList.add( 'NoWallpaper' );
+		}
+		// Check for theme specifics
+		if( dat[ 'themedata_' + Workspace.theme ] )
+		{
+			Workspace.themeData = dat[ 'themedata_' + Workspace.theme ];
+		}
+		else if( !Workspace.themeDataSet )
+		{
+			Workspace.themeData = false;
+		}
+		
+		if( dat.wallpaperwindows )
+		{
+			Workspace.windowWallpaperImage = dat.wallpaperwindows;
+		}
+
+		if( dat.language )
+		{
+			globalConfig.language = dat.language.spokenLanguage;
+			globalConfig.alternateLanguage = dat.language.spokenAlternate ? dat.language.spokenAlternate : 'en-US';
+		}
+		if( dat.menumode )
+		{
+			globalConfig.menuMode = dat.menumode;
+		}
+		if( dat.focusmode )
+		{
+			globalConfig.focusMode = dat.focusmode;
+			document.body.setAttribute( 'focusmode', dat.focusmode ); // Register for styling
+		}
+		if( dat.navigationmode )
+		{
+			globalConfig.navigationMode = dat.navigationmode;
+		}
+		if( dat.hiddensystem )
+		{
+			globalConfig.hiddenSystem = dat.hiddensystem;
+		}
+		if( window.isMobile )
+		{
+			globalConfig.viewList = 'separate';
+		}
+		else if( dat.windowlist )
+		{
+			globalConfig.viewList = dat.windowlist;
+			document.body.setAttribute( 'viewlist', dat.windowlist ); // Register for styling
+		}
+		if( dat.scrolldesktopicons == 1 )
+		{
+			globalConfig.scrolldesktopicons = dat.scrolldesktopicons;
+		}
+		else globalConfig.scrolldesktopicons = 0;
+		
+		if( dat.hidedesktopicons == 1 || Workspace.tabletMode == true )
+		{
+			globalConfig.hidedesktopicons = dat.scrolldesktopicons;
+			document.body.classList.add( 'DesktopIconsHidden' );
+			if( !Workspace.dashboard && typeof( window.TabletDashboard ) != 'undefined' )
+				Workspace.dashboard = new TabletDashboard();
+		}
+		else
+		{
+			globalConfig.hidedesktopicons = 0;
+			document.body.classList.remove( 'DesktopIconsHidden' );
+			if( Workspace.dashboard && !Workspace.desktop && !Workspace.themeData[ 'sidebarEngine' ] )
+				Workspace.dashboard.destroy();
+		}
+		// Can only have workspaces on mobile
+		// TODO: Implement dynamic workspace count for mobile (one workspace per app)
+		if( dat.workspacecount >= 0 && !window.isMobile && !Workspace.tabletMode )
+		{
+			globalConfig.workspacecount = dat.workspacecount;
+		}
+		else
+		{
+			globalConfig.workspacecount = 1;
+		}
+
+		if( dat.workspacemode )
+		{
+			Workspace.workspacemode = dat.workspacemode;
+		}
+		else
+		{
+			Workspace.workspacemode = 'developer';
+		}
+	
+		if( dat.workspace_labels )
+		{
+			globalConfig.workspace_labels = dat.workspace_labels;
+		}
+		else
+		{
+			globalConfig.workspace_labels = [];
+		}
 	},
 	// Called on onunload
 	unloadFriendNetwork: function( e )
@@ -3722,10 +3730,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			if( e == 'ok' )
 			{
 				let s = JSON.parse( d );
-				Workspace.mimeTypes = s.Mimetypes;
+				Workspace.mimeTypes = s;
 			}
 		}
-		m.execute( 'usersettings' );
+		m.execute( 'mimetypes' );
 	},
 	// Refresh an open window by path
 	// TODO: Make less aggressive! Use settimeouts f.ex. so we can abort multiple

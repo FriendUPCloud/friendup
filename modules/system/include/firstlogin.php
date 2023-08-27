@@ -9,7 +9,9 @@
 *                                                                              *
 *****************************************************************************©*/
 
-//TK-820
+global $Logger, $User;
+
+// Install an app
 function InstallApp( $user_id, $app_name )
 {
 	global $Logger;
@@ -78,7 +80,6 @@ if( $wgroups = $SqlDatabase->FetchObjects( '
 			// Load custom script for this workgroup
 			if( file_exists( 'cfg/firstlogin_' . $wkey . '.php' ) )
 			{
-				$Logger->log( 'Found workgroup ' . $wkey . ' firstlogin script.' );
 				require( 'cfg/firstlogin_' . $wkey . '.php' );
 				// The script has run, register it
 				$cr->Save();
@@ -116,9 +117,8 @@ $cr->Key = 'firstlogin';
 $cr->UserID = $userid;
 if( !$cr->Load() || ( isset( $args->args->force ) && $args->args->force ) )
 {
-	// This one is there for the first user to be upgraded to recent settings
-	include( 'modules/system/include/upgradesettings.php' );
-
+	$doNotDie = true;
+	
 	// Check for expansion
 	if( file_exists( 'cfg/firstlogin.php' ) )
 	{
@@ -127,12 +127,22 @@ if( !$cr->Load() || ( isset( $args->args->force ) && $args->args->force ) )
 	// Do defaults
 	else
 	{
-		require( 'firstlogin.defaults.php' );
+		require( __DIR__ . '/firstlogin.defaults.php' );
 	}
+	
+	// This one is there for the first user to be upgraded to recent settings
+	$oldUser = $User;
+	$User = new stdClass();
+	$User->ID = $userid;
+	include( __DIR__ . '/upgradesettings.php' );
+	$User = $oldUser;
+	
 	// Now we had first login!
 	if( !isset( $args->args->force ) || !$args->args->force )
 	{
+		$cr->Data = date( 'Y-m-d H:i:s' );
 		$cr->Save();
 	}
 }
+
 

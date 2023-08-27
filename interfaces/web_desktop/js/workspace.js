@@ -1037,7 +1037,7 @@ Workspace = {
 		if( !this.userWorkspaceInitialized )
 		{
 			this.userWorkspaceInitialized = true;
-
+			
 			// Loading remaining scripts
 			let s = document.createElement( 'script' );
 			s.src = '/webclient/js/gui/workspace_inside.js;' +
@@ -1093,7 +1093,7 @@ Workspace = {
 				'webclient/js/oo.js;' + 
 				'webclient/js/api/friendAPIv1_2.js';
 			s.onload = function()
-			{
+			{	
 			    // Start with expanding the workspace object
 				if( _this.sessionId && _this.postInitialized )
 				{
@@ -1155,6 +1155,7 @@ Workspace = {
 					let th = '';
 					if( ( th = GetUrlVar( 'theme' ) ) )
 					{
+						console.log( '[1] Just refreshing theme.' );
 						_this.refreshTheme( th, false );
 						if( _this.loginPrompt )
 						{
@@ -1167,11 +1168,13 @@ Workspace = {
 					else
 					{
 						// Check eula
+						console.log( '[1] Loading user settings.' );
 						let m = new Module( 'system' );
 						m.onExecuted = function( e, d )
 						{
-							let m = new Module( 'system' );
-							m.onExecuted = function( ee, dd )
+							console.log( '[1] Done loading user settings.', d );
+							let m2 = new Module( 'system' );
+							m2.onExecuted = function( ee, dd )
 							{
 							    if( ee != 'ok' )
 							    {
@@ -1191,7 +1194,7 @@ Workspace = {
 								}
 						        afterEula( e );								
 							}
-							m.execute( 'checkeula' );
+							m2.execute( 'checkeula' );
 							
 							// When eula is displayed or not
 							function afterEula( ev )
@@ -1218,7 +1221,7 @@ Workspace = {
 									catch( e )
 									{ 
 										s = {}; 
-									};
+									}
 									if( s && s.Theme && s.Theme.length )
 									{
 										_this.refreshTheme( s.Theme.toLowerCase(), false );

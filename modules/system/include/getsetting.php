@@ -9,6 +9,8 @@
 *                                                                              *
 *****************************************************************************©*/
 
+global $Logger;
+
 // Dependency
 function getsetting_calculateTextBox( $text, $fontFile, $fontSize, $fontAngle )
 {
@@ -39,8 +41,6 @@ if( !file_exists( $wname . 'thumbnails' ) )
 // End FUGLY procedure that should be in Friend Core!
 
 $settings = new stdClass();
-$settings->Date = date( 'Y-m-d H:i:s' );
-
 
 if( isset( $args->args->authid ) && !isset( $args->authid ) )
 {

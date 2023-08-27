@@ -1,5 +1,7 @@
 <?php
 
+global $Logger;
+
 $s = new dbIO( 'FSetting' );
 $s->UserID = $User->ID;
 $s->Type = 'system';
@@ -8,13 +10,17 @@ if( $s->load() )
 {
 	if( $s->Data == FRIEND_VERSION )
 	{
-		die( 'ok<!--separate-->{"response":"2","message":"Already at current version."}' );
+		if( !isset( $doNotDie ) )
+		{
+			die( 'ok<!--separate-->{"response":"2","message":"Already at current version."}' );
+		}
+		goto doneUpgrade;
 	}
 }
 
 // We need to upgrade
 $s->Data = FRIEND_VERSION;
-$s->save();
+$s->Save();
 if( $s->ID > 0 )
 {
 	// No go set the updated settings
@@ -94,9 +100,14 @@ if( $s->ID > 0 )
 		$SqlDatabase->query( 'DELETE FROM FUserApplication WHERE ID=\'' . $row->UID . '\'' );
 	}
 
-	die( 'ok<!--separate-->{"response":"1","message":"You are upgraded.","version":"' . $s->Data . '"}' );
+	if( !isset( $doNotDie ) )
+		die( 'ok<!--separate-->{"response":"1","message":"You are upgraded.","version":"' . $s->Data . '"}' );
 }
 
-die( 'fail<!--separate-->{"response":"0","message":"Could not find current Friend information."}' );
+if( !isset( $doNotDie ) )
+	die( 'fail<!--separate-->{"response":"0","message":"Could not find current Friend information."}' );
+
+doneUpgrade:
+
 
 ?>

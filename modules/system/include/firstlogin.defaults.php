@@ -22,7 +22,7 @@
 $userid = ( isset( $args->args->userid ) ? $args->args->userid : $User->ID );
 
 // 0. Check if mountlist is installed and user have access!
-if( ( !isset( $args->args->exclude ) || isset( $args->args->exclude ) && !in_array( 'mountlist', $args->args->exclude ) ) 
+if( ( !isset( $args->args->exclude ) || ( isset( $args->args->exclude ) && !in_array( 'mountlist', $args->args->exclude ) ) ) 
 && !( $row = $SqlDatabase->FetchObject( $q = 'SELECT * FROM FApplication WHERE Name = "Mountlist" AND UserID=\'' . $userid . '\'' ) ) )
 {
 	if( !function_exists( 'findInSearchPaths' ) )
@@ -100,7 +100,7 @@ if( ( !isset( $args->args->exclude ) || isset( $args->args->exclude ) && !in_arr
 }
 
 // 1. Check dock!
-if( ( !isset( $args->args->exclude ) || isset( $args->args->exclude ) && !in_array( 'dock', $args->args->exclude ) ) 
+if( ( !isset( $args->args->exclude ) || ( isset( $args->args->exclude ) && !in_array( 'dock', $args->args->exclude ) ) ) 
 && !( $row = $SqlDatabase->FetchObject( $q = 'SELECT * FROM DockItem WHERE UserID=\'' . $userid . '\'' ) ) )
 {
 	// 2. Setup standard dock items
@@ -126,7 +126,7 @@ if( ( !isset( $args->args->exclude ) || isset( $args->args->exclude ) && !in_arr
 			$o = new dbIO( 'FSetting' );
 			$o->UserID = $userid;
 			$o->Type = 'mimetypes';
-			$o->Key = $args->args->type;
+			$o->Key = $r[2];
 			$o->Load();
 			$o->Data = $r[0];
 			$o->Save();
