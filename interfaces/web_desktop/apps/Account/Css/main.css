@@ -205,6 +205,11 @@
 	text-align: Center;
 }
 
+.Collections > .Collection.Chatroom > .Image:after
+{
+	content: "\f1d7";
+}
+
 html #GroupSearch input
 {
 	height: 25px;

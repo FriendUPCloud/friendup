@@ -155,7 +155,8 @@ function refreshGroups( keys )
 			// TODO: Make sure we can get our descriptions!
 			if( !list[a].description )
 				list[a].description = '';
-			str += '<div class="MousePointer sw' + sw + ' Collection" onclick="editGroup(\'' + list[a].ID + '\')">\
+			let ex = list[a].Type == 'chatroom' ? ' Chatroom' : '';
+			str += '<div class="MousePointer sw' + sw + ' Collection' + ex + '" onclick="editGroup(\'' + list[a].ID + '\')">\
 				<div class="Image"></div>\
 				<div class="Name" title="' + list[a].Name + '"><span>' + list[a].Name + '</span></div>\
 				<div class="Description">' + ( list[a].Description ? list[a].Description : i18n( 'i18n_no_description' ) ) + '</div>\

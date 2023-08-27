@@ -252,7 +252,7 @@ Friend.User = {
 					if( Workspace.userLevel != 'admin' )
 					{
 						console.log( '%cWelcome to %cFriend OS!', 'font-weight: bold;', 'font-weight: bold; color: #5599ff;' );
-						//window.console.log = function( msg ){};
+						window.console.log = function( msg ){};
 					}
 					else
 					{

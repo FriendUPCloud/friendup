@@ -583,7 +583,7 @@ function Notify( message, callback = false, clickcallback = false )
 			// Desktop notifications
 			function showNotification()
 			{
-				var not = new Notification( 
+				let not = new Notification( 
 					message.title + "\n" + ( message.text ? message.text : '' )
 				);
 				not.onshow = function( e )
@@ -593,7 +593,7 @@ function Notify( message, callback = false, clickcallback = false )
 						if( Workspace.currentViewState == 'active' && !Workspace.sleeping )
 						{
 							//console.log( 'Showing: ', message.notificationId );
-							var l = new Library( 'system.library' );
+							let l = new Library( 'system.library' );
 							l.onExecuted = function(){};
 							l.execute( 'mobile/updatenotification', { 
 								notifid: message.notificationId, 
@@ -635,7 +635,7 @@ function Notify( message, callback = false, clickcallback = false )
 	if( !message.title ) message.title = 'untitled'; 
 	
 	// The notification event
-	var nev = {
+	let nev = {
 		title: message.title,
 		text: message.text,
 		seen: false,
@@ -643,7 +643,7 @@ function Notify( message, callback = false, clickcallback = false )
 		showCallback: callback,
 		clickCallback: clickcallback
 	};
-	var notificationId = AddNotificationEvent( nev, message.notificationId );
+	let notificationId = AddNotificationEvent( nev, message.notificationId );
 
 	// On mobile, we always show the notification on the Workspace screen
 	if( isMobile )
@@ -654,7 +654,7 @@ function Notify( message, callback = false, clickcallback = false )
 		{
 			if( !ge( 'MobileNotifications' ) )
 			{
-				var d = document.createElement( 'div' );
+				let d = document.createElement( 'div' );
 				d.className = 'Notification Mobile';
 				d.id = 'MobileNotifications';
 				// With dashboard mode, use body for notifications
@@ -670,7 +670,7 @@ function Notify( message, callback = false, clickcallback = false )
 			{
 				if( Workspace.currentViewState == 'active' && !Workspace.sleeping )
 				{
-					var l = new Library( 'system.library' );
+					let l = new Library( 'system.library' );
 					l.onExecuted = function(){};
 					l.execute( 'mobile/updatenotification', { 
 						notifid: message.notificationId, 
@@ -681,10 +681,10 @@ function Notify( message, callback = false, clickcallback = false )
 			}
 		}
 		
-		var n = document.createElement( 'div' );
+		let n = document.createElement( 'div' );
 		n.className = 'MobileNotification BackgroundDefault ColorDefault';
 		
-		var ic = '';
+		let ic = '';
 		if( message.applicationIcon )
 		{
 			ic += '<img src="' + message.applicationIcon + '"/>';
@@ -710,20 +710,20 @@ function Notify( message, callback = false, clickcallback = false )
 		n.innerHTML = ic + '<div class="Title">' + message.title + '<br><span class="DateStamp">' + timStr + '</span></div><div class="Text">' + message.text + '</div>';
 		
 		// Check duplicate
-		var found = false;
-		for( var a = 0; a < ge( 'MobileNotifications' ).childNodes.length; a++ )
+		let found = false;
+		for( let a = 0; a < ge( 'MobileNotifications' ).childNodes.length; a++ )
 		{
-			var nod = ge( 'MobileNotifications' ).childNodes[ a ];
+			let nod = ge( 'MobileNotifications' ).childNodes[ a ];
 			if( nod.application == message.application )
 			{
-				var num = parseInt( nod.getAttribute( 'notificationCount' ) );
+				let num = parseInt( nod.getAttribute( 'notificationCount' ) );
 				if( isNaN( num ) || !num ) num = 1;
 				num++;
 				nod.setAttribute( 'notificationCount', num );
 				var existing = nod.querySelector( '.NotificationCount' );
 				if( !existing )
 				{
-					var nc = document.createElement( 'div' );
+					let nc = document.createElement( 'div' );
 					nc.className = 'NotificationCount';
 					nc.innerHTML = num;
 					nod.appendChild( nc );
@@ -805,7 +805,7 @@ function Notify( message, callback = false, clickcallback = false )
 				el: n,
 				condition: function( e )
 				{
-					var diff = windowMouseX - this.cx;
+					let diff = windowMouseX - this.cx;
 					n.style.position = 'absolute';
 					n.style.left = this.ox + diff + 'px';
 					n.style.top = this.oy - 5 + 'px';
@@ -823,7 +823,7 @@ function Notify( message, callback = false, clickcallback = false )
 						{
 							if( Workspace.currentViewState == 'active' && !Workspace.sleeping )
 							{
-								var l = new Library( 'system.library' );
+								let l = new Library( 'system.library' );
 								l.onExecuted = function(){};
 								l.execute( 'mobile/updatenotification', { 
 									notifid: message.notificationId, 

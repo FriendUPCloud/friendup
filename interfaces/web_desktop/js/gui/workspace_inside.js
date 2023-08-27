@@ -2415,7 +2415,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			    	return;
 			    }
 			    Friend.User.prevSettingsHash = Friend.User.settingsHash;
-			    console.log( '[1] Settings hash: ' + Friend.User.settingsHash );
 		        
 				userSettingsFetched = true;
 				
@@ -2627,7 +2626,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				}
 				
 				// Load application cache's and then init workspace
-				console.log( '[1]Now loading application basics' );
 				loadApplicationBasics( initFriendWorkspace );
 			}
 			m.forceHTTP = true;
@@ -2639,7 +2637,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				'workspacemode', 'workspace_labels'
 			] } );
 		}
-		console.log( '[1]Now getting user settings' );
 		getUserSettings();
 		setTimeout( function()
 		{
@@ -2658,7 +2655,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	},
 	readUserSettings: function( dat )
 	{
-		console.log( '[1] Reading config: ', dat );
 		if( dat.wallpaperdoors && dat.wallpaperdoors.substr )
 		{
 			if( dat.wallpaperdoors.substr(0,5) == 'color' )

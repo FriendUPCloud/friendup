@@ -1155,7 +1155,6 @@ Workspace = {
 					let th = '';
 					if( ( th = GetUrlVar( 'theme' ) ) )
 					{
-						console.log( '[1] Just refreshing theme.' );
 						_this.refreshTheme( th, false );
 						if( _this.loginPrompt )
 						{
@@ -1168,11 +1167,9 @@ Workspace = {
 					else
 					{
 						// Check eula
-						console.log( '[1] Loading user settings.' );
 						let m = new Module( 'system' );
 						m.onExecuted = function( e, d )
 						{
-							console.log( '[1] Done loading user settings.', d );
 							let m2 = new Module( 'system' );
 							m2.onExecuted = function( ee, dd )
 							{
