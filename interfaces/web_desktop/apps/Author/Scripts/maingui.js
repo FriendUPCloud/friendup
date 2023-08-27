@@ -663,12 +663,18 @@ Application.loadFile = function( path, cbk )
 			{
 				Application.statusMessage( i18n('i18n_loaded') );
 				
+				// This should be an error!
+				if( data == 'undefined' )
+				{
+					data = '<body><p></p></body>';
+				}
+				
 				// Let's fix authid paths and sessionid paths
-				var m = false;
+				let m = false;
 				data = data.split( /authid\=[^&]+/i ).join ( 'authid=' + Application.authId );
 				data = data.split( /sessionid\=[^&]+/i ).join ( 'authid=' + Application.authId );
 		
-				var bdata = data.match( /\<body[^>]*?\>([\w\W]*?)\<\/body[^>]*?\>/i );
+				let bdata = data.match( /\<body[^>]*?\>([\w\W]*?)\<\/body[^>]*?\>/i );
 				if( bdata && bdata[1] )
 				{
 					function loader( num )

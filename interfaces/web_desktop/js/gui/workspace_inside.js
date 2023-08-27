@@ -5392,6 +5392,13 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			return false;
 		return this.icons;
 	},
+	// Create a new memo
+	newmemo: function( path )
+	{
+		if( !path ) path = currentMovable.content.fileInfo.Path;
+		let f = new File( path + 'new_memo.memo' );
+		f.save();
+	},
 	// Create a new web link!
 	weblink: function( path )
 	{
@@ -8285,6 +8292,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						name:	i18n( 'menu_paste' ),
 						command: function( e ) { Workspace.pasteFiles( e ); },
 						disabled: sharedVolume || !iconsInClipboard || systemDrive || cannotWrite
+					},
+					{
+						name: i18n( 'i18n_new_memo' ),
+	                    icon: 'file-text',
+	                    command: function() { Workspace.newmemo(); }
 					},
 					{
 						name:	i18n( 'menu_new_weblink' ),

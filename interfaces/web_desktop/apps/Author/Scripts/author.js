@@ -595,5 +595,3 @@ Application.receiveMessage = function( msg )
 	}
 }
 
-
-
