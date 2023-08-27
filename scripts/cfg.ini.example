@@ -15,8 +15,8 @@ preventWizard = 1
 
 [Core]
 port = 6502
-SSLEnable = 1
-ProxyEnable = 1
+SSLEnable = 0
+ProxyEnable = 0
 skipDBUpdate=false
 
 [LoginModules]
