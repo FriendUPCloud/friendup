@@ -229,6 +229,7 @@ if( !function_exists( 'curl_exec_follow' ) )
 
 if( isset( $args->command ) )
 {
+	$args->command = str_replace( array( '.', '/' ), '', $args->command );
 	switch( $args->command )
 	{
 		case 'init':
@@ -330,9 +331,13 @@ if( isset( $args->command ) )
 		case 'sendinvite':
 			if( isset( $User ) )
 				require( 'modules/system/include/invites.php' );
+			if( isset( $o ) && isset( $o->Status ) )
+				goto moduleSystemBottom;
+			die( 'fail<!--separate-->{"response":-1,"message":"Failed to interpret invite event."}' );
 			break;
 		case 'leavegroup':
 			require( 'modules/system/include/leavegroup.php' );
+			die( 'fail<!--separate-->{"response":-1,"message":"Failed to interpret group event."}' );
 			break;
 		case 'ping':
 			if( isset( $UserSession ) && isset( $UserSession->UserID ) )
@@ -2196,5 +2201,7 @@ if( isset( $args->command ) )
 // End of the line
 die( 'fail<!--separate-->{"response":"uncaught command exception"}' );
 
+moduleSystemBottom:
+// Bottom
 
 ?>

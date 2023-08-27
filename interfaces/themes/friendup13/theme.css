@@ -584,8 +584,8 @@ html > body > div button:last-child, html > body > div .Button:last-child
 
 html .BubbleInfo > div, html .PopInfo > div
 {
-	max-width: 170px;
-	min-width: 170px;
+	max-width: calc(100% - 80px);
+	min-width: 250px;
 }
 
 html .TrayElement.Notification .BubbleInfo, 

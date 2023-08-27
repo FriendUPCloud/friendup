@@ -18,6 +18,17 @@ ini_set( 'display_errors', 1 );
 include_once( 'php/include/helpers.php' );
 include_once( 'php/classes/mailserver.php' );
 
+$serverToken = false;
+if( $adminUser = $SqlDatabase->fetchObject( '
+	SELECT u.* FROM FUser u, FUserToGroup fug, FUserGroup g
+	WHERE
+		g.Name = "Admin" AND fug.UserID = u.ID AND fug.UserGroupID = g.ID
+		LIMIT 1
+' ) )
+{
+	$serverToken = $adminUser->ServerToken;
+}
+
 $reinvite = false; // In case we are reinviting
 
 if( $args->command )
@@ -190,7 +201,6 @@ if( $args->command )
 		case 'removeinvite':
 			
 			// removeinvite (args: ids=1 or args: ids=1,55,2)
-			
 			if( isset( $args->args->ids ) && $args->args->ids )
 			{
 				if( $SqlDatabase->Query( 'DELETE FROM FTinyUrl WHERE ID IN (' . intval( $args->args->ids, 10 ) . ') ' ) )
@@ -200,23 +210,42 @@ if( $args->command )
 						WHERE InviteLinkID IN (' . intval( $args->args->ids, 10 ) . ') 
 					' );
 					
+					// Included from queuedeventresponse.php
+					if( isset( $response ) )
+					{
+						$response->message = 'Invite link was deleted via ID.';
+						goto bottomOfInvites;
+					}
 					if( !$args->skip ) die( 'ok<!--separate-->{"Response":"Invite link with ids: ' . $args->args->ids . ' was successfully deleted"}' );
 				}
 			}
 			else if( isset( $args->args->hash ) && $args->args->hash )
 			{
 				// TODO: Look at this ... don't remove invite link if it's a general invite link to connect to the inviter or a group ...
-				
-				if( !$args->skip )
+				if( $SqlDatabase->Query( 'DELETE FROM `FTinyUrl` WHERE `Hash`="' . $SqlDatabase->_link->real_escape_string( $args->args->hash ) . '"' ) )
 				{
-					if( $SqlDatabase->Query( 'DELETE FROM FTinyUrl WHERE Hash = "' . $args->args->hash . '"' ) )
+					// Included from queuedeventresponse.php
+					if( isset( $response ) )
 					{
-						if( !$args->skip ) die( 'ok<!--separate-->{"Response":"Invite link with hash: ' . $args->args->hash . ' was successfully deleted"}' );
+						$response->message = 'Invite link was deleted via HASH.';
+						goto bottomOfInvites;
 					}
+					if( !isset( $args->skip ) )
+						die( 'ok<!--separate-->{"Response":"Invite link with hash: ' . $args->args->hash . ' was successfully deleted"}' );
 				}
+			}
+			else
+			{
+				die( 'fail<!--separate-->' . print_r( $args, 1 ) );
 			}
 			
 			if( !$args->skip ) die( 'fail<!--separate-->{"Response":"Could not delete invite link(s)"}' );
+			// Included from queuedeventresponse.php
+			if( isset( $response ) )
+			{
+				$response->message = 'Could not delete invite links.';
+				goto bottomOfInvites;
+			}
 			
 			break;
 		
@@ -257,7 +286,7 @@ if( $args->command )
 			{
 				if( $f = $SqlDatabase->FetchObject( '
 					SELECT * FROM FTinyUrl 
-					WHERE Hash = "' . $args->args->hash . '" AND Source LIKE "%/system.library/user/addrelationship%" 
+					WHERE `Hash` = "' . $SqlDatabase->_link->real_escape_string( $args->args->hash ) . '" AND `Source` LIKE "%/system.library/user/addrelationship%" 
 					ORDER BY ID ASC LIMIT 1
 				' ) )
 				{
@@ -330,7 +359,8 @@ if( $args->command )
 										[
 											'mode'       => $json->data->mode,
 											'sourceid'   => $relation->SourceUniqueID,
-											'contactids' => json_encode( [ $relation->ContactUniqueID ] )
+											'contactids' => json_encode( [ $relation->ContactUniqueID ] ),
+											'servertoken'  => $serverToken
 										] ) )
 										{
 											if( strstr( $result, 'ok<!--separate-->' ) )
@@ -361,8 +391,39 @@ if( $args->command )
 														WHERE ID = \'' . $f->ID . '\' 
 													' );
 												}
-											}
 											
+												// Remove event
+												$h = $SqlDatabase->_link->real_escape_string( $args->args->hash );
+												if( isset( $args->args->eventid ) )
+													$SqlDatabase->query( 'DELETE FROM `FQueuedEvent` WHERE ActionAccepted LiKE "%\"' . $h . '\"%"' );
+												$SqlDatabase->query( '
+													DELETE FROM FTinyUrl 
+													WHERE `Hash` = "' . $h . '"
+												' );
+												
+												// Add user to group
+												if( isset( $json->data->workgroups ) )
+												{
+													$user_id = isset( $json->contact->Name ) ? $json->contact->Name : $User->ID;
+													
+													foreach( $json->data->workgroups as $wg )
+													{
+														$r = FriendCoreQuery( '/system.library/group/addusers', 
+														[
+															'id'       => $wg->ID,
+															'users'   => $user_id,
+															'servertoken'  => $serverToken
+														] );
+													}
+												}
+												
+												// Included from queuedeventresponse.php
+												if( isset( $response ) )
+												{
+													$response->message = 'Added a user relationship.';
+													goto bottomOfInvites;
+												}
+											}
 											if( !$args->skip ) die( $result );
 											
 										}
@@ -926,5 +987,9 @@ function decodeURL( $source = false )
 	}
 	return false;
 }
+
+bottomOfInvites:
+
+// The bottom
 
 ?>

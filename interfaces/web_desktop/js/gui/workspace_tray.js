@@ -62,29 +62,20 @@ function PollTrayPosition()
 function PollTray()
 {
 	if( Workspace.dashboard && Workspace.dashboard.pollTray )
-	{
 		Workspace.dashboard.pollTray();
-	}
 
 	// Mobile handles this a bit differently
 	if( isMobile )
-	{
 		return PollMobileTray();
-	}
 	
-	var tray = ge( 'Tray' );
+	let tray = ge( 'Tray' );
 	if( !tray )
-	{
 		return;
-	}
 	
 	PollTrayPosition();
 	
 	// Checks for tasks (running programs)
-	if( tray.tasks )
-	{
-		tray.tasks.poll();
-	}
+	if( tray.tasks ) tray.tasks.poll();
 	else
 	{
 		// Add task applet (running programs)
@@ -92,8 +83,8 @@ function PollTray()
 		tray.tasks.className = 'Tasks TrayElement IconSmall';
 		tray.tasks.poll = function()
 		{
-			var taskn = Workspace.applications.length;
-			var edit = '';
+			let taskn = Workspace.applications.length;
+			let edit = '';
 			if( taskn > 0 )
 				edit = '<p class="BorderTop PaddingTop"><button onmousedown="Workspace.Tasklist()" type="button" class="Button IconSmall fa-bar-chart"> ' + i18n( 'i18n_manage_tasks' ) + '</button></p>';
 			this.innerHTML = '<div class="BubbleInfo"><div><p class="Layout">' + taskn + ' ' + ( taskn == 1 ? i18n( 'i18n_task_running' ) : i18n( 'i18n_tasks_running' ) ) + '.</p>' + edit + '</div></div>';
@@ -102,7 +93,7 @@ function PollTray()
 		
 		// Add download applet
 		// TODO: Remove this from native friend book interface
-		var da = tray.downloadApplet = document.createElement( 'div' );
+		let da = tray.downloadApplet = document.createElement( 'div' );
 		da.className = 'Download TrayElement IconSmall';
 		da.poll = function()
 		{
@@ -124,9 +115,7 @@ function PollTray()
 		}
 		tray.appendChild( da );
 		
-		/*
-		//TODO: Reenable when ready
-		var ca = tray.calendarApplet = document.createElement( 'div' );
+		let ca = tray.calendarApplet = document.createElement( 'div' );
 		ca.className = 'Calendar TrayElement IconSmall';
 		ca.onclick = function()
 		{
@@ -135,7 +124,7 @@ function PollTray()
 		ca.poll = function()
 		{
 		}
-		tray.appendChild( ca );*/
+		tray.appendChild( ca );
 	}
 	
 	// Check for notifications in history
@@ -147,8 +136,8 @@ function PollTray()
 			if( !tray.notificationPopup ) return;
 			tray.notificationPopup.innerHTML = '';
 		
-			var h = 8;
-			var notties = Workspace.notificationEvents;
+			let h = 8;
+			let notties = Workspace.notificationEvents;
 			
 			if( notties.length > 0 )
 			{
@@ -176,11 +165,11 @@ function PollTray()
 							<p class="Layout">\
 								<button class="Accept FloatRight" type="button" ' +
 								'onmousedown="Workspace.handleNotificationInteraction(\'' + notties[a].eventId + '\', true, \'' + notties[a].uniqueId + '\')">\
-									' + i18n( 'i18n_accept' ) + '\
+									<span class="fa fa-check"></span> ' + i18n( 'i18n_accept' ) + '\
 								</button>\
 								<button class="Reject FloatLeft" type="button" ' +
 								'onmousedown="Workspace.handleNotificationInteraction(\'' + notties[a].eventId + '\', false, \'' + notties[a].uniqueId + '\')">\
-									' + i18n( 'i18n_reject' ) + '\
+									<span class="fa fa-remove"></span> ' + i18n( 'i18n_reject' ) + '\
 								</button>\
 							</p>';
 					}
@@ -191,6 +180,7 @@ function PollTray()
 							<p class="Layout"><strong>' + notties[a].title + '<br><span class="DateStamp">' + timStr + '</span></strong></p>\
 							<p class="Layout">' + notties[a].text + '</p>' + interactions + '\
 						</div>';
+					
 					d.onmousedown = function( ev )
 					{
 						if( this.notification.clickCallback )
@@ -219,11 +209,11 @@ function PollTray()
 					
 					// Remove notification
 					( function( not, dd ){
-						var el = dd.getElementsByClassName( 'NotificationClose' )[ 0 ];
+						let el = dd.getElementsByClassName( 'NotificationClose' )[ 0 ];
 						el.onmousedown = function( e )
 						{
-							var out = [];
-							for( var z = 0; z < Workspace.notificationEvents.length; z++ )
+							let out = [];
+							for( let z = 0; z < Workspace.notificationEvents.length; z++ )
 							{
 								if( z == not ) continue;
 								else out.push( Workspace.notificationEvents[ z ] );
@@ -252,7 +242,7 @@ function PollTray()
 				// Clear button
 				if( notties.length > 1 )
 				{
-					var remAll = document.createElement( 'div' );
+					let remAll = document.createElement( 'div' );
 					remAll.className = 'NotificationPopupElement BorderBottom';
 					remAll.innerHTML = '\
 						<div>\
@@ -300,7 +290,7 @@ function PollTray()
 			tray.appendChild( tray.notifications );
 		}
 		// hot
-		var nots = Workspace.notificationEvents;
+		let nots = Workspace.notificationEvents;
 		
 		tray.notifications.className = 'Notification TrayElement IconSmall';
 		
@@ -308,7 +298,8 @@ function PollTray()
 		let tm = ( new Date() ).getTime();
 		for( let a = 0; a < nots.length; a++ )
 		{
-			if( tm - nots[ a ].time < 250 )
+			let diff = tm - nots[ a ].time;
+			if( isNaN( diff ) || diff < 250 )
 			{
 				toClear = false;
 			}
@@ -341,7 +332,7 @@ function PollTray()
 				{
 					if( Workspace.currentViewState == 'active' && !Workspace.sleeping )
 					{
-						var l = new Library( 'system.library' );
+						let l = new Library( 'system.library' );
 						l.onExecuted = function(){};
 						l.execute( 'mobile/updatenotification', { 
 							notifid: nots[ a ].uniqueId, 
@@ -355,11 +346,11 @@ function PollTray()
 				// Add this bubble!
 				( function( event )
 				{
-					var prevs = tray.notifications.getElementsByTagName( 'div' );
-					var showingStuff = false;
-					for( var a = 0; a < prevs.length; a++ )
+					let prevs = tray.notifications.getElementsByTagName( 'div' );
+					let showingStuff = false;
+					for( let o = 0; o < prevs.length; o++ )
 					{
-						if( prevs[a].classList && prevs[a].classList.contains( 'TrayNotificationPopup' ) )
+						if( prevs[o].classList && prevs[a].classList.contains( 'TrayNotificationPopup' ) )
 						{
 							showingStuff = true;
 							break;
@@ -378,9 +369,27 @@ function PollTray()
 						let tdi = StrPad( tim.getMinutes(), 2, '0' );
 						let timStr = tdy + '/' + tdm + '/' + tdd + ', ' + tdh + ':' + tdi;
 					
-						var d = document.createElement( 'div' );
+						let interactions = '';
+						if( event.type == 'interaction' )
+						{
+							// Perhaps do something else
+							interactions = '\
+							<hr class="Divider"/>\
+							<p class="Layout">\
+								<button class="Accept FloatRight" type="button" ' +
+								'onmousedown="Workspace.handleNotificationInteraction(\'' + event.eventId + '\', true, \'' + event.uniqueId + '\')">\
+									<span class="fa fa-check"></span> ' + i18n( 'i18n_accept' ) + '\
+								</button>\
+								<button class="Reject FloatLeft" type="button" ' +
+								'onmousedown="Workspace.handleNotificationInteraction(\'' + event.eventId + '\', false, \'' + event.uniqueId + '\')">\
+									<span class="fa fa-remove"></span> ' + i18n( 'i18n_reject' ) + '\
+								</button>\
+							</p>';
+						}
+					
+						let d = document.createElement( 'div' );
 						d.className = 'BubbleInfo';
-						d.innerHTML = '<div><p class="Layout"><strong>' + event.title + '<br><span class="DateStamp">' + timStr + '</span></strong></p><p class="Layout">' + event.text + '</p></div>';
+						d.innerHTML = '<div><p class="Layout"><strong>' + event.title + '<br><span class="DateStamp">' + timStr + '</span></strong></p><p class="Layout">' + event.text + interactions + '</p></div>';
 						tray.notifications.appendChild( d );
 						d.onmousedown = function( e )
 						{
@@ -398,22 +407,26 @@ function PollTray()
 						{
 							event.showCallback();
 						}
-						setTimeout( function()
+						
+						if( event.type != 'interaction' )
 						{
-							if( d.parentNode )
+							setTimeout( function()
 							{
-								d.style.opacity = 0;
-								d.style.pointerEvents = 'none';
-								setTimeout( function()
+								if( d.parentNode )
 								{
-									if( d.parentNode )
+									d.style.opacity = 0;
+									d.style.pointerEvents = 'none';
+									setTimeout( function()
 									{
-										tray.notifications.removeChild( d );
-										PollTray();
-									}
-								}, 400 );
-							}
-						}, 5000 );
+										if( d.parentNode )
+										{
+											tray.notifications.removeChild( d );
+											PollTray();
+										}
+									}, 400 );
+								}
+							}, 5000 );
+						}
 					}
 					else
 					{
@@ -556,7 +569,7 @@ function Notify( message, callback = false, clickcallback = false )
 	if( window.NotifyOverride )
 		return NotifyOverride( message, callback, clickcallback );
 	
-	mobileDebug( 'Notify... (state ' + Workspace.currentViewState + ')', true );
+	//mobileDebug( 'Notify... (state ' + Workspace.currentViewState + ')', true );
 	
 	// Not active?
 	if( Workspace.currentViewState != 'active' )
@@ -568,7 +581,7 @@ function Notify( message, callback = false, clickcallback = false )
 		}
 		if( window.Notification )
 		{
-			mobileDebug( 'Showing desktop notification.' );
+			//mobileDebug( 'Showing desktop notification.' );
 			
 			// Add to history
 			AddNotificationEvent( {
@@ -648,7 +661,7 @@ function Notify( message, callback = false, clickcallback = false )
 	// On mobile, we always show the notification on the Workspace screen
 	if( isMobile )
 	{
-		mobileDebug( 'Showing mobile workspace notification.' );
+		//mobileDebug( 'Showing mobile workspace notification.' );
 
 		if( Workspace.currentViewState == 'active' )
 		{

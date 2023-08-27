@@ -33,7 +33,8 @@ if( $o->Load() )
 				{
 					$args = $action;
 					include( 'modules/' . $action->module . '/module.php' );
-					$response->message = 'Successfully executed module call.';
+					if( !isset( $response->message ) )
+						$response->message = 'Successfully executed module call.';
 					$response->flag = 'rejected';
 				}
 			}
@@ -51,7 +52,8 @@ if( $o->Load() )
 				{
 					$args = $action;
 					include( 'modules/' . $action->module . '/module.php' );
-					$response->message = 'Successfully executed module call.';
+					if( !isset( $response->message ) )
+						$response->message = 'Successfully executed module call.';
 					$response->flag = 'accepted';
 				}
 			}

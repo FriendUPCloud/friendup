@@ -197,7 +197,8 @@ Workspace.addCalendarEvent = function()
 	{
 		if( Workspace.calendar && Workspace.calendar.eventWin )
 			Workspace.calendar.eventWin.close();
-		Workspace.calendar.render();
+		if( Workspace.calendar && Workspace.calendar.render )
+			Workspace.calendar.render();
 		Notify( { title: i18n( 'i18n_evt_added' ), text: i18n( 'i18n_evt_addeddesc' ) } );
 	}
 	m.execute( 'addcalendarevent', { event: evt } );
@@ -205,18 +206,18 @@ Workspace.addCalendarEvent = function()
 // Edit a calendar event
 Workspace.editCalendarEvent = function( id )
 {
-	var calendar = Workspace.calendar;
+	let calendar = Workspace.calendar;
 	
 	if( calendar.editWin ) return;
 	
-	var m = new Module( 'system' );
+	let m = new Module( 'system' );
 	m.onExecuted = function( e, d )
 	{
 		if( e == 'ok' )
 		{
-			var row = JSON.parse( d );
+			let row = JSON.parse( d );
 			
-			var date = row.Date;
+			let date = row.Date;
 			
 			calendar.editWin = new View( {
 				title: i18n( 'i18n_event_overview' ) + ' ' + date,
@@ -229,7 +230,7 @@ Workspace.editCalendarEvent = function( id )
 				calendar.editWin = false;
 			}
 
-			var f1 = new File( 'System:templates/calendar_event_edit.html' );
+			let f1 = new File( 'System:templates/calendar_event_edit.html' );
 			f1.replacements = { 
 				date:         date,
 				timefrom:     row.TimeFrom,

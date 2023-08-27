@@ -989,64 +989,11 @@ function addSecureDropWidget( windowobject, objects )
 	window.mouseDown = null;
 }
 
-//check if we run inside an app and do some magic
+// check if we run inside an app and do some magic
+// TODO: Remove it
 function checkForFriendApp()
 {
-// just disabled to do not loose compatybility
-/*
-	//if we dont have a sessionid we will need to wait a bit here...
-	if( !Workspace.sessionId )
-	{
-		console.log('waiting for valid session...' + Workspace.sessionId );
-		setTimeout(checkForFriendApp, 500);
-		return;
-	}
-
-	if( typeof friendApp != 'undefined' && typeof friendApp.exit == 'function')
-	{
-		// if this is mobile app we must register it
-		// if its already registered FC will not do it again
-		let version = null;
-		let platform = null;
-		let appToken = null;
-		let deviceID = null;
-		//var appToken = friendApp.appToken ? friendApp.appToken : false;
-
-		if( typeof friendApp.get_version == 'function' )
-		{
-			version = friendApp.get_version();
-		}
-
-		if( typeof friendApp.get_platform == 'function' )
-		{
-			platform = friendApp.get_platform();
-		}
-
-		if( typeof friendApp.get_app_token == 'function' )
-		{
-			appToken = friendApp.get_app_token();
-		}
-		if( typeof friendApp.get_deviceid == 'function' )
-		{
-			deviceID = friendApp.get_deviceid();
-		}
-
-		console.log('call ' + Workspace.sessionId );
-
-		let l = new Library( 'system.library' );
-		l.onExecuted = function( e, d )
-		{
-			if( e != 'ok' )
-			{
-
-			}
-		}
-		if( appToken != null )	// old applications which do not have appToken will skip this part
-		{
-			l.execute( 'mobile/createuma', { sessionid: Workspace.sessionId, apptoken: appToken, deviceid: deviceID, appversion: version, platform: platform } );
-		}
-	}
-*/
+	return false;
 }
 
 // Refresh programmatic classes
@@ -1054,7 +1001,7 @@ function RefreshDynamicClasses( e )
 {
 	if( !themeInfo.dynamicClasses ) return;
 	let str = '';
-	for( var a in themeInfo.dynamicClasses )
+	for( let a in themeInfo.dynamicClasses )
 	{
 		str += themeInfo.dynamicClasses[ a ]( e );
 	}
@@ -1066,7 +1013,7 @@ function InitDynamicClassSystem()
 	document.body.appendChild( dynCss );
 	themeInfo.dynCssEle = dynCss;
 	let ls = [ 'resize', 'mousedown', 'mouseup', 'touchstart', 'touchend' ];
-	for( var a = 0; a < ls.length; a++ )
+	for( let a = 0; a < ls.length; a++ )
 		window.addEventListener( ls[a], RefreshDynamicClasses );
 	RefreshDynamicClasses( {} );
 }
