@@ -2794,7 +2794,7 @@ html body[viewlist=dockedlist] #Statusbar #Tray > div.Hidden
 	content: "\f271";
 	font-size: 106%;
 	text-align: center;
-	line-height: 24px;
+	line-height: 22px;
 }
 
 #Tray.Size16 .TrayElement.Calendar:before
