@@ -193,6 +193,7 @@ install:
 	cp scripts/*.sh $(FRIEND_PATH)/
 	cp scripts/bash-ini-parser $(FRIEND_PATH)/
 	cp interfaces/web_desktop/js/io/service-worker.js $(FRIEND_PATH)/resources/
+	cp scripts/cfg.ini.example build/cfg/
 	
 	bash post_install.sh
 
