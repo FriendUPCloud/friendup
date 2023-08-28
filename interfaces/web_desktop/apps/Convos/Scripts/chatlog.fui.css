@@ -258,7 +258,7 @@ body:not([mobile]) .FUIChatlog .Input .MobileMen:hover,
 {
 	background-color: var(--fui-background);
 	color: var(--fui-color);
-	padding: 0 15px;
+	padding: 5px 15px 0 15px;
 	box-sizing: border-box;
 	margin: 10px 0 0 0;
 	opacity: 0;
@@ -290,7 +290,7 @@ body:not([mobile]) .FUIChatlog .Input .MobileMen:hover,
 	position: absolute;
 	z-index: 5;
 	right: 16px;
-	top: 1px;
+	top: 4px;
 	background-color: var(--fui-button-background);
     color: var(--fui-button-color);
 	padding: 1px;
