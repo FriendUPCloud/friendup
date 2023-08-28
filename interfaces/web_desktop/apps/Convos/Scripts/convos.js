@@ -305,12 +305,23 @@ Application.receiveMessage = function( msg )
 								{
 									m.shareImageAndPost( msg.data[ a ].Path );
 								}
-								else
-								{
-								}
 							}
 						} );
 						return;
+					default:
+						// Check if we can handle this file
+						Confirm( i18n( 'i18n_share_image_with_group' ), i18n( 'i18n_share_image_desc' ), function( d )
+						{
+							if( d.data == true )
+							{
+								m = FUI.getElementByUniqueId( 'messages' );
+								if( m )
+								{
+									m.shareFileAndPost( msg.data[ a ].Path );
+								}
+							}
+						} );
+						break;
 				}
 			}
 			catch( e ){};
