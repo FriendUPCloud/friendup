@@ -229,7 +229,7 @@ function SetWindowTitle( div, titleStr )
 	// Update window
 	if( Friend.windowBaseStringRules && Friend.windowBaseStringRules == 'replace' )
 		document.title = Friend.windowBaseString;
-	else document.title = titleStr + ' - ' + Friend.windowBaseString;
+	else document.title = titleStr;
 	
 	// Viewtitle (for other uses than title)
 	let vTitle = titleStr;
@@ -1402,7 +1402,7 @@ function _ActivateWindow( div, nopoll, e )
 	}
 	else
 	{
-		document.title = div.windowObject.getFlag( 'title' ) + ' - ' + Friend.windowBaseString;
+		document.title = div.windowObject.getFlag( 'title' );
 	}
 
 	// If it has a window blocker, activate that instead

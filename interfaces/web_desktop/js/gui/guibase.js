@@ -2830,8 +2830,6 @@ function CheckScreenTitle( screen, force )
 			}
 			else
 			{
-				if( tit.indexOf( Friend.windowBaseString ) < 0 )
-					tit += ' - ' + Friend.windowBaseString;
 				document.title = tit;
 			}
 		}
