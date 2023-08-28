@@ -506,6 +506,29 @@ body.Charcoal .FUIChatlog .Message.Own[seen=yes] .Date:before
 	font-family: fontawesome;
 	color: white;
 }
+.FUIChatlog .Message .AttachmentElement > a.DownloadFull:before 
+{
+    margin: 0 6px 0 0;
+}
+.FUIChatlog .Message .AttachmentElement > a.DownloadFull 
+{
+    right: auto;
+    bottom: auto;
+    display: block;
+    position: relative;
+    width: auto;
+    border-radius: 10px;
+    margin: 10px 0 10px 0;
+}
+
+.FUIChatlog .Message iframe.Attachment
+{
+	width: 100%;
+	min-height: 300px;
+	border: 1px solid var(--fui-button-background);
+	background-color: var(--fui-palette-chan02-dim);
+	border-radius: 10px;
+}
 
 .FUIChatlog .Message img.Attachment 
 {

@@ -2914,6 +2914,26 @@ function GetFilename( path )
 	return split[ 0 ];		
 }
 
+// Extract filename extension in lower case
+function GetFilenameExtension( filename )
+{
+	if( filename.indexOf( ':' ) > 0 )
+	{
+		let ext = filename.split( ':' );
+		if( ext.length < 2 ) return false;
+		ext = ext[1];
+		filename = ext;
+	}
+	
+	if( filename.indexOf( '/' ) > 0 )
+	{
+		filename = filename.split( '/' );
+		filename = filename[ filename.length - 1 ];
+	}
+	filename = filename.split( '.' ); 
+	return filename[ filename.length - 1 ].toLowerCase();
+}
+
 // Clean the properties of a Javascript object
 function CleanArray( keys, exclude )
 {

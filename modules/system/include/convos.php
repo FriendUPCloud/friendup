@@ -436,7 +436,7 @@ if( isset( $args->args ) )
         }
         // Get the original file OR
         // Get an attachment on ID
-        else if( $args->args->method == 'getattachment' || $args->args->method == 'getoriginal' )
+        else if( $args->args->method == 'getattachment' || $args->args->method == 'getoriginal' || $args->args->method == 'getupload' )
         {
         	// Check share
         	$o = new dbIO( 'FShared' );
@@ -481,13 +481,27 @@ if( isset( $args->args ) )
 										case 'gif':
 											$part = 'gif';
 											break;
+										case 'pdf':
+											$ext = 'pdf';
+											$part = false;
+											break;
 										default:
 											$part = false;
 											break;
 									}
 									if( $part )
 									{
-										FriendHeader( 'image/' . $part );
+										FriendHeader( 'Content-type: image/' . $part );
+										die( $f->_content );
+									}
+									else if( $ext == 'pdf' )
+									{
+										FriendHeader( 'Content-type: application/pdf' );
+										die( $f->_content );
+									}
+									else
+									{
+										FriendHeader( 'Content-type: application/octet-stream' );
 										die( $f->_content );
 									}
 								}
@@ -533,13 +547,28 @@ if( isset( $args->args ) )
 										case 'gif':
 											$part = 'gif';
 											break;
+										case 'pdf':
+											$ext = 'pdf';
+											$part = false;
+											break;
 										default:
 											$part = false;
 											break;
 									}
 									if( $part )
 									{
-										FriendHeader( 'image/' . $part );
+										FriendHeader( 'Content-type: image/' . $part );
+										die( $f->_content );
+									}
+									else if( $ext == 'pdf' )
+									{
+										FriendHeader( 'Content-type: applicaoition/pdf' );
+										FriendHeader( 'Content-disposition: inline' );
+										die( $f->_content );
+									}
+									else
+									{
+										FriendHeader( 'Content-type: application/octet-stream' );
 										die( $f->_content );
 									}
 								}
@@ -570,13 +599,27 @@ if( isset( $args->args ) )
 								case 'gif':
 									$part = 'gif';
 									break;
+								case 'pdf':
+									$ext = 'pdf';
+									$part = false;
+									break;
 								default:
 									$part = false;
 									break;
 							}
 							if( $part )
 							{
-								FriendHeader( 'image/' . $part );
+								FriendHeader( 'Content-type: image/' . $part );
+								die( $f->_content );
+							}
+							else if( $ext == 'pdf' )
+							{
+								FriendHeader( 'Content-type: application/pdf' );
+								die( $f->_content );
+							}
+							else
+							{
+								FriendHeader( 'Content-type: application/octet-stream' );
 								die( $f->_content );
 							}
 						}
@@ -644,11 +687,13 @@ if( isset( $args->args ) )
 					if( $o->ID > 0 )
 					{
 						$args = new stdClass();
-						$args->method = 'getattachment';
+						if( $args->args->type == 'pdf' || $args->args->type == 'file' )
+							$args->method = 'getupload';
+						else $args->method = 'getattachment';
 						$args->attachment = $o->ID;
 						$args = json_encode( $args );
 						$url = '/system.library/module/?module=system&command=convos&args=' . urlencode( $args );
-						die( 'ok<!--separate-->{"message":"Attachment uploaded.","response":1,"type":"image","url":"' . $url . '"}' );
+						die( 'ok<!--separate-->{"message":"Attachment uploaded.","response":1,"type":"' . $args->args->type . '","url":"' . $url . '"}' );
 					}
 				}
 			}
@@ -676,7 +721,7 @@ if( isset( $args->args ) )
 						$args->attachment = $o->ID;
 						$args = json_encode( $args );
 						$url = '/system.library/module/?module=system&command=convos&args=' . urlencode( $args );
-						die( 'ok<!--separate-->{"message":"Attachment uploaded.","response":1,"type":"image","url":"' . $url . '"}' );
+						die( 'ok<!--separate-->{"message":"Attachment uploaded.","response":1,"type":"' . $args->args->type . '","url":"' . $url . '"}' );
 					}
 				}
 			}
@@ -700,7 +745,7 @@ if( isset( $args->args ) )
 					$args->attachment = $o->ID;
 					$args = json_encode( $args );
 					$url = '/system.library/module/?module=system&command=convos&args=' . urlencode( $args );
-					die( 'ok<!--separate-->{"message":"Attachment uploaded.","response":1,"type":"image","url":"' . $url . '"}' );
+					die( 'ok<!--separate-->{"message":"Attachment uploaded.","response":1,"type":"' . $args->args->type . '","url":"' . $url . '"}' );
 				}
 			}
         	die( 'fail<!--separate-->{"response":0,"message":"Failed to load attachment."}' );

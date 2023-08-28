@@ -306,7 +306,19 @@ class FUIChatlog extends FUIElement
     			{
     				if( response.path && response.result )
     				{
-    					self.shareImageAndPost( response.path );
+    					let ext = GetFilenameExtension( response.path );
+						switch( ext )
+						{
+							case 'jpeg':
+							case 'jpg':
+							case 'png':
+							case 'gif':
+								self.shareImageAndPost( response.path );
+								break;
+							default:
+								self.shareFileAndPost( response.path );
+								break;
+						}
     				}
     			} );
     			return;
@@ -326,14 +338,25 @@ class FUIChatlog extends FUIElement
     	        
     	        let flags = {
 					multiSelect: false,
-					suffix: [ 'jpg', 'jpeg', 'png', 'gif' ],
 					triggerFunction: function( arr )
 					{
 						s.classList.remove( 'Active' );
 						
-						if( arr && arr.length > 0 )
+						for( let a = 0; a < arr.length; a++ )
 						{
-							self.shareImageAndPost( arr[ 0 ].Path );
+							let ext = GetFilenameExtension( arr[ a ].Path );
+							switch( ext )
+							{
+								case 'jpeg':
+								case 'jpg':
+								case 'png':
+								case 'gif':
+									self.shareImageAndPost( arr[ a ].Path );
+									break;
+								default:
+									self.shareFileAndPost( arr[ a ].Path );
+									break;
+							}
 						}
 					},
 					path: false,
@@ -579,7 +602,39 @@ class FUIChatlog extends FUIElement
 				}
 			}
 		}
-		let zmsg = { method: 'addupload', path: path };
+		let zmsg = { method: 'addupload', path: path, type: 'image' };
+		if( self.options.type == 'dm-user' )
+		{
+			zmsg.userId = self.options.cid;
+		}
+		else if( self.options.type == 'jeanie' )
+		{
+			zmsg.context = 'jeanie';
+		}
+		else
+		{
+			zmsg.groupId = self.options.cid;
+		}
+		m.execute( 'convos', zmsg );
+    }
+    // Share a file and post it
+    shareFileAndPost( path )
+    {
+    	let self = this;
+    	let m = new Module( 'system' );
+		m.onExecuted = function( me, md )
+		{
+			if( me == 'ok' )
+			{
+				let res = JSON.parse( md );
+				if( GetFilenameExtension( path ) == 'pdf' )
+				{
+					self.queueMessage( '<attachment type="pdf" file="' + res.url + '" filename="' + GetFilename( path ) + '"/>' );
+				}
+				else self.queueMessage( '<attachment type="download" file="' + res.url + '" filename="' + GetFilename( path ) + '"/>' );
+			}
+		}
+		let zmsg = { method: 'addupload', path: path, type: 'file' };
 		if( self.options.type == 'dm-user' )
 		{
 			zmsg.userId = self.options.cid;
@@ -1407,6 +1462,7 @@ class FUIChatlog extends FUIElement
         // Take attachments
         while( 1 )
         {
+        	// Images
         	let res = string.match( /[\s]{0,1}\<attachment\ type\=\"image\"\ image\=\"(.*?)\"(.*?)\/\>/i );
         	if( res != null )
         	{
@@ -1425,6 +1481,26 @@ class FUIChatlog extends FUIElement
         		}
         		
         		string = string.split( res[ 0 ] ).join( '<div class="AttachmentElement" contenteditable="false"><a class="Download" target="_blank" href="' + od + '"></a><img width="' + w + '" height="' + h + '" onload="Application.handleImageLoad( this )" onerror="Application.handleImageError( this )" src="' + res[1] + '&authid=' + Application.authId + '" class="Attachment"/></div>' );
+        		continue;
+        	}
+        	// Files
+        	res = string.match( /[\s]{0,1}\<attachment\ type\=\"file\"\ file\=\"(.*?)\"\ filename=\"(.*?)"\/\>/i );
+        	if( res != null )
+        	{
+        		let od = res[1].split( 'getattachment' ).join( 'getupload' ) + '&authid=' + Application.authId;
+        		
+        		string = string.split( res[ 0 ] ).join( '<div class="AttachmentElement" contenteditable="false"><a class="DownloadFull" target="_blank" href="' + od + '">' + res[2] + '</a></div>' );
+        		continue;
+        	}
+        	// PDFs
+        	res = string.match( /[\s]{0,1}\<attachment\ type\=\"pdf\"\ file\=\"(.*?)\"\ filename=\"(.*?)"\/\>/i );
+        	if( res != null )
+        	{
+        		let od = res[1].split( 'getattachment' ).join( 'getupload' ) + '&authid=' + Application.authId;
+        		
+        		let lod = '/webclient/3rdparty/pdfjs/web/viewer.html?file=' + encodeURIComponent( od );
+        		
+        		string = string.split( res[ 0 ] ).join( '<div class="AttachmentElement" contenteditable="false"><iframe src="' + lod + '" class="Attachment"/></iframe><a class="DownloadFull" target="_blank" href="' + od + '">' + res[2] + '</a></div>' );
         		continue;
         	}
         	break;
