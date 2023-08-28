@@ -312,6 +312,7 @@ body:not([mobile]) .FUIChatlog .Input .MobileMen:hover,
 {
 	display: inline-block;
 	cursor: pointer;
+	margin: 0 5px 0 5px;
 	min-width: 16px;
 	text-align: center;
 	border-radius: 100%;
@@ -330,7 +331,7 @@ body:not([mobile]) .FUIChatlog .Input .MobileMen:hover,
 
 .FUIChatlog .Message > .Toolbar > .ToolbarButton.Edit
 {
-	margin: 0 5px 0 0;
+	margin: 0 0 0 5px;
 }
 
 .FUIChatlog .Message > .Toolbar > .ToolbarButton.Edit:before
