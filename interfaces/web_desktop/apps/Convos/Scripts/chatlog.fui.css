@@ -510,16 +510,20 @@ body.Charcoal .FUIChatlog .Message.Own[seen=yes] .Date:before
 {
     margin: 0 6px 0 0;
 }
+
 .FUIChatlog .Message .AttachmentElement > a.DownloadFull 
 {
+    width: fit-content;
+    max-width: 100%;
     right: auto;
     bottom: auto;
     display: block;
     position: relative;
-    width: auto;
-    border-radius: 10px;
-    margin: 10px 0 10px 0;
+    min-width: 130px;
     color: var(--fui-color);
+    border-radius: 15px;
+    padding: 5px 15px;
+    margin: 10px auto 10px auto;
 }
 
 .FUIChatlog .Message iframe.Attachment
