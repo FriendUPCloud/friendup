@@ -371,12 +371,14 @@ class FUIChatlog extends FUIElement
     	{
     	    if( this.classList.contains( 'Active' ) )
     	    {
+    	    	document.body.classList.remove( 'Search' );
     	    	self.domElement.classList.remove( 'Search' );
     	        this.classList.remove( 'Active' );
     	        self.clearSearchFilter();
     	    }
     	    else
     	    {
+    	        document.body.classList.add( 'Search' );
     	        self.domElement.classList.add( 'Search' );
     	        clearActive( this );
     	        self.executeSearchFilter();
@@ -406,6 +408,12 @@ class FUIChatlog extends FUIElement
 	        this.checkHeight();
 	        
 	        let str = s.innerHTML.split( /\<.*?\>/i ).join( '' ).split( "\n" ).join( '' ).split( ' ' ).join( '' );
+	        
+	        // Leave this for now
+	        if( document.body.classList.contains( 'Search' ) )
+	        {
+	        	return;
+	        }
 	        
 	        if( str.length > 0 )
     		{
@@ -469,6 +477,13 @@ class FUIChatlog extends FUIElement
         	        this.checkHeight();
 		            return;
 	            }
+	            
+	            // Leave this for now
+			    if( document.body.classList.contains( 'Search' ) )
+			    {
+			    	return;
+			    }
+	            
 		        val = self.domTextarea.innerHTML;
 			    self.domTextarea.innerHTML = '';	
     			cancelBubble( e );
@@ -515,7 +530,8 @@ class FUIChatlog extends FUIElement
 			let messages = self.domElement.querySelector( '.Messages' ).getElementsByClassName( 'Message' );
 			for( let a = 0; a < messages.length; a++ )
 			{
-				if( messages[ a ].querySelector( '.Text' ).innerText.toLowerCase().indexOf( searchString ) < 0 )
+				let t = messages[ a ].querySelector( '.Text' );
+				if( t && t.innerText.toLowerCase().indexOf( searchString ) < 0 )
 				{
 					messages[ a ].style.display = 'none';
 					messages[ a ].setAttribute( 'hidden', 'hidden' );
