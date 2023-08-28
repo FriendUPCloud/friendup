@@ -1484,7 +1484,7 @@ class FUIChatlog extends FUIElement
         		continue;
         	}
         	// Files
-        	res = string.match( /[\s]{0,1}\<attachment\ type\=\"file\"\ file\=\"(.*?)\"\ filename=\"(.*?)"\/\>/i );
+        	res = string.match( /[\s]{0,1}\<attachment\ type\=\"download\"\ file\=\"(.*?)\"\ filename=\"(.*?)"\/\>/i );
         	if( res != null )
         	{
         		let od = res[1].split( 'getattachment' ).join( 'getupload' ) + '&authid=' + Application.authId;
