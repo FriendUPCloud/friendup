@@ -1552,6 +1552,9 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 			char *ltype  = dataLength ? CheckEmbeddedHeaders( data, dataLength, "Content-Type"   ) : NULL;
 			char *length = dataLength ? CheckEmbeddedHeaders( data, dataLength, "Content-Length" ) : NULL;
 			char *dispo  = dataLength ? CheckEmbeddedHeaders( data, dataLength, "Content-Disposition" ) : NULL;
+			if( !ltype ) ltype  = dataLength ? CheckEmbeddedHeaders( data, dataLength, "Content-type"   ) : NULL;
+			if( !length ) length = dataLength ? CheckEmbeddedHeaders( data, dataLength, "Content-length" ) : NULL;
+			if( !dispo ) dispo  = dataLength ? CheckEmbeddedHeaders( data, dataLength, "Content-disposition" ) : NULL;
 			char *code = CheckEmbeddedHeaders( data, dataLength, "Status Code" );
 
 			char *datastart = strstr( data, "---http-headers-end---" );

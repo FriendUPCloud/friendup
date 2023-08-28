@@ -576,10 +576,6 @@ if( file_exists( 'cfg/cfg.ini' ) )
 				$out .= "$k: $v\n";
 			$out .= "---http-headers-end---\n";
 			
-			/*$f = fopen( '/tmp/test.jpg', 'w+' );
-			fwrite( $f, $out . $string );
-			fclose( $f );*/
-			
 			die( $out . $string );
 		}
 	} );

@@ -494,14 +494,16 @@ if( isset( $args->args ) )
 										FriendHeader( 'Content-type: image/' . $part );
 										die( $f->_content );
 									}
-									else if( $ext == 'pdf' )
+									else if( isset( $ext ) && $ext == 'pdf' )
 									{
 										FriendHeader( 'Content-type: application/pdf' );
+										FriendHeader( 'Content-disposition: download; filename="' . $f->Filename . '"' );
 										die( $f->_content );
 									}
 									else
 									{
 										FriendHeader( 'Content-type: application/octet-stream' );
+										FriendHeader( 'Content-disposition: download; filename="' . $f->Filename . '"' );
 										die( $f->_content );
 									}
 								}
@@ -560,15 +562,16 @@ if( isset( $args->args ) )
 										FriendHeader( 'Content-type: image/' . $part );
 										die( $f->_content );
 									}
-									else if( $ext == 'pdf' )
+									else if( isset( $ext ) && $ext == 'pdf' )
 									{
 										FriendHeader( 'Content-type: applicaoition/pdf' );
-										FriendHeader( 'Content-disposition: inline' );
+										FriendHeader( 'Content-disposition: download; filename="' . $f->Filename . '"' );
 										die( $f->_content );
 									}
 									else
 									{
 										FriendHeader( 'Content-type: application/octet-stream' );
+										FriendHeader( 'Content-disposition: download; filename="' . $f->Filename . '"' );
 										die( $f->_content );
 									}
 								}
@@ -612,14 +615,16 @@ if( isset( $args->args ) )
 								FriendHeader( 'Content-type: image/' . $part );
 								die( $f->_content );
 							}
-							else if( $ext == 'pdf' )
+							else if( isset( $ext ) && $ext == 'pdf' )
 							{
 								FriendHeader( 'Content-type: application/pdf' );
+								FriendHeader( 'Content-disposition: download; filename="' . $f->Filename . '"' );
 								die( $f->_content );
 							}
 							else
 							{
 								FriendHeader( 'Content-type: application/octet-stream' );
+								FriendHeader( 'Content-disposition: download; filename="' . $f->Filename . '"' );
 								die( $f->_content );
 							}
 						}
