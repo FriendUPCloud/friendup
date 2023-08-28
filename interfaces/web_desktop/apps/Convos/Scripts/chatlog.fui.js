@@ -1497,10 +1497,8 @@ class FUIChatlog extends FUIElement
         	if( res != null )
         	{
         		let od = res[1].split( 'getattachment' ).join( 'getupload' ) + '&authid=' + Application.authId;
-        		
         		let lod = '/webclient/3rdparty/pdfjs/web/viewer.html?file=' + encodeURIComponent( od );
-        		
-        		string = string.split( res[ 0 ] ).join( '<div class="AttachmentElement" contenteditable="false"><iframe src="' + lod + '" class="Attachment"/></iframe><a class="DownloadFull" target="_blank" href="' + od + '">' + res[2] + '</a></div>' );
+        		string = string.split( res[ 0 ] ).join( '<div class="AttachmentElement" contenteditable="false"><div class="Preview PDF" onclick="this.innerHTML = \'<iframe src=\\\'' + lod + '\\\' class=\\\'Attachment\\\'/></iframe>\'"><p>' + i18n( 'i18n_click_to_view_pdf' ) + '</p></div><a class="DownloadFull" target="_blank" href="' + od + '">' + res[2] + '</a></div>' );
         		continue;
         	}
         	break;

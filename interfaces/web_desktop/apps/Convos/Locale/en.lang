@@ -86,6 +86,7 @@ i18n_deleting_message_text             : This will permanently remove this messa
 
 i18n_failed_to_join_room               : Failed to join room
 i18n_failed_to_join_desc               : Could not join chat room due to an unexpected error.
+i18n_click_to_view_pdf                 : Click to view PDF
 
 
 i18n_january                           : January

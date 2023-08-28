@@ -530,6 +530,22 @@ body.Charcoal .FUIChatlog .Message.Own[seen=yes] .Date:before
 	border-radius: 10px;
 }
 
+.FUIChatlog .Message .AttachmentElement .Preview.PDF 
+{
+    min-height: 300px;
+    width: 100%;
+    color: var(--fui-color);
+    background-color: var(--fui-background);
+    border-radius: 10px;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    align-content: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+
 .FUIChatlog .Message img.Attachment 
 {
     max-width: 100%;
