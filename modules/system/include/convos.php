@@ -221,7 +221,7 @@ if( isset( $args->args ) )
                 {
                     $rows = $SqlDatabase->FetchObjects( '
                         SELECT 
-                            m.ID, m.Seen, m.Message, m.Date, u.Name, u.UniqueID FROM `Message` m, FUser u 
+                            m.ID, m.Seen, m.Message, m.Date, u.Name, u.FullName, u.UniqueID FROM `Message` m, FUser u 
                         WHERE
                             m.RoomType = \'jeanie\' AND m.UniqueUserID=\'' . $User->UniqueID . '\' AND
                             m.ParentID = \'' . ( isset( $args->args->cid ) ? $SqlDatabase->_link->real_escape_string( $args->args->cid ) : '0' ) . '\' AND m.UniqueUserID = u.UniqueID' . $lastId . '
@@ -260,7 +260,7 @@ if( isset( $args->args ) )
                 {
                     $rows = $SqlDatabase->FetchObjects( '
                     SELECT 
-                        m.ID, m.Seen, m.Message, m.Date, u.Name, u.UniqueID FROM `Message` m, FUser u 
+                        m.ID, m.Seen, m.Message, m.Date, u.Name, u.FullName, u.UniqueID FROM `Message` m, FUser u 
                     WHERE
                         m.RoomType = \'dm-user\' AND 
                         ( 
@@ -286,7 +286,7 @@ if( isset( $args->args ) )
                 {
                 	$rows = $SqlDatabase->FetchObjects( '
                     SELECT 
-                        m.ID, m.Seen, m.Message, m.Date, u.Name, u.UniqueID FROM `Message` m, FUser u 
+                        m.ID, m.Seen, m.Message, m.Date, u.Name, u.FullName, u.UniqueID FROM `Message` m, FUser u 
                     WHERE
                         m.RoomType = \'chatroom\' AND 
                         ( 
@@ -311,6 +311,8 @@ if( isset( $args->args ) )
                     	$out->FlatUserID = $v->FlatUserID;
                 	if( isset( $v->Name ) )
 	                    $out->Name = $v->Name;
+                    if( isset( $v->Name ) )
+	                    $out->FullName = $v->FullName;
                     $out->Message = $v->Message;
                     $out->Date = $v->Date;
                     $out->Timestamp = strtotime( $v->Date );
