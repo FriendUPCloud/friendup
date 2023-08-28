@@ -939,7 +939,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 									int cacheState = CACHE_NOT_SUPPORTED;
 
 									char *extension = GetExtension( fs_Path );
-									
+
 									// Use the extension if possible
 									if( strlen( extension ) )
 									{
@@ -1873,10 +1873,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 												{
 													// Check header and remove from data
 													char *cntype = CheckEmbeddedHeaders( phpResp->bs_Buffer, phpResp->bs_Size, "Content-Type" );
-													if( !cntype ) cntype = CheckEmbeddedHeaders( phpResp->bs_Buffer, phpResp->bs_Size, "Content-type" );
 													char *code = CheckEmbeddedHeaders( phpResp->bs_Buffer, phpResp->bs_Size, "Status Code" );
-													char *dispo = CheckEmbeddedHeaders( phpResp->bs_Buffer, phpResp->bs_Size, "Content-Disposision" );
-													if( !dispo ) dispo = CheckEmbeddedHeaders( phpResp->bs_Buffer, phpResp->bs_Size, "Content-disposision" );
 
 													if( cntype != NULL )
 													{
@@ -1885,7 +1882,6 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 
 													struct TagItem tags[] = {
 														{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( cntype ? cntype : "text/html" ) },
-														{ HTTP_HEADER_CONTENT_DISPOSITION, (FULONG)StringDuplicate( dispo ? dispo : "inline" ) },
 														{ HTTP_HEADER_CONNECTION,   (FULONG)StringDuplicate( "close" ) },
 														{ TAG_DONE, TAG_DONE }
 													};
@@ -1942,7 +1938,6 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 
 													if( cntype != NULL ) FFree( cntype );
 													if( code != NULL ) FFree( code );
-													if( dispo != NULL ) FFree( dispo );
 
 													result = 200;
 
