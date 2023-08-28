@@ -519,6 +519,7 @@ body.Charcoal .FUIChatlog .Message.Own[seen=yes] .Date:before
     width: auto;
     border-radius: 10px;
     margin: 10px 0 10px 0;
+    color: var(--fui-color);
 }
 
 .FUIChatlog .Message iframe.Attachment
