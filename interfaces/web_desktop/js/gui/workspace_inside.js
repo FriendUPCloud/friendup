@@ -11411,6 +11411,8 @@ function handleServerMessage( e )
 		if( e.message.senderId == Workspace.uniqueId )
 			return;
 		
+		console.log( 'What is it: ' + Workspace.currentViewState );
+		
 		let found = false;
 		let apps = ge( 'Tasks' ).getElementsByTagName( 'iframe' );
 		for( let a = 0; a < apps.length; a++ )
@@ -11839,7 +11841,8 @@ Workspace.receivePush = function( jsonMsg, ready )
 }
 
 // TODO: Remove me after test
-document.addEventListener( 'visibilitychange' , function(){
+document.addEventListener( 'visibilitychange' , function( e )
+{
 	if( document.hidden )
 	{
 		Workspace.updateViewState( 'inactive' );
@@ -11849,6 +11852,29 @@ document.addEventListener( 'visibilitychange' , function(){
 		Workspace.updateViewState( 'active' );
 	}
 }, false );
+window.addEventListener( 'blur', function( e )
+{
+	if( document.hasFocus() )
+	{
+		if( document.hidden )
+			Workspace.updateViewState( 'inactive' );
+		return;
+	}
+	Workspace.updateViewState( 'inactive' );
+} );
+document.addEventListener( 'focus', function( e )
+{
+	if( document.hidden || !document.hasFocus() )
+		Workspace.updateViewState( 'inactive' );
+	else 
+		Workspace.updateViewState( 'active' );
+} );
+setInterval( function()
+{
+	if( document.hidden )
+		Workspace.updateViewState( 'inactive' );
+	else if( document.hasFocus() ) Workspace.updateViewState( 'active' );
+}, 250 );
 
 // Make sure to register if the document is active
 if( document.hidden )
