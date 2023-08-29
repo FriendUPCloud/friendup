@@ -17,6 +17,7 @@ class FUIChatoverview extends FUIElement
         
         let self = this;
         self.searchMode = 'messages';
+        self.groupsLoaded = false;
         
         window.addEventListener( 'resize', function()
         {
@@ -729,7 +730,9 @@ class FUIChatoverview extends FUIElement
     			{
     				self.domChannels.innerHTML += '<div class="Channel Group" uniqueid="chatroom" name="' + md[a].Name + '" id="' + md[a].UniqueID + '" own="' + md[a].Own + '"></div>';
     			}
+    			self.groupsLoaded = true;
     		}
+    		else self.groupsLoaded = false;
     		
     		self.domChannels.innerHTML += '<div class="Channel Add" uniqueid="add"></div>';
     	
@@ -851,7 +854,7 @@ class FUIChatoverview extends FUIElement
     	}
     	m.execute( 'convos', { 'method': 'getrooms' } );
     }
-    pollChatroom( uniqueId, uid )
+    pollChatroom( uniqueId, uid = false, force = false )
     {
     	// Just poll myself!
         if( uniqueId == Application.uniqueId )
@@ -860,29 +863,45 @@ class FUIChatoverview extends FUIElement
         	chat.refreshMessages();
         	return;
         }
-        let tabs = this.domChannels.getElementsByClassName( 'Channel' );
-        for( let a = 0; a < tabs.length; a++ )
-    	{
-    		if( tabs[ a ].classList.contains( 'Group' ) )
-    		{
-    		    if( tabs[ a ].getAttribute( 'id' ) == uid )
-    		    {
-					// It is already active
-				    if( tabs[ a ].classList.contains( 'Active' ) )
+        if( uid )
+        {
+		    let tabs = this.domChannels.getElementsByClassName( 'Channel' );
+		    for( let a = 0; a < tabs.length; a++ )
+			{
+				if( tabs[ a ].classList.contains( 'Group' ) )
+				{
+				    if( tabs[ a ].getAttribute( 'id' ) == uid )
 				    {
-				        let chat = FUI.getElementByUniqueId( 'messages' );
-				    	chat.refreshMessages();
-				        return;
-				    }
-				    // Activity in an inactive tab - add some info
-				    else
-				    {
-				    	// Play a sound when sending
-				    	Sounds.newMessage.play();
-				    }
-			    }
-    		}
-    	}
+						// It is already active
+						if( tabs[ a ].classList.contains( 'Active' ) )
+						{
+						    let chat = FUI.getElementByUniqueId( 'messages' );
+							chat.refreshMessages();
+						    return;
+						}
+						// Activity in an inactive tab - add some info
+						else
+						{
+							if( force )
+							{
+								tabs[ a ].click();
+								setTimeout( function()
+								{
+									if( tabs[ a ].classList.contains( 'Active' ) )
+									{
+										let chat = FUI.getElementByUniqueId( 'messages' );
+										chat.refreshMessages();
+									}
+								}, 350 );
+							}
+							// Play a sound when sending
+							Sounds.newMessage.play();
+						}
+					}
+				}
+			}
+			return;
+		}
     	let chlist = this.domElement.querySelector( '.Chatlist' );
     	chlist.innerHTML = '<fui-contacts parentelement="convos" uniqueid="contacts" user="' + uniqueId + '"></fui-contacts>';
     	FUI.initialize();

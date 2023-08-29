@@ -10674,6 +10674,8 @@ function DoorsOutListener( e )
 		movableMouseUp( e );
 	}
 	// Keep alive!
+	if( document.hidden || !document.hasFocus() )
+		return Workspace.updateViewState( 'inactive' );
 	Workspace.updateViewState( 'active' );
 }
 function DoorsLeaveListener( e )
@@ -10681,6 +10683,8 @@ function DoorsLeaveListener( e )
 	movableMouseUp( e );
 	
 	// Keep alive!
+	if( document.hidden || !document.hasFocus() )
+		return Workspace.updateViewState( 'inactive' );
 	Workspace.updateViewState( 'active' );
 }
 function DoorsKeyUp( e )
@@ -11412,23 +11416,26 @@ function handleServerMessage( e )
 			return;
 		
 		let found = false;
-		let apps = ge( 'Tasks' ).getElementsByTagName( 'iframe' );
-		for( let a = 0; a < apps.length; a++ )
+		if( Workspace.currentViewState == 'active' )
 		{
-			// TODO: Have per application permissions here..
-			// Not all applications should be able to send messages to
-			// all other applications...
-			if( apps[a].applicationName == e.appname || apps[a].applicationDisplayName == e.appname )
+			let apps = ge( 'Tasks' ).getElementsByTagName( 'iframe' );
+			for( let a = 0; a < apps.length; a++ )
 			{
-				let nmsg = {
-					command: 'notify',
-					applicationId: apps[a].applicationId,
-					authId: e.message.authId,
-					method: 'servermessage',
-					message: e.message
-				};				
-				apps[a].contentWindow.postMessage( nmsg, '*' );
-				found = apps[a];
+				// TODO: Have per application permissions here..
+				// Not all applications should be able to send messages to
+				// all other applications...
+				if( apps[a].applicationName == e.appname || apps[a].applicationDisplayName == e.appname )
+				{
+					let nmsg = {
+						command: 'notify',
+						applicationId: apps[a].applicationId,
+						authId: e.message.authId,
+						method: 'servermessage',
+						message: e.message
+					};				
+					apps[a].contentWindow.postMessage( nmsg, '*' );
+					found = apps[a];
+				}
 			}
 		}
 		if( !found )
@@ -11454,6 +11461,7 @@ function handleServerMessage( e )
 						null,
 						function( k )
 						{
+							e.message.source = 'notification';
 						    ExecuteApplication( 'Convos', JSON.stringify( e.message ) );
 					    }
 					);
@@ -11841,48 +11849,37 @@ Workspace.receivePush = function( jsonMsg, ready )
 // TODO: Remove me after test
 document.addEventListener( 'visibilitychange' , function( e )
 {
-	if( document.hidden )
-	{
-		Workspace.updateViewState( 'inactive' );
-	} 
-	else 
-	{
-		Workspace.updateViewState( 'active' );
-	}
+	if( document.hidden ) Workspace.updateViewState( 'inactive' );
+	else Workspace.updateViewState( 'active' );
 }, false );
 window.addEventListener( 'blur', function( e )
 {
-	if( document.hasFocus() )
+	if( currentMovable && currentMovable.getElementsByTagName( 'iframe' ).length > 0 )
 	{
-		if( document.hidden )
-			Workspace.updateViewState( 'inactive' );
-		return;
+		if( document.hasFocus() )
+		{
+			if( document.hidden )
+				Workspace.updateViewState( 'inactive' );
+			return;
+		}
 	}
 	Workspace.updateViewState( 'inactive' );
 } );
 document.addEventListener( 'focus', function( e )
 {
-	if( document.hidden || !document.hasFocus() )
-		Workspace.updateViewState( 'inactive' );
-	else 
+	if( !( document.hidden || !document.hasFocus() ) )
 		Workspace.updateViewState( 'active' );
 } );
 setInterval( function()
 {
 	if( document.hidden )
 		Workspace.updateViewState( 'inactive' );
-	else if( document.hasFocus() ) Workspace.updateViewState( 'active' );
-}, 250 );
+}, 500 );
 
 // Make sure to register if the document is active
 if( document.hidden )
-{
 	Workspace.updateViewState( 'inactive' );
-}
-else
-{
-	Workspace.updateViewState( 'active' );
-}
+else Workspace.updateViewState( 'active' );
 
 /*  Debug blob: */
 /*if( isMobile  )

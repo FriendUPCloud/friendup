@@ -350,7 +350,7 @@ function PollTray()
 					let showingStuff = false;
 					for( let o = 0; o < prevs.length; o++ )
 					{
-						if( prevs[o].classList && prevs[a].classList.contains( 'TrayNotificationPopup' ) )
+						if( prevs[o].classList && prevs[o].classList.contains( 'TrayNotificationPopup' ) )
 						{
 							showingStuff = true;
 							break;
@@ -569,16 +569,15 @@ function Notify( message, callback = false, clickcallback = false )
 	if( window.NotifyOverride )
 		return NotifyOverride( message, callback, clickcallback );
 	
-	//mobileDebug( 'Notify... (state ' + Workspace.currentViewState + ')', true );
-	
 	// Not active?
-	if( Workspace.currentViewState != 'active' )
+	if( Workspace.currentViewState != 'active' || document.hidden )
 	{	
 		// Use native app
 		if( window.friendApp )
 		{
 			return;
 		}
+		
 		if( window.Notification )
 		{
 			//mobileDebug( 'Showing desktop notification.' );

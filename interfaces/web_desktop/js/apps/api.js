@@ -7092,38 +7092,20 @@ if( !Friend.noevents && ( typeof( _kresponse ) == 'undefined' || !window._keysAd
 			return cancelBubble ( e );
 		}
 	}
-	if ( window.addEventListener )
-	{
-		window.addEventListener( 'keydown', _kresponse,   false );
-		window.addEventListener( 'keyup',   _kresponseup, false );
-		window.addEventListener( 'mousedown', _kmousedown, false );
-		window.addEventListener( 'mouseup', _kmouseup, false );
-		window.addEventListener( 'focus', _kfocus, false );
-	}
-	else
-	{
-		window.attachEvent( 'onkeydown', _kresponse,   false );
-		window.attachEvent( 'onkeyup',  _kresponseup, false );
-		window.attachEvent( 'onmousedown', _kmousedown, false );
-		window.attachEvent( 'onmouseup', _kmouseup, false );
-		window.addEventListener( 'focus', _kfocus, false );
-	}
-
+	
+	window.addEventListener( 'keydown', _kresponse,   false );
+	window.addEventListener( 'keyup',   _kresponseup, false );
+	window.addEventListener( 'mousedown', _kmousedown, false );
+	window.addEventListener( 'mouseup', _kmouseup, false );
+	window.addEventListener( 'focus', _kfocus, false );
+	
 	window._keysAdded = true;
 }
 
 /* Event handlers ----------------------------------------------------------- */
 
-if( window.addEventListener )
-{
-	window.addEventListener( 'click', clickToActivate, true );
-	window.addEventListener( 'message', receiveEvent, false );
-}
-else
-{
-	window.attachEvent( 'onclick', clickToActivate, true );
-	window.attachEvent( 'onmessage', receiveEvent, false );
-}
+window.addEventListener( 'click', clickToActivate, true );
+window.addEventListener( 'message', receiveEvent, false );
 
 // Make sure we can catch relative mouse pointer coordinates
 if( typeof( windowMouseX ) == 'undefined' )
@@ -7150,9 +7132,7 @@ if( typeof( windowMouseX ) == 'undefined' )
 			if( Friend.mouseMoveFunc )
 				Friend.mouseMoveFunc( e );
 		}
-		if( window.addEventListener )
-			window.addEventListener( 'mousemove', mouseEvt, false );
-		else window.attachEvent( 'onmousemove', mouseEvt, false );
+		window.addEventListener( 'mousemove', mouseEvt, false );
 	}
 }
 

@@ -86,7 +86,8 @@ Application.navigate = function( path, depth = 0 )
 					return false;
 				}
 				case 'message':
-				{	
+				{
+					
 					break;
 				}
 			}
@@ -106,6 +107,15 @@ window.unreadMessages = {
 
 Application.receiveMessage = function( msg )
 {
+	let ctest = FUI.getElementByUniqueId( 'contacts' );
+	if( !ctest )
+	{
+		// We may not be ready!
+		return setTimeout( function()
+		{
+			Application.receiveMessage( msg );
+		}, 25 );
+	}
 	// Receiving message on sender
     if( msg.senderId && !msg.command )
     {
@@ -114,14 +124,30 @@ Application.receiveMessage = function( msg )
     		Sounds.newMessage.play();
     	}
         let overview = FUI.getElementByUniqueId( 'convos' );
+        
         if( msg.type && msg.type == 'chatroom' && msg.uniqueId )
         {	
-        	// Log
-        	if( !unreadMessages.rooms[ msg.uniqueId ] )
-        		unreadMessages.rooms[ msg.uniqueId ] = [];
-        	unreadMessages.rooms[ msg.uniqueId ].push( { sender: msg.senderId, message: msg.message, time: ( new Date() ).getTime() } );
-        	overview.updateActivityBubble();
-        	overview.pollChatroom( msg.senderId, msg.uniqueId );
+        	let intr = null;
+        	let retries = 4;
+        	function intoroom()
+        	{
+		    	// Log
+		    	if( retries-- == 0 || overview.groupsLoaded )
+		    	{
+					clearInterval( intr );
+					if( !unreadMessages.rooms[ msg.uniqueId ] )
+						unreadMessages.rooms[ msg.uniqueId ] = [];
+					unreadMessages.rooms[ msg.uniqueId ].push( { sender: msg.senderId, message: msg.message, time: ( new Date() ).getTime() } );
+					overview.updateActivityBubble();
+					overview.pollChatroom( msg.senderId, msg.uniqueId, msg.source && msg.source == 'notification' ? true : false );
+				}
+	    	}
+	    	if( overview.groupsLoaded ) intoroom();
+	    	else
+	    	{
+	    		intr = setInterval( intoroom, 125 );
+	    	}
+	    	
         }
         else
         {
@@ -131,8 +157,33 @@ Application.receiveMessage = function( msg )
         	unreadMessages.dms[ msg.senderId ].push( { message: msg.message, time: ( new Date() ).getTime() } );
         	
         	let contacts = FUI.getElementByUniqueId( 'contacts' );
-    		if( contacts )		
+        	if( contacts )		
 	        	contacts.updateActivityBubble();
+        	// We clicked, so force activate
+        	if( msg.source && msg.source == 'notification' )
+    		{    	
+        		if( contacts )
+        		{
+        			// We may have to wait for the network..
+        			let retries = 5;
+        			let activR = 0;
+        			function activ()
+        			{
+        				if( retries-- == 0 )
+        				{
+        					return clearInterval( activR );
+        				}
+        				if( contacts.getContact( msg.senderId ) )
+        				{
+        					clearInterval( activR );
+			    			contacts.setChatView( contacts.getContact( msg.senderId ) );
+		    			}
+        			}
+        			activR = setInterval( function(){ activ(); }, 125 );
+        			activ();
+        		}
+        	}
+        	
         	let messages = FUI.getElementByUniqueId( 'messages' );
         	if( messages )
         	{
