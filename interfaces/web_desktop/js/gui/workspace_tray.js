@@ -492,6 +492,9 @@ function PollMobileTray()
 // Add notification event for safe keeping
 function AddNotificationEvent( evt )
 {
+	if( !Workspace.notificationEvent )
+		return;
+	
 	// Check duplicates
 	if( evt.eventId )
 	{

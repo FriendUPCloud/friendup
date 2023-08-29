@@ -120,9 +120,8 @@ Application.receiveMessage = function( msg )
     if( msg.senderId && !msg.command )
     {
     	if( document.hidden || !document.body.classList.contains( 'activated' ) )
-    	{
     		Sounds.newMessage.play();
-    	}
+    	
         let overview = FUI.getElementByUniqueId( 'convos' );
         
         if( msg.type && msg.type == 'chatroom' && msg.uniqueId )
