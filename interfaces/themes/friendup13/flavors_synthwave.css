@@ -559,14 +559,14 @@ html body.Synthwave .View.Active ::-webkit-scrollbar-track,
 html body.Synthwave.activated ::-webkit-scrollbar-track,
 html body.Synthwave .View.Active.IconWindow ::-webkit-scrollbar-track
 {
-	background-color: rgba(20,20,20,0.3) !important;
-	border-color: rgba(20,20,20,0.3) !important;
+	background-color: rgba(10,0,20,0.3) !important;
+	border-color: rgba(10,0,20,0.3) !important;
 }
 
 html body.Synthwave ::-webkit-scrollbar-thumb
 {
-	background-color: #383838 !important;
-	border-color: #303030;
+	background-color: #3E184E !important;
+	border-color: #3E184E;
 }
 
 html body.Synthwave .View.Active ::-webkit-scrollbar-thumb,
@@ -574,8 +574,8 @@ html body.Synthwave.activated ::-webkit-scrollbar-thumb,
 html body.Synthwave .View.Active ::-webkit-scrollbar-thumb, 
 html body.Synthwave .View.Active.IconWindow ::-webkit-scrollbar-thumb
 {
-	background-color: #404040 !important;
-	border-color: #383838;
+	background-color: #56154D !important;
+	border-color: #56154D;
 }
 
 html body.Synthwave .Frame .Progress
