@@ -210,6 +210,32 @@ class File
 		die();
 	}
 	
+	// Streams and outputs data
+	function LoadStreaming( $path = false, $userInfo = false )
+	{
+		global $Config, $User, $Logger;
+		
+		$url = $this->GetUrl( $path, $userInfo );
+
+		$c = curl_init();
+		
+		function writeAndFlush( $curl_handle, $chunk)
+		{ 
+		    echo $chunk;
+		    ob_flush();
+		    flush();
+		    return strlen( $chunk );
+		}
+		
+		curl_setopt( $c, CURLOPT_SSL_VERIFYPEER, false               );
+		curl_setopt( $c, CURLOPT_SSL_VERIFYHOST, false               );
+		curl_setopt( $c, CURLOPT_URL,            $url                );
+		curl_setopt( $c, CURLOPT_RETURNTRANSFER, true                );
+		curl_setopt( $c, CURLOPT_WRITEFUNCTION,  writeAndFlush        );
+		curl_exec( $c );
+		curl_close( $c );
+	}
+	
 	function Load( $path = false, $userInfo = false )
 	{
 		global $Config, $User, $Logger;

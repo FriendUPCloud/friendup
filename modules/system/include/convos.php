@@ -459,6 +459,29 @@ if( isset( $args->args ) )
 							if( $u->Load( $o->OwnerUserID ) )
 							{
 								$f = new File( $o->Data );
+								
+								$part = explode( '.', $o->Data );
+								$part = array_pop( $part );
+								switch( strtolower( $part ) )
+								{
+									case 'png':
+										$part = 'png';
+									case 'jpeg':
+									case 'jpg':
+										$part = 'jpg';
+										break;
+									case 'gif':
+										$part = 'gif';
+										break;
+									case 'pdf':
+										$ext = 'pdf';
+										$part = false;
+										break;
+									default:
+										$part = false;
+										break;
+								}
+								
 								$f->SetAuthContext( 'servertoken', $u->ServerToken );
 								if( $args->args->method == 'getattachment' )
 								{
@@ -466,29 +489,31 @@ if( isset( $args->args ) )
 									$flags->width = 1024; $flags->height = 1024;
 									$f->SetPostProcessor( 'thumbnail', $flags );
 								}
-								if( $f->Load( $o->Data ) )
+								else
 								{
-									$part = explode( '.', $o->Data );
-									$part = array_pop( $part );
-									switch( strtolower( $part ) )
+									if( $part )
 									{
-										case 'png':
-											$part = 'png';
-										case 'jpeg':
-										case 'jpg':
-											$part = 'jpg';
-											break;
-										case 'gif':
-											$part = 'gif';
-											break;
-										case 'pdf':
-											$ext = 'pdf';
-											$part = false;
-											break;
-										default:
-											$part = false;
-											break;
+										FriendHeader( 'Content-type: image/' . $part );
+										$f->LoadStreaming( $o->Data );
+										die();
 									}
+									else if( isset( $ext ) && $ext == 'pdf' )
+									{
+										FriendHeader( 'Content-type: applicaoition/pdf' );
+										FriendHeader( 'Content-disposition: download; filename="' . $f->Filename . '"' );
+										$f->LoadStreaming( $o->Data );
+										die();
+									}
+									else
+									{
+										FriendHeader( 'Content-type: application/octet-stream' );
+										FriendHeader( 'Content-disposition: download; filename="' . $f->Filename . '"' );
+										$f->LoadStreaming( $o->Data );
+										die();
+									}
+								}
+								if( $f->Load( $o->Data ) )
+								{	
 									if( $part )
 									{
 										FriendHeader( 'Content-type: image/' . $part );
@@ -527,6 +552,29 @@ if( isset( $args->args ) )
 							if( $u->Load( $o->OwnerUserID ) )
 							{
 								$f = new File( $o->Data );
+								
+								$part = explode( '.', $o->Data );
+								$part = array_pop( $part );
+								switch( strtolower( $part ) )
+								{
+									case 'png':
+										$part = 'png';
+									case 'jpeg':
+									case 'jpg':
+										$part = 'jpg';
+										break;
+									case 'gif':
+										$part = 'gif';
+										break;
+									case 'pdf':
+										$ext = 'pdf';
+										$part = false;
+										break;
+									default:
+										$part = false;
+										break;
+								}
+								
 								$f->SetAuthContext( 'servertoken', $u->ServerToken );
 								if( $args->args->method == 'getattachment' )
 								{
@@ -534,29 +582,31 @@ if( isset( $args->args ) )
 									$flags->width = 1024; $flags->height = 1024;
 									$f->SetPostProcessor( 'thumbnail', $flags );
 								}
+								else
+								{
+									if( $part )
+									{
+										FriendHeader( 'Content-type: image/' . $part );
+										$f->LoadStreaming( $o->Data );
+										die();
+									}
+									else if( isset( $ext ) && $ext == 'pdf' )
+									{
+										FriendHeader( 'Content-type: applicaoition/pdf' );
+										FriendHeader( 'Content-disposition: download; filename="' . $f->Filename . '"' );
+										$f->LoadStreaming( $o->Data );
+										die();
+									}
+									else
+									{
+										FriendHeader( 'Content-type: application/octet-stream' );
+										FriendHeader( 'Content-disposition: download; filename="' . $f->Filename . '"' );
+										$f->LoadStreaming( $o->Data );
+										die();
+									}
+								}
 								if( $f->Load( $o->Data ) )
 								{
-									$part = explode( '.', $o->Data );
-									$part = array_pop( $part );
-									switch( strtolower( $part ) )
-									{
-										case 'png':
-											$part = 'png';
-										case 'jpeg':
-										case 'jpg':
-											$part = 'jpg';
-											break;
-										case 'gif':
-											$part = 'gif';
-											break;
-										case 'pdf':
-											$ext = 'pdf';
-											$part = false;
-											break;
-										default:
-											$part = false;
-											break;
-									}
 									if( $part )
 									{
 										FriendHeader( 'Content-type: image/' . $part );
@@ -581,35 +631,60 @@ if( isset( $args->args ) )
 					else if( $o->SharedType == 'jeanie' )
 					{
 						$f = new File( $o->Data );
+						
+						$part = explode( '.', $o->Data );
+						$part = array_pop( $part );
+						switch( strtolower( $part ) )
+						{
+							case 'png':
+								$part = 'png';
+							case 'jpeg':
+							case 'jpg':
+								$part = 'jpg';
+								break;
+							case 'gif':
+								$part = 'gif';
+								break;
+							case 'pdf':
+								$ext = 'pdf';
+								$part = false;
+								break;
+							default:
+								$part = false;
+								break;
+						}
+						
 						if( $args->args->method == 'getattachment' )
 						{
 							$flags = new stdClass();
 							$flags->width = 1024; $flags->height = 1024;
 							$f->SetPostProcessor( 'thumbnail', $flags );
 						}
+						else
+						{
+							if( $part )
+							{
+								FriendHeader( 'Content-type: image/' . $part );
+								$f->LoadStreaming( $o->Data );
+								die();
+							}
+							else if( isset( $ext ) && $ext == 'pdf' )
+							{
+								FriendHeader( 'Content-type: applicaoition/pdf' );
+								FriendHeader( 'Content-disposition: download; filename="' . $f->Filename . '"' );
+								$f->LoadStreaming( $o->Data );
+								die();
+							}
+							else
+							{
+								FriendHeader( 'Content-type: application/octet-stream' );
+								FriendHeader( 'Content-disposition: download; filename="' . $f->Filename . '"' );
+								$f->LoadStreaming( $o->Data );
+								die();
+							}
+						}
 						if( $f->Load( $o->Data ) )
 						{
-							$part = explode( '.', $o->Data );
-							$part = array_pop( $part );
-							switch( strtolower( $part ) )
-							{
-								case 'png':
-									$part = 'png';
-								case 'jpeg':
-								case 'jpg':
-									$part = 'jpg';
-									break;
-								case 'gif':
-									$part = 'gif';
-									break;
-								case 'pdf':
-									$ext = 'pdf';
-									$part = false;
-									break;
-								default:
-									$part = false;
-									break;
-							}
 							if( $part )
 							{
 								FriendHeader( 'Content-type: image/' . $part );
