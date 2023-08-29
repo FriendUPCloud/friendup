@@ -42,6 +42,11 @@ window.addEventListener( 'visibilitychange', function()
 		}, 25 );
 	}
 } );
+document.body.addEventListener( 'drop', function( e )
+{
+	console.log( e );
+	cancelBubble( e );
+} );
 
 Application.run = function( msg )
 {

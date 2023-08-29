@@ -11406,7 +11406,11 @@ function handleServerMessage( e )
     }
     
 	if( e.message && e.appname )
-	{	    
+	{
+		// Ignore my own messages
+		if( e.message.senderId == Workspace.uniqueId )
+			return;
+		
 		let found = false;
 		let apps = ge( 'Tasks' ).getElementsByTagName( 'iframe' );
 		for( let a = 0; a < apps.length; a++ )
