@@ -1479,9 +1479,10 @@ class FUIChatlog extends FUIElement
         while( 1 )
         {
         	// Images
-        	let res = string.match( /[\s]{0,1}\<attachment\ type\=\"image\"\ image\=\"(.*?)\"(.*?)\/\>/i );
+        	let res = string.match( /[\s]{0,1}\<attachment\ .*?image\=\"(.*?)\"(.*?)\/\>/i );
         	if( res != null )
         	{
+        		console.log( 'Found an image: ', res );
         		let od = res[1].split( 'getattachment' ).join( 'getoriginal' ) + '&authid=' + Application.authId;
         		
         		let w = 'auto';
@@ -1495,7 +1496,6 @@ class FUIChatlog extends FUIElement
 		    			h = wh[2];
 	    			}
         		}
-        		
         		string = string.split( res[ 0 ] ).join( '<div class="AttachmentElement" contenteditable="false"><a class="Download" target="_blank" href="' + od + '"></a><img width="' + w + '" height="' + h + '" onload="Application.handleImageLoad( this )" onerror="Application.handleImageError( this )" src="' + res[1] + '&authid=' + Application.authId + '" class="Attachment"/></div>' );
         		continue;
         	}

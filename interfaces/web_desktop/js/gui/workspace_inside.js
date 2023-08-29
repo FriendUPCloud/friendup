@@ -1,9 +1,3 @@
-// Apps on startup
-Friend.startupApps = {};
-
-window.Sounds = {};
-Sounds.newMessage = new Audio('/themes/friendup13/sound/new_message.ogg');
-
 // Added to workspace
 var WorkspaceInside = {
 	// Tray icons

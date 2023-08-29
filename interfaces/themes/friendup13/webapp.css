@@ -22,3 +22,99 @@ html body .View:not([transparent]) .View > .Content
 {
 	display: none;
 }
+
+.ViewContainer.StandardDialog.Dialog.Active,
+.ViewContainer.StandardDialog.Dialog
+{
+	display: flex;
+	background-color: rgba(0,0,0,0.8);
+	align-content: center;
+	justify-content: center;
+	align-items: center;
+	pointer-events: all;
+}
+
+.ViewContainer.StandardDialog.Dialog.Active > .View.Active,
+.ViewContainer.StandardDialog.Dialog.Active > .View,
+.ViewContainer.StandardDialog.Dialog > .View
+{
+    position: relative !important;
+    width: 480px !important;
+    height: 320px !important;
+    min-width: 480px !important;
+    min-height: 320px !important;
+    border-radius: 15px;
+    overflow: hidden;
+}
+
+.ViewContainer.StandardDialog.Dialog > .View > .Content,
+.ViewContainer.StandardDialog.Dialog > .View > .Content > .Dialog,
+.ViewContainer.StandardDialog.Dialog > .View > .Content > .Dialog .BackgroundDefault
+{
+	background-color: rgba(0,0,0,0.8);
+	color: white;
+}
+
+.ViewContainer.StandardDialog.Dialog > .View > .Content > .Dialog > .VContentTop.Padding
+{
+    padding: 30px;
+    font-size: 125%;
+}
+
+.ViewContainer .View.IconWindow.CustomToolbarArea,
+.ViewContainer + .ViewContainer
+{
+    display: flex;
+    align-content: center;
+    justify-content: center;
+    align-items: center;
+    background-color: rgba(0,0,0,0.8);
+}
+
+.ViewContainer .View.IconWindow.CustomToolbarArea > .Content.FileDialog,
+.ViewContainer + .ViewContainer > .View
+{
+	width: calc(100% - 60px) !important;
+	max-width: 960px !important;
+	position: relative !important;
+	height: calc(100% - 60px) !important;
+	border-radius: 15px !important;
+	overflow: hidden;
+	min-width: auto;
+	min-height: auto;
+}
+
+[webapp=webapp] .ViewContainer + .ViewContainer .Title ,
+body[sharedapp=sharedapp] .ViewContainer + .ViewContainer .View > .Title
+{
+	display: block;
+	position: absolute;
+    z-index: 999;
+    background-color: transparent;
+    cursor: inherit;
+}
+
+.ViewContainer .Title > div > div:not(.Close ) 
+{
+    display: none;
+}
+
+.ViewContainer .View > .Title > div > .Close
+{
+    left: 8px;
+    top: 8px;
+    display: block;
+    position: absolute;
+    background-color: var(--BackgroundHeaviest);
+    border-radius: 100%;
+    cursor: pointer;
+    height: 20px;
+}
+.ViewContainer .View > .Title > div > .Close:hover
+{
+	left: 8px;
+	top: 8px;
+	opacity: 1;
+}
+
+

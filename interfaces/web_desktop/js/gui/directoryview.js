@@ -4435,7 +4435,7 @@ function OpenWindowByUrl( url, fileInfo )
 // unique     = wheather to use a unique view or not
 // targetView = the view to reuse
 //
-let friendPdfIndex = 0;
+var friendPdfIndex = 0;
 function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView, ocallback )
 {
 	if( !ocallback ) ocallback = false;

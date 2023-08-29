@@ -759,9 +759,12 @@ Door.prototype.dosAction = function( ofunc, args, callback )
 		{
 			if( args[possibilities[b]] )
 			{
-				if( func.indexOf('delete') > -1 )
-					Workspace.closeWindowByPath( args[possibilities[b]] );
-				else Workspace.refreshWindowByPath( args[possibilities[b]] );
+				if( Workspace.refreshWindowByPath )
+				{
+					if( func.indexOf('delete') > -1 )
+						Workspace.closeWindowByPath( args[possibilities[b]] );
+					else Workspace.refreshWindowByPath( args[possibilities[b]] );
+				}
 			}
 		}
 	}

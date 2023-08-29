@@ -8,6 +8,12 @@
 *                                                                              *
 *****************************************************************************©*/
 
+// Apps on startup
+Friend.startupApps = {};
+
+window.Sounds = {};
+Sounds.newMessage = new Audio('/themes/friendup13/sound/new_message.ogg');
+
 // Application messaging start -------------------------------------------------
 ApplicationMessagingNexus = {
 	ports: {},
@@ -139,7 +145,7 @@ function DoorsKeyDown( e )
 	}
 	
 	// Start menu key navigation
-	if( Workspace.smenu.visible )
+	if( Workspace.smenu && Workspace.smenu.visible )
 	{
 		let m = Workspace.smenu;
 		let move = false;
@@ -945,9 +951,12 @@ function handleNotificationMessage( msg )
 	}
 }
 
-for( let a in WorkspaceInside )
-	Workspace[a] = WorkspaceInside[a];
-delete WorkspaceInside;
+if( window.WorkspaceInside )
+{
+	for( let a in WorkspaceInside )
+		Workspace[a] = WorkspaceInside[a];
+	delete WorkspaceInside;
+}
 checkForFriendApp();
 InitDynamicClassSystem();
 
@@ -1331,8 +1340,8 @@ function mobileDebug( str, clear )
 // TODO: Test loading different themes
 
 _applicationBasics = {};
-let _applicationBasicsLoading = false;
-let _previousBasicsTheme = false;
+var _applicationBasicsLoading = false;
+var _previousBasicsTheme = false;
 function loadApplicationBasics( callback )
 {
 	if( _applicationBasicsLoading ) 

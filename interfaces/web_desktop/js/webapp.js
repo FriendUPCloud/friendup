@@ -21,7 +21,8 @@ DeepestField = {
 	drawTasks: function() {},
 	networkActivity: { timeToFinish: [] },
 	addConnection: function(){},
-	delConnection: function(){}
+	delConnection: function(){},
+	cleanTasks: function(){}
 };
 
 Workspace = {
@@ -481,8 +482,27 @@ Workspace = {
 			return this.showLoginPrompt();
 		}
 	},
+	setLoading: function( isLoading )
+	{
+		if( isLoading )
+		{
+			document.body.classList.add( 'Loading' );
+		}
+		else
+		{
+			if( !this.initializingWorkspaces )
+			{
+				document.body.classList.add( 'Inside' ); // If not exists
+				document.body.classList.add( 'Loaded' );
+				document.body.classList.remove( 'Login' ); // If exists
+				document.body.classList.remove( 'Loading' );
+			}
+		}
+	},
 	initUserWorkspace: function( json )
 	{
+		if( this.userWorkspaceInitialized ) return;
+		this.userWorkspaceInitialized = true;
 		let t = this;
 		let _this = t;
 		
@@ -543,7 +563,7 @@ Workspace = {
 		
 		// Loading remaining scripts
 		let s = document.createElement( 'script' );
-		s.src = '/webclient/js/api/friendapi.js;' +
+		s.src = '/webclient/js/gui/workspace_inside_webapp.js;' +
 			'webclient/js/gui/workspace_support.js;' +
 			'webclient/3rdparty/adapter.js;' +
 			'webclient/3rdparty/pdfjs/build/pdf.js;' +
@@ -567,7 +587,6 @@ Workspace = {
 			'webclient/js/io/friendnetworkdoor.js;' +
 			'webclient/js/io/friendnetworkapps.js;' +
 			'webclient/js/io/workspace_fileoperations.js;' + 
-			'webclient/js/io/DOS.js;' +
 			'webclient/3rdparty/favico.js/favico-0.3.10.min.js;' +
 			'webclient/js/gui/widget.js;' +
 			'webclient/js/gui/listview.js;' +
@@ -682,6 +701,7 @@ Workspace = {
 			}
 		}
 		document.body.appendChild( s );
+		
 		// Add event listeners
 		for( let a = 0; a < this.runLevels.length; a++ )
 		{
@@ -694,10 +714,6 @@ Workspace = {
 				window.addEventListener( 'message', listener, true );
 			else window.attachEvent( 'onmessage', listener, true );
 		}
-
-		// Init security subdomains
-		if( window.SubSubDomains )
-			SubSubDomains.initSubSubDomains()
 	},
 	// Get a door by path
 	getDoorByPath: function( path )
@@ -888,6 +904,113 @@ Workspace = {
 	setLogoutURL: function( logoutURL )
 	{
 		Workspace.logoutURL = logoutURL;
-	}
+	},
+	updateViewState: function( newState )
+	{
+		let self = this;
+
+		// Don't update if not changed
+		if( this.currentViewState == newState )
+		{
+			// Starts sleep timeout again (five minutes without activity sleep)
+			this.sleepTimeout();
+			return;
+		}
+		
+		if( window.Module && !Workspace.sessionId )
+		{
+			if( this.updateViewStateTM )
+				return;
+			this.updateViewStateTM = setTimeout( function(){ 
+				Workspace.updateViewState( newState );
+				self.updateViewStateTM = null;
+			}, 250 );
+			if( Workspace.loginCall )
+			{
+				Workspace.loginCall.destroy();
+				Workspace.loginCall = null;
+			}
+			Friend.User.ReLogin();
+			return; 
+		}
+		
+		if( newState == 'active' )
+		{
+			Workspace.nudgeWorkspacesWidget();
+			
+			document.body.classList.add( 'ViewStateActive' );
+
+			// Tell all windows
+			if( window.friendApp )
+			{
+				let appsNotified = {};
+				for( let a in movableWindows )
+				{
+					let win = movableWindows[ a ];
+					if( win.applicationId )
+					{
+						// Notify window
+						win.windowObject.sendMessage( {
+							command: 'notify',
+							method: 'wakeup',
+							value: 'active'
+						} );
+						// Notify application too
+						if( !appsNotified[ win.applicationId ] )
+						{
+							for( let b = 0; b < Workspace.applications.length; b++ )
+							{
+								if( Workspace.applications[ b ].applicationId == win.applicationId )
+								{
+									Workspace.applications[ b ].sendMessage( {
+										command: 'notify',
+										method: 'wakeup',
+										value: 'active'
+									} );
+									appsNotified[ win.applicationId ] = true;
+									break;
+								}
+							}
+						}
+					}
+				}
+			}
+			
+			// IMPORTANT:
+			// Sleep in 5 minutes
+			if( this.sleepingTimeout )
+				clearTimeout( this.sleepingTimeout );
+			Workspace.sleeping = false;
+			Workspace.sleepingTimeout = null;
+		}
+		else
+		{
+			document.body.classList.remove( 'ViewStateActive' );
+			document.body.classList.remove( 'Activating' );
+			
+			if( !Workspace.conn || !Workspace.conn.ws )
+			{
+				Workspace.initWebSocket();
+			}
+		}
+		this.sleepTimeout();
+		this.currentViewState = newState;
+	},
+	sleepTimeout: function()
+	{
+		// IMPORTANT: Only for desktops!
+		// Sleep in 5 minutes
+		if( !window.friendApp )
+		{
+			if( this.sleepingTimeout )
+				return;
+			this.sleepingTimeout = setTimeout( function()
+			{
+				Workspace.sleeping = true;
+				Workspace.sleepingTimeout = null;
+				Workspace.updateViewState( 'inactive' );
+			}, 1000 * 60 * 5 );
+		}
+	},
 }
 Doors = Workspace;
