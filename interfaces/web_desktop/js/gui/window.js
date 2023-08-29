@@ -6695,9 +6695,11 @@ function _kresize( e, depth )
 		}
 		if( globalConfig.workspacecount > 1 )
 		{
-			Workspace.initWorkspaces();
+			if( Workspace.initWorkspaces )
+				Workspace.initWorkspaces();
 		}
-		Workspace.checkWorkspaceWallpapers();
+		if( Workspace.checkWorkspaceWallpapers )
+			Workspace.checkWorkspaceWallpapers();
 	}
 	
 	if( isMobile && depth > 0 )
@@ -6724,7 +6726,8 @@ function _kresize( e, depth )
 		}
 	}
 	
-	Workspace.nudgeWorkspacesWidget();
+	if( Workspace.nudgeWorkspacesWidget )
+		Workspace.nudgeWorkspacesWidget();
 }
 
 function Confirm( title, string, okcallback, oktext, canceltext, extrabuttontext, extrabuttonreturn )

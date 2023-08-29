@@ -306,7 +306,8 @@ Screen = function ( flags, initObject )
 			if( !isMobile )
 			{
 				_DeactivateWindows();
-				Workspace.toggleStartMenu( false );
+				if( Workspace.toggleStartMenu )
+					Workspace.toggleStartMenu( false );
 			}
 		}
 	}

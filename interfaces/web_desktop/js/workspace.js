@@ -1041,6 +1041,7 @@ Workspace = {
 			// Loading remaining scripts
 			let s = document.createElement( 'script' );
 			s.src = '/webclient/js/gui/workspace_inside.js;' +
+				'webclient/js/gui/workspace_support.js;' +
 				'webclient/3rdparty/adapter.js;' +
 				'webclient/3rdparty/pdfjs/build/pdf.js;' +
 				'webclient/js/utils/speech-input.js;' +
