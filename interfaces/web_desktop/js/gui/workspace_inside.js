@@ -11411,8 +11411,6 @@ function handleServerMessage( e )
 		if( e.message.senderId == Workspace.uniqueId )
 			return;
 		
-		console.log( 'What is it: ' + Workspace.currentViewState );
-		
 		let found = false;
 		let apps = ge( 'Tasks' ).getElementsByTagName( 'iframe' );
 		for( let a = 0; a < apps.length; a++ )
