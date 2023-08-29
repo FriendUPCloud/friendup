@@ -1042,6 +1042,11 @@ Workspace = {
 			let s = document.createElement( 'script' );
 			s.src = '/webclient/js/gui/workspace_inside.js;' +
 				'webclient/js/gui/workspace_support.js;' +
+				'webclient/js/gui/filebrowser.js;' +
+				'webclient/js/fui/fui_v1.js;' +
+				'webclient/js/fui/classes/baseclasses.fui.js;' +
+				'webclient/js/fui/classes/group.fui.js;' +
+				'webclient/js/fui/classes/listview.fui.js;' +
 				'webclient/3rdparty/adapter.js;' +
 				'webclient/3rdparty/pdfjs/build/pdf.js;' +
 				'webclient/js/utils/speech-input.js;' +
