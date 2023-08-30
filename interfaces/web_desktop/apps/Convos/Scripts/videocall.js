@@ -75,20 +75,14 @@ let remotePeerId = false;
 Application.receiveMessage = function( msg )
 {
 	// We were told it is safe to start calling the remote peer
-	if( msg.command == 'initcall' && msg.peerId == ge( 'peerId' ).value )
+	if( msg.command == 'initcall' && msg.remotePeerId && ge( 'currentPeerId' ).value == msg.peerId )
 	{
-		if( !window.peer )
-		{
-			return setTimeout( function()
-			{
-				Application.receiveMessage( msg );
-			}, 100 );
-		}
+		ge( 'remotePeerId' ).value = msg.remotePeerId;
+		remotePeerId = msg.remotePeerId;
 		
 		const localVideoStream = ge( 'VideoStream' ).srcObject;
-		retrying = true;
 		
-		remotePeerId = msg.remotePeerId;
+		retrying = true;
 		
 		function executeCall()
 		{
@@ -117,7 +111,6 @@ Application.receiveMessage = function( msg )
 			{
 				if( retrying )
 				{
-					//console.log( '[Host] Retrying..' );
 					executeCall();
 				}
 			}, 250 );
@@ -133,26 +126,9 @@ Application.run = function()
 	let self = this;
 	
 	peer = new Peer();
-	/*peer.on( 'error', ( err ) => {
-		console.log( 'Peer error: ', err );
-	} );
-	peer.on( 'disconnected', ( err ) => {
-		console.log( 'Peer disconnected: ', err );
-	} );
-	peer.on( 'peer-unavailable', ( err ) => {
-		console.log( 'Peer became unavailable: ', err );
-	} );
-	peer.on( 'connection', ( err ) => {
-		console.log( 'Peer connection info: ', err );
-	} );
-	peer.on( 'close', ( err ) => {
-		console.log( 'Peer closed: ', err );
-	} );*/
-	peer.on( 'open', (peerId) => {
-		ge( 'peerId' ).value = peerId;
+	peer.on( 'open', ( peerId ) => {
+		ge( 'currentPeerId' ).value = peerId;
 	  
-		//console.log( '[All] We opened a peer.' );
-		
 		const localVideo = ge( 'VideoStream' );
 		navigator.mediaDevices.getUserMedia( { video: true, audio: true } )
 			.then( ( stream ) => {
@@ -174,12 +150,10 @@ Application.run = function()
 							ge( 'VideoArea' ).classList.add( 'Connected' );
 							remoteVideo.srcObject = remoteStream;
 							initStreamEvents( remoteVideo );
-							//console.log( '[Client] Streaming now.' );
 							callList[ c.peer ] = c;
 							currentRemoteStream = remoteStream; // For safe keeping
 						}
 					} );
-					//console.log( '[Client] We were called, doing stream' );
 					c.on( 'data', ( data ) => {
 						console.log( 'We got data after call stream: ', data );
 					} ),
@@ -187,31 +161,26 @@ Application.run = function()
 						console.log( 'Call error...', err );
 					} );
 				} );
-				/*peer.on( 'error', ( err ) => {
-					console.log( 'Error with calling remote.', err );
-				} );*/
 			} )
 			.catch( ( error ) => {
 				console.error( 'Error accessing media devices:', error );
 			} );
 		// We are starting the stream, so broadcast call
-		if( !ge( 'currentPeerId' ).value )
+		if( !ge( 'remotePeerId' ).value )
 		{
-			//console.log( '[Host] Broadcasting our peer id: ' + ge( 'peerId' ).value );
 			self.sendMessage( {
 				command: 'broadcast-call',
-				peerId: ge( 'peerId' ).value
+				peerId: ge( 'currentPeerId' ).value
 			} );
 		}
 		// We have a currentPeerId from remote, so tell we got it
 		else
 		{
-			//console.log( '[Client] Accepting remote peer id: ' + ge( 'currentPeerId' ).value );
 			ge( 'VideoStream' ).parentNode.classList.add( 'Loading' );
 			Application.sendMessage( {
 				command: 'broadcast-received',
 				peerId: ge( 'currentPeerId' ).value,
-				remotePeerId: ge( 'peerId' ).value
+				remotePeerId: ge( 'remotePeerId' ).value
 			} );
 		}
 	} );
@@ -277,7 +246,7 @@ function videoPoll()
 	}
 	/*Application.sendMessage( {
 		command: 'broadcast-poll',
-		peerId: ge( 'peerId' ).value
+		peerId: ge( 'remotePeerId' ).value
 	} );*/
 }
 

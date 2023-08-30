@@ -77,6 +77,8 @@ i18n_start_conversation                : Start a conversation.
 i18n_video_call                        : Video call
 i18n_video_call_button                 : Click to join video call.
 i18n_sharing_screen                    : You are sharing your screen.
+i18n_receive_video_call                : Receiving video call
+i18n_receiving_video_desc              : is calling you. Do you want to take the call?
 
 i18n_video_invite                      : Video invite
 i18n_video_invite_desc                 : is inviting you to a video session.
