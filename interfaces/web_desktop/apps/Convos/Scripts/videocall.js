@@ -259,20 +259,17 @@ function initStreamEvents( obj )
 
 function videoPoll()
 {
-	// Call client
-	if( remotePeerId )
+	// Call the other
+	if( ge( 'remotePeerId' ).value )
 	{
-		peer.call( remotePeerId, ge( 'VideoStream' ).srcObject );
+		peer.call( ge( 'remotePeerId' ).value, ge( 'VideoStream' ).srcObject );
+		
+		// Just nudge our friend!
+		Application.sendMessage( {
+			command: 'broadcast-poll',
+			peerId: ge( 'remotePeerId' ).value
+		} );
 	}
-	// Call host
-	else
-	{
-		peer.call( ge( 'currentPeerId' ).value, ge( 'VideoStream' ).srcObject );
-	}
-	/*Application.sendMessage( {
-		command: 'broadcast-poll',
-		peerId: ge( 'remotePeerId' ).value
-	} );*/
 }
 
 // Function to start screen sharing
@@ -301,13 +298,16 @@ function startScreenShare( el, retries = 5 )
 			console.error( 'Error accessing screen share:', error );
 			if( retries > 0 )
 			{
-				return startScreenShare( el, retries - 1 );
+				return setTimeout( function()
+				{
+					startScreenShare( el, retries - 1 );
+				}, 100 );
 			}
 		});
 }
 
 // Function to stop screen sharing and return to video call
-function stopScreenShare( el ) 
+function stopScreenShare( el, retries = 5 ) 
 {
 	navigator.mediaDevices.getUserMedia( { video: true, audio: true } )
 		.then( ( stream ) => {
@@ -330,6 +330,13 @@ function stopScreenShare( el )
 		} )
 		.catch( ( error ) => {
 			console.error( 'Error accessing user media:', error );
+			if( retries > 0 )
+			{
+				return setTimeout( function()
+				{
+					stopScreenShare( el, retries - 1 );
+				}, 100 );
+			}
 		});
 }
 
