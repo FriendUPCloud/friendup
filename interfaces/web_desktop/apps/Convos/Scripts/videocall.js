@@ -87,25 +87,28 @@ Application.receiveMessage = function( msg )
 		function executeCall()
 		{
 			const c = peer.call( msg.remotePeerId, localVideoStream );
-			c.on( 'stream', ( remoteStream ) => {
-				// Prevent readding the same
-				if( !callList[ c.peer ] )
-				{
-					ge( 'VideoArea' ).classList.remove( 'Loading' );
-					ge( 'VideoArea' ).classList.add( 'Connected' );
-					const remoteVideo = ge( 'RemoteVideoStream' );
-					remoteVideo.srcObject = remoteStream;
-					initStreamEvents( remoteVideo );
-					currentRemoteStream = remoteStream; // For safe keeping
-					
-					// In case of reconnects (this happens when remote goes away)
-					callList[ c.peer ] = c;
-				}
-				retrying = false;
-			} );
-			c.on( 'error', ( err ) => {
-				console.log( 'Error with connecting to remote stream.', err );
-			} );
+			if( c && c.on )
+			{
+				c.on( 'stream', ( remoteStream ) => {
+					// Prevent readding the same
+					if( !callList[ c.peer ] )
+					{
+						ge( 'VideoArea' ).classList.remove( 'Loading' );
+						ge( 'VideoArea' ).classList.add( 'Connected' );
+						const remoteVideo = ge( 'RemoteVideoStream' );
+						remoteVideo.srcObject = remoteStream;
+						initStreamEvents( remoteVideo );
+						currentRemoteStream = remoteStream; // For safe keeping
+						
+						// In case of reconnects (this happens when remote goes away)
+						callList[ c.peer ] = c;
+					}
+					retrying = false;
+				} );
+				c.on( 'error', ( err ) => {
+					console.log( 'Error with connecting to remote stream.', err );
+				} );
+			}
 			clearTimeout( retryTimeo );
 			retryTimeo = setTimeout( function()
 			{
