@@ -114,6 +114,7 @@ Application.receiveMessage = function( msg )
 			{
 				if( retrying )
 				{
+					console.log( 'Retrying.' );
 					executeCall();
 				}
 			}, 250 );
@@ -122,6 +123,7 @@ Application.receiveMessage = function( msg )
 	}
 	else if( msg.command == 'poll' )
 	{
+		console.log( 'Was polled', msg );
 	}
 }
 Application.run = function()
