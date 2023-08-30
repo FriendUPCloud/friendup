@@ -114,7 +114,7 @@ Application.receiveMessage = function( msg )
 			{
 				if( retrying )
 				{
-					console.log( 'Retrying.' );
+					//console.log( 'Retrying.' );
 					executeCall();
 				}
 			}, 250 );
@@ -142,30 +142,50 @@ Application.run = function()
 				currentVideoStream = stream;
 				const remoteVideo = ge( 'RemoteVideoStream' );
 				
+				let doRetrying = true;
+				let doRetryTimeo = false;
+				
 				// Set up call event so we can be called
-				peer.on( 'call', ( c ) => {
-					// Answer the call and display remote stream
-					callList = [];
-					c.answer( stream );
-					c.on( 'stream', ( remoteStream ) => {
-						// Prevent readding the same
-						if( !callList[ c.peer ] )
+				function executeCall2()
+				{
+					peer.on( 'call', ( c ) => {
+						if( c && c.on )
 						{
-							ge( 'VideoArea' ).classList.remove( 'Loading' );
-							ge( 'VideoArea' ).classList.add( 'Connected' );
-							remoteVideo.srcObject = remoteStream;
-							initStreamEvents( remoteVideo );
-							callList[ c.peer ] = c;
-							currentRemoteStream = remoteStream; // For safe keeping
+							// Answer the call and display remote stream
+							callList = [];
+							c.answer( stream );
+							c.on( 'stream', ( remoteStream ) => {
+								// Prevent readding the same
+								if( !callList[ c.peer ] )
+								{
+									ge( 'VideoArea' ).classList.remove( 'Loading' );
+									ge( 'VideoArea' ).classList.add( 'Connected' );
+									remoteVideo.srcObject = remoteStream;
+									initStreamEvents( remoteVideo );
+									callList[ c.peer ] = c;
+									currentRemoteStream = remoteStream; // For safe keeping
+								}
+								doRetrying = false;
+							} );
+							c.on( 'data', ( data ) => {
+								console.log( 'We got data after call stream: ', data );
+							} ),
+							c.on( 'error', ( err ) => {
+								console.log( 'Call error...', err );
+							} );
 						}
+						clearTimeout( doRetryTimeo );
+						doRetryTimeo = setTimeout( function()
+						{
+							if( doRetrying )
+							{
+								console.log( 'Retrying here.' );
+								executeCall2();
+							}
+						}, 250 );
 					} );
-					c.on( 'data', ( data ) => {
-						console.log( 'We got data after call stream: ', data );
-					} ),
-					c.on( 'error', ( err ) => {
-						console.log( 'Call error...', err );
-					} );
-				} );
+				}
+				executeCall2();
 			} )
 			.catch( ( error ) => {
 				console.error( 'Error accessing media devices:', error );
