@@ -691,7 +691,7 @@ class FUIChatlog extends FUIElement
 				        text = dec;
 				    }
 				    catch( e ){};
-    				t.innerHTML = self.replaceUrls( self.replaceEmojis( text ) );
+    				t.innerHTML = self.replaceEmojis( self.replaceUrls( text ) );
     			}
     		}
     	}
@@ -784,7 +784,7 @@ class FUIChatlog extends FUIElement
             	toolbar = '';
             
             let replacements = {
-                message: self.replaceUrls( self.replaceEmojis( text ) ),
+                message: self.replaceEmojis( self.replaceUrls( text ) ),
                 i18n_date: i18n( 'i18n_date' ),
                 i18n_fullname: i18n( 'i18n_fullname' ),
                 date: self.parseDate( m.Date ),
@@ -856,7 +856,7 @@ class FUIChatlog extends FUIElement
 							val = val.split( /<style.*?\>[\w\W]*?\<\/style\>/i ).join( '' );
 							val = val.split( /<link.*?\>/i ).join( '' );
 							
-							t.innerHTML = self.replaceUrls( self.replaceEmojis( val ) );
+							t.innerHTML = self.replaceEmojis( self.replaceUrls( val ) );
 							
 							// Check white space
 							let candidate = val.split( /\<.*?\>/ ).join( '' );
@@ -1430,9 +1430,9 @@ class FUIChatlog extends FUIElement
         let tr = string.match( /(```<br>*(.*?)<br>```)/ );
         if( tr )
         {
-        	console.log( tr );
+        	//console.log( tr );
         	string = string.split( tr[0] ).join( '<codeblock>' + Trim( tr[2] ) + '</codeblock>' );
-        	string = string.split( '<codeblock><br>' ).join( '</codeblock>' );
+        	string = string.split( '<codeblock><br>' ).join( '<codeblock>' );
     	}
         
         // Take attachments
@@ -1486,6 +1486,16 @@ class FUIChatlog extends FUIElement
         let smilies = [ '8)', '8-)', ':-)', ':)', ':-D', ':D', 'X)', 'B)', 'B-)', 'X-)', ':|', ':-|', ':-o', ':o', ':O', ':O', ':(', ':-(',  ';)', ';-)' ];
         let emotes  = [ '🤓', '🤓', '🙂',  '🙂', '😀', '😀', '😆', '😎', '😎', '😆', '😐', '😐', '😮', '😮', '😮', '😮', '😒', '😒', '😏', '😏' ];
         
+        // Fix code blocks
+        let codeblocks = [];
+        while( 1 )
+        {
+        	let res = string.match( /(\<codeblock\>.*?\<\/codeblock\>)/i );
+        	if( !res ) break;
+        	codeblocks.push( res[1] );
+        	string = string.split( res[1] ).join( '<!--block--' + codeblocks.length + '>' );
+        }
+        
         for( let a = 0; a < smilies.length; a++ )
         {
             string = string.split( smilies[a] ).join( '<span contenteditable="false" class="Emoji">' + emotes[a] + '</span>' );
@@ -1500,6 +1510,18 @@ class FUIChatlog extends FUIElement
             }
             else break;
         }
+        
+        // Reconstitute code blocks
+        if( codeblocks.length )
+        {
+        	let n = 0;
+        	while( 1 )
+        	{
+        		let res = string.match( /\<\!\-\-block\-\-([0-9]*?)\>/i );
+        		if( !res ) break;
+        		string = string.split( res[0] ).join( codeblocks[ n++ ] );
+        	}
+	    }
         
         return string;
     }
