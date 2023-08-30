@@ -830,29 +830,28 @@ function handleServerMessage( e )
 			return;
 		
 		let found = false;
-		if( Workspace.currentViewState == 'active' )
+		
+		let apps = ge( 'Tasks' ).getElementsByTagName( 'iframe' );
+		for( let a = 0; a < apps.length; a++ )
 		{
-			let apps = ge( 'Tasks' ).getElementsByTagName( 'iframe' );
-			for( let a = 0; a < apps.length; a++ )
+			// TODO: Have per application permissions here..
+			// Not all applications should be able to send messages to
+			// all other applications...
+			if( apps[a].applicationName == e.appname || apps[a].applicationDisplayName == e.appname )
 			{
-				// TODO: Have per application permissions here..
-				// Not all applications should be able to send messages to
-				// all other applications...
-				if( apps[a].applicationName == e.appname || apps[a].applicationDisplayName == e.appname )
-				{
-					let nmsg = {
-						command: 'notify',
-						applicationId: apps[a].applicationId,
-						authId: e.message.authId,
-						method: 'servermessage',
-						message: e.message
-					};				
-					apps[a].contentWindow.postMessage( nmsg, '*' );
-					found = apps[a];
-				}
+				let nmsg = {
+					command: 'notify',
+					applicationId: apps[a].applicationId,
+					authId: e.message.authId,
+					method: 'servermessage',
+					message: e.message
+				};				
+				apps[a].contentWindow.postMessage( nmsg, '*' );
+				found = apps[a];
 			}
 		}
-		if( !found )
+		
+		if( !found || Workspace.currentViewState == 'inactive' )
 		{
 			// Check that we have message
 		    if( e.message && e.message.message )
