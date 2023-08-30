@@ -21,7 +21,7 @@ document.querySelector( '.Mute' ).onclick = function()
 				s.classList.add( 'Muted' );
 				track.enabled = false;
 			}
-			videoPoll();
+			setTimeout( function(){ videoPoll(); }, 100 );
 		} );
 	} )
 	.catch( ( error ) => {
@@ -46,7 +46,7 @@ document.querySelector( '.Vision' ).onclick = function()
 				s.classList.add( 'Muted' );
 				track.enabled = false;
 			}
-			videoPoll();
+			setTimeout( function(){ videoPoll(); }, 100 );
 		} );
 	} )
 	.catch( ( error ) => {
