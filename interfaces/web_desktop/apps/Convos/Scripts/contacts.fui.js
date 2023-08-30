@@ -202,6 +202,7 @@ class FUIContacts extends FUIElement
         	}
         }
         
+        // Video calls
         let vid = this.domSettings.querySelector( '.Videocall' );
         if( vid )
         {
@@ -220,14 +221,20 @@ class FUIContacts extends FUIElement
         		{
         			self.videoCall = null;
         			self.domSettings.querySelector( '.Videocall' ).classList.remove( 'Pending' );
+        			
         			// Say hang up!
-        			let mess = FUI.getElementByUniqueId( 'messages' );
-        			if( mess )
-        				mess.queueMessage( '<videohangup callid="' + window.currentPeerId + '"/>' );
+    				Application.SendUserMsg( {
+						recipientId: self.record.ID,
+						message: {
+							command: 'broadcast-stop',
+							peerId: window.currentPeerId
+						}
+					} );
+					
     				window.currentPeerId = null;
         		}
         		let f = new File( 'Progdir:Markup/videocall.html' );
-        		f.replacements = { 'peerId': window.currentPeerId ? window.currentPeerId : '' };
+        		f.replacements = { 'currentPeerId': '', 'remotePeerId': '' };
         		f.i18n();
         		f.onLoad = function( data )
         		{

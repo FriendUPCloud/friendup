@@ -53,6 +53,7 @@ Application.receiveMessage = function( msg )
 {
     if( msg.command )
     {
+    	console.log( 'got ' + msg.command );
         if( msg.command == 'servermessage' )
         {
             this.view.sendMessage( msg.data );
@@ -70,11 +71,19 @@ Application.receiveMessage = function( msg )
         {
         	this.view.sendMessage( msg );
         }
+        else if( msg.command == 'broadcast-connect' )
+        {
+        	this.view.sendMessage( msg );
+        }
         else if( msg.command == 'broadcast-received' )
         {
         	this.view.sendMessage( msg );
         }
         else if( msg.command == 'broadcast-start' )
+        {
+        	this.view.sendMessage( msg );
+        }
+        else if( msg.command == 'broadcast-stop' )
         {
         	this.view.sendMessage( msg );
         }

@@ -773,56 +773,6 @@ class FUIChatlog extends FUIElement
             }
             catch( e ){};
             
-            // Trap video calls
-            if( !m.Own )
-            {
-            	let vidc = text.indexOf( '<videocall' ) == 0;
-            	let vidh = text.indexOf( '<videohangup' ) == 0;
-            	// Expire after 3 secs
-            	if( ( new Date().getTime() / 1000 ) - ( new Date( m.Date ).getTime() / 1000 ) < 3 )
-            	{
-				    if( vidc )
-				    {
-				    	// Only take new calls (expire after 30 seconds)
-				    	// Take video calls
-				    	let string = text;
-						let res = string.match( /[\s]{0,1}\<videocall\ type\=\"video\"\ callid\=\"(.*?)\"\/\>/i );
-						if( res != null )
-						{
-							self.setVideoCall( res[1] );
-						}
-						Notify( {
-				        	title: i18n( 'i18n_video_invite' ),
-				        	text: m.Name + ' ' + i18n( 'i18n_video_invite_desc' )
-				        }, false, function()
-				        {
-				        	self.setVideoCall( res[1], true );     	
-				        } );
-				        continue;
-				    }
-				    else if( vidh )
-				    {
-				    	// Only take new calls (expire after 30 seconds)
-				    	// Take video calls
-				    	self.setVideoCall( false );
-						continue;
-				    }
-			    }
-			    else
-			    {
-			    	if( vidc || vidh )
-			    		continue;
-			    }
-	        }
-	        // Skip own video calls and hangups
-	        else
-	        {
-	        	if( text.indexOf( '<videocall' ) == 0 || text.indexOf( '<videohangup' ) == 0 )
-			    {
-			    	continue;
-			    }			   
-	        }
-            
             let mess = md5( m.Message );
             d.setAttribute( 'message-hash', mess );
             d.setAttribute( 'mid', m.ID );

@@ -11,6 +11,7 @@
 window.Convos = {
 	outgoing: [], // Outgoing messages
 	sounds: {}, // Cached sounds
+	incoming_calls: {}, // Incoming
 	unseenMessages: {} // Count unseen messages
 };
 
@@ -116,6 +117,7 @@ Application.receiveMessage = function( msg )
 			Application.receiveMessage( msg );
 		}, 25 );
 	}
+	
 	// Receiving message on sender
     if( msg.senderId && !msg.command )
     {
@@ -244,12 +246,23 @@ Application.receiveMessage = function( msg )
     else if( msg.command == 'broadcast-call' )
     {
 		let messages = FUI.getElementByUniqueId( 'messages' );
-		if( messages )
+		let contacts = FUI.getElementByUniqueId( 'contacts' );
+		if( messages && contacts )
 		{
-			messages.queueMessage( '<videocall type="video" callid="' + msg.peerId + '"/>' );
+			// Send "video start" to recipient!
+			Application.SendUserMsg( {
+				recipientId: contacts.record.ID,
+				message: {
+					command: 'broadcast-start',
+					peerId: msg.peerId,
+					senderId: Application.uniqueId,
+					senderName: Application.fullName
+				}
+			} );
+			window.currentPeerId = msg.peerId;
 		}
     }
-    // User receives a call broadcast
+    // Callee receives a call broadcast, ready to connect
     else if( msg.command == 'broadcast-received' )
     {
     	let contacts = FUI.getElementByUniqueId( 'contacts' );
@@ -258,21 +271,49 @@ Application.receiveMessage = function( msg )
 			Application.SendUserMsg( {
 				recipientId: contacts.record.ID,
 				message: {
-					command: 'broadcast-start',
+					command: 'broadcast-connect',
 					peerId: msg.peerId,
 					remotePeerId: msg.remotePeerId
 				}
 			} );
 		}
     }
-    // User starts broadcast participation
+    // This is when the remote is connecting in!
+    else if( msg.command == 'broadcast-connect' )
+    {
+    	let contacts = FUI.getElementByUniqueId( 'contacts' );
+    	if( contacts && contacts.videoCall )
+    	{
+    		// Switch peerId (current) and remotePeerId ( remote) as it comes
+    		// from the remote callee - and their remote is this peer..
+			contacts.videoCall.sendMessage( { command: 'initcall', peerId: msg.remotePeerId, remotePeerId: msg.peerId } );
+		}
+    }
+    // Callee starts broadcast participation (received signal)
     else if( msg.command == 'broadcast-start' )
     {
     	let contacts = FUI.getElementByUniqueId( 'contacts' );
     	if( contacts )
     	{
-    		console.log( '[Host] Received broadcast-start from client.' );
-    		contacts.videoCall.sendMessage( { command: 'initcall', peerId: msg.peerId, remotePeerId: msg.remotePeerId } );
+    		Confirm( i18n( 'i18n_receive_video_call' ), msg.senderName + ' ' + i18n( 'i18n_receiving_video_desc' ), function( d )
+    		{
+    			if( d && d.data )
+    			{
+    				contacts.setChatView( contacts.getContact( msg.senderId ) );
+    				takeVideoCall( msg.peerId );
+	    		}
+    			// Say hang up!
+	    		else
+	    		{
+					Application.SendUserMsg( {
+						recipientId: msg.senderId,
+						message: {
+							command: 'broadcast-stop',
+							peerId: msg.peerId
+						}
+					} );
+	    		}
+    		} );
 		}
     }
     // Polls broadcast
@@ -281,6 +322,7 @@ Application.receiveMessage = function( msg )
 		let contacts = FUI.getElementByUniqueId( 'contacts' );
     	if( contacts )
     	{
+			console.log( 'Poll' );
 			Application.SendUserMsg( {
 				recipientId: contacts.record.ID,
 				message: {
@@ -290,6 +332,19 @@ Application.receiveMessage = function( msg )
 			} );
     		console.log( '[host] Broadcast poll to other user' );
 		}
+    }
+    // Close video (both sides will do it)
+    else if( msg.command == 'broadcast-stop' )
+    {
+    	let contacts = FUI.getElementByUniqueId( 'contacts' );
+    	if( contacts && contacts.videoCall )
+    	{
+    		// Only on match
+    		if( window.currentPeerId == msg.peerId )
+    		{
+    			contacts.videoCall.close();
+			}
+    	}
     }
     // Comes from host
     else if( msg.command == 'broadcase-poll-remote' )
@@ -421,6 +476,46 @@ Application.SendChannelMsg = function( msg )
 			}
 		}
 	}
+}
+
+function takeVideoCall( incomingPeerId )
+{
+	let contacts = FUI.getElementByUniqueId( 'contacts' );
+	if( contacts.videoCall )
+		contacts.videoCall.close();
+	
+	window.currentPeerId = incomingPeerId;
+	
+	contacts.videoCall = new View( {
+		title: i18n( 'i18n_video_call' ) + ' - ' + contacts.record.Fullname,
+		width: 650,
+		height: 512
+	} );
+	contacts.videoCall.record = contacts.record;
+	contacts.videoCall.onClose = function()
+	{
+		contacts.videoCall = null;
+		contacts.domSettings.querySelector( '.Videocall' ).classList.remove( 'Pending' );
+		
+		// Say hang up!
+		Application.SendUserMsg( {
+			recipientId: contacts.record.ID,
+			message: {
+				command: 'broadcast-stop',
+				peerId: window.currentPeerId
+			}
+		} );
+		
+		window.currentPeerId = null;
+	}
+	let f = new File( 'Progdir:Markup/videocall.html' );
+	f.replacements = { 'remotePeerId': incomingPeerId, 'currentPeerId': '' };
+	f.i18n();
+	f.onLoad = function( data )
+	{
+		contacts.videoCall.setContent( data );
+	}
+	f.load();
 }
 
 // Send a message to a Friend OS user on the same server
