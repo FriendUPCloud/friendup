@@ -21,6 +21,7 @@ document.querySelector( '.Mute' ).onclick = function()
 				s.classList.add( 'Muted' );
 				track.enabled = false;
 			}
+			setTimeout( function(){ videoPoll(); }, 100 );
 		} );
 	} )
 	.catch( ( error ) => {
@@ -45,6 +46,7 @@ document.querySelector( '.Vision' ).onclick = function()
 				s.classList.add( 'Muted' );
 				track.enabled = false;
 			}
+			setTimeout( function(){ videoPoll(); }, 100 );
 		} );
 	} )
 	.catch( ( error ) => {
@@ -114,6 +116,7 @@ Application.receiveMessage = function( msg )
 			{
 				if( retrying )
 				{
+					//console.log( 'Retrying.' );
 					executeCall();
 				}
 			}, 250 );
@@ -122,6 +125,7 @@ Application.receiveMessage = function( msg )
 	}
 	else if( msg.command == 'poll' )
 	{
+		console.log( 'Was polled', msg );
 	}
 }
 Application.run = function()
@@ -140,30 +144,50 @@ Application.run = function()
 				currentVideoStream = stream;
 				const remoteVideo = ge( 'RemoteVideoStream' );
 				
+				let doRetrying = true;
+				let doRetryTimeo = false;
+				
 				// Set up call event so we can be called
-				peer.on( 'call', ( c ) => {
-					// Answer the call and display remote stream
-					callList = [];
-					c.answer( stream );
-					c.on( 'stream', ( remoteStream ) => {
-						// Prevent readding the same
-						if( !callList[ c.peer ] )
+				function executeCall2()
+				{
+					peer.on( 'call', ( c ) => {
+						if( c && c.on )
 						{
-							ge( 'VideoArea' ).classList.remove( 'Loading' );
-							ge( 'VideoArea' ).classList.add( 'Connected' );
-							remoteVideo.srcObject = remoteStream;
-							initStreamEvents( remoteVideo );
-							callList[ c.peer ] = c;
-							currentRemoteStream = remoteStream; // For safe keeping
+							// Answer the call and display remote stream
+							callList = [];
+							c.answer( stream );
+							c.on( 'stream', ( remoteStream ) => {
+								// Prevent readding the same
+								if( !callList[ c.peer ] )
+								{
+									ge( 'VideoArea' ).classList.remove( 'Loading' );
+									ge( 'VideoArea' ).classList.add( 'Connected' );
+									remoteVideo.srcObject = remoteStream;
+									initStreamEvents( remoteVideo );
+									callList[ c.peer ] = c;
+									currentRemoteStream = remoteStream; // For safe keeping
+								}
+								doRetrying = false;
+							} );
+							c.on( 'data', ( data ) => {
+								console.log( 'We got data after call stream: ', data );
+							} ),
+							c.on( 'error', ( err ) => {
+								console.log( 'Call error...', err );
+							} );
 						}
+						clearTimeout( doRetryTimeo );
+						doRetryTimeo = setTimeout( function()
+						{
+							if( doRetrying )
+							{
+								console.log( 'Retrying here.' );
+								executeCall2();
+							}
+						}, 250 );
 					} );
-					c.on( 'data', ( data ) => {
-						console.log( 'We got data after call stream: ', data );
-					} ),
-					c.on( 'error', ( err ) => {
-						console.log( 'Call error...', err );
-					} );
-				} );
+				}
+				executeCall2();
 			} )
 			.catch( ( error ) => {
 				console.error( 'Error accessing media devices:', error );
@@ -237,24 +261,21 @@ function initStreamEvents( obj )
 
 function videoPoll()
 {
-	// Call client
-	if( remotePeerId )
+	// Call the other
+	if( ge( 'remotePeerId' ).value )
 	{
-		peer.call( remotePeerId, ge( 'VideoStream' ).srcObject );
+		peer.call( ge( 'remotePeerId' ).value, ge( 'VideoStream' ).srcObject );
+		
+		/*// Just nudge our friend!
+		Application.sendMessage( {
+			command: 'broadcast-poll',
+			peerId: ge( 'remotePeerId' ).value
+		} );*/
 	}
-	// Call host
-	else
-	{
-		peer.call( ge( 'currentPeerId' ).value, ge( 'VideoStream' ).srcObject );
-	}
-	/*Application.sendMessage( {
-		command: 'broadcast-poll',
-		peerId: ge( 'remotePeerId' ).value
-	} );*/
 }
 
 // Function to start screen sharing
-function startScreenShare( el ) 
+function startScreenShare( el, retries = 5 ) 
 {
 	navigator.mediaDevices.getDisplayMedia( { video: true } )
 		.then( ( stream ) => {
@@ -277,11 +298,18 @@ function startScreenShare( el )
 		} )
 		.catch( ( error ) => {
 			console.error( 'Error accessing screen share:', error );
+			if( retries > 0 )
+			{
+				return setTimeout( function()
+				{
+					startScreenShare( el, retries - 1 );
+				}, 100 );
+			}
 		});
 }
 
 // Function to stop screen sharing and return to video call
-function stopScreenShare( el ) 
+function stopScreenShare( el, retries = 5 ) 
 {
 	navigator.mediaDevices.getUserMedia( { video: true, audio: true } )
 		.then( ( stream ) => {
@@ -304,6 +332,13 @@ function stopScreenShare( el )
 		} )
 		.catch( ( error ) => {
 			console.error( 'Error accessing user media:', error );
+			if( retries > 0 )
+			{
+				return setTimeout( function()
+				{
+					stopScreenShare( el, retries - 1 );
+				}, 100 );
+			}
 		});
 }
 
