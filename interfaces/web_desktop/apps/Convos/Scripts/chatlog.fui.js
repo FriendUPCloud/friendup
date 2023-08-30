@@ -1442,7 +1442,6 @@ class FUIChatlog extends FUIElement
         	let res = string.match( /[\s]{0,1}\<attachment\ .*?image\=\"(.*?)\"(.*?)\/\>/i );
         	if( res != null )
         	{
-        		console.log( 'Found an image: ', res );
         		let od = res[1].split( 'getattachment' ).join( 'getoriginal' ) + '&authid=' + Application.authId;
         		
         		let w = 'auto';
@@ -1496,6 +1495,22 @@ class FUIChatlog extends FUIElement
         	string = string.split( res[1] ).join( '<!--block--' + codeblocks.length + '>' );
         }
         
+        // Fix links
+        let hrefs = [];
+        while( 1 )
+        {
+        	let res = string.match( /(\<a .*?\>.*?\<\/a\>)/i );
+        	if( !res ) break;
+        	hrefs.push( res[1] );
+        	string = string.split( res[1] ).join( '<!--hrefs--' + hrefs.length + '>' );
+        }
+        
+        // Fix emos!
+        for( let a = 0; a < smilies.length; a++ )
+        {
+            string = string.split( smilies[a] ).join( '<span contenteditable="false" class="Emoji">' + emotes[a] + '</span>' );
+        }        
+        
         for( let a = 0; a < smilies.length; a++ )
         {
             string = string.split( smilies[a] ).join( '<span contenteditable="false" class="Emoji">' + emotes[a] + '</span>' );
@@ -1520,6 +1535,18 @@ class FUIChatlog extends FUIElement
         		let res = string.match( /\<\!\-\-block\-\-([0-9]*?)\>/i );
         		if( !res ) break;
         		string = string.split( res[0] ).join( codeblocks[ n++ ] );
+        	}
+	    }
+	    
+	    // Reconstitute hrefs
+        if( hrefs.length )
+        {
+        	let n = 0;
+        	while( 1 )
+        	{
+        		let res = string.match( /\<\!\-\-hrefs\-\-([0-9]*?)\>/i );
+        		if( !res ) break;
+        		string = string.split( res[0] ).join( hrefs[ n++ ] );
         	}
 	    }
         
