@@ -21,6 +21,7 @@ document.querySelector( '.Mute' ).onclick = function()
 				s.classList.add( 'Muted' );
 				track.enabled = false;
 			}
+			videoPoll();
 		} );
 	} )
 	.catch( ( error ) => {
@@ -45,6 +46,7 @@ document.querySelector( '.Vision' ).onclick = function()
 				s.classList.add( 'Muted' );
 				track.enabled = false;
 			}
+			videoPoll();
 		} );
 	} )
 	.catch( ( error ) => {
@@ -264,11 +266,11 @@ function videoPoll()
 	{
 		peer.call( ge( 'remotePeerId' ).value, ge( 'VideoStream' ).srcObject );
 		
-		// Just nudge our friend!
+		/*// Just nudge our friend!
 		Application.sendMessage( {
 			command: 'broadcast-poll',
 			peerId: ge( 'remotePeerId' ).value
-		} );
+		} );*/
 	}
 }
 
