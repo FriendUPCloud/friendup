@@ -276,7 +276,7 @@ function videoPoll()
 }
 
 // Function to start screen sharing
-function startScreenShare( el ) 
+function startScreenShare( el, retries = 5 ) 
 {
 	navigator.mediaDevices.getDisplayMedia( { video: true } )
 		.then( ( stream ) => {
@@ -299,6 +299,10 @@ function startScreenShare( el )
 		} )
 		.catch( ( error ) => {
 			console.error( 'Error accessing screen share:', error );
+			if( retries > 0 )
+			{
+				return startScreenShare( el, retries - 1 );
+			}
 		});
 }
 
