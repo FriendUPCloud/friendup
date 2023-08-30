@@ -855,7 +855,7 @@ if( !window.FriendWebSocket )
 			{
 				if ( !self.sendQueue )
 					self.sendQueue = [];
-				self.sendQueue.push( msg );
+				self.sendQueue.push( str );
 				self.wsClose();
 				return;
 			}
