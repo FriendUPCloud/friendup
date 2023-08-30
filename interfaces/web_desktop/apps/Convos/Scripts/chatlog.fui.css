@@ -479,6 +479,27 @@ body.Charcoal .FUIChatlog .Message.Own[seen=yes] .Date:before
     color: var(--fui-color);
 }
 
+.FUIChatlog .Message codeblock
+{
+	display: block;
+	position: relative;
+	box-sizing: border-box;
+	width: 100%;
+	overflow: auto;
+    font-family: monospace;
+    background-color: #151a1f;
+    border-radius: 10px;
+    padding: 10px;
+    color: #aaccdd;
+    font-size: 93%;
+    overflow-x: auto;
+}
+
+.FUIChatlog .Message codeblock div
+{
+	white-space: nowrap;
+}
+
 .FUIChatlog .Message .AttachmentElement
 {
 	position: relative;

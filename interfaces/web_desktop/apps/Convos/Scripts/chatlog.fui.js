@@ -1425,6 +1425,16 @@ class FUIChatlog extends FUIElement
         {
             string = string.split( 'fnds://' ).join( 'https://' ).split( 'fnd://' ).join( 'http://' );
         }
+        
+        // Fix code blocks
+        let tr = string.match( /(```<br>*(.*?)<br>```)/ );
+        if( tr )
+        {
+        	console.log( tr );
+        	string = string.split( tr[0] ).join( '<codeblock>' + Trim( tr[2] ) + '</codeblock>' );
+        	string = string.split( '<codeblock><br>' ).join( '</codeblock>' );
+    	}
+        
         // Take attachments
         while( 1 )
         {
