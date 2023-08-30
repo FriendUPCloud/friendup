@@ -53,7 +53,6 @@ Application.receiveMessage = function( msg )
 {
     if( msg.command )
     {
-    	console.log( 'got ' + msg.command );
         if( msg.command == 'servermessage' )
         {
             this.view.sendMessage( msg.data );
