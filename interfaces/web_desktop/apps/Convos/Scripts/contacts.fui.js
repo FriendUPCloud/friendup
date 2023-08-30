@@ -524,15 +524,9 @@ class FUIContacts extends FUIElement
         {
             if( contacts[ a ].record && contacts[ a ].record.ID == id )
             {
-            	console.log( 'Got: ', contacts[ a ].record );
             	return contacts[ a ].record;
             }
-            else
-            {
-            	console.log( 'Contact is not ' + id + ' but instead ' + contacts[ a ].record.ID );
-            }
         }
-        console.log( 'No contacts yet..' );
         return false;
     }
     
