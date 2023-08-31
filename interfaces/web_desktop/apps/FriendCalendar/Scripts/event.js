@@ -16,7 +16,7 @@ Application.run = function( msg )
 	
 	ge( 'SaveBtn' ).onclick = function( e )
 	{
-		var result = {
+		let result = {
 			id: ge( 'pID' ).value,
 			timeFrom: ge( 'pTimeFrom' ).value.substr( 0, 5 ),
 			timeTo: ge( 'pTimeTo' ).value.substr( 0, 5 ),
@@ -28,6 +28,7 @@ Application.run = function( msg )
 			leadin: ge( 'pDescription' ).value,
 			dateTo: ( new Date( ge( 'pDateTo' ).value ) ).getTime() > ( new Date( ge( 'pDate' ).value ) ).getTime() ? ge( 'pDateTo' ).value : ''
 		};
+		
 		self.sendMessage( {
 			command: 'saveevent',
 			eventData: result,

@@ -536,6 +536,11 @@ html > body .CalendarHeaderRow > .HRow.CalendarRow > .Day.Today > .Label
 	background: #006350;
 }
 
+.Day > .TimeSlot
+{
+	position: relative;
+}
+
 .Day > .TimeSlot:nth-child(odd)
 {
 	display: block;
