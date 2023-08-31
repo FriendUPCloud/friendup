@@ -8,7 +8,7 @@
 *                                                                              *
 *****************************************************************************©*/
 
-// Checkbox element
+// Empty element
 class FUITemplate extends FUIElement
 {
     constructor( options )

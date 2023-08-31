@@ -1,0 +1,78 @@
+// Empty element
+class FUITemplate extends FUIElement
+{
+    constructor( options )
+    {
+        super( options );
+        // Do stuff in constructor
+    }
+    // Attaching DOM element
+    attachDomElement()
+    {
+        super.attachDomElement();
+        
+        let self = this;
+        
+        // Modify dom element
+        // this.domElement.innerHTML = 'Your markup or content.';
+    }
+    // Grab attributes from FUI markup element
+    grabAttributes( domElement )
+    {
+        super.grabAttributes( domElement );
+        
+        //if( domElement.getAttribute( 'someattribute' ) )
+        //{
+        //	this.options.someattribute = domElement.getAttribute( 'someattribute' );
+        //}
+        
+        
+        //this.refreshDom();
+    }
+    refreshDom()
+    {
+        super.refreshDom();
+        
+        // Do something with properties on dom
+        /*
+        if( this.property )
+        {
+            this.domElement.classList.add( 'FUIClassName' );
+        }
+        else
+        {
+            this.domElement.classList.remove( 'FUIClassName' );
+        }*/
+    }
+    getMarkup( data )
+    {
+    	// Return meta-markup for class instantiation later
+    	
+    	/*let str = '<checkbox {options}/>';
+    	let opts = [];
+    	for( let a in data )
+    	{
+    		if( a == 'OnChange' )
+    		{
+    			opts.push( 'onchange="' + data[a] + '"' );
+    		}
+    		if( a == 'Value' && data[a] )
+    		{
+    			opts.push( 'checked="checked"' );
+    		}
+    	}
+    	if( opts.length )
+    	{
+    		str = str.split( '{options}' ).join( opts.join( ' ' ) );
+    	}
+    	else
+    	{
+    		str = str.split( ' {options}' ).join( '' );
+    	}
+    	return str;*/
+    }
+}
+// Add class to FUI (don't use multiple Uppercase letters!)
+// E.g use: FUIThis, FUIThat and register 'this', and 'that'
+FUI.registerClass( 'template', FUITemplate );
+
