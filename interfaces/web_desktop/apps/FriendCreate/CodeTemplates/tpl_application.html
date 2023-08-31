@@ -1,0 +1,27 @@
+// Init application
+Application.run = function( msg )
+{
+	this.setApplicationName( 'MyApplication' ); // Task name
+	this.setSingleInstance( false ); // Can we run several or only one instance?
+	// Create a new view window
+	this.mainView = new View( {
+		title: 'My application',
+		width: 720,
+		height: 600,
+		// Put your assets here, comma separated (HTML, js, css)
+		// A HTML file will be used as markup for the view window
+		//assets: [ 'Progdir:YourFile.html' ]
+	} );
+	// Quit when window closed
+	this.mainView.onClose = function()
+	{
+		Application.quit();
+	}
+}
+
+// Receive messages
+Application.receiveMessage = function( msg )
+{
+	console.log( 'Received message: ', msg );
+}
+

@@ -371,12 +371,12 @@ Application.receiveMessage = function( msg )
 				
 				var d = ev.DateStart.split( ' ' )[0];
 				d = d.split( '-' );
-				var from = new Date( d[0], d[1], d[2] );
+				var from = new Date( d[0], d[1] - 1, d[2] );
 				var fromTime = from.getTime();
 				
 				var t = ev.DateEnd.split( ' ' )[0];
 				t = t.split( '-' );
-				var to = new Date( t[0], t[1], t[2] );
+				var to = new Date( t[0], t[1] - 1, t[2] );
 				var toTime = to.getTime();
 				
 				// Make sure we have toTime
@@ -387,7 +387,7 @@ Application.receiveMessage = function( msg )
 				for( var b = fromTime; b <= toTime; b += tspan )
 				{
 					var k = new Date( b );
-					k = k.getFullYear() + '-' + k.getMonth() + '-' + k.getDate();
+					k = k.getFullYear() + '-' + ( k.getMonth() + 1 ) + '-' + k.getDate();
 					if( typeof( Calendar.events[k] ) == 'undefined' )
 						Calendar.events[k] = [];
 					Calendar.events[k].push( ev );
@@ -410,8 +410,8 @@ function drawNow()
 	{
 		var d = new Date();
 		var cd = ge( 'MainView' ).querySelector( '.CalendarDates' ).querySelector( '.Day' );
-		var tint = d.getHours() + ( d.getMinutes() / 60 );
-		nowDiv.style.top = Math.floor( tint / 24 * cd.offsetHeight ) + 'px';
+		var tint = Math.floor( ( d.getHours() * 100 ) + d.getMinutes() ) / 2400;
+		nowDiv.style.top = Math.floor( tint * cd.offsetHeight ) + 'px';
 	}
 }
 setInterval( drawNow, 10000 );

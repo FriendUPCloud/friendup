@@ -2330,6 +2330,15 @@ Application.receiveMessage = function( msg )
 			case 'updatemountlist':
 				if( gui.sideBar ) gui.sideBar.render( 1 );
 				break;
+			case 'tpl_fui_class':
+			case 'tpl_application':
+				let n = new File( 'Progdir:CodeTemplates/' + msg.command + '.html' );
+				n.onLoad = function( data )
+				{
+					Application.currentFile.editor.session.insert( Application.currentFile.editor.getCursorPosition(), data );
+				}
+				n.load();
+				break;
 			case 'open':
 				OpenFile();
 				break;

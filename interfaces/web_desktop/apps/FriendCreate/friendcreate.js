@@ -217,6 +217,19 @@ Application.run = function( msg )
 			]
 		},
 		{
+			name: i18n( 'menu_templates' ),
+			items: [
+				{
+					name: i18n( 'menu_empty_application' ),
+					command: 'tpl_application'
+				},
+				{
+					name: i18n( 'menu_empty_fui_class' ),
+					command: 'tpl_fui_class'
+				}
+			]
+		},
+		{
 			name: i18n( 'menu_packages' ),
 			items: [
 				{
@@ -248,6 +261,8 @@ Application.receiveMessage = function( msg )
 			case 'project_new':
 			case 'package_generate':
 			case 'project_close':
+			case 'tpl_application':
+			case 'tpl_fui_class':
 				mainWindow.sendMessage( msg );
 				break;
 			case 'system-notification':
