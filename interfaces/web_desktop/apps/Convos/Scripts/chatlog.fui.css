@@ -579,8 +579,8 @@ body.Charcoal .FUIChatlog .Message.Own[seen=yes] .Date:before
 
 .FUIChatlog .Message img.Attachment 
 {
-    max-width: 512px;
-    width: 100%;
+    max-width: 512px !important;
+    width: 100% !important;
     height: auto;
     border-radius: 10px;
     display: block;
