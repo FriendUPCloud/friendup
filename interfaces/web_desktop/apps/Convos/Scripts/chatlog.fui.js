@@ -1455,7 +1455,8 @@ class FUIChatlog extends FUIElement
 		    			h = wh[2];
 	    			}
         		}
-        		string = string.split( res[ 0 ] ).join( '<div class="AttachmentElement" contenteditable="false"><a class="Download" target="_blank" href="' + od + '"></a><img width="' + w + '" height="' + h + '" onload="Application.handleImageLoad( this, \'' + od + '\' )" onerror="Application.handleImageError( this )" src="' + res[1] + '&authid=' + Application.authId + '" class="Attachment"/></div>' );
+        		let prestr = document.location.href.split( '/webclient/' )[0] + '/';
+        		string = string.split( res[ 0 ] ).join( '<div class="AttachmentElement" contenteditable="false"><a class="Download" target="_blank" href="' + od + '"></a><img width="' + w + '" height="' + h + '" onload="Application.handleImageLoad( this, \'' + prestr + od + '\', false )" onerror="Application.handleImageError( this )" src="' + res[1] + '&authid=' + Application.authId + '" class="Attachment"/></div>' );
         		continue;
         	}
         	// Files
@@ -1581,7 +1582,7 @@ Application.handleImageError = function( ele )
 	ele.parentNode.replaceChild( newnode, ele );
 }
 
-Application.handleImageLoad = function( ele, originalFileSrc = false )
+Application.handleImageLoad = function( ele, originalFileSrc = false, filename = false )
 {
 	let mes = document.querySelector( '.Messages' );
 	if( !mes ) return;
@@ -1601,7 +1602,7 @@ Application.handleImageLoad = function( ele, originalFileSrc = false )
 			type: 'dos',
 			method: 'openWindowByFilename',
 			args: {
-				fileInfo: { Path: originalFileSrc ? originalFileSrc : ele.src, Filename: 'Convos - Image' },
+				fileInfo: { Path: originalFileSrc ? originalFileSrc : ele.src, Filename: filename ? filename : 'Convos - Image' },
 				ext: 'jpg'
 			}
 		};
