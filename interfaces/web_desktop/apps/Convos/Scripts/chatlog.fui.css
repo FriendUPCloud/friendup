@@ -503,7 +503,7 @@ body.Charcoal .FUIChatlog .Message.Own[seen=yes] .Date:before
 .FUIChatlog .Message .AttachmentElement 
 {
     position: relative;
-    background: rgba(0,0,0,0.4);
+    background: rgba(0,0,0,0.1);
     border-radius: 10px;
     padding: 10px;
     box-sizing: border-box;
