@@ -31,6 +31,10 @@ menu_file_print                     : Print
 menu_file_close                     : Close
 menu_quit                           : Quit
 
+menu_templates                      : Templates
+menu_empty_application              : Add empty application
+menu_empty_fui_class                : Add empty FUI class
+
 menu_project                        : Project
 menu_project_new                    : New project
 menu_project_open                   : Open project

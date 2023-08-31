@@ -217,6 +217,19 @@ Application.run = function( msg )
 			]
 		},
 		{
+			name: i18n( 'menu_templates' ),
+			items: [
+				{
+					name: 'menu_empty_application',
+					command: 'tpl_application'
+				},
+				{
+					name: 'menu_empty_fui_class',
+					command: 'tpl_fui_class'
+				}
+			]
+		},
+		{
 			name: i18n( 'menu_packages' ),
 			items: [
 				{

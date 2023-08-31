@@ -187,7 +187,7 @@
 	left: 0;
 	width: 70px;
 	height: 100%;
-	padding: 15px;
+	padding: 15px 0 15px 0;
 	box-sizing: border-box;
 	background-color: var(--fui-module-background);
 	transition: width,padding 0.25s,0.25s;
@@ -322,7 +322,7 @@
 	background-color: var(--fui-background);
 	width: 40px;
 	height: 40px;
-	margin: 0 0 15px 0;
+	margin: 0 auto 15px auto;
 	cursor: pointer;
 	background-position: center;
 	background-size: cover;
@@ -685,8 +685,6 @@ html body.activated .FUIChatoverview .Channels.Scroll::-webkit-scrollbar-track
 
 .FUIChatoverview .Channels.Scroll
 {
-	padding-left: 19px;
-	padding-right: 19px;
 	width: 70px;
 }
 
