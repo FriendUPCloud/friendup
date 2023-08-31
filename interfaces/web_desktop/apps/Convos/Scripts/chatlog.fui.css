@@ -500,16 +500,20 @@ body.Charcoal .FUIChatlog .Message.Own[seen=yes] .Date:before
 	white-space: nowrap;
 }
 
-.FUIChatlog .Message .AttachmentElement
+.FUIChatlog .Message .AttachmentElement 
 {
-	position: relative;
+    position: relative;
+    background: rgba(0,0,0,0.4);
+    border-radius: 10px;
+    padding: 10px;
+    box-sizing: border-box;
 }
 
 .FUIChatlog .Message .AttachmentElement > a
 {
-	position: absolute;
-    right: 20px;
-    bottom: 20px;
+    position: absolute;
+    right: 10px;
+    bottom: 10px;
     width: 25px;
     text-align: center;
     height: 25px;
@@ -580,7 +584,7 @@ body.Charcoal .FUIChatlog .Message.Own[seen=yes] .Date:before
     height: auto;
     border-radius: 10px;
     display: block;
-    margin: 0 auto 15px auto;
+    margin: 0 auto 10 auto;
     cursor: pointer;
     opacity: 0;
     transition: opacity 0.25s;
