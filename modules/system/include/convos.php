@@ -486,7 +486,7 @@ if( isset( $args->args ) )
 								if( $args->args->method == 'getattachment' )
 								{
 									$flags = new stdClass();
-									$flags->width = 1024; $flags->height = 1024;
+									$flags->width = 512; $flags->height = 512;
 									$f->SetPostProcessor( 'thumbnail', $flags );
 								}
 								else
@@ -579,7 +579,7 @@ if( isset( $args->args ) )
 								if( $args->args->method == 'getattachment' )
 								{
 									$flags = new stdClass();
-									$flags->width = 1024; $flags->height = 1024;
+									$flags->width = 512; $flags->height = 512;
 									$f->SetPostProcessor( 'thumbnail', $flags );
 								}
 								else
@@ -657,7 +657,7 @@ if( isset( $args->args ) )
 						if( $args->args->method == 'getattachment' )
 						{
 							$flags = new stdClass();
-							$flags->width = 1024; $flags->height = 1024;
+							$flags->width = 512; $flags->height = 512;
 							$f->SetPostProcessor( 'thumbnail', $flags );
 						}
 						else
