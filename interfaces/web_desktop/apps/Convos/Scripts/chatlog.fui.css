@@ -584,7 +584,7 @@ body.Charcoal .FUIChatlog .Message.Own[seen=yes] .Date:before
     height: auto;
     border-radius: 10px;
     display: block;
-    margin: 0 auto 10 auto;
+    margin: 0 auto 0 auto;
     cursor: pointer;
     opacity: 0;
     transition: opacity 0.25s;
