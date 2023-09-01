@@ -54,7 +54,6 @@ function canQuitApp( appName )
 // Load a javascript application into a sandbox
 function ExecuteApplication( app, args, callback, retries, flags )
 {
-	console.log( 'Attempting to launch application' );
 	//console.log( 'ExecuteApplication', [ app, args, callback, retries, flags ])
     // Do not do this if we have nothing
     if( !document.body || ( !document.body.getAttribute( 'sharedapp' ) && ( document.body && !document.body.classList.contains( 'Loaded' ) ) ) )
@@ -65,13 +64,13 @@ function ExecuteApplication( app, args, callback, retries, flags )
             ExecuteApplication( app, args, callback, retries, flags );
         }, 50 );
     }
-	console.log( 'ExecuteApplication', [
+	/*console.log( 'ExecuteApplication', [
 		app,
 		args,
 		callback,
 		retries,
 		flags,
-	]);
+	]);*/
 	// Just nothing.
 	if( !app )
 	{
@@ -136,16 +135,16 @@ function ExecuteApplication( app, args, callback, retries, flags )
 					args: args
 				};
 				Friend.singleInstanceApps[ appName ].contentWindow.postMessage( JSON.stringify( nmsg ), '*' );
-				console.log( 'Tried to post message directly to running single instance app: ', appName, args );
+				//console.log( 'Tried to post message directly to running single instance app: ', appName, args );
 				if( callback )
 					callback( false, { response: false, message: 'Already run.', data: 'executed' } );
 				return;
 			}
 		}
-		console.log( 'ExecuteApplication - app found in execution queue', {
+		/*console.log( 'ExecuteApplication - app found in execution queue', {
 			app   : app,
 			queue : _executionQueue,
-		});
+		});*/
 		if( callback )
 			callback( false, { response: false, message: 'Already run.', data: 'executed' } );
 		return;
