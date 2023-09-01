@@ -666,13 +666,16 @@ Workspace = {
 
 			document.body.style.visibility = 'visible';
 			
-			console.log( '[1] Loaded css' );
+			console.log( '[2] Loaded css' );
 			
 			// Loading notice
 			let loading = document.createElement( 'div' );
 			loading.className = 'LoadingMessage';
 			if( !t.conf || typeof( t.conf.app ) == 'undefined' )
+			{
+				console.log( '[2] Nothing to load: ', t.conf );
 				loading.innerHTML = '<p>Nothing to load...</p>';
+			}
 			else loading.innerHTML = '<p>Entering ' + t.conf.app + '...</p>';
 			document.body.appendChild( loading );
 			setTimeout( function()
@@ -682,6 +685,7 @@ Workspace = {
 			
 			if( t.conf.app )
 			{
+				console.log( '[2] Going home' );
 				return loadApplicationBasics( function()
 				{
 					ExecuteApplication( t.conf.app, GetUrlVar( 'data' ), function( result )
