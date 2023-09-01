@@ -235,6 +235,7 @@ if( isset( $args->command ) )
 			$work = mysqli_real_escape_string( $SqlDatabase->_link, $args->args->workspace );
 			$opensilent = mysqli_real_escape_string( $SqlDatabase->_link, $args->args->opensilent );
 			$dname = mysqli_real_escape_string( $SqlDatabase->_link, $args->args->displayname );
+			$type = mysqli_real_escape_string( $SqlDatabase->_link, $args->args->type ? $args->args->type : 'executable' );
 			$SqlDatabase->Query( '
 				UPDATE DockItem SET
 					Application = \'' . $application . '\',
@@ -242,7 +243,8 @@ if( isset( $args->command ) )
 					ShortDescription = \'' . $shortdesc . '\',
 					`Icon` = \'' . $icon . '\',
 					`Workspace` = \'' . $work . '\',
-					`OpenSilent` = \'' . $opensilent . '\'
+					`OpenSilent` = \'' . $opensilent . '\',
+					`Type` = \'' . $type . '\'
 				WHERE
 					ID=\'' . $id . '\' AND
 					UserID=\'' . $UserSession->UserID . '\'
