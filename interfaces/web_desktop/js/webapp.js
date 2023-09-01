@@ -435,7 +435,6 @@ Workspace = {
 	},
 	init: function( mode )
 	{
-		console.log( '[2] Init' );
 		// Add locale
 		i18nAddPath( 'locale/en.locale' );
 
@@ -475,7 +474,6 @@ Workspace = {
 			}
 		}
 		
-		console.log( '[2] Setting url vars (should be first)' );
 		this.conf = urlVars;
 
 		this.mode = mode;
@@ -564,8 +562,6 @@ Workspace = {
 			if( cb ) cb();
 		}
 		
-		console.log( '[2] Loading css' );
-		
 		// Loading remaining scripts
 		let s = document.createElement( 'script' );
 		s.src = '/webclient/js/gui/workspace_inside_webapp.js;' +
@@ -583,14 +579,6 @@ Workspace = {
 			'webclient/js/io/module.js;' +
 			'webclient/js/io/file.js;' +
 			'webclient/js/io/progress.js;' +
-			'webclient/js/io/friendnetwork.js;' +
-			'webclient/js/io/friendnetworkshare.js;' +
-			'webclient/js/io/friendnetworkfriends.js;' +
-			'webclient/js/io/friendnetworkdrive.js;' +
-			'webclient/js/io/friendnetworkpower.js;' +
-			'webclient/js/io/friendnetworkextension.js;' +
-			'webclient/js/io/friendnetworkdoor.js;' +
-			'webclient/js/io/friendnetworkapps.js;' +
 			'webclient/js/io/workspace_fileoperations.js;' + 
 			'webclient/3rdparty/favico.js/favico-0.3.10.min.js;' +
 			'webclient/js/gui/widget.js;' +
@@ -666,14 +654,11 @@ Workspace = {
 
 			document.body.style.visibility = 'visible';
 			
-			console.log( '[2] Loaded css' );
-			
 			// Loading notice
 			let loading = document.createElement( 'div' );
 			loading.className = 'LoadingMessage';
 			if( !t.conf || typeof( t.conf.app ) == 'undefined' )
 			{
-				console.log( '[2] Nothing to load: ', t.conf );
 				loading.innerHTML = '<p>Nothing to load...</p>';
 			}
 			else loading.innerHTML = '<p>Entering ' + t.conf.app + '...</p>';
@@ -685,7 +670,6 @@ Workspace = {
 			
 			if( t.conf.app )
 			{
-				console.log( '[2] Going home' );
 				return loadApplicationBasics( function()
 				{
 					console.log( '[2] Launching ' + t.conf.app );

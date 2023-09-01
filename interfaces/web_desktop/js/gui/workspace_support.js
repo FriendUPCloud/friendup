@@ -572,7 +572,8 @@ function InitWorkspaceNetwork()
 		wsp.initWebSocket();
 	}
 
-	wsp.checkFriendNetwork();
+	if( wsp.checkFriendNetwork )
+		wsp.checkFriendNetwork();
 	
 	if( window.PouchManager && !this.pouchManager )
 		this.pouchManager = new PouchManager();
