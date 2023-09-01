@@ -2332,6 +2332,7 @@ Application.receiveMessage = function( msg )
 				break;
 			case 'tpl_fui_class':
 			case 'tpl_application':
+			case 'tpl_application_scope':
 				let n = new File( 'Progdir:CodeTemplates/' + msg.command + '.html' );
 				n.onLoad = function( data )
 				{

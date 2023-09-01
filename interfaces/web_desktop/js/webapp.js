@@ -474,6 +474,7 @@ Workspace = {
 			}
 		}
 		this.conf = urlVars;
+		console.log( '[2] setting url vars' );
 
 		this.mode = mode;
 
@@ -664,6 +665,7 @@ Workspace = {
 			// Loading notice
 			let loading = document.createElement( 'div' );
 			loading.className = 'LoadingMessage';
+			console.log( '[2] Checking' );
 			if( typeof( t.conf.app ) == 'undefined' )
 				loading.innerHTML = '<p>Nothing to load...</p>';
 			else loading.innerHTML = '<p>Entering ' + t.conf.app + '...</p>';

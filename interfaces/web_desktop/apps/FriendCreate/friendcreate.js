@@ -224,6 +224,10 @@ Application.run = function( msg )
 					command: 'tpl_application'
 				},
 				{
+					name: i18n( 'menu_application_scope' ),
+					command: 'tpl_application_scope'
+				},
+				{
 					name: i18n( 'menu_empty_fui_class' ),
 					command: 'tpl_fui_class'
 				}
@@ -262,6 +266,7 @@ Application.receiveMessage = function( msg )
 			case 'package_generate':
 			case 'project_close':
 			case 'tpl_application':
+			case 'tpl_application_scope':
 			case 'tpl_fui_class':
 				mainWindow.sendMessage( msg );
 				break;
