@@ -54,22 +54,24 @@ function canQuitApp( appName )
 // Load a javascript application into a sandbox
 function ExecuteApplication( app, args, callback, retries, flags )
 {
+	console.log( 'Attempting to launch application' );
 	//console.log( 'ExecuteApplication', [ app, args, callback, retries, flags ])
     // Do not do this if we have nothing
     if( !document.body || ( !document.body.getAttribute( 'sharedapp' ) && ( document.body && !document.body.classList.contains( 'Loaded' ) ) ) )
     {
+    	console.log( 'Not ready' );
         return setTimeout( function()
         {
             ExecuteApplication( app, args, callback, retries, flags );
         }, 50 );
     }
-	/*console.log( 'ExecuteApplication', [
+	console.log( 'ExecuteApplication', [
 		app,
 		args,
 		callback,
 		retries,
 		flags,
-	]);*/
+	]);
 	// Just nothing.
 	if( !app )
 	{
@@ -288,7 +290,7 @@ function ExecuteApplication( app, args, callback, retries, flags )
 	// 1. Ask about application.................................................
 	let m = new Module( 'system' );
 	m.onExecuted = function( r, d )
-	{	
+	{
 		// Get data from Friend Core
 		let conf = false;
 		try
@@ -838,9 +840,10 @@ function ExecuteApplication( app, args, callback, retries, flags )
 			RemoveFromExecutionQueue( appName );
 		}
 	}
-	var eo = { application: app, args: args };
+	let eo = { application: app, args: args };
 	if( Workspace.conf && Workspace.conf.authid )
 		eo.authid = Workspace.conf.authid;
+	m.forceHTTP = true;
 	m.execute( 'friendapplication', eo );
 	// console.log( 'Test3: Executing application: ' + app );
 }

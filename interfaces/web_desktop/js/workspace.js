@@ -1060,14 +1060,6 @@ Workspace = {
 				'webclient/js/io/module.js;' +
 				'webclient/js/io/file.js;' +
 				'webclient/js/io/progress.js;' +
-				'webclient/js/io/friendnetwork.js;' +
-				'webclient/js/io/friendnetworkshare.js;' +
-				'webclient/js/io/friendnetworkfriends.js;' +
-				'webclient/js/io/friendnetworkdrive.js;' +
-				'webclient/js/io/friendnetworkpower.js;' +
-				'webclient/js/io/friendnetworkextension.js;' +
-				'webclient/js/io/friendnetworkdoor.js;' +
-				'webclient/js/io/friendnetworkapps.js;' +
 				'webclient/js/io/workspace_fileoperations.js;' + 
 				'webclient/js/io/DOS.js;' +
 				'webclient/3rdparty/favico.js/favico-0.3.10.min.js;' +

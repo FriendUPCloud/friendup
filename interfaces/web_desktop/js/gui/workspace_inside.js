@@ -1727,6 +1727,9 @@ var WorkspaceInside = {
 	},
 	checkFriendNetwork: function()
 	{
+		// TODO: Evaluate whether to continue this
+		return false;
+		
 		let self = this;
 		if ( window.isMobile )
 		{
@@ -1755,7 +1758,9 @@ var WorkspaceInside = {
 	},
 	connectToFriendNetwork: function()
 	{
-		let self = this;
+		// TODO: Check whether to keep
+		return false;
+		/*let self = this;
 		this.friendNetworkEnabled = true;
 		if ( !FriendNetwork.conn )
 		{
@@ -1777,16 +1782,19 @@ var WorkspaceInside = {
 				window.FriendNetworkDrive.start();				// It drives
 				window.Friend.Network.Power.start();			// power!
 			}, 1000 );											// Friend! Empowerment for everyone! (Y)
-		}
+		}*/
 	},
 	closeFriendNetwork: function()
 	{
+		// TODO: Check whether to do this
+		return false;
+		/*
 		Friend.Network.Power.close();
 		FriendNetworkDrive.close();
 		FriendNetworkShare.close();
 		FriendNetworkFriends.close();
 		FriendNetworkDoor.close();
-		FriendNetwork.close();
+		FriendNetwork.close();*/
 	},
 	terminateSession: function( sess, dev, e )
 	{
@@ -2780,6 +2788,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	// Called on onunload
 	unloadFriendNetwork: function( e )
  	{
+ 		return false;
+ 		/*
 		// Close all connections
 		if ( this.friendNetworkEnabled && !this.fnetCloseOn )
 		{
@@ -2795,7 +2805,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					clearInterval( handle );
 				}, 50 );
 			}, 1000 )
-		}
+		}*/
  	},
 	// Do you want to leave?
 	leave: function( e )
@@ -8404,11 +8414,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						},
 						disabled: !volumeIcon || !canUnmount
 					},
-					{
+					/*{
 						name:	i18n( 'menu_share' ),
 						command: function() { FriendNetworkShare.sharePath( shareIcon.Path, shareIcon.Type ); },
 						disabled: !hasSharing || ( !iconsSelected || volumeIcon ) || systemDrive || cannotWrite || !canBeShared || typeof( Workspace.dashboard ) == 'object'
-					},
+					},*/
 					{
 						name:	i18n( 'menu_download' ),
 						command: function() { 

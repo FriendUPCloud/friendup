@@ -789,7 +789,7 @@ window.Shell = function( appObject )
 			else
 			{
 				// If the current shell is a host of FriendNetwork client, send the response to him
-				if ( t.clientKey && !t.skipClient )
+				if ( t.clientKey && !t.skipClient && window.FriendNetwork )
 				{
 					FriendNetwork.send(
 					{

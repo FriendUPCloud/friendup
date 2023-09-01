@@ -763,10 +763,10 @@ Friend.User = {
 				{
 				    return setTimeout( function(){ Friend.User.SetUserConnectionState( mode, force ); }, 25 );
 				}
-				else
+				/*else
 				{
 					console.log( 'We have a kind of conn: ', Workspace.conn, Workspace.conn ? Workspace.conn.ws : false );
-				}
+				}*/
 				// Clear execution queue
 				_executionQueue = {};
 			}

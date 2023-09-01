@@ -473,6 +473,7 @@ Workspace = {
 				}
 			}
 		}
+		
 		this.conf = urlVars;
 
 		this.mode = mode;
@@ -578,14 +579,6 @@ Workspace = {
 			'webclient/js/io/module.js;' +
 			'webclient/js/io/file.js;' +
 			'webclient/js/io/progress.js;' +
-			'webclient/js/io/friendnetwork.js;' +
-			'webclient/js/io/friendnetworkshare.js;' +
-			'webclient/js/io/friendnetworkfriends.js;' +
-			'webclient/js/io/friendnetworkdrive.js;' +
-			'webclient/js/io/friendnetworkpower.js;' +
-			'webclient/js/io/friendnetworkextension.js;' +
-			'webclient/js/io/friendnetworkdoor.js;' +
-			'webclient/js/io/friendnetworkapps.js;' +
 			'webclient/js/io/workspace_fileoperations.js;' + 
 			'webclient/3rdparty/favico.js/favico-0.3.10.min.js;' +
 			'webclient/js/gui/widget.js;' +
@@ -665,7 +658,9 @@ Workspace = {
 			let loading = document.createElement( 'div' );
 			loading.className = 'LoadingMessage';
 			if( !t.conf || typeof( t.conf.app ) == 'undefined' )
+			{
 				loading.innerHTML = '<p>Nothing to load...</p>';
+			}
 			else loading.innerHTML = '<p>Entering ' + t.conf.app + '...</p>';
 			document.body.appendChild( loading );
 			setTimeout( function()
