@@ -29,6 +29,51 @@ Application.run = function( msg, iface )
 	m.execute( 'listuserapplications' );
 }
 
+function FindIcon()
+{
+	new Filedialog( {
+		multiSelect: false,
+		triggerFunction: function( arr )
+		{
+			if( arr )
+			{
+				ge( 'Icon' ).value = arr[0].Path;
+			}
+		},
+		path: false,
+		rememberPath: true,
+		type: 'load',
+		suffix: [ 'jpg', 'jpeg', 'png', 'gif' ]	
+	} );
+}
+
+function setItemType( type )
+{
+	if( type == 'bookmark' )
+ 	{
+ 		ge( 'ApplicationLabel' ).innerHTML = i18n( 'i18n_bookmark_src' );
+ 	}
+ 	else
+ 	{
+ 		ge( 'ApplicationLabel' ).innerHTML = i18n( 'i18n_application' );
+ 	}
+}
+
+function SaveDockItem()
+{
+	let ms = { 
+		command: 'saveitem', 
+		application: ge('Application').value, 
+		displayname: ge('DisplayName' ).value, 
+		shortdescription: ge('ShortDescription').value, 
+		icon: ge( 'Icon' ).value, 
+		workspace: ge( 'Workspace' ).value, 
+		opensilent: ge( 'OpenSilent' ).value, 
+		docktype: ge( 'TypeSelection' ).value 
+	};
+	Application.sendMessage( ms );
+}
+
 Application.receiveMessage = function( msg )
 {
 	//console.log( 'We are receiving:', msg );
@@ -40,6 +85,7 @@ Application.receiveMessage = function( msg )
 	switch( msg.command )
 	{
 		case 'updateitem':
+			
 			ge( 'Application' ).value = msg.item.Application;
 			ge( 'DisplayName' ).value = typeof( msg.item.DisplayName ) != 'undefined' ? msg.item.DisplayName : '';
 			ge( 'ShortDescription' ).value = msg.item.ShortDescription;
@@ -48,11 +94,26 @@ Application.receiveMessage = function( msg )
 			ge( 'Settings' ).classList.remove( 'Disabled' );
 			ge( 'OpenSilent' ).value = typeof( msg.item.OpenSilent ) != 'undefined' ? msg.item.OpenSilent : 0;
 			ge( 'OpenSilentCheck' ).checked = ge( 'OpenSilent' ).value == 1 ? 'checked' : '';
+			let optsi = ge( 'TypeSelection' ).getElementsByTagName( 'option' );
+			for( let a = 0; a < optsi.length; a++ )
+			{
+				if( optsi[ a ].value == msg.item.Type )
+					optsi[ a ].selected = 'selected';
+				else optsi[ a ].selected = '';
+			}
+		 	if( msg.item.Type == 'bookmark' )
+		 	{
+		 		ge( 'ApplicationLabel' ).innerHTML = i18n( 'i18n_bookmark_src' );
+		 	}
+		 	else
+		 	{
+		 		ge( 'ApplicationLabel' ).innerHTML = i18n( 'i18n_application' );
+		 	}
 		 	
 		 	document.body.classList.add( 'DockEdit' );
 		 	
-		 	var opts = ge( 'ApplicationSelection' ).getElementsByTagName( 'option' );
-		 	for( var a = 0; a < opts.length; a++ )
+		 	let opts = ge( 'ApplicationSelection' ).getElementsByTagName( 'option' );
+		 	for( let a = 0; a < opts.length; a++ )
 		 	{
 		 		if( a == 0 ) opts[a].selected = 'selected';
 		 		else opts[a].selected = '';
@@ -69,7 +130,6 @@ Application.receiveMessage = function( msg )
 		 	
 		 	if( msg.scroll == 'scrolldown' )
 		 	{
-		 		console.log( 'Going!' );
 		 		ge( 'Applications' ).scroll( 0, ge( 'Applications' ).offsetHeight );
 		 	}
 			break;
@@ -195,14 +255,13 @@ function SaveCurrentDock()
 {	
 	let options = {};
 	//options.position  = getSelectValue( ge( 'DockPlacement' ) );
-	options.position  = 'aligned';
-	options.layout    = getSelectValue( ge( 'DockLayout' ) );
-	options.size      = parseInt( getSelectValue( ge( 'DockSize' ) ) );
-	options.dockx     = ge( 'DockY' ).value;
-	options.docky     = ge( 'DockX' ).value;
-	options.workspace = ge( 'Workspace' ).value;
+	options.position   = 'aligned';
+	options.layout     = getSelectValue( ge( 'DockLayout' ) );
+	options.size       = parseInt( getSelectValue( ge( 'DockSize' ) ) );
+	options.dockx      = ge( 'DockY' ).value;
+	options.docky      = ge( 'DockX' ).value;
+	options.workspace  = ge( 'Workspace' ).value;
 	options.opensilent = ge( 'OpenSilentCheck' ).checked ? '1' : '0';
-	
 	Application.sendMessage( { 
 		command: 'savecurrentdock', 
 		dockid: currentDock, 

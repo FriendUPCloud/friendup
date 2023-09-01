@@ -7,6 +7,14 @@
 			</div>
 			<div class="HContentRight HContent70" id="SettingsContainer">
 				<div class="BackgroundDefault Padding Disabled BorderBottom ScrollableY" id="Settings">
+					<div class="HRow MarginTop" id="TypeSelectionElement">
+						<div class="HContent25 FloatLeft">
+							<strong id="ApplicationTypeLabel">{i18n_type}:</strong>
+						</div>
+						<div class="HContent75 FloatLeft">
+							<select id="TypeSelection" onchange="setItemType(this.value)"><option value="application">{i18n_type_application}</option><option value="bookmark">{i18n_type_bookmark}</option></select>
+						</div>
+					</div>
 					<div class="HRow MarginTop">
 						<div class="HContent25 FloatLeft">
 							<strong id="ApplicationLabel">{i18n_application}:</strong>
@@ -53,8 +61,11 @@
 						<div class="HContent25 FloatLeft">
 							<strong id="IconLabel">{i18n_icon}:</strong>
 						</div>
-						<div class="HContent75 FloatLeft">
-							<input type="text" class="FullWidth" id="Icon" placeholder="Example: Home:Icons/icon.png"/>
+						<div class="HContent55 FloatLeft">
+							<input type="text" class="FullWidth ButtonHeight " id="Icon" placeholder="Example: Home:Icons/icon.png"/>
+						</div>
+						<div class="HContent20 FloatLeft">
+							<button type="button" class="MarginLeft IconSmall fa-folder" onclick="FindIcon()"></button>
 						</div>
 					</div>
 					<div class="HRow MarginTop">
@@ -74,7 +85,7 @@
 					<div class="HRow BorderBottom MarginTop PaddingTop PaddingBottom">
 						<div class="HContent25 FloatLeft">&nbsp;</div>
 						<div class="HContent75 FloatLeft">
-							<button type="button" class="IconSmall fa-save" onclick="Application.sendMessage( { command: 'saveitem', application: ge('Application').value, displayname: ge('DisplayName' ).value, shortdescription: ge('ShortDescription').value, icon: ge( 'Icon' ).value, workspace: ge( 'Workspace' ).value, opensilent: ge( 'OpenSilent' ).value } )">
+							<button type="button" class="IconSmall fa-save" onclick="SaveDockItem()">
 								{i18n_save}
 							</button>
 							<button type="button" class="IconSmall fa-remove" onclick="Application.sendMessage( { command: 'deleteitem' } )">

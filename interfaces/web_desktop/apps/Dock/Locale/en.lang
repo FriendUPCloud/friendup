@@ -1,6 +1,7 @@
 i18n_file                             : File
 i18n_quit                             : Quit
 i18n_application                      : Application
+i18n_bookmark_src                     : Bookmark url
 i18n_description                      : Description
 i18n_icon                             : Icon
 i18n_sort_order                       : Sort order
@@ -46,7 +47,9 @@ i18n_select_application               : Select application
 i18n_display_name                     : Display name
 i18n_dock_layout_settings             : Layout settings
 i18n_open_silent                      : Open silently
-
+i18n_type                             : Type
+i18n_type_application                 : Application
+i18n_type_bookmark                    : Bookmark
 i18n_preferred_workspace              : Preferred workspace
 
 i18n_item_saved : Item saved

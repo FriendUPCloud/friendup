@@ -119,7 +119,7 @@ function LoadApplications( win, currentItemId, callback )
 			sw = sw == 1 ? 2 : 1;
 			cl += ' sw' + sw;
 			
-			let nam = eles[a].Name;
+			let nam = eles[a].DisplayName ? eles[a].DisplayName : eles[a].Name;
 			if( nam.indexOf( ':' ) > 0 )
 				nam = nam.split( ':' )[1];
 			if( nam.indexOf( '/' ) > 0 )
@@ -215,8 +215,8 @@ Application.run = function( packet )
 // Request a new Dock item
 Application.newDockItem = function()
 {
-	var m = new Module( 'dock' );
-	var w = this.view;
+	let m = new Module( 'dock' );
+	let w = this.view;
 	m.onExecuted = function( r, dat )
 	{
 		if( r == 'ok' )
@@ -294,35 +294,25 @@ Application.blur = function()
 }
 
 // Update an application in the database
-Application.saveItem = function( id, application, displayname, shortdescription, icon, workspace, opensilent )
+Application.saveItem = function( id, application, displayname, shortdescription, icon, workspace, opensilent, type )
 {
-	var w = this.view;
+	let w = this.view;
 
-	/*
-	TODO: Reenable when sensitive for arguments
-	for( var a = 0; a < Application.appCache.length; a++ )
-	{
-		if( Application.appCache[a].Name == application )
-		{
-			Alert( i18n( 'i18n_item_exists' ), i18n( 'i18n_item_exists_desc' ) );
-			return;
-		}
-	}
-	*/
-	var m = new Module( 'dock' );
+	let m = new Module( 'dock' );
 	m.onExecuted = function( r, d )
 	{
 		LoadApplications( w, id );
    		Notify({title:i18n('i18n_item_saved'),text:i18n('i18n_item_saved_text')});
 	}
-	var ms = { 
+	let ms = { 
 		itemId: id, 
 		application: application,
 		displayname: displayname,
 		shortdescription: shortdescription, 
 		icon: icon, 
 		workspace: workspace,
-		opensilent: opensilent === '1' ? '1' : '0'
+		opensilent: opensilent === '1' ? '1' : '0',
+		type: type ? type : 'executable'
 	};
 	Application.selectAfterLoad = id;
 	m.execute( 'saveitem', ms );
@@ -376,6 +366,7 @@ Application.receiveMessage = function( msg )
 			case 'saveitem':
 				if( Application.currentItemId )
 				{
+					console.log( 'Save now!', msg );
 					Application.saveItem( 
 						Application.currentItemId,
 						msg.application,
@@ -383,8 +374,13 @@ Application.receiveMessage = function( msg )
 						msg.shortdescription,
 						msg.icon,
 						msg.workspace,
-						msg.opensilent === 'true' ? '1': '0'
+						msg.opensilent === 'true' ? '1': '0',
+						msg.docktype
 					);
+				}
+				else
+				{
+					console.log( 'Nothing to save...' );
 				}
 				break;
 			case 'savecurrentdock':
