@@ -688,6 +688,7 @@ Workspace = {
 				console.log( '[2] Going home' );
 				return loadApplicationBasics( function()
 				{
+					console.log( '[2] Launching ' + t.conf.app );
 					ExecuteApplication( t.conf.app, GetUrlVar( 'data' ), function( result )
 					{
 						// Prevent loading twice...
