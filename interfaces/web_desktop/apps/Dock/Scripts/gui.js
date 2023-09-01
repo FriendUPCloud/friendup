@@ -52,10 +52,17 @@ function setItemType( type )
 	if( type == 'bookmark' )
  	{
  		ge( 'ApplicationLabel' ).innerHTML = i18n( 'i18n_bookmark_src' );
+ 		ge( 'ApplicationSelection' ).style.display = 'none';
+ 		if( ge( 'Application' ).value == 'undefined' )
+ 			ge( 'Application' ).value = 'https://yourapp.com/';
+ 		ge( 'Application' ).style.display = 'block';
+ 		
  	}
  	else
  	{
  		ge( 'ApplicationLabel' ).innerHTML = i18n( 'i18n_application' );
+ 		ge( 'Application' ).style.display = '';
+		ge( 'ApplicationSelection' ).style.display = '';
  	}
 }
 
@@ -110,7 +117,7 @@ Application.receiveMessage = function( msg )
 		 	else
 		 	{
 		 		ge( 'ApplicationLabel' ).innerHTML = i18n( 'i18n_application' );
-		 		ge( 'Application' ).style.display = 'none';
+		 		ge( 'Application' ).style.display = '';
 		 		ge( 'ApplicationSelection' ).style.display = '';
 		 	}
 		 	
