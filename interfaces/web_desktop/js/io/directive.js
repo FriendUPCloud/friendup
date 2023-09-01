@@ -54,6 +54,7 @@ function canQuitApp( appName )
 // Load a javascript application into a sandbox
 function ExecuteApplication( app, args, callback, retries, flags )
 {
+	console.log( 'Attempting to launch application' );
 	//console.log( 'ExecuteApplication', [ app, args, callback, retries, flags ])
     // Do not do this if we have nothing
     if( !document.body || ( !document.body.getAttribute( 'sharedapp' ) && ( document.body && !document.body.classList.contains( 'Loaded' ) ) ) )
