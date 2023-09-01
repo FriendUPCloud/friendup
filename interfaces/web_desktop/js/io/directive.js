@@ -58,18 +58,19 @@ function ExecuteApplication( app, args, callback, retries, flags )
     // Do not do this if we have nothing
     if( !document.body || ( !document.body.getAttribute( 'sharedapp' ) && ( document.body && !document.body.classList.contains( 'Loaded' ) ) ) )
     {
+    	console.log( 'Not ready' );
         return setTimeout( function()
         {
             ExecuteApplication( app, args, callback, retries, flags );
         }, 50 );
     }
-	/*console.log( 'ExecuteApplication', [
+	console.log( 'ExecuteApplication', [
 		app,
 		args,
 		callback,
 		retries,
 		flags,
-	]);*/
+	]);
 	// Just nothing.
 	if( !app )
 	{
