@@ -435,6 +435,7 @@ Workspace = {
 	},
 	init: function( mode )
 	{
+		console.log( '[2] Init' );
 		// Add locale
 		i18nAddPath( 'locale/en.locale' );
 
@@ -473,6 +474,8 @@ Workspace = {
 				}
 			}
 		}
+		
+		console.log( '[2] Setting url vars (should be first)' );
 		this.conf = urlVars;
 
 		this.mode = mode;
@@ -560,6 +563,8 @@ Workspace = {
 			// Call back!
 			if( cb ) cb();
 		}
+		
+		console.log( '[2] Loading css' );
 		
 		// Loading remaining scripts
 		let s = document.createElement( 'script' );
@@ -660,6 +665,8 @@ Workspace = {
 			SetupWorkspaceData( json );
 
 			document.body.style.visibility = 'visible';
+			
+			console.log( '[1] Loaded css' );
 			
 			// Loading notice
 			let loading = document.createElement( 'div' );
