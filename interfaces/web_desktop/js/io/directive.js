@@ -290,7 +290,7 @@ function ExecuteApplication( app, args, callback, retries, flags )
 	// 1. Ask about application.................................................
 	let m = new Module( 'system' );
 	m.onExecuted = function( r, d )
-	{	
+	{
 		// Get data from Friend Core
 		let conf = false;
 		try
@@ -840,9 +840,10 @@ function ExecuteApplication( app, args, callback, retries, flags )
 			RemoveFromExecutionQueue( appName );
 		}
 	}
-	var eo = { application: app, args: args };
+	let eo = { application: app, args: args };
 	if( Workspace.conf && Workspace.conf.authid )
 		eo.authid = Workspace.conf.authid;
+	m.forceHTTP = true;
 	m.execute( 'friendapplication', eo );
 	// console.log( 'Test3: Executing application: ' + app );
 }
