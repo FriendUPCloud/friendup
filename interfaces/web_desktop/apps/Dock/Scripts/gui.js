@@ -104,10 +104,14 @@ Application.receiveMessage = function( msg )
 		 	if( msg.item.Type == 'bookmark' )
 		 	{
 		 		ge( 'ApplicationLabel' ).innerHTML = i18n( 'i18n_bookmark_src' );
+		 		ge( 'Application' ).style.display = '';
+		 		ge( 'ApplicationSelection' ).style.display = 'none';
 		 	}
 		 	else
 		 	{
 		 		ge( 'ApplicationLabel' ).innerHTML = i18n( 'i18n_application' );
+		 		ge( 'Application' ).style.display = 'none';
+		 		ge( 'ApplicationSelection' ).style.display = '';
 		 	}
 		 	
 		 	document.body.classList.add( 'DockEdit' );
