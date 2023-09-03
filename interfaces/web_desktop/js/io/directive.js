@@ -538,6 +538,8 @@ function ExecuteApplication( app, args, callback, retries, flags )
 				ifr.src = sdomain + filepath + 'index.html?friendup=' + sdomain;
 			}
 			
+			console.log( 'ws: ', ws );
+			
 			// Register name and ID
 			ifr.applicationName = app.indexOf( ' ' ) > 0 ? app.split( ' ' )[0] : app;
 			ifr.userId = Workspace.userId;
@@ -715,7 +717,7 @@ function ExecuteApplication( app, args, callback, retries, flags )
 				// Make sure pickup items are cleared
 				mousePointer.clear();
 				
-				var cid = addWrapperCallback( function( data )
+				let cid = addWrapperCallback( function( data )
 				{
 					if( typeof( callback ) == 'function' )
 					{
@@ -737,7 +739,7 @@ function ExecuteApplication( app, args, callback, retries, flags )
 				}
 				
 				// Args could be sent in JSON format, then try to give this on.
-				var oargs = args;
+				let oargs = args;
 				try
 				{
 					oargs = JSON.parse( decodeURIComponent( args ) );
