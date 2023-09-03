@@ -282,7 +282,7 @@ File = function( filename )
 					
 					if ( typeof( t.onLoad ) != 'undefined' )
 					{
-						console.log( 'We got it: ' + t.rawdata );
+						console.log( 'We got it: ' + filename + ' --- ' + t.rawdata );
 						if( t.replacements )
 						{
 							for( var a in t.replacements )
