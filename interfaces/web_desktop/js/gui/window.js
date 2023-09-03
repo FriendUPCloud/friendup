@@ -4681,7 +4681,6 @@ var View = function( args )
 		
 		ifr.id = 'sandbox_' + this.viewId;
 		ifr.src = domain;
-		console.log( 'Loaded: ' + domain );
 
 		let view = this;
 		this.iframe = ifr;

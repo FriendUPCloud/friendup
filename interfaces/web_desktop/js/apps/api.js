@@ -2487,6 +2487,7 @@ function View( flags )
 	// Set window content
 	this.setContent = function( data, callback )
 	{
+		console.log( 'Window set content: ' + data );
 		// Add callback
 		let cid = false;
 		if( callback )
