@@ -8,25 +8,25 @@
 *                                                                              *
 *****************************************************************************©*/
 
-var _cajax_process_count = 0;
+let _cajax_process_count = 0;
 
-var _cajax_connection_seed = Math.random(0,999)+Math.random(0,999)+Math.random(0,999)+'_';
+let _cajax_connection_seed = Math.random(0,999)+Math.random(0,999)+Math.random(0,999)+'_';
 
-var _cajax_http_connections = 0;                // How many?
-var _cajax_http_max_connections = 6;            // Max
-var _cajax_http_last_time = 0;                  // Time since last
-var _cajax_mutex = 0;
+let _cajax_http_connections = 0;                // How many?
+let _cajax_http_max_connections = 6;            // Max
+let _cajax_http_last_time = 0;                  // Time since last
+let _cajax_mutex = 0;
 
-var _cajax_ws_connections = 0;                  // How many?
-var _cajax_ws_max_connections = 12;             // Max
+let _cajax_ws_connections = 0;                  // How many?
+let _cajax_ws_max_connections = 12;             // Max
 
-var _cajax_ws_disabled = 0;                     // Disable websocket usage?
+let _cajax_ws_disabled = 0;                     // Disable websocket usage?
 
-var _cajax_origin = document.location.origin;
+let _cajax_origin = document.location.origin;
 
 // For debug
-var _c_count = 0;
-var _c_destroyed = 0;
+let _c_count = 0;
+let _c_destroyed = 0;
 
 if( !window.Friend ) window.Friend = {};
 if( !Friend.cajax ) 
@@ -999,7 +999,7 @@ if( typeof bindSingleParameterMethod != 'function' )
 }
 
 // Clean ajax calls!
-var currentCajaxType = 0;
+let currentCajaxType = 0;
 function CleanAjaxCalls( depth = false )
 {
 	// Cycle types
