@@ -16,8 +16,6 @@ File = function( filename )
 {
 	this.path = filename;
 
-	console.log( 'File directive: ' + filename );
-
 	this.useEncryption = false; // Default no encryption
 
 	this.data = false;
@@ -91,6 +89,8 @@ File = function( filename )
 		// Fix broken paths
 		if( filename.substr( 0, 20 ) == 'resources/webclient/' )
 			filename = filename.substr( 20, filename.length - 20 );
+
+		console.log( 'The path: ' + filename );
 
 		return filename;
 	}
