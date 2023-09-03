@@ -25,7 +25,14 @@ Friend.User = {
     AccessToken: null,          // Holds the user's access token
     ConnectionAttempts: 0,      // How many relogin attempts were made
     ConnectionIncidents: 0,     // How many connection stream attemts counted
-    CookiePrefix: document.location.href.match( /webclient\/(.*?)\.html/ )[1], 
+    CookiePrefix: ( function(){
+    	let m = document.location.href.match( /webclient\/(.*?)\.html/ );
+    	if( !m )
+    		m = document.location.href.match( /app\/(.*?)\// );
+    	if( m )
+    		return m[0];
+    	return 'index';
+    } )(),
     
     // Methods -----------------------------------------------------------------
     
