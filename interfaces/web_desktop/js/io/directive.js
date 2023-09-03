@@ -772,7 +772,6 @@ function ExecuteApplication( app, args, callback, retries, flags )
 					cachedAppData: _applicationBasics,
 					context: flags.context ? flags.context : null
 				};
-				console.log( 'OH', o );
 				if( conf.State ) o.state = conf.State;
 
                 if( _applicationBasics.css && _applicationBasics.css.length > 0 )
@@ -803,6 +802,7 @@ function ExecuteApplication( app, args, callback, retries, flags )
 			}
 
 			// Add application iframe to body
+			console.log( 'AttachAppSandbox 2' );
 			AttachAppSandbox( ifr, sdomain + filepath );
 
 			// Add application
@@ -1656,6 +1656,7 @@ function ExecuteJSX( data, app, args, path, callback, conf, flags )
 				iconPath.pop();
 				iconPath = iconPath.join( '/' );
 			}
+			console.log( 'AttachAppSandbox 1' );
 			AttachAppSandbox( ifr, iconPath, 'friendpath' );
 
 			// Add application
@@ -1687,13 +1688,13 @@ function AttachAppSandbox( ifr, path, pathType )
 {
 	if( !pathType ) pathType = 'default';
 	
-	var d = document.createElement( 'div' );
+	let d = document.createElement( 'div' );
 	d.className = 'AppSandbox';
 	d.appendChild( ifr );
 	ifr.div = d;
 	d.ifr = ifr;
 
-	var n = document.createElement( 'div' );
+	let n = document.createElement( 'div' );
 	n.className = 'Taskname';
 	n.innerHTML = ifr.applicationName;
 	d.appendChild( n );
@@ -1701,14 +1702,14 @@ function AttachAppSandbox( ifr, path, pathType )
 	// Make sure we have a path
 	if( !path ) path = ifr.src.split( /\/[^/.]*\.html/ )[0];
 
-	var x = document.createElement( 'div' );
-	var icon = oicon = '/webclient/gfx/icons/64x64/mimetypes/application-x-javascript.png';
+	let x = document.createElement( 'div' );
+	let icon = oicon = '/webclient/gfx/icons/64x64/mimetypes/application-x-javascript.png';
 	if( path.indexOf( '?' ) < 0 || path.indexOf( 'command=resource' ) > 0 )
 		icon = ( pathType == 'friendpath' ? oicon : ( path + ( ( path[ path.length - 1 ] == '/' ? '' : '/' ) ) + 'icon.png' ) );
 	ifr.icon = icon;
 	x.style.backgroundImage = 'url(' + ifr.icon + ')';
 	x.className = 'Close';
-	var img = document.createElement( 'img' );
+	let img = document.createElement( 'img' );
 	img.src = ifr.icon;
 	img.onload = function()
 	{
@@ -1717,7 +1718,7 @@ function AttachAppSandbox( ifr, path, pathType )
 	x.appendChild( img );
 	d.appendChild( x );
 
-	var b = document.createElement( 'div' );
+	let b = document.createElement( 'div' );
 	b.className = 'CloseButton';
 	b.onmousedown = function()
 	{
