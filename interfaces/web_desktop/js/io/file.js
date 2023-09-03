@@ -92,6 +92,11 @@ File = function( filename )
 
 		console.log( 'This is the path: ' + filename );
 
+		if( filename.substr( 0, 5 ) == 'apps/' )
+		{
+			return '/webclient/' + filename;
+		}
+
 		return filename;
 	}
 
