@@ -519,6 +519,7 @@ function ExecuteApplication( app, args, callback, retries, flags )
 						{
 							ws = this.rawData;
 						}
+						console.log( 'what: ', ws );
 						if( ws.length )
 						{
 							ifr.src = URL.createObjectURL(new Blob([ws],{type:'text/html'}));
