@@ -16,6 +16,8 @@ File = function( filename )
 {
 	this.path = filename;
 
+	console.log( 'File directive: ' + filename );
+
 	this.useEncryption = false; // Default no encryption
 
 	this.data = false;
