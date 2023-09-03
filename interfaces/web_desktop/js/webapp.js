@@ -674,6 +674,7 @@ Workspace = {
 				{
 					ExecuteApplication( t.conf.app, GetUrlVar( 'data' ), function( result )
 					{
+						console.log( 'App executed.' );
 						// Prevent loading twice...
 						if( document.body.loaded ) return;
 						document.body.loaded = true;
