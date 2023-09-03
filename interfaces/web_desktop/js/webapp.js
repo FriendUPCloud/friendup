@@ -475,6 +475,14 @@ Workspace = {
 		}
 		
 		this.conf = urlVars;
+		// Rewrite
+		if( !this.conf.app )
+		{
+			this.conf.app = document.location.href.match( /app\/(.*)/i );
+			this.conf.app = this.conf.app[1];
+			if( this.conf.app.substr( -1, 1 ) == '/' )
+				this.conf.app = this.conf.app.substr( 0, this.conf.app.length - 1 );
+		}
 
 		this.mode = mode;
 
