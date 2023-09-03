@@ -481,7 +481,9 @@ Workspace = {
 		{
 			this.conf.app = document.location.href.match( /app\/(.*)/i );
 			this.conf.app = this.conf.app[1];
-			if( this.conf.app.substr( -1, 1 ) == '/' )
+			if( this.conf.app.substr( -11, 11 ) == '/index.html' )
+				this.conf.app = this.conf.app.substr( 0, this.conf.app.length - 11 );
+			else if( this.conf.app.substr( -1, 1 ) == '/' )
 				this.conf.app = this.conf.app.substr( 0, this.conf.app.length - 1 );
 		}
 
