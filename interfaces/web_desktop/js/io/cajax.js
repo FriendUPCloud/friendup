@@ -999,7 +999,7 @@ if( typeof bindSingleParameterMethod != 'function' )
 }
 
 // Clean ajax calls!
-let currentCajaxType = 0;
+var currentCajaxType = 0;
 function CleanAjaxCalls( depth = false )
 {
 	// Cycle types
