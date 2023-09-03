@@ -90,12 +90,9 @@ File = function( filename )
 		if( filename.substr( 0, 20 ) == 'resources/webclient/' )
 			filename = filename.substr( 20, filename.length - 20 );
 
-		console.log( 'This is the path: ' + filename );
-
+		// Special case, we\'re in a special parent url
 		if( filename.substr( 0, 5 ) == 'apps/' )
-		{
 			return '/webclient/' + filename;
-		}
 
 		return filename;
 	}
