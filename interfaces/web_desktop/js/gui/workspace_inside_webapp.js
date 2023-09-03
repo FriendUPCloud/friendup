@@ -127,7 +127,7 @@ var WorkspaceInside = {
 				}
 				
 				// Load application cache's and then init workspace
-				loadApplicationBasics( initFriendWorkspace );
+				initFriendWorkspace();
 			}
 			m.forceHTTP = true;
 			m.execute( 'getsetting', { settings: [ 
