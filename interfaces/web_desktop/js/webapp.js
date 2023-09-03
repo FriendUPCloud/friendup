@@ -475,7 +475,8 @@ Workspace = {
 		}
 		
 		this.conf = urlVars;
-		// Rewrite
+		
+		// Rewrite active?
 		if( !this.conf.app )
 		{
 			this.conf.app = document.location.href.match( /app\/(.*)/i );
