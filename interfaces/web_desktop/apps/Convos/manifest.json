@@ -1,6 +1,6 @@
 {
 	"name": "Convos",
-	"short_name": "Friend",
+	"short_name": "Convos",
 	"start_url": "index.html",
 	"display": "standalone",
 	"background_color": "#335675",
