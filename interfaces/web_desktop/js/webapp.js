@@ -681,12 +681,10 @@ Workspace = {
 			
 			if( t.conf.app )
 			{
-				console.log( '[dbg] App basics' );
 				return loadApplicationBasics( function()
 				{
 					ExecuteApplication( t.conf.app, GetUrlVar( 'data' ), function( result )
 					{
-						console.log( '[dbg] App executed.', result );
 						// Prevent loading twice...
 						if( document.body.loaded ) return;
 						document.body.loaded = true;
