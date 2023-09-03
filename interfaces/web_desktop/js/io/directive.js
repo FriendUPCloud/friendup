@@ -54,7 +54,6 @@ function canQuitApp( appName )
 // Load a javascript application into a sandbox
 function ExecuteApplication( app, args, callback, retries, flags )
 {
-	console.log( 'Attempting to launch application' );
 	//console.log( 'ExecuteApplication', [ app, args, callback, retries, flags ])
     // Do not do this if we have nothing
     if( !document.body || ( !document.body.getAttribute( 'sharedapp' ) && ( document.body && !document.body.classList.contains( 'Loaded' ) ) ) )
@@ -65,13 +64,7 @@ function ExecuteApplication( app, args, callback, retries, flags )
             ExecuteApplication( app, args, callback, retries, flags );
         }, 50 );
     }
-	console.log( 'ExecuteApplication', [
-		app,
-		args,
-		callback,
-		retries,
-		flags,
-	]);
+	
 	// Just nothing.
 	if( !app )
 	{
@@ -793,7 +786,6 @@ function ExecuteApplication( app, args, callback, retries, flags )
 			}
 
 			// Add application iframe to body
-			console.log( 'AttachAppSandbox 2' );
 			AttachAppSandbox( ifr, sdomain + filepath );
 
 			// Add application
@@ -1647,7 +1639,6 @@ function ExecuteJSX( data, app, args, path, callback, conf, flags )
 				iconPath.pop();
 				iconPath = iconPath.join( '/' );
 			}
-			console.log( 'AttachAppSandbox 1' );
 			AttachAppSandbox( ifr, iconPath, 'friendpath' );
 
 			// Add application
