@@ -272,7 +272,6 @@ File = function( filename )
 
 					if( typeof ( t.onLoad ) != 'undefined' )
 					{
-						console.log( 'We got it: ' + t.data );
 						t.onLoad( t.data );
 					}
 				}
@@ -280,8 +279,10 @@ File = function( filename )
 				else if( ( !this.returnCode || this.returnCode.length > 3 ) && this.responseText().length )
 				{
 					t.rawdata = this.responseText();
+					
 					if ( typeof( t.onLoad ) != 'undefined' )
 					{
+						console.log( 'We got it: ' + t.rawdata );
 						if( t.replacements )
 						{
 							for( var a in t.replacements )
