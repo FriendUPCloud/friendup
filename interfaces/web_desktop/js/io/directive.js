@@ -528,7 +528,6 @@ function ExecuteApplication( app, args, callback, retries, flags )
 							console.log( '[Directive] Error loading blob. Retry.' );
 							j.send();
 						}
-						console.log( 'ws: ', ws );
 					}
 					j.send();
 				}
@@ -775,16 +774,9 @@ function ExecuteApplication( app, args, callback, retries, flags )
 				};
 				if( conf.State ) o.state = conf.State;
 
-                if( _applicationBasics.css && _applicationBasics.css.length > 0 )
-                {
-				    //console.log( 'Directive: Sent (cached) css to app with ' + _applicationBasics.css.length );
-			    }
-			    else
-			    {
-			        //console.log( 'Directive: Could not find css string length. Handle in API.' );
-			    }
+				console.log( 'Data: ', cachedAppData );
 
-				// Get JSON data from url
+                // Get JSON data from url
 				let vdata = GetUrlVar( 'data' ); if( vdata ) o.data = vdata;
 
 				// Language support
