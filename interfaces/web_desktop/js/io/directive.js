@@ -528,6 +528,7 @@ function ExecuteApplication( app, args, callback, retries, flags )
 							console.log( '[Directive] Error loading blob. Retry.' );
 							j.send();
 						}
+						console.log( 'ws: ', ws );
 					}
 					j.send();
 				}
@@ -537,8 +538,6 @@ function ExecuteApplication( app, args, callback, retries, flags )
 				// Same domain
 				ifr.src = sdomain + filepath + 'index.html?friendup=' + sdomain;
 			}
-			
-			console.log( 'ws: ', ws );
 			
 			// Register name and ID
 			ifr.applicationName = app.indexOf( ' ' ) > 0 ? app.split( ' ' )[0] : app;
