@@ -476,7 +476,7 @@ Workspace = {
 		
 		this.conf = urlVars;
 		
-		// Rewrite active?
+		// Rewrite
 		if( !this.conf.app )
 		{
 			this.conf.app = document.location.href.match( /app\/(.*)/i );
@@ -571,8 +571,52 @@ Workspace = {
 			if( cb ) cb();
 		}
 		
-		// When API was loaded
-		function APILoaded()
+		// Loading remaining scripts
+		let s = document.createElement( 'script' );
+		s.src = '/webclient/js/gui/workspace_inside_webapp.js;' +
+			'webclient/js/gui/workspace_support.js;' +
+			'webclient/3rdparty/adapter.js;' +
+			'webclient/3rdparty/pdfjs/build/pdf.js;' +
+			'webclient/js/utils/speech-input.js;' +
+			'webclient/js/utils/events.js;' +
+			'webclient/js/utils/utilities.js;' +
+			'webclient/js/io/directive.js;' +
+			'webclient/js/io/door.js;' +
+			'webclient/js/io/dormant.js;' +
+			'webclient/js/io/dormantramdisc.js;' +
+			'webclient/js/io/door_system.js;' +
+			'webclient/js/io/module.js;' +
+			'webclient/js/io/file.js;' +
+			'webclient/js/io/progress.js;' +
+			'webclient/js/io/workspace_fileoperations.js;' + 
+			'webclient/3rdparty/favico.js/favico-0.3.10.min.js;' +
+			'webclient/js/gui/widget.js;' +
+			'webclient/js/gui/listview.js;' +
+			'webclient/js/gui/directoryview.js;' +
+			'webclient/js/io/directoryview_fileoperations.js;' +
+			'webclient/js/gui/menufactory.js;' +
+			'webclient/js/gui/workspace_menu.js;' +
+			'webclient/js/gui/deepestfield.js;' +
+			'webclient/js/gui/filedialog.js;' +
+			'webclient/js/gui/printdialog.js;' +
+			'webclient/js/gui/desklet.js;' +
+			'webclient/js/gui/calendar.js;' +
+			'webclient/js/gui/colorpicker.js;' +
+			'webclient/js/gui/workspace_calendar.js;' +
+			'webclient/js/gui/workspace_tray.js;' +
+			'webclient/js/gui/workspace_sharing.js;' +
+			'webclient/js/gui/tutorial.js;' +
+			'webclient/js/media/audio.js;' +
+			'webclient/js/io/p2p.js;' +
+			'webclient/js/io/request.js;' +
+			'webclient/js/io/coreSocket.js;' +
+			'webclient/js/io/networkSocket.js;' +
+			'webclient/js/io/connection.js;' +
+			'webclient/js/friendmind.js;' +
+			'webclient/js/frienddos.js;' +
+			'webclient/js/oo.js;' + 
+			'webclient/js/api/friendAPIv1_2.js';
+		s.onload = function()
 		{
 			if( Workspace.loginPrompt )
 			{
@@ -635,10 +679,12 @@ Workspace = {
 			
 			if( t.conf.app )
 			{
+				console.log( '[dbg] App basics' );
 				return loadApplicationBasics( function()
 				{
 					ExecuteApplication( t.conf.app, GetUrlVar( 'data' ), function( result )
 					{
+						console.log( '[dbg] App executed.' );
 						// Prevent loading twice...
 						if( document.body.loaded ) return;
 						document.body.loaded = true;
@@ -660,65 +706,7 @@ Workspace = {
 				} );
 			}
 		}
-		
-		// Loading remaining scripts
-		if( !this.APILoaded )
-		{
-			this.APILoaded = true;
-			let s = document.createElement( 'script' );
-			s.src = '/webclient/js/gui/workspace_inside_webapp.js;' +
-				'webclient/js/gui/workspace_support.js;' +
-				'webclient/3rdparty/adapter.js;' +
-				'webclient/3rdparty/pdfjs/build/pdf.js;' +
-				'webclient/js/utils/speech-input.js;' +
-				'webclient/js/utils/events.js;' +
-				'webclient/js/utils/utilities.js;' +
-				'webclient/js/io/directive.js;' +
-				'webclient/js/io/door.js;' +
-				'webclient/js/io/dormant.js;' +
-				'webclient/js/io/dormantramdisc.js;' +
-				'webclient/js/io/door_system.js;' +
-				'webclient/js/io/module.js;' +
-				'webclient/js/io/file.js;' +
-				'webclient/js/io/progress.js;' +
-				'webclient/js/io/workspace_fileoperations.js;' + 
-				'webclient/3rdparty/favico.js/favico-0.3.10.min.js;' +
-				'webclient/js/gui/widget.js;' +
-				'webclient/js/gui/listview.js;' +
-				'webclient/js/gui/directoryview.js;' +
-				'webclient/js/io/directoryview_fileoperations.js;' +
-				'webclient/js/gui/menufactory.js;' +
-				'webclient/js/gui/workspace_menu.js;' +
-				'webclient/js/gui/deepestfield.js;' +
-				'webclient/js/gui/filedialog.js;' +
-				'webclient/js/gui/printdialog.js;' +
-				'webclient/js/gui/desklet.js;' +
-				'webclient/js/gui/calendar.js;' +
-				'webclient/js/gui/colorpicker.js;' +
-				'webclient/js/gui/workspace_calendar.js;' +
-				'webclient/js/gui/workspace_tray.js;' +
-				'webclient/js/gui/workspace_sharing.js;' +
-				'webclient/js/gui/tutorial.js;' +
-				'webclient/js/media/audio.js;' +
-				'webclient/js/io/p2p.js;' +
-				'webclient/js/io/request.js;' +
-				'webclient/js/io/coreSocket.js;' +
-				'webclient/js/io/networkSocket.js;' +
-				'webclient/js/io/connection.js;' +
-				'webclient/js/friendmind.js;' +
-				'webclient/js/frienddos.js;' +
-				'webclient/js/oo.js;' + 
-				'webclient/js/api/friendAPIv1_2.js';
-			s.onload = function()
-			{
-				APILoaded();
-			}
-			document.body.appendChild( s );
-		}
-		else
-		{
-			APILoaded();
-		}
+		document.body.appendChild( s );
 		
 		// Add event listeners
 		for( let a = 0; a < this.runLevels.length; a++ )
