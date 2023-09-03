@@ -519,7 +519,6 @@ function ExecuteApplication( app, args, callback, retries, flags )
 						{
 							ws = this.rawData;
 						}
-						console.log( 'what: ', ws );
 						if( ws.length )
 						{
 							ifr.src = URL.createObjectURL(new Blob([ws],{type:'text/html'}));
@@ -538,13 +537,6 @@ function ExecuteApplication( app, args, callback, retries, flags )
 				// Same domain
 				ifr.src = sdomain + filepath + 'index.html?friendup=' + sdomain;
 			}
-			
-			/*console.log( 'ExecuteApplication - opening app', {
-				ifr    : ifr,
-				conf   : conf,
-				flags  : flags,
-				silent : flags.openSilent,
-			});*/
 			
 			// Register name and ID
 			ifr.applicationName = app.indexOf( ' ' ) > 0 ? app.split( ' ' )[0] : app;
@@ -754,7 +746,6 @@ function ExecuteApplication( app, args, callback, retries, flags )
 				{
 					oargs = args;
 				}
-
 				let o = {
 					command: 'register',
 					applicationId: ifr.applicationId,
@@ -781,6 +772,7 @@ function ExecuteApplication( app, args, callback, retries, flags )
 					cachedAppData: _applicationBasics,
 					context: flags.context ? flags.context : null
 				};
+				console.log( 'OH', o );
 				if( conf.State ) o.state = conf.State;
 
                 if( _applicationBasics.css && _applicationBasics.css.length > 0 )
@@ -793,7 +785,7 @@ function ExecuteApplication( app, args, callback, retries, flags )
 			    }
 
 				// Get JSON data from url
-				var vdata = GetUrlVar( 'data' ); if( vdata ) o.data = vdata;
+				let vdata = GetUrlVar( 'data' ); if( vdata ) o.data = vdata;
 
 				// Language support
 				if( conf.language )
