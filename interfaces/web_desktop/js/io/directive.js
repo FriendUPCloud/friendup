@@ -774,7 +774,7 @@ function ExecuteApplication( app, args, callback, retries, flags )
 				};
 				if( conf.State ) o.state = conf.State;
 
-				console.log( 'Data: ', cachedAppData );
+				console.log( 'Data: ', _applicationBasics );
 
                 // Get JSON data from url
 				let vdata = GetUrlVar( 'data' ); if( vdata ) o.data = vdata;
