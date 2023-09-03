@@ -90,6 +90,8 @@ File = function( filename )
 		if( filename.substr( 0, 20 ) == 'resources/webclient/' )
 			filename = filename.substr( 20, filename.length - 20 );
 
+		console.log( 'This is the path: ' + filename );
+
 		return filename;
 	}
 
