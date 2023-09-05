@@ -670,7 +670,10 @@ Workspace = {
 		},
 		getServerKey: function( callback )
 		{
-			var k = new Module( 'system' );
+			let self = this;
+			if( typeof( Module ) == 'undefined' )
+				return setTimeout( function(){ self.getServerKey( callback ); }, 50 );
+			let k = new Module( 'system' );
 			k.onExecuted = function( e, d )
 			{
 				if( callback )
