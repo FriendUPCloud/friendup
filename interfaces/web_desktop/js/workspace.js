@@ -1040,9 +1040,7 @@ Workspace = {
 			
 			// Loading remaining scripts
 			let s = document.createElement( 'script' );
-			s.charset = 'UTF-8';
-			let prefx = document.location.protocol + '//' + document.location.host;
-			s.setAttribute( 'src', prefx + '/webclient/js/gui/workspace_inside.js;' +
+			s.src = '/webclient/js/gui/workspace_inside.js;' +
 				'webclient/js/gui/workspace_support.js;' +
 				'webclient/js/gui/filebrowser.js;' +
 				'webclient/js/fui/fui_v1.js;' +
@@ -1090,8 +1088,7 @@ Workspace = {
 				'webclient/js/friendmind.js;' +
 				'webclient/js/frienddos.js;' +
 				'webclient/js/oo.js;' + 
-				'webclient/js/api/friendAPIv1_2.js'
-			);
+				'webclient/js/api/friendAPIv1_2.js';
 			s.onload = function()
 			{	
 			    // Start with expanding the workspace object

@@ -705,7 +705,7 @@ Workspace = {
 				} );
 			}
 		}
-		document.body.appendChild( s );
+		document.getElementsByTagName( 'head' )[0].appendChild( s );
 		
 		// Add event listeners
 		for( let a = 0; a < this.runLevels.length; a++ )
