@@ -4724,6 +4724,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									// Set the wallpaper
 									eles[0].style.backgroundImage = 'url(' + this.src + ')';
 									eles[0].classList.add( 'Loaded' );
+									console.log( eles[0] );
 								}
 							};
 							
