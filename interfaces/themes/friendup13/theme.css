@@ -60,6 +60,7 @@ html body
 	color: #333333;
 	-webkit-font-smoothing:antialiased;
 	border-radius: 0 !important;
+	touch-action: pan-y
 }
 
 html body[mobile=mobile]
