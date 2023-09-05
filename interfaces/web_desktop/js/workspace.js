@@ -1108,7 +1108,8 @@ Workspace = {
                 // Just get it done!
                 function doInitInside()
                 {
-					InitWorkspaceNetwork();
+					if( typeof( InitWorkspaceNetwork ) != 'undefined' )
+						InitWorkspaceNetwork();
 
 					// Reset some options
 					if( ev && ev.shiftKey )
