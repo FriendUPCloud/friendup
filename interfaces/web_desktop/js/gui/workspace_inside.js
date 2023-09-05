@@ -4605,13 +4605,17 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			// Recall wallpaper
 			else if( Workspace.mode != 'vr' && self.wallpaperImage != 'color' )
 			{
+			    console.log( 'OK' );
 			    if( typeof( self.wallpaperImage ) == undefined )
 			    {
+			    	console.log( 'Waiting' );
 			        return setTimeout( function(){ Workspace.refreshDesktop( callback, forceRefresh ) }, 25 );
 			    }
+			    console.log( 'Here we go' );
 				let eles = self.screen.div.getElementsByClassName( 'ScreenContent' );
 				if( eles.length )
 				{
+					console.log( 'No' );
 					let ext = false;
 					let found = false;
 					if( self.wallpaperImage )
@@ -4769,7 +4773,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					eles[0].classList.add( 'Wallpaper' );
 					eles[0].style.backgroundImage = '';
 					eles[0].classList.add( 'Loaded' );
-					console.log( 'Foo bar' );
 					setupDriveClicks();
 				}
 				Workspace.wallpaperLoaded = true;
@@ -4783,7 +4786,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			{
 				//console.log( 'Wallpaper: What happened and which mode? ' + Workspace.mode );
 			}
-
 		}, forceRefresh );
 	},
 	// Get a door by path
