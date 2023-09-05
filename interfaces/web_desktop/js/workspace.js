@@ -1107,7 +1107,7 @@ Workspace = {
 				// Just get it done!
 				function doInitInside()
 				{
-					window.InitWorkspaceNetwork();
+					InitWorkspaceNetwork();
 
 					// Reset some options
 					if( ev && ev.shiftKey )
@@ -1300,8 +1300,10 @@ Workspace = {
 					}
 					l.execute( 'getsetting', { settings: [ 'locale', 'friendversion' ] } );
 				}
-				if( window.InitWorkspaceNetwork && window.FriendDOS )
+				if( typeof( InitWorkspaceNetwork ) != 'undefined' && window.FriendDOS )
+				{
 					doInitInside();
+				}
 				else setTimeout( function(){ doInitInside(); }, 50 );
 			}
 			document.body.appendChild( s );
