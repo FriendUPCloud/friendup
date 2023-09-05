@@ -1311,7 +1311,6 @@ Workspace = {
 				else setTimeout( function(){ doInitInside(); }, 50 );
 			}
 			f.send();
-			console.log( 'ADDED SCRIPT' );
 		}
 		// We've already logged in
 		else

@@ -1,4 +1,3 @@
-console.log( 'WORKSPACE INSIDE' );
 // Added to workspace
 var WorkspaceInside = {
 	// Tray icons
