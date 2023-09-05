@@ -1107,7 +1107,7 @@ Workspace = {
 				// Just get it done!
 				function doInitInside()
 				{
-					InitWorkspaceNetwork();
+					window.InitWorkspaceNetwork();
 
 					// Reset some options
 					if( ev && ev.shiftKey )
