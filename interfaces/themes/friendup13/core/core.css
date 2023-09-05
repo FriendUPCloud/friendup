@@ -3297,7 +3297,7 @@ body:not([mobile]).ShowTasks #TaskSwitcher .Current .Close
 #DoorsScreen > .ScreenContent.Wallpaper
 {
 	position: absolute;
-	top: 32px !important;
+	top: 26px !important;
 	width: 100%;
 	height: 100%;
 	overflow: auto;
