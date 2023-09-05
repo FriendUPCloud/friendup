@@ -271,6 +271,8 @@ var WorkspaceInside = {
 	// Check workspace wallpapers
 	checkWorkspaceWallpapers: function( loaded )
 	{
+		let self = this;
+		
 		if( this.mode == 'vr' ) return;
 		if( globalConfig.workspacecount <= 1 ) return;
 
@@ -306,25 +308,37 @@ var WorkspaceInside = {
 		}
 		
 		let image = url == 'none' ? url : ( 'url(' + url + ')' );
-		
+		let preload = new Image();
+		preload.src = url;
+		preload.onload = function()
+		{
+			for( let a = 0; a < m; a++ )
+			{
+				// Update background image
+				if( self.workspaceWallpapers[a] )
+				{
+					self.workspaceWallpapers[a].style.backgroundImage = image;
+					self.workspaceWallpapers[a].classList.add( 'Loaded' );
+				}
+			}
+		}
+		// Maintain divs
 		for( let a = 0; a < m; a++ )
 		{
 			// Check if we already have wallpapers
-			if( this.workspaceWallpapers && a < this.workspaceWallpapers.length )
+			if( self.workspaceWallpapers && a < self.workspaceWallpapers.length )
 			{
 				// Reduction of superflous workspaces
 				if( a >= globalConfig.workspacecount )
 				{
-					this.workspaceWallpapers[a].parentNode.removeChild(
-						this.workspaceWallpapers[a]
+					self.workspaceWallpapers[a].parentNode.removeChild(
+						self.workspaceWallpapers[a]
 					);
 				}
-				else o.push( this.workspaceWallpapers[a] );
-				// Update background image
-				this.workspaceWallpapers[a].style.backgroundImage = image;
-				this.workspaceWallpapers[a].style.left = scr.div.offsetWidth * a + 'px';
-				this.workspaceWallpapers[a].style.width = scr.div.offsetWidth + 'px';
-				this.workspaceWallpapers[a].style.height = scr.contentDiv.offsetHeight + 'px';
+				else o.push( self.workspaceWallpapers[a] );
+				self.workspaceWallpapers[a].style.left = scr.div.offsetWidth * a + 'px';
+				self.workspaceWallpapers[a].style.width = scr.div.offsetWidth + 'px';
+				self.workspaceWallpapers[a].style.height = scr.contentDiv.offsetHeight + 'px';
 			}
 			// New entry
 			else
@@ -334,13 +348,12 @@ var WorkspaceInside = {
 				d.style.left = scr.div.offsetWidth * a + 'px';
 				d.style.width = scr.div.offsetWidth + 'px';
 				d.style.height = scr.contentDiv.offsetHeight + 'px';
-				d.style.backgroundImage = image;
 				scr.contentDiv.appendChild( d );
 				o.push( d );
 			}
 		}
 		// Overwrite array
-		this.workspaceWallpapers = o;
+		self.workspaceWallpapers = o;
 		
 		if( loaded )
 		{
@@ -4599,7 +4612,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				let eles = self.screen.div.getElementsByClassName( 'ScreenContent' );
 				if( eles.length )
 				{
-					eles[0].className.remove( 'Loaded' );
+					eles[0].classList.remove( 'Loaded' );
 					
 					let ext = false;
 					let found = false;

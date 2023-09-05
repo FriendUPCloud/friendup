@@ -3449,6 +3449,12 @@ body:not([mobile]).ShowTasks #TaskSwitcher .Current .Close
 	top: 0px;
 	background-size: cover;
 	background-position: center;
+	opacity: 0;
+	transition: opacity 0.5s;
+}
+.WorkspaceWallpaper.Loaded
+{
+	opacity: 1;
 }
 
 .WorkspaceContainer
