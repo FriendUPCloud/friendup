@@ -1300,7 +1300,7 @@ Workspace = {
 					}
 					l.execute( 'getsetting', { settings: [ 'locale', 'friendversion' ] } );
 				}
-				if( typeof( InitWorkspaceNetwork ) != 'undefined' && window.FriendDOS )
+				if( window.InitWorkspaceNetwork && window.FriendDOS )
 				{
 					doInitInside();
 				}
