@@ -587,7 +587,6 @@ Workspace = {
 			'webclient/js/io/dormant.js;' +
 			'webclient/js/io/dormantramdisc.js;' +
 			'webclient/js/io/door_system.js;' +
-			'webclient/js/io/module.js;' +
 			'webclient/js/io/file.js;' +
 			'webclient/js/io/progress.js;' +
 			'webclient/js/io/workspace_fileoperations.js;' + 

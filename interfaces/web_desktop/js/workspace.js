@@ -670,9 +670,6 @@ Workspace = {
 		},
 		getServerKey: function( callback )
 		{
-			let self = this;
-			if( typeof( Module ) == 'undefined' )
-				return setTimeout( function(){ self.getServerKey( callback ); }, 50 );
 			let k = new Module( 'system' );
 			k.onExecuted = function( e, d )
 			{
@@ -1060,7 +1057,6 @@ Workspace = {
 				'webclient/js/io/dormant.js;' +
 				'webclient/js/io/dormantramdisc.js;' +
 				'webclient/js/io/door_system.js;' +
-				'webclient/js/io/module.js;' +
 				'webclient/js/io/file.js;' +
 				'webclient/js/io/progress.js;' +
 				'webclient/js/io/workspace_fileoperations.js;' + 
