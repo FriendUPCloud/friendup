@@ -96,7 +96,7 @@ class FUIInvitedialog extends FUIElement
 		this.refreshDom();
 	}
 	
-	executeSearch = function( query, res )
+	executeSearch( query, res )
 	{
 		let self = this;
 		
