@@ -42,11 +42,6 @@
 	color: #E7B66F;
 }
 
-:root
-{
-	touch-action: pan-y
-}
-
 html 
 {
 	height: 100vh;
@@ -60,12 +55,11 @@ html body
 	color: #333333;
 	-webkit-font-smoothing:antialiased;
 	border-radius: 0 !important;
-	touch-action: pan-y
 }
 
 html body[mobile=mobile]
 {
-	font-size: 1em;
+	font-size: 16px;
 }
 
 html body hr.Divider,
