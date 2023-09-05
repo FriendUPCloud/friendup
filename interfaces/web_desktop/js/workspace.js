@@ -1048,7 +1048,6 @@ Workspace = {
 				'webclient/js/fui/classes/group.fui.js;' +
 				'webclient/js/fui/classes/listview.fui.js;' +
 				'webclient/3rdparty/adapter.js;' +
-				'webclient/3rdparty/pdfjs/build/pdf.js;' +
 				'webclient/js/utils/speech-input.js;' +
 				'webclient/js/utils/events.js;' +
 				'webclient/js/utils/utilities.js;' +
@@ -1094,6 +1093,12 @@ Workspace = {
 			f.onload = function( data )
 			{
 				window.eval( this.responseText );
+				
+				// Add PDF where supported
+				let PDF = new XMLHttpRequest();
+				PDF.open( 'GET', '/webclient/3rdparty/pdfjs/build/pdf.js', true );
+				PDF.onload = function(){ try{ window.eval( this.responseText ); } catch( e ){ console.log( e ); } };
+				PDF.send();
 				
 			    // Start with expanding the workspace object
 				if( _this.sessionId && _this.postInitialized )
