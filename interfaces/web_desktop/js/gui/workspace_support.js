@@ -578,6 +578,7 @@ function InitWorkspaceNetwork()
 	if( window.PouchManager && !this.pouchManager )
 		this.pouchManager = new PouchManager();
 }
+console.log( 'HELLO THERE - SETTING IT' );
 
 // Voice -----------------------------------------------------------------------
 
