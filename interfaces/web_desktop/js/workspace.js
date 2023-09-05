@@ -1104,11 +1104,10 @@ Workspace = {
 					return false;
 				}
 
-                // Just get it done!
-                function doInitInside()
-                {
-					if( typeof( InitWorkspaceNetwork ) != 'undefined' )
-						InitWorkspaceNetwork();
+				// Just get it done!
+				function doInitInside()
+				{
+					InitWorkspaceNetwork();
 
 					// Reset some options
 					if( ev && ev.shiftKey )
@@ -1301,7 +1300,7 @@ Workspace = {
 					}
 					l.execute( 'getsetting', { settings: [ 'locale', 'friendversion' ] } );
 				}
-				if( window.InitWorkspaceNetwork )
+				if( window.InitWorkspaceNetwork && window.FriendDOS )
 					doInitInside();
 				else setTimeout( function(){ doInitInside(); }, 50 );
 			}
