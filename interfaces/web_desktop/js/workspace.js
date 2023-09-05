@@ -1306,7 +1306,7 @@ Workspace = {
 				}
 				else setTimeout( function(){ doInitInside(); }, 50 );
 			}
-			document.body.appendChild( s );
+			document.getElementsByTagName( 'head' )[0].appendChild( s );
 		}
 		// We've already logged in
 		else
