@@ -4613,6 +4613,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				if( eles.length )
 				{
 					eles[0].classList.remove( 'Loaded' );
+					eles[0].classList.add( 'Wallpaper' );
 					
 					let ext = false;
 					let found = false;
@@ -4658,6 +4659,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								o.preload = true;
 								o.className = 'VideoBackground';
 								o.src = getImageUrl( self.wallpaperImage );
+								o.classList.add( 'Loaded' );
 							}
 							let m = document.createElement( 'video' ); setTheThing( m );
 							let c = document.createElement( 'video' ); setTheThing( c );
@@ -4681,7 +4683,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							eles[0].style.backgroundImage = '';
 							eles[0].parentNode.appendChild( m );
 							eles[0].parentNode.appendChild( c );
-							eles[0].classList.add( 'Loaded' );
 							Workspace.wallpaperLoaded = true;
 							break;
 						default:
@@ -4724,7 +4725,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									// Set the wallpaper
 									eles[0].style.backgroundImage = 'url(' + this.src + ')';
 									eles[0].classList.add( 'Loaded' );
-									console.log( eles[0] );
 								}
 							};
 							
@@ -4765,6 +4765,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				let eles = self.screen.div.getElementsByClassName( 'ScreenContent' );
 				if( eles.length )
 				{
+					eles[0].classList.add( 'Wallpaper' );
 					eles[0].style.backgroundImage = '';
 					eles[0].classList.add( 'Loaded' );
 					setupDriveClicks();
