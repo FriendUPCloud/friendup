@@ -4599,6 +4599,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				let eles = self.screen.div.getElementsByClassName( 'ScreenContent' );
 				if( eles.length )
 				{
+					eles[0].className.remove( 'Loaded' );
+					
 					let ext = false;
 					let found = false;
 					if( self.wallpaperImage )
@@ -4620,7 +4622,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							ext = ( ( ext[ ext.length - 1 ] ) + "" ).toLowerCase();
 						}
 					}
-
+					
 					// Remove prev
 					let v = eles[0].parentNode.getElementsByTagName( 'video' );
 					for( let z = 0; z < v.length; z++ ) 
@@ -4666,6 +4668,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							eles[0].style.backgroundImage = '';
 							eles[0].parentNode.appendChild( m );
 							eles[0].parentNode.appendChild( c );
+							eles[0].classList.add( 'Loaded' );
 							Workspace.wallpaperLoaded = true;
 							break;
 						default:
@@ -4707,6 +4710,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								{
 									// Set the wallpaper
 									eles[0].style.backgroundImage = 'url(' + this.src + ')';
+									eles[0].classList.add( 'Loaded' );
 								}
 							};
 							
@@ -4748,6 +4752,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				if( eles.length )
 				{
 					eles[0].style.backgroundImage = '';
+					eles[0].classList.add( 'Loaded' );
 					setupDriveClicks();
 				}
 				Workspace.wallpaperLoaded = true;
