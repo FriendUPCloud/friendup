@@ -1041,7 +1041,8 @@ Workspace = {
 			// Loading remaining scripts
 			let s = document.createElement( 'script' );
 			s.charset = 'UTF-8';
-			s.setAttribute( 'src', '/webclient/js/gui/workspace_inside.js;' +
+			let prefx = document.location.protocol + '//' + document.location.host;
+			s.setAttribute( 'src', prefx + '/webclient/js/gui/workspace_inside.js;' +
 				'webclient/js/gui/workspace_support.js;' +
 				'webclient/js/gui/filebrowser.js;' +
 				'webclient/js/fui/fui_v1.js;' +
