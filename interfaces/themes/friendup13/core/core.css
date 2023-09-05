@@ -3304,7 +3304,7 @@ body:not([mobile]).ShowTasks #TaskSwitcher .Current .Close
 	background-size: cover;
 	background-position: center;
 	opacity: 0;
-	transition: opacity 0.5s;
+	transition: opacity 1.5s;
 }
 #DoorsScreen > .ScreenContent.Wallpaper.Loaded
 {
@@ -3456,7 +3456,7 @@ body:not([mobile]).ShowTasks #TaskSwitcher .Current .Close
 	background-size: cover;
 	background-position: center;
 	opacity: 0;
-	transition: opacity 0.5s;
+	transition: opacity 1.5s;
 }
 .WorkspaceWallpaper.Loaded
 {
