@@ -1040,6 +1040,7 @@ Workspace = {
 			
 			// Loading remaining scripts
 			let s = document.createElement( 'script' );
+			s.setAttribute( 'type', 'text/javascript' ); 
 			s.src = '/webclient/js/gui/workspace_inside.js;' +
 				'webclient/js/gui/workspace_support.js;' +
 				'webclient/js/gui/filebrowser.js;' +
