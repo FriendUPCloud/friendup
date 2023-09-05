@@ -4687,6 +4687,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						default:
 							eles[0].classList.remove( 'Loaded' );
 							eles[0].classList.add( 'Wallpaper' );
+							console.log( 'Just there' );
 							Workspace.wallpaperLoaded = false;
 							let src = found ? getImageUrl( self.wallpaperImage ) : '/webclient/gfx/theme/default_login_screen.jpg';
 							let workspaceBackgroundImage = new Image();
