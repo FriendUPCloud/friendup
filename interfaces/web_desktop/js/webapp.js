@@ -574,8 +574,7 @@ Workspace = {
 		}
 		
 		// Loading remaining scripts
-		let s = document.createElement( 'script' );
-		s.src = '/webclient/js/gui/workspace_inside_webapp.js;' +
+		let f = new File( '/webclient/js/gui/workspace_inside_webapp.js;' +
 			'webclient/js/gui/workspace_support.js;' +
 			'webclient/3rdparty/adapter.js;' +
 			'webclient/3rdparty/pdfjs/build/pdf.js;' +
@@ -616,9 +615,10 @@ Workspace = {
 			'webclient/js/friendmind.js;' +
 			'webclient/js/frienddos.js;' +
 			'webclient/js/oo.js;' + 
-			'webclient/js/api/friendAPIv1_2.js';
-		s.onload = function()
+			'webclient/js/api/friendAPIv1_2.js' );
+		f.onLoad = function( data )
 		{
+			window.eval( data );
 			if( Workspace.loginPrompt )
 			{
 				Workspace.loginPrompt.close();
@@ -705,7 +705,7 @@ Workspace = {
 				} );
 			}
 		}
-		document.getElementsByTagName( 'head' )[0].appendChild( s );
+		f.load();
 		
 		// Add event listeners
 		for( let a = 0; a < this.runLevels.length; a++ )

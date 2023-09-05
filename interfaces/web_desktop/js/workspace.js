@@ -1307,7 +1307,7 @@ Workspace = {
 				}
 				else setTimeout( function(){ doInitInside(); }, 50 );
 			}
-			document.getElementsByTagName( 'head' )[0].appendChild( s );
+			document.head.appendChild( s );
 			console.log( 'ADDED SCRIPT' );
 		}
 		// We've already logged in
