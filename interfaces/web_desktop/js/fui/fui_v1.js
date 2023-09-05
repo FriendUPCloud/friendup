@@ -361,4 +361,6 @@ class FUIElement
     {
     }
 }
+FUI.registerClass( 'element', FUIElement );
+
 

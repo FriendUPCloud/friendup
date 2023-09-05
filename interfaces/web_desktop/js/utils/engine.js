@@ -333,6 +333,34 @@ function GetByAjax( url, execfunc )
 	client.send ();
 }
 
+if( !window.LoadScript )
+{
+	window.LoadScript = function( scriptSrc, callback = false, async = false )
+	{
+		if( async )
+		{
+			let s = document.createElement( 'script' );
+			s.type = 'text/javascript';
+			s.src = scriptSrc;
+			s.onload = callback;
+			document.head.appendChild( s );
+			return;
+		}
+		let f = new XMLHttpRequest();
+		f.open( 'GET', scriptSrc, false );
+		f.onload = function( data )
+		{
+			try
+			{
+				window.eval( this.responseText );
+				if( callback ) callback();
+			}
+			catch( e ){};
+		}
+		f.send();
+	}
+};
+
 function hideKeyboard()
 {
 	if( !isMobile && !isTablet ) return;
