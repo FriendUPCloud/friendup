@@ -42,12 +42,16 @@
 	color: #E7B66F;
 }
 
+:root
+{
+	touch-action: pan-y
+}
+
 html 
 {
 	height: 100vh;
 	width: 100vw;
 	-webkit-text-size-adjust: 100%;
-	touch-action: pan-y;
 }
 
 html body
