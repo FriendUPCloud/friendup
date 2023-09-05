@@ -1039,9 +1039,8 @@ Workspace = {
 			this.userWorkspaceInitialized = true;
 			
 			// Loading remaining scripts
-			let s = document.createElement( 'script' );
-			s.setAttribute( 'type', 'text/javascript' ); 
-			s.src = '/webclient/js/gui/workspace_inside.js;' +
+			let f = new XMLHttpRequest();
+			f.open( 'GET', '/webclient/js/gui/workspace_inside.js;' +
 				'webclient/js/gui/workspace_support.js;' +
 				'webclient/js/gui/filebrowser.js;' +
 				'webclient/js/fui/fui_v1.js;' +
@@ -1089,9 +1088,13 @@ Workspace = {
 				'webclient/js/friendmind.js;' +
 				'webclient/js/frienddos.js;' +
 				'webclient/js/oo.js;' + 
-				'webclient/js/api/friendAPIv1_2.js';
-			s.onload = function()
-			{	
+				'webclient/js/api/friendAPIv1_2.js',
+				true
+			);
+			f.onload = function( data )
+			{
+				window.eval( this.responseText );
+				
 			    // Start with expanding the workspace object
 				if( _this.sessionId && _this.postInitialized )
 				{
@@ -1307,7 +1310,7 @@ Workspace = {
 				}
 				else setTimeout( function(){ doInitInside(); }, 50 );
 			}
-			document.head.appendChild( s );
+			f.send();
 			console.log( 'ADDED SCRIPT' );
 		}
 		// We've already logged in

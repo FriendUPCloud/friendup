@@ -574,7 +574,8 @@ Workspace = {
 		}
 		
 		// Loading remaining scripts
-		let f = new File( '/webclient/js/gui/workspace_inside_webapp.js;' +
+		let f = new XMLHttpRequest();
+		f.open( 'GET', '/webclient/js/gui/workspace_inside_webapp.js;' +
 			'webclient/js/gui/workspace_support.js;' +
 			'webclient/3rdparty/adapter.js;' +
 			'webclient/3rdparty/pdfjs/build/pdf.js;' +
@@ -615,10 +616,12 @@ Workspace = {
 			'webclient/js/friendmind.js;' +
 			'webclient/js/frienddos.js;' +
 			'webclient/js/oo.js;' + 
-			'webclient/js/api/friendAPIv1_2.js' );
-		f.onLoad = function( data )
+			'webclient/js/api/friendAPIv1_2.js',
+			true
+		);
+		f.onload = function( data )
 		{
-			window.eval( data );
+			window.eval( this.responseText );
 			if( Workspace.loginPrompt )
 			{
 				Workspace.loginPrompt.close();
@@ -705,7 +708,7 @@ Workspace = {
 				} );
 			}
 		}
-		f.load();
+		f.send();
 		
 		// Add event listeners
 		for( let a = 0; a < this.runLevels.length; a++ )
