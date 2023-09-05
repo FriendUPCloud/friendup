@@ -530,7 +530,7 @@ function WindowResizeFunc()
 	}
 }
 
-window.InitWorkspaceEvents = function()
+function InitWorkspaceEvents()
 {
 	if( window.attachEvent )
 	{
@@ -559,7 +559,7 @@ window.InitWorkspaceEvents = function()
 	}
 }
 
-window.InitWorkspaceNetwork = function()
+function InitWorkspaceNetwork()
 {
 	let wsp = Workspace;
 	
