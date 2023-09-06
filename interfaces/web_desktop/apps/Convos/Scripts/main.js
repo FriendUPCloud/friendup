@@ -43,7 +43,8 @@ Application.run = function( msg ){
 	    	let nmsg = {
 	    		senderId: msg.args.uuid,
 	    		type: msg.args.type,
-	    		source: 'notification'
+	    		source: 'notification',
+	    		command: 'app-ready'
 	    	};
 	    	serverQueue.push( nmsg );
 	    	console.log( '[Convos] Waiting for: ', nmsg );
@@ -61,9 +62,9 @@ Application.run = function( msg ){
 
 Application.receiveMessage = function( msg )
 {
-    if( msg.command || msg.source == 'notification' )
+    if( msg.command )
     {
-        if( msg.command == 'servermessage' || msg.source == 'notification' )
+        if( msg.command == 'servermessage' )
         {
             this.view.sendMessage( msg.data );
         }
