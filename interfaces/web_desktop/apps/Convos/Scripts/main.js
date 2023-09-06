@@ -43,11 +43,9 @@ Application.run = function( msg ){
 	    	let nmsg = {
 	    		senderId: msg.args.uuid,
 	    		type: msg.args.type,
-	    		source: 'notification',
-	    		command: 'app-ready'
+	    		source: 'notification'
 	    	};
 	    	serverQueue.push( nmsg );
-	    	console.log( '[Convos] Waiting for: ', nmsg );
 	    }
 	}
 	
