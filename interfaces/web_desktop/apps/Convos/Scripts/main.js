@@ -41,8 +41,10 @@ Application.run = function( msg ){
 	    else if( msg.args.type )
 	    {
 	    	serverQueue.push( {
+	    		command: 'servermessage',
 	    		senderId: msg.args.uuid,
-	    		type: msg.args.type
+	    		type: msg.args.type,
+	    		source: 'push'
 	    	} );
 	    }
 	}
