@@ -38,9 +38,12 @@ Application.run = function( msg ){
 	    {
 	        serverQueue.push( msg.args );
 	    }
-	    else
+	    else if( msg.args.type )
 	    {
-	    	console.log( 'What did we get?', msg );
+	    	serverQueue.push( {
+	    		senderId: msg.args.uuid,
+	    		type: msg.args.type
+	    	} );
 	    }
 	}
 	
