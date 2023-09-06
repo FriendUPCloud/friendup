@@ -63,7 +63,7 @@ Application.receiveMessage = function( msg )
 {
     if( msg.command || msg.source == 'notification' )
     {
-        if( msg.command == 'servermessage' )
+        if( msg.command == 'servermessage' || msg.source == 'notification' )
         {
             this.view.sendMessage( msg.data );
         }
