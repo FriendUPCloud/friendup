@@ -86,6 +86,11 @@ Workspace = {
 			{
 				webpush.applicationdata = JSON.stringify( webpush.applicationdata );
 				Workspace.webPushData = webpush;
+				console.log( 'Cached web push info: ', webpush );
+			}
+			else
+			{
+				console.log( 'Test: ', webpush );
 			}
 		}
 		
