@@ -77,12 +77,16 @@ Workspace = {
 		// First things first
 		if( this.initialized ) return;
 
-		// Get web push
+		// Get web push and cache it
 		let webpush = GetUrlVar( 'webpush' );
 		if( webpush )
 		{
 			webpush = JSON.parse( decodeURIComponent( webpush ) );
-			console.log( 'what was it: ', webpush );
+			if( webpush && webpush.application )
+			{
+				webpush.applicationdata = JSON.stringify( webpush.applicationdata );
+				Workspace.webPushData = webpush;
+			}
 		}
 		
 

@@ -3475,6 +3475,13 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							Workspace.mainDock.openDesklet();
 						Workspace.insideInitialized = true;
 						forceScreenMaxHeight();
+						
+						// Handle push
+						if( Workspace.webPushData )
+						{
+							ExecuteApplication( Workspace.webPushData.application, Workspace.webPushData.applicationdata );
+							Workspace.webPushData = null;
+						}
 					}
 					
 					// Make sure to redraw icons fully
