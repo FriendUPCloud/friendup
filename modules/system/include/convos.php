@@ -105,7 +105,6 @@ if( isset( $args->args ) )
 				            $message->Body = $out->message;
 				            $message->Application = 'Convos';
 				            $message->ApplicationData = '{"uuid":"' . $User->UniqueID . '","type":"dm-user"}';
-		            		$Logger->log( '[webpush] Starting push.' );
 				            $User->WebPush( $targetUser, $options, $message );
 			            }
 		            }
