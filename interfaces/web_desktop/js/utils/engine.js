@@ -346,7 +346,7 @@ if( !window.LoadScript )
 			document.head.appendChild( s );
 			return;
 		}
-		if( scriptSrc.indexOf( '/webclient' ) == 0 )
+		if( scriptSrc.indexOf( '/' ) == 0 )
 		{
 			let m = document.location.href.match( /(http.*?\:\/\/.*?)\// );
 			if( m && m[1] )
