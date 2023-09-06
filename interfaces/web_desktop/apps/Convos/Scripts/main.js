@@ -38,6 +38,10 @@ Application.run = function( msg ){
 	    {
 	        serverQueue.push( msg.args );
 	    }
+	    else
+	    {
+	    	console.log( 'What did we get?', msg );
+	    }
 	}
 	
 	let s = new Shell();
