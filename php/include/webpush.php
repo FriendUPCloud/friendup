@@ -4,7 +4,7 @@ require __DIR__ . '/../vendor/autoload.php';
 use Minishlink\WebPush\WebPush;
 use Minishlink\WebPush\Subscription;
 
-$Logger->log( '[webpush] Checking setting.' );
+//$Logger->log( '[webpush] Checking setting.' );
 
 if( isset( $setting ) )
 {		
