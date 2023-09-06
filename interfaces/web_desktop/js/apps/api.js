@@ -79,7 +79,7 @@ if( !window.LoadScript )
 {
 	window.LoadScript = function( scriptSrc, callback = false, async = false )
 	{
-		if( async )
+		if( async || scriptSrc.substr( 0, 6 ) == '(data:' )
 		{
 			let s = document.createElement( 'script' );
 			s.type = 'text/javascript';
@@ -87,6 +87,12 @@ if( !window.LoadScript )
 			s.onload = callback;
 			document.head.appendChild( s );
 			return;
+		}
+		if( scriptSrc.indexOf( '/' ) == 0 )
+		{
+			let m = document.location.href.match( /(http.*?\:\/\/.*?)\// );
+			if( m && m[1] )
+				scriptSrc = m[1] + scriptSrc;
 		}
 		let f = new XMLHttpRequest();
 		f.open( 'GET', scriptSrc, false );
@@ -97,7 +103,9 @@ if( !window.LoadScript )
 				window.eval( this.responseText );
 				if( callback ) callback();
 			}
-			catch( e ){};
+			catch( e ){
+				console.log( 'Something went wrong!' );
+			};
 		}
 		f.send();
 	}

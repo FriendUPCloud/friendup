@@ -346,6 +346,12 @@ if( !window.LoadScript )
 			document.head.appendChild( s );
 			return;
 		}
+		if( scriptSrc.indexOf( '/webclient' ) == 0 )
+		{
+			let m = document.location.href.match( /(http.*?\:\/\/.*?)\// );
+			if( m && m[1] )
+				scriptSrc = m[1] + scriptSrc;
+		}
 		let f = new XMLHttpRequest();
 		f.open( 'GET', scriptSrc, false );
 		f.onload = function( data )
