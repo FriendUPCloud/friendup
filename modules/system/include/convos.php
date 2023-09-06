@@ -108,6 +108,10 @@ if( isset( $args->args ) )
 				            $User->WebPush( $targetUser, $options, $message );
 			            }
 		            }
+		            else
+		            {
+		            	$Logger->log( '[webpush] System not set up.' );
+		            }
                 }
             }
             $o->DateUpdated = date( 'Y-m-d H:i:s' );
