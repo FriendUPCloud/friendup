@@ -90,6 +90,10 @@ File = function( filename )
 		if( filename.substr( 0, 20 ) == 'resources/webclient/' )
 			filename = filename.substr( 20, filename.length - 20 );
 
+		// Special case, we\'re in a special parent url
+		if( filename.substr( 0, 5 ) == 'apps/' )
+			return '/webclient/' + filename;
+
 		return filename;
 	}
 
@@ -232,7 +236,6 @@ File = function( filename )
 				jax.setResponseType( 'arraybuffer' );
 			}
 			
-			//console.log('PATH ' + filename );
 			// File description
 			if ( typeof( filename ) == 'string' )
 			{
@@ -280,6 +283,7 @@ File = function( filename )
 				else if( ( !this.returnCode || this.returnCode.length > 3 ) && this.responseText().length )
 				{
 					t.rawdata = this.responseText();
+					
 					if ( typeof( t.onLoad ) != 'undefined' )
 					{
 						if( t.replacements )

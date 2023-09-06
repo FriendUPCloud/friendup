@@ -77,12 +77,13 @@ Workspace = {
 		// First things first
 		if( this.initialized ) return;
 
-		// Get web push
+		// Get web push and cache it
 		let webpush = GetUrlVar( 'webpush' );
 		if( webpush )
 		{
 			webpush = JSON.parse( decodeURIComponent( webpush ) );
-			alert( 'Got Web Push: ' + webpush.application );
+			if( webpush && webpush.application )
+				Workspace.webPushData = webpush;
 		}
 		
 
@@ -218,9 +219,7 @@ Workspace = {
 		InitWorkspaceEvents();
 		InitGuibaseEvents();
 
-		let dapis = document.createElement( 'script' );
-		dapis.src = '/system.library/module/?module=system&command=doorsupport&sessionid=' + this.sessionId;
-		document.getElementsByTagName( 'head' )[0].appendChild( dapis );
+		LoadScript( '/system.library/module/?module=system&command=doorsupport&sessionid=' + this.sessionId );
 
 		// Add event listeners
 		for( let a = 0; a < this.runLevels.length; a++ )
@@ -670,7 +669,7 @@ Workspace = {
 		},
 		getServerKey: function( callback )
 		{
-			var k = new Module( 'system' );
+			let k = new Module( 'system' );
 			k.onExecuted = function( e, d )
 			{
 				if( callback )
@@ -1039,8 +1038,8 @@ Workspace = {
 			this.userWorkspaceInitialized = true;
 			
 			// Loading remaining scripts
-			let s = document.createElement( 'script' );
-			s.src = '/webclient/js/gui/workspace_inside.js;' +
+			let f = new XMLHttpRequest();
+			f.open( 'GET', '/webclient/js/gui/workspace_inside.js;' +
 				'webclient/js/gui/workspace_support.js;' +
 				'webclient/js/gui/filebrowser.js;' +
 				'webclient/js/fui/fui_v1.js;' +
@@ -1048,7 +1047,6 @@ Workspace = {
 				'webclient/js/fui/classes/group.fui.js;' +
 				'webclient/js/fui/classes/listview.fui.js;' +
 				'webclient/3rdparty/adapter.js;' +
-				'webclient/3rdparty/pdfjs/build/pdf.js;' +
 				'webclient/js/utils/speech-input.js;' +
 				'webclient/js/utils/events.js;' +
 				'webclient/js/utils/utilities.js;' +
@@ -1057,7 +1055,6 @@ Workspace = {
 				'webclient/js/io/dormant.js;' +
 				'webclient/js/io/dormantramdisc.js;' +
 				'webclient/js/io/door_system.js;' +
-				'webclient/js/io/module.js;' +
 				'webclient/js/io/file.js;' +
 				'webclient/js/io/progress.js;' +
 				'webclient/js/io/workspace_fileoperations.js;' + 
@@ -1089,9 +1086,19 @@ Workspace = {
 				'webclient/js/friendmind.js;' +
 				'webclient/js/frienddos.js;' +
 				'webclient/js/oo.js;' + 
-				'webclient/js/api/friendAPIv1_2.js';
-			s.onload = function()
-			{	
+				'webclient/js/api/friendAPIv1_2.js',
+				true
+			);
+			f.onload = function( data )
+			{
+				window.eval( this.responseText );
+				
+				// Add PDF where supported
+				let PDF = new XMLHttpRequest();
+				PDF.open( 'GET', '/webclient/3rdparty/pdfjs/build/pdf.js', true );
+				PDF.onload = function(){ try{ window.eval( this.responseText ); } catch( e ){ console.log( e ); } };
+				PDF.send();
+				
 			    // Start with expanding the workspace object
 				if( _this.sessionId && _this.postInitialized )
 				{
@@ -1105,9 +1112,9 @@ Workspace = {
 					return false;
 				}
 
-                // Just get it done!
-                function doInitInside()
-                {
+				// Just get it done!
+				function doInitInside()
+				{
 					InitWorkspaceNetwork();
 
 					// Reset some options
@@ -1301,11 +1308,13 @@ Workspace = {
 					}
 					l.execute( 'getsetting', { settings: [ 'locale', 'friendversion' ] } );
 				}
-				if( window.InitWorkspaceNetwork )
+				if( window.InitWorkspaceNetwork && window.FriendDOS )
+				{
 					doInitInside();
+				}
 				else setTimeout( function(){ doInitInside(); }, 50 );
 			}
-			document.body.appendChild( s );
+			f.send();
 		}
 		// We've already logged in
 		else

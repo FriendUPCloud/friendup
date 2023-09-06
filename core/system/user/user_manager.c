@@ -1017,23 +1017,26 @@ User *UMGetAllUsersDB( UserManager *um )
  */
 int UMAddUser( UserManager *um,  User *usr )
 {
-	User *lu =  UMGetUserByID( um, usr->u_ID );
-	if( lu == NULL  )
+	if( usr != NULL && usr->u_ID != NULL )
 	{
-		int tr = 20;
-		
-		USER_MANAGER_CHANGE_ON( um );
-		usr->node.mln_Succ  = (MinNode *) um->um_Users;
-		if( um->um_Users != NULL )
+		User *lu =  UMGetUserByID( um, usr->u_ID );
+		if( lu == NULL  )
 		{
-			um->um_Users->node.mln_Pred = (MinNode *)usr;
+			int tr = 20;
+			
+			USER_MANAGER_CHANGE_ON( um );
+			usr->node.mln_Succ  = (MinNode *) um->um_Users;
+			if( um->um_Users != NULL )
+			{
+				um->um_Users->node.mln_Pred = (MinNode *)usr;
+			}
+			um->um_Users = usr;
+			USER_MANAGER_CHANGE_OFF( um );
 		}
-		um->um_Users = usr;
-		USER_MANAGER_CHANGE_OFF( um );
-	}
-	else
-	{
-		INFO("User found, will not be added\n");
+		else
+		{
+			INFO("User found, will not be added\n");
+		}
 	}
 	
 	return  0;

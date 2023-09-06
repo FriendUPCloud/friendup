@@ -59,7 +59,7 @@ html body
 
 html body[mobile=mobile]
 {
-	font-size: 1em;
+	font-size: 16px;
 }
 
 html body hr.Divider,

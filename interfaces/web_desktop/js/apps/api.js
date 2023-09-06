@@ -75,6 +75,45 @@ Friend.application = {
 	}
 };
 
+if( !window.LoadScript )
+{
+	window.LoadScript = function( scriptSrc, callback = false, async = false )
+	{
+		if( async || scriptSrc.substr( 0, 6 ) == '(data:' )
+		{
+			let s = document.createElement( 'script' );
+			s.type = 'text/javascript';
+			s.src = scriptSrc;
+			s.onload = callback;
+			document.head.appendChild( s );
+			return;
+		}
+		if( scriptSrc.indexOf( '/' ) == 0 )
+		{
+			let m = document.location.href.match( /(http.*?\:\/\/.*?)\// );
+			if( m && m[1] )
+				scriptSrc = m[1] + scriptSrc;
+		}
+		let f = new XMLHttpRequest();
+		f.open( 'GET', scriptSrc, false );
+		f.onload = function( data )
+		{
+			try
+			{
+				window.eval( this.responseText );
+				if( callback ) callback();
+			}
+			catch( e ){
+				console.log( 'Something went wrong!' );
+			};
+		}
+		f.send();
+	}
+};
+
+// Load FUI
+LoadScript( '/webclient/js/fui/fui_v1.js' );
+
 window.Application =
 {
 	activated: false,
@@ -123,13 +162,10 @@ window.Application =
 	initFriendVR: function( callback )
 	{
 		if( this.friendVR ) return false;
-		var js = document.createElement( 'script' );
-		js.src = '/webclient/js/apps/friendvr.js';
-		js.onload = function()
+		LoadScript( '/webclient/js/apps/friendvr.js', function()
 		{
 			if( callback ) callback( new Friend.VR() );
-		}
-		document.body.appendChild( js );
+		} );
 		return true;
 	},
 	// Get an element retrieved by View.getWindowElement()
@@ -6200,32 +6236,41 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		if( scripts.length )
 		{
 			let removes = [];
+			let webclients = [];
 			for( let a = 0; a < scripts.length; a++ )
 			{
 				let src = scripts[a].getAttribute( 'src' )
 				if( src )
 				{
-					
-					totalLoadingResources++;
-					let d = document.createElement( 'script' );
-					d.src = src;
-					d.async = false;
-					d.onload = doneLoading;
-					document.body.appendChild( d );
-					wait = true;
-					removes.push( scripts[a] );
+					let match = document.location.href.split( '/system.library/' )[0] + '/webclient/';
+					if( src.substr( 0, match.length ) == match )
+					{
+						webclients.push( 'webclient/' + src.substr( match.length, src.length - match.length ) );
+						removes.push( scripts[a] );
+						continue;
+					}
+					else
+					{
+						totalLoadingResources++;
+						LoadScript( src, doneLoading, true );
+						removes.push( scripts[a] );
+					}
 				}
 				else
 				{
-				    let d = document.createElement( 'script' );
-				    d.innerHTML = EntityDecode( scripts[a].innerHTML );
-				    document.body.appendChild( d );
+				    window.eval( EntityDecode( scripts[a].innerHTML ) );
 				}
+			}
+			if( webclients.length )
+			{
+				totalLoadingResources++;
+				LoadScript( '/' + webclients.join( ';' ), doneLoading, true );
 			}
 			// Clear friendscripts
 			for( let a = 0; a < removes.length; a++ )
 			{
-				removes[a].parentNode.removeChild( removes[a] );
+				if( removes[ a ] && removes[ a ].parentNode )
+					removes[a].parentNode.removeChild( removes[a] );
 			}
 			removes = null;
 		}
@@ -6594,52 +6639,24 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				]
 			];
 
-			let elez = [];
+			let loadedCount = 0;
 			for ( let a = 0; a < js.length; a++ )
 			{
-				let s = document.createElement( 'script' );
 				// Set src with some rules whether it's an app or a Workspace component
 				let path = js[ a ].join( ';/webclient/' );
-				s.src = '/webclient/' + path;
-				s.async = false;
-				elez.push( s );
-
-				// When last javascript loads, parse css, setup translations and say:
-				// We are now registered..
-				if( a == js.length-1 )
+				LoadScript( '/webclient/' + path, function()
 				{
-					function fl()
+					loadedCount++;
+					if( loadedCount == js.length )
 					{
-						if( this ) this.isLoaded = true;
-						let allLoaded = true;
-						for( let b = 0; b < elez.length; b++ )
+						if( typeof( Workspace ) == 'undefined' )
 						{
-							if( !elez[b].isLoaded ) allLoaded = false;
+							if( typeof( InitWindowEvents ) != 'undefined' ) InitWindowEvents();
+							if( typeof( InitGuibaseEvents ) != 'undefined' ) InitGuibaseEvents();
 						}
-						if( allLoaded )
-						{
-							if( typeof( Workspace ) == 'undefined' )
-							{
-								if( typeof( InitWindowEvents ) != 'undefined' ) InitWindowEvents();
-								if( typeof( InitGuibaseEvents ) != 'undefined' ) InitGuibaseEvents();
-							}
-							onLoaded();
-						}
-						else
-						{
-							setTimeout( fl, 5 );
-						}
+						onLoaded();
 					}
-					s.onload = fl;
-				}
-				else
-				{
-					s.onload = function()
-					{
-						this.isLoaded = true;
-					}
-				}
-				head.appendChild( s );
+				} );
 			}
 		}
 	}
@@ -6653,9 +6670,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		else style.appendChild( document.createTextNode( packet.cachedAppData.css ) );
 		head.appendChild( style );
 		
-		let js = document.createElement( 'script' );
-		js.innerHTML = packet.cachedAppData.js;
-		head.appendChild( js );
+		window.eval( packet.cachedAppData.js );
 		
 		// We are loaded
 		onLoaded();

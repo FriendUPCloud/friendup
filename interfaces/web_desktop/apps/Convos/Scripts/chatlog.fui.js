@@ -1037,7 +1037,7 @@ class FUIChatlog extends FUIElement
 		}
     }
     // Did we scroll?
-    checkScrolled = function()
+    checkScrolled()
     {
     	return  this.domMessages.scrollTop + 50 < this.domMessages.scrollHeight - this.domMessages.offsetHeight;
     }

@@ -271,6 +271,8 @@ var WorkspaceInside = {
 	// Check workspace wallpapers
 	checkWorkspaceWallpapers: function( loaded )
 	{
+		let self = this;
+		
 		if( this.mode == 'vr' ) return;
 		if( globalConfig.workspacecount <= 1 ) return;
 
@@ -306,25 +308,37 @@ var WorkspaceInside = {
 		}
 		
 		let image = url == 'none' ? url : ( 'url(' + url + ')' );
-		
+		let preload = new Image();
+		preload.src = url;
+		preload.onload = function()
+		{
+			for( let a = 0; a < m; a++ )
+			{
+				// Update background image
+				if( self.workspaceWallpapers[a] )
+				{
+					self.workspaceWallpapers[a].style.backgroundImage = image;
+					self.workspaceWallpapers[a].classList.add( 'Loaded' );
+				}
+			}
+		}
+		// Maintain divs
 		for( let a = 0; a < m; a++ )
 		{
 			// Check if we already have wallpapers
-			if( this.workspaceWallpapers && a < this.workspaceWallpapers.length )
+			if( self.workspaceWallpapers && a < self.workspaceWallpapers.length )
 			{
 				// Reduction of superflous workspaces
 				if( a >= globalConfig.workspacecount )
 				{
-					this.workspaceWallpapers[a].parentNode.removeChild(
-						this.workspaceWallpapers[a]
+					self.workspaceWallpapers[a].parentNode.removeChild(
+						self.workspaceWallpapers[a]
 					);
 				}
-				else o.push( this.workspaceWallpapers[a] );
-				// Update background image
-				this.workspaceWallpapers[a].style.backgroundImage = image;
-				this.workspaceWallpapers[a].style.left = scr.div.offsetWidth * a + 'px';
-				this.workspaceWallpapers[a].style.width = scr.div.offsetWidth + 'px';
-				this.workspaceWallpapers[a].style.height = scr.contentDiv.offsetHeight + 'px';
+				else o.push( self.workspaceWallpapers[a] );
+				self.workspaceWallpapers[a].style.left = scr.div.offsetWidth * a + 'px';
+				self.workspaceWallpapers[a].style.width = scr.div.offsetWidth + 'px';
+				self.workspaceWallpapers[a].style.height = scr.contentDiv.offsetHeight + 'px';
 			}
 			// New entry
 			else
@@ -334,13 +348,12 @@ var WorkspaceInside = {
 				d.style.left = scr.div.offsetWidth * a + 'px';
 				d.style.width = scr.div.offsetWidth + 'px';
 				d.style.height = scr.contentDiv.offsetHeight + 'px';
-				d.style.backgroundImage = image;
 				scr.contentDiv.appendChild( d );
 				o.push( d );
 			}
 		}
 		// Overwrite array
-		this.workspaceWallpapers = o;
+		self.workspaceWallpapers = o;
 		
 		if( loaded )
 		{
@@ -3462,6 +3475,13 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							Workspace.mainDock.openDesklet();
 						Workspace.insideInitialized = true;
 						forceScreenMaxHeight();
+						
+						// Handle push
+						if( Workspace.webPushData )
+						{
+							ExecuteApplication( Workspace.webPushData.application, Workspace.webPushData.applicationdata );
+							Workspace.webPushData = null;
+						}
 					}
 					
 					// Make sure to redraw icons fully
@@ -3837,7 +3857,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				// Do the actual refresh
 				if( w.directoryview )
 					w.directoryview.toChange = true;
-				//else console.log( 'Hippopotomous: ', w );
 				w.refresh( cbk );
 			}, timeout );
 		}
@@ -4620,7 +4639,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							ext = ( ( ext[ ext.length - 1 ] ) + "" ).toLowerCase();
 						}
 					}
-
+					
 					// Remove prev
 					let v = eles[0].parentNode.getElementsByTagName( 'video' );
 					for( let z = 0; z < v.length; z++ ) 
@@ -4636,6 +4655,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						case 'avi':
 						case 'ogg':
 						case 'webm':
+							eles[0].classList.remove( 'Loaded' );
+							eles[0].classList.add( 'Wallpaper' );
 							// Add new video
 							function setTheThing( o )
 							{
@@ -4643,6 +4664,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								o.preload = true;
 								o.className = 'VideoBackground';
 								o.src = getImageUrl( self.wallpaperImage );
+								o.classList.add( 'Loaded' );
 							}
 							let m = document.createElement( 'video' ); setTheThing( m );
 							let c = document.createElement( 'video' ); setTheThing( c );
@@ -4669,6 +4691,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							Workspace.wallpaperLoaded = true;
 							break;
 						default:
+							eles[0].classList.remove( 'Loaded' );
+							eles[0].classList.add( 'Wallpaper' );
 							Workspace.wallpaperLoaded = false;
 							let src = found ? getImageUrl( self.wallpaperImage ) : '/webclient/gfx/theme/default_login_screen.jpg';
 							let workspaceBackgroundImage = new Image();
@@ -4696,6 +4720,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								
 								Workspace.wallpaperImageObject = workspaceBackgroundImage;
 								Workspace.wallpaperLoaded = src;
+								eles[0].classList.add( 'Loaded' );
 								
 								// Mobile is not using multiple workspaces
 								if( !isMobile && globalConfig.workspacecount > 1 )
@@ -4747,7 +4772,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				let eles = self.screen.div.getElementsByClassName( 'ScreenContent' );
 				if( eles.length )
 				{
+					eles[0].classList.add( 'Wallpaper' );
 					eles[0].style.backgroundImage = '';
+					eles[0].classList.add( 'Loaded' );
 					setupDriveClicks();
 				}
 				Workspace.wallpaperLoaded = true;
@@ -4761,7 +4788,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			{
 				//console.log( 'Wallpaper: What happened and which mode? ' + Workspace.mode );
 			}
-
 		}, forceRefresh );
 	},
 	// Get a door by path

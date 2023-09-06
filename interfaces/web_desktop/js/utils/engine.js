@@ -333,6 +333,40 @@ function GetByAjax( url, execfunc )
 	client.send ();
 }
 
+if( !window.LoadScript )
+{
+	window.LoadScript = function( scriptSrc, callback = false, async = false )
+	{
+		if( async )
+		{
+			let s = document.createElement( 'script' );
+			s.type = 'text/javascript';
+			s.src = scriptSrc;
+			s.onload = callback;
+			document.head.appendChild( s );
+			return;
+		}
+		if( scriptSrc.indexOf( '/' ) == 0 )
+		{
+			let m = document.location.href.match( /(http.*?\:\/\/.*?)\// );
+			if( m && m[1] )
+				scriptSrc = m[1] + scriptSrc;
+		}
+		let f = new XMLHttpRequest();
+		f.open( 'GET', scriptSrc, false );
+		f.onload = function( data )
+		{
+			try
+			{
+				window.eval( this.responseText );
+				if( callback ) callback();
+			}
+			catch( e ){};
+		}
+		f.send();
+	}
+};
+
 function hideKeyboard()
 {
 	if( !isMobile && !isTablet ) return;
@@ -2950,14 +2984,10 @@ var __randDevId = false;
 function GetDeviceId()
 {
 	// Try to get the device id from cookie
-	/*var ck = GetCookie( 'deviceId' );
-	if( ck ) return ck;*/
+	//var ck = GetCookie( 'deviceId' );
+	//if( ck ) return ck;
 	
-	if( !__randDevId )
-	{
-		var md5 = deps ? deps.MD5 : window.MD5;
-		__randDevId = md5( ( Math.random() % 999 ) + ( Math.random() % 999 ) + ( Math.random() % 999 ) + '' );
-	}
+	if( !__randDevId ) __randDevId = UniqueHash();
 	
 	var id = !!('ontouchstart' in window) ? 'touch' : 'wimp';
 	var ua = navigator.userAgent.toLowerCase()
@@ -2973,6 +3003,8 @@ function GetDeviceId()
 	if( !platform ) platform = 'Generic';
 	
 	let r = id + '_' + type + '_' + platform + '_' + __randDevId;
+
+	console.log( '[deviceid] Start device id: ' + r );
 
 	//application token is needed for iOS push notifications
 	if( window.friendApp )
@@ -3055,6 +3087,8 @@ function GetDeviceId()
 	
 	// Store the cookie for later use
 	//SetCookie( 'deviceId', r );
+	
+	console.log( '[deviceid] ' + r );
 	
 	return r;
 }

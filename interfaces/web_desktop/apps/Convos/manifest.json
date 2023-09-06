@@ -1,0 +1,40 @@
+{
+	"name": "Convos",
+	"short_name": "Convos",
+	"start_url": "index.html",
+	"display": "standalone",
+	"background_color": "#335675",
+	"description": "Chat and discussion groups.",
+	"icons": [
+		{
+			"src": "/webclient/apps/Convos/icon48.png",
+			"sizes": "48x48",
+			"type": "image/png"
+		},
+		{
+			"src": "/webclient/apps/Convos/icon72.png",
+			"sizes": "72x72",
+			"type": "image/png"
+		},
+		{
+			"src": "/webclient/apps/Convos/icon96.png",
+			"sizes": "96x96",
+			"type": "image/png"
+		},
+		{
+			"src": "/webclient/apps/Convos/icon144.png",
+			"sizes": "144x144",
+			"type": "gfx/png"
+		},
+		{
+			"src": "/webclient/apps/Convos/icon168.png",
+			"sizes": "168x168",
+			"type": "image/png"
+		},
+		{
+			"src": "/webclient/apps/Convos/icon192.png",
+			"sizes": "192x192",
+			"type": "image/png"
+		}
+	]
+}

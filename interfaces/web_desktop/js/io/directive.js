@@ -54,27 +54,17 @@ function canQuitApp( appName )
 // Load a javascript application into a sandbox
 function ExecuteApplication( app, args, callback, retries, flags )
 {
-	//console.log( 'ExecuteApplication', [ app, args, callback, retries, flags ])
-    // Do not do this if we have nothing
-    if( !document.body || ( !document.body.getAttribute( 'sharedapp' ) && ( document.body && !document.body.classList.contains( 'Loaded' ) ) ) )
-    {
-    	console.log( 'Not ready' );
-        return setTimeout( function()
+        // Do not do this if we have nothing
+        if( !document.body || ( !document.body.getAttribute( 'sharedapp' ) && ( document.body && !document.body.classList.contains( 'Loaded' ) ) ) )
         {
-            ExecuteApplication( app, args, callback, retries, flags );
-        }, 50 );
-    }
-	/*console.log( 'ExecuteApplication', [
-		app,
-		args,
-		callback,
-		retries,
-		flags,
-	]);*/
+            return setTimeout( function()
+            {
+                ExecuteApplication( app, args, callback, retries, flags );
+            }, 50 );
+        }
 	// Just nothing.
 	if( !app )
 	{
-		//console.log( 'just nothing things', app );
 		return;
 	}
 	
@@ -537,13 +527,6 @@ function ExecuteApplication( app, args, callback, retries, flags )
 				ifr.src = sdomain + filepath + 'index.html?friendup=' + sdomain;
 			}
 			
-			/*console.log( 'ExecuteApplication - opening app', {
-				ifr    : ifr,
-				conf   : conf,
-				flags  : flags,
-				silent : flags.openSilent,
-			});*/
-			
 			// Register name and ID
 			ifr.applicationName = app.indexOf( ' ' ) > 0 ? app.split( ' ' )[0] : app;
 			ifr.userId = Workspace.userId;
@@ -721,7 +704,7 @@ function ExecuteApplication( app, args, callback, retries, flags )
 				// Make sure pickup items are cleared
 				mousePointer.clear();
 				
-				var cid = addWrapperCallback( function( data )
+				let cid = addWrapperCallback( function( data )
 				{
 					if( typeof( callback ) == 'function' )
 					{
@@ -743,7 +726,7 @@ function ExecuteApplication( app, args, callback, retries, flags )
 				}
 				
 				// Args could be sent in JSON format, then try to give this on.
-				var oargs = args;
+				let oargs = args;
 				try
 				{
 					oargs = JSON.parse( decodeURIComponent( args ) );
@@ -752,7 +735,6 @@ function ExecuteApplication( app, args, callback, retries, flags )
 				{
 					oargs = args;
 				}
-
 				let o = {
 					command: 'register',
 					applicationId: ifr.applicationId,
@@ -781,17 +763,8 @@ function ExecuteApplication( app, args, callback, retries, flags )
 				};
 				if( conf.State ) o.state = conf.State;
 
-                if( _applicationBasics.css && _applicationBasics.css.length > 0 )
-                {
-				    //console.log( 'Directive: Sent (cached) css to app with ' + _applicationBasics.css.length );
-			    }
-			    else
-			    {
-			        //console.log( 'Directive: Could not find css string length. Handle in API.' );
-			    }
-
-				// Get JSON data from url
-				var vdata = GetUrlVar( 'data' ); if( vdata ) o.data = vdata;
+                // Get JSON data from url
+				let vdata = GetUrlVar( 'data' ); if( vdata ) o.data = vdata;
 
 				// Language support
 				if( conf.language )
@@ -1693,13 +1666,13 @@ function AttachAppSandbox( ifr, path, pathType )
 {
 	if( !pathType ) pathType = 'default';
 	
-	var d = document.createElement( 'div' );
+	let d = document.createElement( 'div' );
 	d.className = 'AppSandbox';
 	d.appendChild( ifr );
 	ifr.div = d;
 	d.ifr = ifr;
 
-	var n = document.createElement( 'div' );
+	let n = document.createElement( 'div' );
 	n.className = 'Taskname';
 	n.innerHTML = ifr.applicationName;
 	d.appendChild( n );
@@ -1707,14 +1680,14 @@ function AttachAppSandbox( ifr, path, pathType )
 	// Make sure we have a path
 	if( !path ) path = ifr.src.split( /\/[^/.]*\.html/ )[0];
 
-	var x = document.createElement( 'div' );
-	var icon = oicon = '/webclient/gfx/icons/64x64/mimetypes/application-x-javascript.png';
+	let x = document.createElement( 'div' );
+	let icon = oicon = '/webclient/gfx/icons/64x64/mimetypes/application-x-javascript.png';
 	if( path.indexOf( '?' ) < 0 || path.indexOf( 'command=resource' ) > 0 )
 		icon = ( pathType == 'friendpath' ? oicon : ( path + ( ( path[ path.length - 1 ] == '/' ? '' : '/' ) ) + 'icon.png' ) );
 	ifr.icon = icon;
 	x.style.backgroundImage = 'url(' + ifr.icon + ')';
 	x.className = 'Close';
-	var img = document.createElement( 'img' );
+	let img = document.createElement( 'img' );
 	img.src = ifr.icon;
 	img.onload = function()
 	{
@@ -1723,7 +1696,7 @@ function AttachAppSandbox( ifr, path, pathType )
 	x.appendChild( img );
 	d.appendChild( x );
 
-	var b = document.createElement( 'div' );
+	let b = document.createElement( 'div' );
 	b.className = 'CloseButton';
 	b.onmousedown = function()
 	{

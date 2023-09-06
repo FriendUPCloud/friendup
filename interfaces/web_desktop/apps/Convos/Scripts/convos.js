@@ -118,6 +118,8 @@ Application.receiveMessage = function( msg )
 		}, 25 );
 	}
 	
+	console.log( 'CONVOS GOT MESSAGE: ', msg );
+	
 	// Receiving message on sender
     if( msg.senderId && !msg.command )
     {
@@ -322,7 +324,6 @@ Application.receiveMessage = function( msg )
 		let contacts = FUI.getElementByUniqueId( 'contacts' );
     	if( contacts )
     	{
-			console.log( 'Poll' );
 			Application.SendUserMsg( {
 				recipientId: contacts.record.ID,
 				message: {

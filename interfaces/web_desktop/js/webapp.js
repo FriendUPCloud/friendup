@@ -475,6 +475,17 @@ Workspace = {
 		}
 		
 		this.conf = urlVars;
+		
+		// Rewrite
+		if( this.conf && !this.conf.app )
+		{
+			this.conf.app = document.location.href.match( /app\/(.*)/i );
+			this.conf.app = this.conf.app[1];
+			if( this.conf.app.substr( -11, 11 ) == '/index.html' )
+				this.conf.app = this.conf.app.substr( 0, this.conf.app.length - 11 );
+			else if( this.conf.app.substr( -1, 1 ) == '/' )
+				this.conf.app = this.conf.app.substr( 0, this.conf.app.length - 1 );
+		}
 
 		this.mode = mode;
 
@@ -563,8 +574,8 @@ Workspace = {
 		}
 		
 		// Loading remaining scripts
-		let s = document.createElement( 'script' );
-		s.src = '/webclient/js/gui/workspace_inside_webapp.js;' +
+		let f = new XMLHttpRequest();
+		f.open( 'GET', '/webclient/js/gui/workspace_inside_webapp.js;' +
 			'webclient/js/gui/workspace_support.js;' +
 			'webclient/3rdparty/adapter.js;' +
 			'webclient/3rdparty/pdfjs/build/pdf.js;' +
@@ -576,7 +587,6 @@ Workspace = {
 			'webclient/js/io/dormant.js;' +
 			'webclient/js/io/dormantramdisc.js;' +
 			'webclient/js/io/door_system.js;' +
-			'webclient/js/io/module.js;' +
 			'webclient/js/io/file.js;' +
 			'webclient/js/io/progress.js;' +
 			'webclient/js/io/workspace_fileoperations.js;' + 
@@ -606,9 +616,12 @@ Workspace = {
 			'webclient/js/friendmind.js;' +
 			'webclient/js/frienddos.js;' +
 			'webclient/js/oo.js;' + 
-			'webclient/js/api/friendAPIv1_2.js';
-		s.onload = function()
+			'webclient/js/api/friendAPIv1_2.js',
+			true
+		);
+		f.onload = function( data )
 		{
+			window.eval( this.responseText );
 			if( Workspace.loginPrompt )
 			{
 				Workspace.loginPrompt.close();
@@ -695,7 +708,7 @@ Workspace = {
 				} );
 			}
 		}
-		document.body.appendChild( s );
+		f.send();
 		
 		// Add event listeners
 		for( let a = 0; a < this.runLevels.length; a++ )

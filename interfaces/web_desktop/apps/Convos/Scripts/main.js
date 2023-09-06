@@ -38,6 +38,15 @@ Application.run = function( msg ){
 	    {
 	        serverQueue.push( msg.args );
 	    }
+	    else if( msg.args.type )
+	    {
+	    	let nmsg = {
+	    		senderId: msg.args.uuid,
+	    		type: msg.args.type,
+	    		source: 'notification'
+	    	};
+	    	serverQueue.push( nmsg );
+	    }
 	}
 	
 	let s = new Shell();

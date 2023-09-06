@@ -386,6 +386,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 		HashmapElement *ast = GetHEReq( *request, "authid" );
 		HashmapElement *sst = GetHEReq( *request, "servertoken" ); // TODO: Only allow this on localhost!
 		HashmapElement *lot = GetHEReq( *request, "logintoken" );
+		HashmapElement *dev = GetHEReq( *request, "deviceid" );
 		
 		if( tst == NULL && ast == NULL && sst == NULL && lot == NULL )
 		{			
@@ -464,7 +465,8 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 						if( loggedSession == NULL && userName[ 0 ] != 0 )	// only if user exist and it has servertoken
 						{
 							// This needs to create a new session
-							loggedSession = UserSessionNew( NULL, ( char *)lot->hme_Data, l->fcm->fcm_ID );
+							char *deviceId = ( dev != NULL && dev->hme_Data != NULL ) ? ( char *)dev->hme_Data : ( char *)lot->hme_Data;
+							loggedSession = UserSessionNew( NULL, deviceId, l->fcm->fcm_ID );
 							if( loggedSession != NULL )
 							{
 								sprintf( sessionid, "%s", loggedSession->us_SessionID );
