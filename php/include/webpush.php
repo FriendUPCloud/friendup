@@ -12,6 +12,7 @@ if( isset( $setting ) )
 	
 	if( !file_exists( $path . 'webpush_private_key.txt' ) )
 	{
+		$Logger->log( '[webpush] No private key.' );
 		die( 'fail<!--separate-->{"message":"Keys not installed.","response":-1}' );
 	}
 	else
@@ -93,6 +94,10 @@ if( isset( $setting ) )
 				}
 			}
 		}
+	}
+	else
+	{
+		$Logger->log( '[webpush] Failed to send one notification.' );
 	}
 }
 return false;
