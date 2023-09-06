@@ -83,15 +83,7 @@ Workspace = {
 		{
 			webpush = JSON.parse( decodeURIComponent( webpush ) );
 			if( webpush && webpush.application )
-			{
-				webpush.applicationdata = JSON.stringify( webpush.applicationdata );
 				Workspace.webPushData = webpush;
-				console.log( 'Cached web push info: ', webpush );
-			}
-			else
-			{
-				console.log( 'Test: ', webpush );
-			}
 		}
 		
 

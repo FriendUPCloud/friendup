@@ -465,7 +465,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 						if( loggedSession == NULL && userName[ 0 ] != 0 )	// only if user exist and it has servertoken
 						{
 							// This needs to create a new session
-							char *deviceId = dev && dev->hme_Data ? ( char *)dev->hme_Data : ( char *)lot->hme_Data;
+							char *deviceId = ( dev != NULL && dev->hme_Data != NULL ) ? ( char *)dev->hme_Data : ( char *)lot->hme_Data;
 							loggedSession = UserSessionNew( NULL, deviceId, l->fcm->fcm_ID );
 							if( loggedSession != NULL )
 							{
