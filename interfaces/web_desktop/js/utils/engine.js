@@ -2984,8 +2984,8 @@ var __randDevId = false;
 function GetDeviceId()
 {
 	// Try to get the device id from cookie
-	var ck = GetCookie( 'deviceId' );
-	if( ck ) return ck;
+	//var ck = GetCookie( 'deviceId' );
+	//if( ck ) return ck;
 	
 	if( !__randDevId ) __randDevId = UniqueHash();
 	
@@ -3086,7 +3086,7 @@ function GetDeviceId()
 	}
 	
 	// Store the cookie for later use
-	SetCookie( 'deviceId', r );
+	//SetCookie( 'deviceId', r );
 	
 	console.log( '[deviceid] ' + r );
 	
