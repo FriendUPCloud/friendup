@@ -155,6 +155,7 @@ Application.receiveMessage = function( msg )
         else
         {
         	// Log
+        	console.log( 'CONVOS: Trying to get contact.', msg );
         	if( !unreadMessages.dms[ msg.senderId ] )
         		unreadMessages.dms[ msg.senderId ] = [];
         	unreadMessages.dms[ msg.senderId ].push( { message: msg.message, time: ( new Date() ).getTime() } );
@@ -179,8 +180,10 @@ Application.receiveMessage = function( msg )
         				if( contacts.getContact( msg.senderId ) )
         				{
         					clearInterval( activR );
+			    			console.log( 'YEH?' );
 			    			contacts.setChatView( contacts.getContact( msg.senderId ) );
 		    			}
+		    			console.log( 'Tryuing' );
         			}
         			activR = setInterval( function(){ activ(); }, 125 );
         			activ();
