@@ -859,6 +859,10 @@ class dbUser extends dbIO
 						require( __DIR__ . '/../include/webpush.php' );
 					}
 				}
+				else
+				{
+					$Logger->log( '[webpush] No device with identity push' );
+				}
 			}
 		}
 		else
