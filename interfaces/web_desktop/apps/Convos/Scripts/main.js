@@ -42,9 +42,12 @@ Application.run = function( msg ){
 	    {
 	    	let nmsg = {
 	    		command: 'servermessage',
-	    		senderId: msg.args.uuid,
-	    		type: msg.args.type,
-	    		source: 'notification'
+	    		data:
+	    		{
+					senderId: msg.args.uuid,
+					type: msg.args.type,
+					source: 'notification'
+				}
 	    	};
 	    	serverQueue.push( nmsg );
 	    	console.log( '[Convos] Waiting for: ', nmsg );
