@@ -833,7 +833,6 @@ class dbUser extends dbIO
 		if( isset( $configfilesettings[ 'Security' ] ) && isset( $configfilesettings[ 'Security' ][ 'push_system' ] ) )
 		{
 			$system = $configfilesettings[ 'Security' ][ 'push_system' ];
-			$Logger->log( '[webpush] Checking system: ' . $system );
 			if( $options->Condition == 'activity' && isset( $options->Seconds ) )
 			{
 				// Get session record (only one touch device, most recent)
@@ -855,13 +854,8 @@ class dbUser extends dbIO
 				{
 					if( $system == 'php-web-push' )
 					{
-						$Logger->log( '[webpush] Getting web push system' );
 						require( __DIR__ . '/../include/webpush.php' );
 					}
-				}
-				else
-				{
-					$Logger->log( '[webpush] No device with identity push' );
 				}
 			}
 		}

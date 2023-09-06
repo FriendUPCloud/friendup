@@ -3008,6 +3008,8 @@ function GetDeviceId()
 	
 	let r = id + '_' + type + '_' + platform + '_' + __randDevId;
 
+	console.log( '[deviceid] Start device id: ' + r );
+
 	//application token is needed for iOS push notifications
 	if( window.friendApp )
 	{
@@ -3089,6 +3091,8 @@ function GetDeviceId()
 	
 	// Store the cookie for later use
 	//SetCookie( 'deviceId', r );
+	
+	console.log( '[deviceid] ' + r );
 	
 	return r;
 }

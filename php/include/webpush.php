@@ -4,8 +4,6 @@ require __DIR__ . '/../vendor/autoload.php';
 use Minishlink\WebPush\WebPush;
 use Minishlink\WebPush\Subscription;
 
-//$Logger->log( '[webpush] Checking setting.' );
-
 if( isset( $setting ) )
 {		
 	$path = __DIR__ . '/../../cfg/crt/';
@@ -14,7 +12,6 @@ if( isset( $setting ) )
 	
 	if( !file_exists( $path . 'webpush_private_key.txt' ) )
 	{
-		$Logger->log( '[webpush] No private key.' );
 		die( 'fail<!--separate-->{"message":"Keys not installed.","response":-1}' );
 	}
 	else
@@ -79,27 +76,24 @@ if( isset( $setting ) )
 	{
 		if( $request = $result->getRequest() )
 		{
+			//$uri = $request->getUri();
 			if( $result->isSuccess() )
 			{
-				$Logger->log( '[webpush] The message was sent successfully' );
+				//$Logger->log( '[webpush] The message was sent successfully' );
 				return true;
 			}
 			else
 			{
-				$Logger->log( '[webpush] Failed to send message' );
+				//$Logger->log( '[webpush] Failed to send message' );
 				$resultString = $result->getReason();
 				if( strpos( $resultString, '410 Gone' ) > 0 )
 				{
 					// Subscription was expired, just remove the push record!
-					$Logger->log( '[webpush] Subscription expired, cleaning up DB.' );
+					//$Logger->log( '[webpush] Subscription expired, cleaning up DB.' );
 					$SqlDatabase->query( 'DELETE FROM FSetting WHERE ID=\'' . $setting->ID . '\' LIMIT 1' );
 				}
 			}
 		}
-	}
-	else
-	{
-		$Logger->log( '[webpush] Failed to send one notification.' );
 	}
 }
 return false;
