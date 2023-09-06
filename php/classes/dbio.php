@@ -855,6 +855,7 @@ class dbUser extends dbIO
 				{
 					if( $system == 'php-web-push' )
 					{
+						$Logger->log( '[webpush] Getting web push system' );
 						require( __DIR__ . '/../include/webpush.php' );
 					}
 				}
