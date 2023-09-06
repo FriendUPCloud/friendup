@@ -2984,14 +2984,10 @@ var __randDevId = false;
 function GetDeviceId()
 {
 	// Try to get the device id from cookie
-	/*var ck = GetCookie( 'deviceId' );
-	if( ck ) return ck;*/
+	var ck = GetCookie( 'deviceId' );
+	if( ck ) return ck;
 	
-	if( !__randDevId )
-	{
-		var md5 = deps ? deps.MD5 : window.MD5;
-		__randDevId = md5( ( Math.random() % 999 ) + ( Math.random() % 999 ) + ( Math.random() % 999 ) + '' );
-	}
+	if( !__randDevId ) __randDevId = UniqueHash();
 	
 	var id = !!('ontouchstart' in window) ? 'touch' : 'wimp';
 	var ua = navigator.userAgent.toLowerCase()
@@ -3090,7 +3086,7 @@ function GetDeviceId()
 	}
 	
 	// Store the cookie for later use
-	//SetCookie( 'deviceId', r );
+	SetCookie( 'deviceId', r );
 	
 	console.log( '[deviceid] ' + r );
 	
