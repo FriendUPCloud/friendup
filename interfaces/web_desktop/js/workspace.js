@@ -82,7 +82,7 @@ Workspace = {
 		if( webpush )
 		{
 			webpush = JSON.parse( decodeURIComponent( webpush ) );
-			alert( 'Got Web Push: ' + webpush.application );
+			console.log( 'what was it: ', webpush );
 		}
 		
 
