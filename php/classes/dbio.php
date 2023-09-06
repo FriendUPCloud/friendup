@@ -833,6 +833,7 @@ class dbUser extends dbIO
 		if( isset( $configfilesettings[ 'Security' ] ) && isset( $configfilesettings[ 'Security' ][ 'push_system' ] ) )
 		{
 			$system = $configfilesettings[ 'Security' ][ 'push_system' ];
+			$Logger->log( '[webpush] Checking system: ' . $system );
 			if( $options->Condition == 'activity' && isset( $options->Seconds ) )
 			{
 				// Get session record (only one touch device, most recent)
