@@ -1017,7 +1017,7 @@ User *UMGetAllUsersDB( UserManager *um )
  */
 int UMAddUser( UserManager *um,  User *usr )
 {
-	if( usr != NULL && user->u_ID != NULL )
+	if( usr != NULL && usr->u_ID != NULL )
 	{
 		User *lu =  UMGetUserByID( um, usr->u_ID );
 		if( lu == NULL  )
