@@ -537,6 +537,11 @@ if( isset( $args->command ) )
 
 				curl_close( $c );
 				
+				if( isset( $args->args->mode ) )
+				{
+					if( $args->args->mode == 'raw' )
+						die( $r );
+				}
 				
 				if( isset( $args->args->diskpath ) )
 				{
@@ -545,15 +550,13 @@ if( isset( $args->command ) )
 						$f = new File( $args->args->diskpath );
 						if( $f->save( $r ) )
 						{
-							$Logger->log( 'Saved to ' . $args->args->diskpath );
+							//$Logger->log( 'Saved to ' . $args->args->diskpath );
 							die( 'ok<!--separate-->{"result":"1","message":"Saved","path":"' . $args->args->diskpath . '"}' );
 						}
 					}
-					$Logger->log( 'Could not save to ' . $args->args->diskpath );
+					//$Logger->log( 'Could not save to ' . $args->args->diskpath );
 					die( 'fail<!--separate-->{"result":"0","message":"Failed to save file"}' );
 				}
-				
-				
 				
 				if( isset( $fields['rawdata'] ) && $fields['rawdata'] )
 				{

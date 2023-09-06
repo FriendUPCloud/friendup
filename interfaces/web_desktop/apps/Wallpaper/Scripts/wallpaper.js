@@ -8,14 +8,6 @@
 *                                                                              *
 *****************************************************************************©*/
 
-// Fetch web images
-async function loadWallpapersFromRepo()
-{
-	console.log( 'Try' );
-	const response = await fetch('https://repo.friendsky.cloud/?action=list&type=wallpaper');
-	console.log( response );
-}
-
 Application.run = function( msg )
 {
 	let w = new View ( {
@@ -80,8 +72,6 @@ Application.run = function( msg )
 
 	// Set app in single mode
 	this.setSingleInstance( true );
-	
-	loadWallpapersFromRepo();
 }
 
 // Handle messages

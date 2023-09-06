@@ -14,6 +14,46 @@ Application.run = function( msg, iface )
 {
 	this.sendMessage( { command: 'getimages' } );
 	scrapeImages();
+	loadWallpapersFromRepo();
+}
+
+// Fetch web images
+async function loadWallpapersFromRepo()
+{
+	let URL = 'https://repo.friendsky.cloud/?action=list&type=wallpaper';
+	let m = new XMLHttpRequest();
+	let args = encodeURIComponent( JSON.stringify( { mode: 'raw', url: URL } ) );
+	m.open( 'GET', '/system.library/module/?module=system&command=proxyget&authid=' + Application.authId + '&args=' + args, true );
+	m.onload = function()
+	{
+		let js = JSON.parse( this.responseText );
+		ge( 'Webimages' ).innerHTML = '';
+		for( let a = 0; a < js.wallpapers.length; a++ )
+		{
+			let w = js.wallpapers[ a ];
+			for( let b = 0; b < w.wallpapers.length; b++ )
+			{
+				let i = w.wallpapers[ b ];
+				let c = document.createElement( 'div' );
+				c.className = 'MousePointer WPImage';
+				let d = document.createElement( 'div' );
+				d.className = 'Thumb';
+				c.appendChild( d );
+				d.innerHTML = '<div>' + i.split( '/' )[1] + '</div>';
+				ge( 'Webimages' ).appendChild( c );
+				
+				let im = new Image();
+				im.src = 'https://repo.friendsky.cloud/?action=get&type=wallpaper-thumbnail&item=' + i;
+				im.onload = function()
+				{
+					d.style.backgroundImage = 'url(' + im.src + ')';
+				}
+				console.log( im.src );
+				document.body.appendChild( im );
+			}
+		}
+	}
+	m.send();
 }
 
 Application.selectedImage = -3;
