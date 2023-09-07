@@ -1836,6 +1836,10 @@ if( isset( $args->command ) )
 		case 'getvotes':
 			require( 'modules/system/include/getvotes.php' );
 			break;
+		// Get my votes
+		case 'setvote':
+			require( 'modules/system/include/setvote.php' );
+			break;
 		case 'setsetting':
 			require( 'modules/system/include/setsetting.php' );
 			break;
