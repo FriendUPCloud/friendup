@@ -117,6 +117,16 @@ Description = "The cool place to hang out for my organisation!"
 BackgroundColor = "#000088"
 ```
 
+Optional settings under [Customization]
+
+```
+SiteLogo = "mylogo.png"
+SiteCSS = "mycss.css"
+```
+
+These files need to be located in build/cfg/ from where they will be copied to 
+the active build resource for your Friend OS site.
+
 The site.ini file can be modified to use your own favicon and other adaptations to give it your own identity or brand.
 
 
