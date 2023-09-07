@@ -466,7 +466,11 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 						{
 							// This needs to create a new session
 							char *deviceId = ( dev != NULL && dev->hme_Data != NULL ) ? ( char *)dev->hme_Data : ( char *)lot->hme_Data;
-							loggedSession = UserSessionNew( NULL, deviceId, l->fcm->fcm_ID );
+							// Get existing session
+							loggedSession = USMGetSessionByDeviceIDandUser( l->sl_USM, deviceId, uid );
+							// Get new session
+							if( loggedSession == NULL )
+								loggedSession = UserSessionNew( NULL, deviceId, l->fcm->fcm_ID );
 							if( loggedSession != NULL )
 							{
 								sprintf( sessionid, "%s", loggedSession->us_SessionID );
