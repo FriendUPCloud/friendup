@@ -18,7 +18,11 @@ if( $votes = $SqlDatabase->fetchObjects( '
 	$votesOut = [];
 	foreach( $votes as $vote )
 	{
-		$votesOut[ $vote->Key ] = $vote->Data;
+		$total = $SqlDatabase->fetchObject( 'SELECT COUNT(*) AS T FROM FSetting WHERE `Type`="vote" AND `Data`="1" AND `Key`="' . $vote->Key . '"' );
+		$votesOut[ $vote->Key ] = [
+			mine => $vote->Data,
+			total => $total->T
+		];
 	}
 	
 	die( 'ok<!--separate-->' . json_encode( $votesOut ) );
