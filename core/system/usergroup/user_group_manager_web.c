@@ -749,7 +749,8 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 					
 						snprintf( buffer, sizeof(buffer), "{\"id\":%lu,\"uuid\":\"%s\",\"name\":\"%s\"}", ug->ug_ID, ug->ug_UUID, ug->ug_Name );
 					
-						NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "group", "create", buffer );
+						if( l->sl_NotificationManager )
+							NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "group", "create", buffer );
 						if( groupCreatedByUser == FALSE )
 						{
 							addUsers = TRUE;
@@ -809,7 +810,8 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 							snprintf(msg, sizeof(msg), "{\"id\":%lu,\"uuid\":\"%s\",\"name\":\"%s\",\"parentid\":%lu}", 
 									ug->ug_ID, ug->ug_UUID, ug->ug_Name, ug->ug_ParentID );
 							
-							NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "group", "create", msg );
+							if( l->sl_NotificationManager )
+								NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "group", "create", msg );
 					
 							char buffer[ 1024 ];
 							snprintf( buffer, sizeof(buffer), "ok<!--separate-->{\"response\":\"success\",\"id\":%lu,\"uuid\":\"%s\"}", ug->ug_ID, ug->ug_UUID );
@@ -861,7 +863,8 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 					generateConnectedUsersID( l, groupID, NULL, retString );
 					BufStringAddSize( retString, "]}", 2 );
 					
-					NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "group", "setusers", retString->bs_Buffer );
+					if( l->sl_NotificationManager )
+						NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "group", "setusers", retString->bs_Buffer );
 					BufStringDelete( retString );
 				}
 				
@@ -1005,7 +1008,8 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 									
 									UGMRemoveGroup( l->sl_UGM, fg->ug_ID );
 
-									NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "group", "delete", msg );
+									if( l->sl_NotificationManager )
+										NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "group", "delete", msg );
 						
 									HttpAddTextContent( response, "ok<!--separate-->{\"Result\":\"success\"}" );
 
@@ -1312,7 +1316,8 @@ Http *UMGWebRequest( void *m, char **urlpath, Http* request, UserSession *logged
 					{
 						char msg[ 1024 ];
 						snprintf( msg, sizeof(msg), "{\"id\":%lu,\"uuid\":\"%s\",\"name\":\"%s\",\"type\":\"%s\",\"parentid\":%lu}", ug->ug_ID, ug->ug_UUID, ug->ug_Name, ug->ug_Type, ug->ug_ParentID );
-						NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "group", "update", msg );
+						if( l->sl_NotificationManager )
+							NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "group", "update", msg );
 						
 						// if users parameter is passed then we must remove current users from group
 						if( users != NULL )
@@ -1578,7 +1583,8 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 					
 					char msg[ 1024 ];
 					snprintf( msg, sizeof(msg), "{\"id\":%lu,\"uuid\":\"%s\",\"name\":\"%s\",\"type\":\"%s\",\"parentid\":%lu}", fg->ug_ID, fg->ug_UUID, fg->ug_Name, fg->ug_Type, fg->ug_ParentID );
-					NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "group", "update", msg );
+					if( l->sl_NotificationManager )
+						NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "group", "update", msg );
 					
 					char buffer[ 256 ];
 					snprintf( buffer, sizeof(buffer), "ok<!--separate-->{\"response\":\"sucess\",\"id\":%lu,\"status\":%d}", fg->ug_ID, status );
@@ -2143,7 +2149,8 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 			BufStringAddSize( retServiceString, "}", 1 );
 			
 			// send notification to external service
-			NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "group", "addusers", retServiceString->bs_Buffer );
+			if( l->sl_NotificationManager )
+				NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "group", "addusers", retServiceString->bs_Buffer );
 		
 			HttpSetContent( response, retString->bs_Buffer, retString->bs_Size );
 			retString->bs_Buffer = NULL;
@@ -2545,7 +2552,8 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 			BufStringAddSize( retExtString, "}", 1 );
 			
 			// send notification to external service
-			NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "group", "removeusers", retExtString->bs_Buffer );
+			if( l->sl_NotificationManager )
+				NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "group", "removeusers", retExtString->bs_Buffer );
 			BufStringDelete( retExtString );
 		
 			HttpSetContent( response, retString->bs_Buffer, retString->bs_Size );
@@ -2691,7 +2699,8 @@ where u.ID in (SELECT ID FROM FUser WHERE ID NOT IN (select UserID from FUserToG
 						generateConnectedUsersIDByID( l, groupID, retString, retString, usersSQL );
 						BufStringAddSize( retString, "]}", 2 );
 						
-						NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "group", "setusers", retString->bs_Buffer );
+						if( l->sl_NotificationManager )
+							NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "group", "setusers", retString->bs_Buffer );
 						BufStringDelete( retString );
 					}
 					char buffer[ 256 ];

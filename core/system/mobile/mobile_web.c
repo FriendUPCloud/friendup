@@ -832,7 +832,7 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 		
 		DEBUG("Update notification. Action %d notifsid %lu\n", action, notifid );
 		
-		if( action > 0 && notifid > 0 )	// register is not supported
+		if( action > 0 && notifid > 0 && l->sl_NotificationManager )	// register is not supported
 		{
 			char tmp[ 512 ];
 			char *userName = NULL;
