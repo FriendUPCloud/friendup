@@ -300,6 +300,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *userDa
 							}
 							
 							DEBUG( "[WS] Waiting: %d\n", wsd->wsc_InUseCounter );
+							Log( FLOG_DEBUG, "[WS] Waiting to close (inuse: %s)\n", wsd->wsc_InUseCounter );
 						}
 						
 						DEBUG( "[WS] Detaching websocket from session...\n" );
@@ -479,7 +480,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *userDa
 
 							int errret = lws_send_pipe_choked( wsi );
 					
-						    // Hogne removed åprinting the entire message
+						    // Hogne removed printing the entire message
 							//DEBUG1("Sending message, size: %d PRE %d msg %s\n", e->fq_Size, LWS_SEND_BUFFER_PRE_PADDING, e->fq_Data+LWS_SEND_BUFFER_PRE_PADDING );
 							DEBUG1("Sending message, size: %d PRE %d.\n", e->fq_Size, LWS_SEND_BUFFER_PRE_PADDING );
 							if( e != NULL )
