@@ -21,6 +21,7 @@ $o = new dbIO( 'FSetting' );
 $o->Type = 'vote';
 $o->UserID = $User->ID;
 $o->Key = $args->args->key;
+$o->Data = $args->args->data;
 $o->Save();
 
 if( $o->ID )
