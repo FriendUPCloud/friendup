@@ -1832,6 +1832,10 @@ if( isset( $args->command ) )
 		case 'workgroupaddmetadata':
 			require( 'modules/system/include/workgroupaddmetadata.php' );
 			break;
+		// Get my votes
+		case 'getvotes':
+			require( 'modules/system/include/getvotes.php' );
+			break;
 		case 'setsetting':
 			require( 'modules/system/include/setsetting.php' );
 			break;

@@ -10,9 +10,19 @@
 *                                                                              *
 *****************************************************************************©*/
 
-// TODO: Make modular
-/* Check if push notifications are installed */
-include( 'modules/system/features/webpush.php' );
-die( 'ok<!--separate-->{"message":"System initialized.","response":1}' );
+if( $votes = $SqlDatabase->fetchObjects( '
+	SELECT * FROM FSetting WHERE `Type`="vote" AND UserID=\'' . $User->ID . '\'
+	ORDER BY ID DESC
+' ) )
+{
+	$votesOut = [];
+	foreach( $votes as $vote )
+	{
+		$votesOut[ $vote->Key ] = $vote->Data;
+	}
+	
+	die( 'ok<!--separate-->' . json_encode( $votesOut ) );
+}
+die( 'fail<!--separate-->{"message":"Could not find any votes.","response":"-1"}' );
 
 ?>
