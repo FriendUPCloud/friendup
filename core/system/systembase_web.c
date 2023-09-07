@@ -466,11 +466,15 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 						{
 							// This needs to create a new session
 							char *deviceId = ( dev != NULL && dev->hme_Data != NULL ) ? ( char *)dev->hme_Data : ( char *)lot->hme_Data;
+							bool isNewSession = false;
 							// Get existing session
 							loggedSession = USMGetSessionByDeviceIDandUser( l->sl_USM, deviceId, uid );
 							// Get new session
 							if( loggedSession == NULL )
+							{
 								loggedSession = UserSessionNew( NULL, deviceId, l->fcm->fcm_ID );
+								isNewSession = true;
+							}
 							if( loggedSession != NULL )
 							{
 								sprintf( sessionid, "%s", loggedSession->us_SessionID );
@@ -483,12 +487,14 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 									if( usr != NULL )
 									{
 										UMAddUser( l->sl_UM, usr );
-										UserAddSession( usr, loggedSession );
+										if( isNewSession )
+											UserAddSession( usr, loggedSession );
 									}
 								}
 								else
 								{
-									UserAddSession( usr, loggedSession );
+									if( isNewSession )
+										UserAddSession( usr, loggedSession );
 								}
 
 								if( usr && usr->u_ID )
@@ -500,7 +506,8 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 									UGMAssignGroupToUser( l->sl_UGM, usr );
 									
 									USMSessionSaveDB( l->sl_USM, loggedSession );
-									USMUserSessionAddToList( l->sl_USM, loggedSession );
+									if( isNewSession )
+										USMUserSessionAddToList( l->sl_USM, loggedSession );
 									//DEBUG( "[lot] Session saved: %s!\n", loggedSession->us_SessionID );
 							    }
 							}
