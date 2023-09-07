@@ -8344,16 +8344,16 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						command: function() { Workspace.renameFile(); },
 						disabled: sharedVolume || ( !iconsSelected || volumeIcon || systemDrive || cannotWrite )
 					},
-					/*{
+					{
 						name:	i18n( 'menu_zip' ),
 						command: function() { Workspace.zipFiles(); },
 						disabled: sharedVolume || ( !iconsSelected || volumeIcon || systemDrive || cannotWrite || dormant )
-					},*/
-					/*{
+					},
+					{
 						name:	i18n( 'menu_unzip' ),
 						command: function() { Workspace.unzipFiles(); },
 						disabled: sharedVolume || !iconsSelected || !Workspace.selectedIconByType( 'zip' ) || systemDrive || cannotWrite || dormant
-					},*/
+					},
 					//{
 					//	name:	i18n( 'menu_openfolder' ),
 					//	command: function( event ) { Workspace.openFolder( event ); },

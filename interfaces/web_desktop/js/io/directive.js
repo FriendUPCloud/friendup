@@ -336,7 +336,7 @@ function ExecuteApplication( app, args, callback, retries, flags )
 				let w = new View( {
 					title:  title,
 					width:  480,
-					height: 140,
+					height: 180,
 					id:     'system_install_' + app,
 					hidden: hideView
 				} );
