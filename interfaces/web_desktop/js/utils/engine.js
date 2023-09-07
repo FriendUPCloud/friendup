@@ -3086,8 +3086,6 @@ function GetDeviceId()
 	// Store the cookie for later use
 	//SetCookie( 'deviceId', r );
 	
-	console.log( '[deviceid] ' + r );
-	
 	return r;
 }
 
