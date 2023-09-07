@@ -23,12 +23,13 @@ if [ -e "build/site.ini" ]; then
     echo "Manifest updated with background color: $description"
     cp build/resources/manifest.json build/resources/webclient/manifest.json
     
-    # Fix login logo
+    # Fix login logo / css
     if [ -n "$site_logo" ]; then
-	    cp build/cfg/$site_logo build/resources/graphics/release_logo.png
+    	echo "Copying build/cfg/$site_logo to build/resources/graphics/release_logo.png"
+	    cp -f build/cfg/$site_logo build/resources/graphics/release_logo.png
 	fi
     if [ -n "$site_css" ]; then
-	    cp build/cfg/$site_css build/resources/webclient/css/static.css
+	    cp -f build/cfg/$site_css build/resources/webclient/css/static.css
     fi
 else
     echo "site.ini not found in the build directory."
