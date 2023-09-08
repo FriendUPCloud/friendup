@@ -14,6 +14,7 @@ global $args, $SqlDatabase, $User, $Logger, $UserSession;
 
 // Include API
 require( 'php/friend.php' );
+include_once( 'php/classes/file.php' );
 
 // TODO: Only run this the first time ------------------------------------------
 
@@ -338,7 +339,21 @@ if( isset( $args->command ) )
 				$desc = mysqli_real_escape_string( $SqlDatabase->_link, $args->args->shortdescription );
 				$type = mysqli_real_escape_string( $SqlDatabase->_link, $args->args->type );
 				if( $args->args->icon )
-					$icon = mysqli_real_escape_string( $SqlDatabase->_link, $args->args->icon );
+				{
+					// Upload external icons for user
+					if( substr( $args->args->icon, 0, 8 ) == 'https://' )
+					{
+						$fn = 'Home:Uploads/dock-icon-' . $args->args->displayname . '.ico';
+						$image = file_get_contents( $args->args->icon );
+						$ic = new File( $fn );
+						$ic->save( $image );
+						$icon = $fn;
+					}
+					else
+					{
+						$icon = mysqli_real_escape_string( $SqlDatabase->_link, $args->args->icon );
+					}
+				}
 				else if( $args->args->src )
 					$icon = mysqli_real_escape_string( $SqlDatabase->_link, $args->args->src );
 				else $icon = '';
