@@ -565,6 +565,8 @@ function apiWrapper( event, force )
 				break;
 			// Friend Network --------------------------------------------------
 			case 'friendnet':
+				// TODO: Look at this if it is to be reactivated
+				return;
 				switch( msg.method )
 				{
 					case 'isReady':
@@ -758,6 +760,8 @@ function apiWrapper( event, force )
 
 			// Friend Network Share ---------------------------------------------
 			case 'friendNetworkRun':
+				// TODO: Reexamine
+				return;
 				switch ( msg.method )
 				{
 					case 'start':
@@ -779,6 +783,8 @@ function apiWrapper( event, force )
 
 			// Friend Network Share ---------------------------------------------
 			case 'friendNetworkShare':
+				// TODO: Reexamine
+				return;
 				switch( msg.method )
 				{
 					case 'activate':
@@ -793,6 +799,8 @@ function apiWrapper( event, force )
 
 			// Friend Network Drive ---------------------------------------------
 			case 'friendNetworkDrive':
+				// TODO: Reexamine
+				return;
 				switch( msg.method )
 				{
 					case 'activate':
@@ -807,6 +815,8 @@ function apiWrapper( event, force )
 
 			// Friend Network Door ---------------------------------------------
 			case 'friendNetworkDoor':
+				// TODO: Reexamine
+				return;
 				switch( msg.method )
 				{
 					case 'activate':
@@ -888,6 +898,8 @@ function apiWrapper( event, force )
 
 			// Friend Network Friends ---------------------------------------------
 			case 'friendNetworkFriends':
+				// TODO: Reexamine
+				return;
 				switch( msg.method )
 				{
 					case 'changeFriendNetworkSettings':
@@ -939,6 +951,8 @@ function apiWrapper( event, force )
 
 			// Friend Network Apps ---------------------------------------------
 			case 'friendNetworkApps':
+				// TODO: Reexamine
+				return;
 				switch( msg.method )
 				{
 					case 'changeFriendNetworkSettings':

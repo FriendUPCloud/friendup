@@ -889,7 +889,8 @@ if( isset( $args->command ) )
 				if( $fsys = $SqlDatabase->FetchObject( '
 					SELECT f.* 
 					FROM `Filesystem` f 
-					WHERE f.UserID = \'' . $UserSession->UserID . '\' AND f.Name = \'' . $args->args->appPath . '\' 
+					WHERE 
+						f.UserID = \'' . $UserSession->UserID . '\' AND f.Name = \'' . $args->args->appPath . '\'
 					ORDER BY f.ID ASC 
 				' ) )
 				{
@@ -911,6 +912,7 @@ if( isset( $args->command ) )
 							AND u.UserID = \'' . $UserSession->UserID . '\' 
 						)
 				WHERE 
+						k.RowType != "LoginToken" AND
 						k.UserID = \'' . $User->ID . '\' 
 					AND k.IsDeleted = "0" 
 					' . ( isset( $args->args->id ) ? 'AND k.ID IN ( ' . $args->args->id . ' ) ' : '' ) . '

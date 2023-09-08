@@ -947,6 +947,8 @@ function drawKeyList( list )
 
 function refreshUserKeys()
 {
+	// TODO: Reenable when useful
+	return;
 	var m = new Module( 'system' );
 	m.onExecuted = function( e, d )
 	{
@@ -1430,6 +1432,7 @@ function saveDia()
 	
 	if( Application.friendNetwork )
 	{
+		return;
 		// Save device information 
 		var image = ge( 'fnetDeviceAvatar' );
 		var canvas = document.createElement( 'canvas' );
