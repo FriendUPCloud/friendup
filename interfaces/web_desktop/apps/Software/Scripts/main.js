@@ -437,13 +437,17 @@ function refreshSoftware( specificApp, appData, searchKeywords )
 				p.classList.add ( 'ProductImage' );
 				var div = document.createElement( 'div' );
 				div.className = 'Image';
-				if( app.length && app.indexOf( '.png' ) > 0 )
+				let f = new Image();
+				f.src = '/system.library/module/?module=system&command=getapplicationicon&application=' + app + '&authid=' + Application.authId;
+				f.onerror = function()
 				{
-					div.style.backgroundImage = 'url(' + getImageUrl( 'Progdir:' + app ) + ')';
+					p.parentNode.removeChild( p );
+					div.style.backgroundImage = 'url(' + getImageUrl( 'Progdir:' + app ) + 'url(' + getImageUrl( 'Progdir:icon.png' ) + ')';
 				}
-				else
+				f.onload = function()
 				{
-					div.style.backgroundImage = 'url(/system.library/module/?module=system&command=getapplicationpreview&application=' + app + '&authid=' + Application.authId + ')';
+					p.classList.add( 'Showing' );
+					div.style.backgroundImage = 'url(' + f.src + ')';
 				}
 				p.appendChild( div );
 				return true;
@@ -452,14 +456,7 @@ function refreshSoftware( specificApp, appData, searchKeywords )
 		}
 		for( var a = 0; a < finalList.length; a++ )
 		{
-			if( finalList[a].Preview )
-			{
-				delayedImageLoader( finalList[a].Name, a );
-			}
-			else
-			{
-				delayedImageLoader( 'package.png', a );
-			}
+			delayedImageLoader( finalList[a].Name, a );
 		}
 		
 		InitTabs( ge( 'SoftwareTabs' ) );
