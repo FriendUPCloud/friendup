@@ -108,6 +108,14 @@ if( isset( $wsql ) && $wgroupdata = $SqlDatabase->fetchObjects( $wsql ) )
 // Fetch locally available software
 $apps = [];
 $paths = [ 'resources/webclient/apps/', 'repository/' ];
+
+if( isset( $args->args->type ) )
+{
+	if( $args->args->type == 'repository' )
+	{
+		$paths = [ 'repository/' ];
+	}
+}
 foreach( $paths as $path )
 {
 	if( $dir = opendir( $path ) )
