@@ -512,7 +512,7 @@ function refreshSoftware( specificApp, appData, searchKeywords )
 			}
 			mm.execute( 'listuserapplications' );
 		}
-		m.execute( 'software', { 'type', 'repository' } );
+		m.execute( 'software', { 'type': 'repository' } );
 	}
 	m.execute( 'getmetadata', { search: 'application_', valueStrings: [ 'Visible', 'Featured' ] } );
 }
