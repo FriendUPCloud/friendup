@@ -13,7 +13,12 @@ Application.currentPath = 'Mountlist:';
 Application.run = function( msg, iface )
 {
 	this.sendMessage( { command: 'getimages' } );
-	scrapeImages();
+	let s = new Shell();
+	s.onReady = function()
+	{
+		this.execute( 'makedir Home:Wallpaper' );
+		this.close();
+	}
 	loadWallpapersFromRepo();
 }
 
@@ -48,7 +53,21 @@ async function loadWallpapersFromRepo()
 				{
 					d.style.backgroundImage = 'url(' + im.src + ')';
 				}
-				console.log( im.src );
+				d.onclick = function()
+				{
+					let imgs = ge( 'Webimages' ).getElementsByClassName( 'Thumb' );
+					for( let c = 0; c < imgs.length; c++ )
+					{
+						if( imgs[c] == this )
+						{
+							imgs[ c ].parentNode.classList.add( 'WSelected', 'BoxSelected' );
+						}
+						else
+						{
+							imgs[ c ].parentNode.classList.remove( 'WSelected', 'BoxSelected' );
+						}
+					}
+				}
 				document.body.appendChild( im );
 			}
 		}
@@ -84,24 +103,6 @@ Application.addImages = function( images )
 	this.showImages();
 }
 
-function scrapeImages()
-{
-	/*var m = new Module( 'system' );
-	m.onExecuted = function( e, d )
-	{
-		if( e == 'ok' )
-		{
-			console.log( d );
-		}
-		else
-		{
-			console.log( e, d );
-		}
-	}
-	m.execute( 'proxyget', { url: 'https://www.pexels.com/new-photos/' } );*/
-	ge( 'Webimages' ).innerHTML = '<h2>' + i18n( 'i18n_unfinished' ) + '</h2>' + '<p>' + i18n( 'i18n_soon' ) + '</p>';
-}
-
 // Show the wallpaper images
 let current = false;
 Application.showImages = function()
@@ -109,8 +110,7 @@ Application.showImages = function()
 	let self = this;
 	
 	function onCache( e, d )
-	{
-		
+	{	
 		if( e == 'ok' )
 		{
 			if( d )
@@ -283,6 +283,47 @@ Application.addImage = function()
 // Use current setting
 Application.operationUse = function()
 {
+	let self = this;
+	// Find stuff from the web
+	if( document.querySelector( '.Tab.fa-folder.TabActive' ) )
+	{
+		let t = document.querySelector( '.Tab.fa-folder.TabActive' );
+		let p = document.querySelector( '.PageActive' );
+		let thumbs = p.getElementsByClassName( 'Thumb' );
+		for( a = 0; a < thumbs.length; a++ )
+		{
+			if( thumbs[ a ].parentNode.classList.contains( 'BoxSelected' ) )
+			{
+				let thumb = thumbs[ a ];
+				let src = thumb.style.backgroundImage.split( '.thumb.jpg' ).join( '' );
+				src = src.split( 'wallpaper-thumbnail' ).join( 'wallpaper' );
+				src = src.match( /url\(\"(.*?)\"\)/ )[1];
+				let fn = src.match( /.*?item=(.*)/ )[1].split( '/' ).join( '-' );
+				let m = new Module( 'system' );
+				m.onExecuted = function( e, d )
+				{
+					if( e == 'ok' )
+					{
+						self.sendMessage( {
+							type: 'system',
+							command: 'wallpaperimage',
+							mode: this.mode,
+							image: src
+						} );
+						setTimeout( function()
+						{
+							self.imageCache = false;
+							self.showImages();
+						}, 500 );
+						return;
+					}
+				}
+				m.execute( 'proxyget', { url: src, diskpath: 'Home:Wallpaper/' + fn } );
+				return;
+			}
+		}
+	}
+	
 	var arr = Application.mode == 'doors' ? Application.wallpaperImages : 
 			Application.windowImages;
 	
@@ -313,6 +354,47 @@ Application.operationUse = function()
 // Use current setting
 Application.operationSave = function()
 {
+	let self = this;
+	// Find stuff from the web
+	if( document.querySelector( '.Tab.fa-folder.TabActive' ) )
+	{
+		let t = document.querySelector( '.Tab.fa-folder.TabActive' );
+		let p = document.querySelector( '.PageActive' );
+		let thumbs = p.getElementsByClassName( 'Thumb' );
+		for( a = 0; a < thumbs.length; a++ )
+		{
+			if( thumbs[ a ].parentNode.classList.contains( 'BoxSelected' ) )
+			{
+				let thumb = thumbs[ a ];
+				let src = thumb.style.backgroundImage.split( '.thumb.jpg' ).join( '' );
+				src = src.split( 'wallpaper-thumbnail' ).join( 'wallpaper' );
+				src = src.match( /url\(\"(.*?)\"\)/ )[1];
+				let fn = src.match( /.*?item=(.*)/ )[1].split( '/' ).join( '-' );
+				let m = new Module( 'system' );
+				m.onExecuted = function( e, d )
+				{
+					if( e == 'ok' )
+					{
+						self.sendMessage( {
+							type: 'system',
+							command: 'savewallpaperimage',
+							mode: self.mode,
+							image: 'Home:Wallpaper/' + fn
+						} );
+						setTimeout( function()
+						{
+							self.imageCache = false;
+							self.showImages();
+						}, 500 );
+						return;
+					}
+				}
+				m.execute( 'proxyget', { url: src, diskpath: 'Home:Wallpaper/' + fn } );
+				return;
+			}
+		}
+	}
+	
 	var arr = Application.mode == 'doors' ? Application.wallpaperImages : 
 			Application.windowImages;
 	
