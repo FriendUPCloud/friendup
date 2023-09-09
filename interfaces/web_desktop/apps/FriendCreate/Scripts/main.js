@@ -89,6 +89,7 @@ Application.run = function( msg )
 function SetCurrentFile( index )
 {
 	Application.currentFile = files[ index ];
+	window.ace = Application.currentFile.editor;
 }
 
 // Check if we support the filetype --------------------------------------------

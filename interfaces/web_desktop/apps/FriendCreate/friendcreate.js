@@ -25,7 +25,6 @@ Application.run = function( msg )
 			'Progdir:Templates/main.css',
 			'Progdir:Scripts/preload.js',
 			'Progdir:Libraries/Ace/src-min-noconflict/ace.js',
-			'Progdir:Libraries/Ace/src-min-noconflict/ext-language_tools.js',
 			'System:js/gui/filebrowser.js',
 			'Progdir:Scripts/main.js'
 		],

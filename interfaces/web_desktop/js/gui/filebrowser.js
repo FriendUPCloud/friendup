@@ -227,9 +227,6 @@ Friend.FileBrowser.prototype.setPath = function( target, cbk, tempFlags, e )
 	this.flags.path = target; // This is the current target path..
 	if( tempFlags ) this.tempFlags = tempFlags;
 	
-	console.log( '[setPath] Refreshing on this path: (' + this.rootPath + ') ' + target, { context: this.lastContext } );
-	console.log( '[setPath] --' );
-	
 	this.refresh( this.rootPath, this.dom, cbk, 0, { context: this.lastContext } );
 }
 
