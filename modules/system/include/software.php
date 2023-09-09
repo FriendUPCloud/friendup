@@ -146,7 +146,7 @@ foreach( $paths as $path )
 		
 			$o = new stdClass();
 			$o->Name = str_replace( '_', ' ', $file );
-			if( ( !$metadata || !isset( $metadata->{$o->Name} ) ) && $level != 'Admin' ) continue;
+			//if( ( !$metadata || !isset( $metadata->{$o->Name} ) ) && $level != 'Admin' ) continue;
 			$o->Preview = file_exists( $path . $file . '/preview.png' ) ? true : false;
 			$o->Category = $f->Category;
 			$o->Description = isset( $f->Description ) ? $f->Description : '';
