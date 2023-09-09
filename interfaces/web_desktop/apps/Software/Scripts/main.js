@@ -30,7 +30,6 @@ function resiz()
 Application.run = function( msg, iface )
 {
 	refreshSoftware();
-	InitTabs( ge( 'DetailTabs' ) );
 	//showNotice();
 	resiz();
 }

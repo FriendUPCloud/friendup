@@ -126,13 +126,13 @@ function details( nam )
 			var fullData = JSON.parse( d );
 			
 			ge( 'DtlShortDescription' ).innerHTML = soft.Description;
-			ge( 'DtlScreenshot' ).innerHTML = '<img style="height: auto" src="' +screenshot + '" alt="Screenshot"/>';
+			//ge( 'DtlScreenshot' ).innerHTML = '<img style="height: auto" src="' +screenshot + '" alt="Screenshot"/>';
 			ge( 'DtlReadme' ).innerHTML = fullData.readme ? fixMarkdown( fullData.readme ) : '';
 			ge( 'DtlResources' ).innerHTML = fullData.resources ? fixMarkdown( fullData.resources ) : '';
 			
 			document.body.classList.add( 'Details' );
 		
-			var meta = metadata[ soft.Name ];
+			/*var meta = metadata[ soft.Name ];
 			if( meta && meta.visible )
 			{
 				ge( 'DetailsVisible' ).classList.remove( 'fa-toggle-off' );
@@ -161,7 +161,7 @@ function details( nam )
 				ge( 'DetailsFeatured' ).classList.add( 'fa-toggle-off' );
 				ge( 'DetailsFeatured' ).innerHTML = '&nbsp;Featured';
 				ge( 'DetailsFeatured' ).featured = false;
-			}
+			}*/
 		}
 	}
 	det.execute( 'applicationdetails', { application: nam, mode: 'data' } );
