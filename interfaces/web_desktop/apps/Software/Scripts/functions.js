@@ -125,7 +125,7 @@ function details( nam )
 			
 			var fullData = JSON.parse( d );
 			
-			ge( 'DtlShortDescription' ).innerHTML = soft.Description;
+			ge( 'DtlShortDescription' ).innerHTML = '<p>' + soft.Description.split( "\n" ).join( "</p><p>" ) + '</p>';
 			//ge( 'DtlScreenshot' ).innerHTML = '<img style="height: auto" src="' +screenshot + '" alt="Screenshot"/>';
 			ge( 'DtlReadme' ).innerHTML = fullData.readme ? fixMarkdown( fullData.readme ) : '';
 			ge( 'DtlResources' ).innerHTML = fullData.resources ? fixMarkdown( fullData.resources ) : '';
