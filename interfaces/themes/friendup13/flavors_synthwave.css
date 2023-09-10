@@ -583,3 +583,9 @@ html body.Synthwave .Frame .Progress
 	text-shadow: 1px 1px rgba(0,0,0,0.7);
 }
 
+html body.Synthwave hr.Divider, 
+body.Synthwave hr 
+{
+    background: linear-gradient(90deg,transparent,#4e2061,transparent);
+}
+

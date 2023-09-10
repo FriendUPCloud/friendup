@@ -715,7 +715,7 @@ if( !class_exists( 'DoorSQLDrive' ) )
 						return 'fail<!--separate-->{"response":"could not read file, file does not exist"}';
 					}
 				}
-				return 'fail<!--separate-->{"response":"could not read file"}'; //Could not read file: ' . $Config->FCUpload . $fn . '<!--separate-->' . print_r( $f, 1 );
+				return 'fail<!--separate-->{"response":"could not read file"}';
 			}
 			// Import sent files!
 			else if( $args->command == 'import' )

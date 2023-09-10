@@ -10,9 +10,25 @@
 *                                                                              *
 *****************************************************************************©*/
 
-// TODO: Make modular
-/* Check if push notifications are installed */
-include( 'modules/system/features/webpush.php' );
-die( 'ok<!--separate-->{"message":"System initialized.","response":1}' );
+if( $votes = $SqlDatabase->fetchObject( '
+	SELECT * FROM FSetting WHERE `Type`="vote" AND `Key`="' . $SqlDatabase->_link->real_escape_string( $args->args->key ) . '" AND UserID=\'' . $User->ID . '\'
+' ) )
+{
+	die( 'fail<!--separate-->{"message":"Vote already cast.","response":"-1"}' );
+}
+
+$o = new dbIO( 'FSetting' );
+$o->Type = 'vote';
+$o->UserID = $User->ID;
+$o->Key = $args->args->key;
+$o->Data = $args->args->data;
+$o->Save();
+
+if( $o->ID )
+{
+	die( 'ok<!--separate-->' . json_encode( $votesOut ) );
+}
+
+die( 'fail<!--separate-->{"message":"Could not set vote.","response":"-1"}' );
 
 ?>

@@ -207,7 +207,8 @@ inline static void NotifyExtServices( SystemBase *l, Http *request, User *usr, c
 	DEBUG("NotifyExtServices3: %s\n", bs->bs_Buffer );
 	
 	DEBUG("NotifyExtServices - send information to 3rd party services\n");
-	NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "user", action, bs->bs_Buffer );
+	if( l->sl_NotificationManager )
+		NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "user", action, bs->bs_Buffer );
 	
 	BufStringDelete( bs );
 }
@@ -1590,7 +1591,8 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 								{
 									snprintf( msg, sizeof(msg), "{\"userid\":\"%s\"}", logusr->u_UUID );
 								}
-								NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "user", "update", msg );
+								if( l->sl_NotificationManager )
+									NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "user", "update", msg );
 							}
 							UMUserUpdateDB( l->sl_UM, logusr );
 						}
@@ -2458,7 +2460,8 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 					{
 						snprintf( msg, len, "{\"sourceId\":\"%s\",\"contactIds\":%s}", sourceID, contactIDs );
 
-						NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "user", "relation-add", msg );
+						if( l->sl_NotificationManager )
+							NotificationManagerSendEventToConnections( l->sl_NotificationManager, request, NULL, NULL, "service", "user", "relation-add", msg );
 						
 						FFree( msg );
 					}

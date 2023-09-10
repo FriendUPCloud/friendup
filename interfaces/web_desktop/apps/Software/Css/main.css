@@ -284,6 +284,13 @@
 {
 	border: none;
 	box-shadow: none;
+	opacity: 0;
+	transition: opacity 0.2s;
+}
+
+.ProductImage.Showing
+{
+	opacity: 1;
 }
 
 .ProductImage .Button

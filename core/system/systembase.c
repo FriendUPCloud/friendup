@@ -656,14 +656,13 @@ SystemBase *SystemInit( FBOOL skipDBupdParam )
 	}
 	
 //#ifdef USE_PUSH_NOTIFICATIONS
-	l->sl_NotificationManager = NotificationManagerNew( l );
+	/*l->sl_NotificationManager = NotificationManagerNew( l );
 	if( l->sl_NotificationManager == NULL )
 	{
 		Log( FLOG_ERROR, "Cannot initialize sl_NotificationManager\n");
-	}
-//#else
-//	l->sl_NotificationManager = NULL;
-//#endif
+	}*/
+	l->sl_NotificationManager = NULL;
+
 	
 	l->fcm = FriendCoreManagerNew();
 

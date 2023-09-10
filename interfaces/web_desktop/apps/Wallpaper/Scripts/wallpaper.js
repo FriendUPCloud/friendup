@@ -10,7 +10,7 @@
 
 Application.run = function( msg )
 {
-	var w = new View ( {
+	let w = new View ( {
 		'title'      : i18n('Wallpaper'), 
 		'width'      : 960, 
 		'height'     : 600, 
@@ -24,10 +24,10 @@ Application.run = function( msg )
 		Application.quit();
 	}
 	
-	var no_images_in_folder = i18n('i18n_no_images_in_folder');
+	let no_images_in_folder = i18n('i18n_no_images_in_folder');
 	
 	// Lets load our main settings file
-	var m = new Module( 'system' );
+	let m = new Module( 'system' );
 	m.onExecuted = function( e, d )
 	{
 		if( e == 'ok' )
@@ -36,8 +36,8 @@ Application.run = function( msg )
 			if( !Application.settings ) Application.settings = {};
 			try
 			{ 
-				var setar = JSON.parse( d );
-				for( var a in setar )
+				let setar = JSON.parse( d );
+				for( let a in setar )
 					Application.settings[a] = setar[a];
 			}
 			catch( e )
@@ -46,7 +46,7 @@ Application.run = function( msg )
 		}
 		
 		// Go on!
-		var f = new File( 'Progdir:Templates/main.html' );
+		let f = new File( 'Progdir:Templates/main.html' );
 		f.replacements = {
 			'cancel'           : i18n('i18n_cancel'),
 			'close'            : i18n('i18n_close'),

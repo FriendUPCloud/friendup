@@ -2988,49 +2988,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					{
 						topInfo = 'Top';
 					}
-
-					// Add favorites
-					if( dparent.classList.contains( 'DockMenu' ) && ge( 'desklet_0' ) )
-					{
-						let eles = ge( 'desklet_0' ).getElementsByClassName( 'Launcher' );
-						let out = [];
-						for( let b = 0; b < eles.length; b++ )
-						{
-							if( eles[b].classList.contains( 'Startmenu' ) ) continue;
-
-							let nam = eles[b].getAttribute( 'data-displayname' ) ? eles[b].getAttribute( 'data-displayname' ) : eles[b].getElementsByTagName( 'span' )[0].innerHTML;
-							let exe = eles[b].getAttribute( 'data-exename' ) ? eles[b].getAttribute( 'data-exename' ) : eles[b].getElementsByTagName( 'span' )[0].innerHTML;
-							
-							// Skip erroneous elements
-							if( !exe || typeof( exe ) == 'undefined' || exe == 'undefined' ) continue;
-							
-							let im = eles[b].style.backgroundImage ? 
-								eles[b].style.backgroundImage.match( /url\([\'|\"]{0,1}(.*?)[\'|\"]{0,1}\)/i ) : false;
-							if( im && im[1] )
-							{
-								im = im[1];
-							}
-							else im = false;
-							
-							out.push( {
-								Title: nam,
-								Path: 'Mountlist:',
-								Filename: exe,
-								Type: 'Executable',
-								Icon: im ? im : null
-							} );
-						}
-						if( out.length )
-						{
-							out = ( [ { Title: i18n( 'i18n_favorites' ) + ':', Path: 'Mountlist:', Type: 'Header' } ] ).concat( out );
-							out.push( { Title: i18n( 'i18n_menu' ) + ':', Path: 'Mountlist:', Type: 'Header' } );
-							for( let a = 0; a < data.length; a++ )
-							{
-								out.push( data[a] );
-							}
-							data = out;
-						}
-					}
 					
 					// Duplicates patch
 					let dupTest = [];
@@ -8344,16 +8301,16 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						command: function() { Workspace.renameFile(); },
 						disabled: sharedVolume || ( !iconsSelected || volumeIcon || systemDrive || cannotWrite )
 					},
-					/*{
+					{
 						name:	i18n( 'menu_zip' ),
 						command: function() { Workspace.zipFiles(); },
 						disabled: sharedVolume || ( !iconsSelected || volumeIcon || systemDrive || cannotWrite || dormant )
-					},*/
-					/*{
+					},
+					{
 						name:	i18n( 'menu_unzip' ),
 						command: function() { Workspace.unzipFiles(); },
 						disabled: sharedVolume || !iconsSelected || !Workspace.selectedIconByType( 'zip' ) || systemDrive || cannotWrite || dormant
-					},*/
+					},
 					//{
 					//	name:	i18n( 'menu_openfolder' ),
 					//	command: function( event ) { Workspace.openFolder( event ); },

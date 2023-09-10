@@ -104,23 +104,26 @@ Http *SMWebRequest( void *lsb, char **urlpath, Http* request, UserSession *logge
 		
 		if( params != NULL && path != NULL )
 		{
-			BufString *serresp = NotificationManagerSendRequestToConnections( 
-				l->sl_NotificationManager, 
-				request, 
-				loggedSession, 
-				servername, 
-				type, 
-				path, 
-				params 
-			); // 0 - type request, 1 - event
-			
-			if( serresp != NULL )
+			if( l->sl_NotificationManager )
 			{
-				HttpSetContent( response, serresp->bs_Buffer, serresp->bs_Size );
+				BufString *serresp = NotificationManagerSendRequestToConnections( 
+					l->sl_NotificationManager, 
+					request, 
+					loggedSession, 
+					servername, 
+					type, 
+					path, 
+					params 
+				); // 0 - type request, 1 - event
 				
-				// assign response to return string and delete bufstring
-				serresp->bs_Buffer = NULL;
-				BufStringDelete( serresp );
+				if( serresp != NULL )
+				{
+					HttpSetContent( response, serresp->bs_Buffer, serresp->bs_Size );
+					
+					// assign response to return string and delete bufstring
+					serresp->bs_Buffer = NULL;
+					BufStringDelete( serresp );
+				}
 			}
 		} // missing parameters
 		else
