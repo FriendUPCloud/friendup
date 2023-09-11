@@ -746,6 +746,7 @@ i18n_refresh_when_online                : Refresh directory when online
 i18n_filename                           : Filename
 i18n_size                               : Filesize
 i18n_date                               : Date
+i18n_date_to                            : Ends date
 i18n_type                               : Type
 
 i18n_directory                          : Directory
