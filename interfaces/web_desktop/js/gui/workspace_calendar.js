@@ -99,7 +99,7 @@ Workspace.newCalendarEvent = function()
 	dateForm = dateForm[0] + '-' + StrPad( dateForm[1], 2, '0' ) + '-' + StrPad( dateForm[2], 2, '0' );
 
 	calendar.eventWin = new View( {
-		title: i18n( 'i18n_event_overview' ) + ' ' + dateForm,
+		title: i18n( 'i18n_event_overview' ),
 		width: 700,
 		height: 445
 	} );
@@ -151,7 +151,6 @@ Workspace.addCalendarEvent = function()
 	let tmto = ge( 'calTimeTo' ).value;
 	let tmfr = ge( 'calTimeFrom' ).value;
 	let dfro = ge( 'calDateTo' ).value;
-	console.log( 'Date: ' + dfro );
 	
 	let timefrom = new Date( date + ' ' + tmfr ).getTime();
 	let timeto   = new Date( ( Trim( dfro ) ? dfro : date ) + ' ' + tmto ).getTime();
@@ -198,11 +197,14 @@ Workspace.addCalendarEvent = function()
 	let m = new Module( 'system' );
 	m.onExecuted = function( e, d )
 	{
-		Notify( { title: i18n( 'i18n_evt_added' ), text: i18n( 'i18n_evt_addeddesc' ) } );
-		if( Workspace.calendar && Workspace.calendar.eventWin )
-			Workspace.calendar.eventWin.close();
-		if( Workspace.calendar && Workspace.calendar.render )
-			Workspace.calendar.render();
+		if( e == 'ok' )
+		{
+			Notify( { title: i18n( 'i18n_evt_added' ), text: i18n( 'i18n_evt_addeddesc' ) } );
+			if( Workspace.calendar && Workspace.calendar.eventWin )
+				Workspace.calendar.eventWin.close();
+			if( Workspace.calendar && Workspace.calendar.render )
+				Workspace.calendar.render();
+		}
 	}
 	m.execute( 'addcalendarevent', { event: evt } );
 };
@@ -223,7 +225,7 @@ Workspace.editCalendarEvent = function( id )
 			let date = row.Date;
 			
 			calendar.editWin = new View( {
-				title: i18n( 'i18n_event_overview' ) + ' ' + date,
+				title: i18n( 'i18n_event_overview' ),
 				width: 500,
 				height: 445
 			} );

@@ -315,9 +315,7 @@ CalendarEvent.prototype.close = function()
 CalendarEvent.prototype.init = function()
 {
 	var self = this;
-	
-	console.log( self );
-	
+
 	var title = self.data.Title;
 	
 	self.element = document.createElement( 'div' );

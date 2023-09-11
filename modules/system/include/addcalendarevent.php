@@ -76,7 +76,8 @@ if( is_object( $args->args->event ) )
 	// Participant support!
 	if( isset( $args->args->event->Participants ) )
 	{
-		$timeto = date( 'Y-m-d H:i:s', strtotime( $o->Date . ' ' . $o->TimeTo ) );
+		$dateTo = isset( $args->args->event->DateTo ) && trim( $args->args->event->DateTo ) ? $args->args->event->DateTo : false;
+		$timeto = date( 'Y-m-d H:i:s', strtotime( ( $dateTo ? $dateTo : $o->Date ) . ' ' . $o->TimeTo ) );
 		$timefrom = date( 'Y-m-d H:i:s', strtotime( $o->Date . ' ' . $o->TimeFrom ) );
 		$utimeto = date( 'Ymd\THis\Z', strtotime( $timeto ) );
 		$utimefrom = date( 'Ymd\THis\Z', strtotime( $timefrom ) );
