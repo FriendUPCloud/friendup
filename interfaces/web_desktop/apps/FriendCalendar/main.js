@@ -20,7 +20,7 @@ Application.run = function( msg, iface )
 	
 	this.setApplicationName( 'Friend Calendar' );
 	
-	var v = new View( {
+	let v = new View( {
 		title: i18n( 'i18n_your_calendar' ),
 		width: 960,
 		height: 720
@@ -82,7 +82,7 @@ Application.run = function( msg, iface )
 	] );
 	
 	// Load main template
-	var t = new File( 'Progdir:Templates/main.html' );
+	let t = new File( 'Progdir:Templates/main.html' );
 	t.i18n();
 	t.onLoad = function( data )
 	{
@@ -283,7 +283,7 @@ function executeRefresh( index )
 		type: 'calendar',
 		method: 'calendarrefresh'
 	} );
-	
+		
 	// Just use built-in values
 	return UpdateEvents();
 	
@@ -421,21 +421,21 @@ function CheckSourceCount( count, events )
 function UpdateEvents( evts )
 {
 	// First get built-in calendar sources
-	var md = new Module( 'system' );
+	let md = new Module( 'system' );
 	md.onExecuted = function( e, d )
 	{
-		var finalEvents = [];
+		let finalEvents = [];
 	
 		try
 		{
 			// Update events
-			var eles = JSON.parse( d );
-			var outEvents = [];
+			let eles = JSON.parse( d );
+			let outEvents = [];
 			
-			for( var a in eles )
+			for( let a in eles )
 			{
-				var tf = eles[a].Date + ' ' + eles[a].TimeFrom + ':00';
-				var tt = eles[a].Date + ' ' + eles[a].TimeTo   + ':00';
+				let tf = eles[a].Date + ' ' + eles[a].TimeFrom + ':00';
+				let tt = eles[a].Date + ' ' + eles[a].TimeTo   + ':00';
 				finalEvents.push( {
 					DateStart: tf,
 					DateEnd: tt,
@@ -449,20 +449,20 @@ function UpdateEvents( evts )
 		}
 		catch( e )
 		{
+			console.log( 'Bop' );
 		}
 		
 		if( evts && evts.length )
 		{
-			for( var a in evts )
+			for( let a in evts )
 				finalEvents.push( evts[ a ] );
 		}
-		
 		Application.mainView.sendMessage( {
 			command: 'updateEvents',
 			events: finalEvents
 		} );
 	}
-	var radius = 60 * 60 * 24 * 31; // One month radius
+	let radius = 60 * 60 * 24 * 31; // One month radius
 	md.execute( 'getcalendarevents', { timestamp: Math.floor( Application.date.getTime() / 1000 ), radius: radius } );
 }
 
