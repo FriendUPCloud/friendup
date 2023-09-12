@@ -99,7 +99,7 @@ Workspace.newCalendarEvent = function()
 	dateForm = dateForm[0] + '-' + StrPad( dateForm[1], 2, '0' ) + '-' + StrPad( dateForm[2], 2, '0' );
 
 	calendar.eventWin = new View( {
-		title: i18n( 'i18n_event_overview' ) + ' ' + dateForm,
+		title: i18n( 'i18n_event_overview' ),
 		width: 700,
 		height: 445
 	} );
@@ -147,12 +147,13 @@ Workspace.removeCalendarEvent = function( id )
 };
 Workspace.addCalendarEvent = function()
 {
-	var date = ge( 'calDateField' ).value;
-	var tmto = ge( 'calTimeTo' ).value;
-	var tmfr = ge( 'calTimeFrom' ).value;
+	let date = ge( 'calDateField' ).value;
+	let tmto = ge( 'calTimeTo' ).value;
+	let tmfr = ge( 'calTimeFrom' ).value;
+	let dfro = ge( 'calDateTo' ).value;
 	
-	var timefrom = new Date( date + ' ' + tmfr ).getTime();
-	var timeto   = new Date( date + ' ' + tmto ).getTime();
+	let timefrom = new Date( date + ' ' + tmfr ).getTime();
+	let timeto   = new Date( ( Trim( dfro ) ? dfro : date ) + ' ' + tmto ).getTime();
 	if( timeto < timefrom )
 	{
 		Notify( { title: i18n( 'i18n_to_not_in_past' ), text: i18n( 'i18n_to_not_in_past_desc' ) } );
@@ -161,12 +162,13 @@ Workspace.addCalendarEvent = function()
 	}
 	
 	
-	var evt = {
+	let evt = {
 		Title: ge( 'calTitle' ).value,
 		Description: ge( 'calDescription' ).value,
 		TimeFrom: ge( 'calTimeFrom' ).value,
 		TimeTo: ge( 'calTimeTo' ).value,
-		Date: ge( 'calDateField' ).value
+		Date: ge( 'calDateField' ).value,
+		DateTo: ge( 'calDateTo' ).value
 	};
 	
 	if( ge( 'calendarEventParticipants' ) )
@@ -174,8 +176,8 @@ Workspace.addCalendarEvent = function()
 		evt.Participants = ge( 'calendarEventParticipants' ).value;
 		if( !evt.Participants ) evt.Participants = '';
 	}
-	var metadata = {};
-	var metadataset = 0;
+	let metadata = {};
+	let metadataset = 0;
 	
 	if( ge( 'CalEvtMeetingLocation' ) )
 	{
@@ -192,14 +194,17 @@ Workspace.addCalendarEvent = function()
 	if( metadataset > 0 )
 		evt.MetaData = JSON.stringify( metadata );
 
-	var m = new Module( 'system' );
+	let m = new Module( 'system' );
 	m.onExecuted = function( e, d )
 	{
-		if( Workspace.calendar && Workspace.calendar.eventWin )
-			Workspace.calendar.eventWin.close();
-		if( Workspace.calendar && Workspace.calendar.render )
-			Workspace.calendar.render();
-		Notify( { title: i18n( 'i18n_evt_added' ), text: i18n( 'i18n_evt_addeddesc' ) } );
+		if( e == 'ok' )
+		{
+			Notify( { title: i18n( 'i18n_evt_added' ), text: i18n( 'i18n_evt_addeddesc' ) } );
+			if( Workspace.calendar && Workspace.calendar.eventWin )
+				Workspace.calendar.eventWin.close();
+			if( Workspace.calendar && Workspace.calendar.render )
+				Workspace.calendar.render();
+		}
 	}
 	m.execute( 'addcalendarevent', { event: evt } );
 };
@@ -220,7 +225,7 @@ Workspace.editCalendarEvent = function( id )
 			let date = row.Date;
 			
 			calendar.editWin = new View( {
-				title: i18n( 'i18n_event_overview' ) + ' ' + date,
+				title: i18n( 'i18n_event_overview' ),
 				width: 500,
 				height: 445
 			} );

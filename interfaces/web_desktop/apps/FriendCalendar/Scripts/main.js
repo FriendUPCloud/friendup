@@ -364,29 +364,29 @@ Application.receiveMessage = function( msg )
 			break;
 		case 'updateEvents':
 			Calendar.events = [];
-			var tspan = 60 * 60 * 24 * 1000;
-			for( var a = 0; a < msg.events.length; a++ )
+			let tspan = 60 * 60 * 24 * 1000;
+			for( let a = 0; a < msg.events.length; a++ )
 			{
-				var ev = msg.events[a];
+				let ev = msg.events[a];
 				
-				var d = ev.DateStart.split( ' ' )[0];
+				let d = ev.DateStart.split( ' ' )[0];
 				d = d.split( '-' );
-				var from = new Date( d[0], d[1] - 1, d[2] );
-				var fromTime = from.getTime();
+				let from = new Date( d[0], d[1] - 1, d[2] );
+				let fromTime = from.getTime();
 				
-				var t = ev.DateEnd.split( ' ' )[0];
+				let t = ev.DateEnd.split( ' ' )[0];
 				t = t.split( '-' );
-				var to = new Date( t[0], t[1] - 1, t[2] );
-				var toTime = to.getTime();
+				let to = new Date( t[0], t[1] - 1, t[2] );
+				let toTime = to.getTime();
 				
 				// Make sure we have toTime
 				if( toTime < fromTime )
 					toTime = fromTime;
 				
 				// Fill this date in
-				for( var b = fromTime; b <= toTime; b += tspan )
+				for( let b = fromTime; b <= toTime; b += tspan )
 				{
-					var k = new Date( b );
+					let k = new Date( b );
 					k = k.getFullYear() + '-' + ( k.getMonth() + 1 ) + '-' + k.getDate();
 					if( typeof( Calendar.events[k] ) == 'undefined' )
 						Calendar.events[k] = [];
