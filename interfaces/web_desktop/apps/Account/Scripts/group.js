@@ -431,7 +431,7 @@ function deleteGroup()
 							
 							var data = JSON.parse( d );
 							
-							console.log( { e:e, d:(data?data:d) } );
+							//console.log( { e:e, d:(data?data:d) } );
 							
 							if( data.roomId )
 							{
@@ -439,13 +439,13 @@ function deleteGroup()
 									roomId : data.roomId
 								};
 								
-								console.log( '[1]', { type: 0, path: '/room/remove', params: json, servername: null } );
+								//console.log( '[1]', { type: 0, path: '/room/remove', params: json, servername: null } );
 								
 								var dp = new Library( 'system.library' );
 								dp.onExecuted = function( ee, dd )
 								{
 									
-									console.log( '[2]', { type: 0, path: '/room/remove', params: json, servername: null, ee: ee, dd:dd } );
+									//console.log( '[2]', { type: 0, path: '/room/remove', params: json, servername: null, ee: ee, dd:dd } );
 									
 									if( ee == 'fail' )
 									{
@@ -485,18 +485,22 @@ function saveGroup()
 {
 	function joinGroup( gid, cb )
 	{
-		m = new Module( 'system' );
-		m.onExecuted = function( e, d ){ if( cb ) cb(); }
-		m.execute( 'joingroup', { groupId: gid } );
+		let l = new XMLHttpRequest();
+		l.open( 'POST', '/system.library/group/addusers/?authid=' + Application.authId + '&id=' + gid + '&users=' + Application.userId, true );
+		l.onload = function()
+		{
+			// Do nothing
+			console.log( 'Result of add users: ', this.responseText );
+		}
+		l.send();
 	}
 	
+	// TODO: Deprecate
 	function connectFriendChatRoom( gid, roomid, cb )
 	{
-		
 		let wmd = new Module( 'system' );
 		wmd.onExecuted = function( e, d ){ if( cb ) cb( e, d ); }
 		wmd.execute( 'workgroupaddmetadata', { groupId: gid, roomId: roomid } );
-		
 	}
 	
 	let t = new Library( 'system.library' );
