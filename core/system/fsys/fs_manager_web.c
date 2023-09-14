@@ -2225,13 +2225,12 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 								dstPath =  &tmpPath[ dpos + 1 ] ;
 							}
 							
-							// if there is upload to not existing Downloads folder, FriendCore must create it
-							// https://app.yodiz.com/plan/pages/board.vz?cid=33486#/app/tk-1465
+							// if there is upload to not existing Uploads folder, FriendCore must create it
 							DEBUG("original path: %s\n", originalPath );
-							if( strncmp( originalPath, "Home:Downloads/", 15 ) == 0 )
+							if( strncmp( originalPath, "Home:Uploads/", 15 ) == 0 )
 							{
 								BufString *bs = NULL;
-								DEBUG("User want to upload file into Home:Downloads\n");
+								DEBUG("User want to upload file into Home:Uploads\n");
 								bs = actFS->Info( actDev, originalPath );
 								if( bs != NULL )
 								{
@@ -2239,7 +2238,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 									// seems directory do not exist, FriendCore must create it
 									if( strncmp( bs->bs_Buffer, "fail", 4 ) == 0 )
 									{
-										int err = actFS->MakeDir( actDev, "Downloads" );
+										int err = actFS->MakeDir( actDev, "Uploads" );
 										DEBUG("Makedir called, response: %d\n", err );
 									}
 									BufStringDelete( bs );

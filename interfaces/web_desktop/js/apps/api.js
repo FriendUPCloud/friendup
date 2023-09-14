@@ -2003,7 +2003,10 @@ function receiveEvent( event, queued )
 						f( dataPacket );
 					}
 				}
-				catch( e ){}
+				catch( e )
+				{
+					//console.log( 'We got problems: ', e );
+				}
 				return true;
 			}
 			// Aha, we have a window to send to (see if it's at this level)
@@ -5171,8 +5174,6 @@ Authenticate = {
 
 	ns.FConn.prototype.receiveMessage = function( msg )
 	{
-
-
 		let self = this;
 		let event = msg.data;
 		let handler = self.listeners[ event.type ];
@@ -5507,14 +5508,14 @@ function Door( path )
 	}
 	
 	// Gets the files and subdirectories inside of a directory
-	this.getDirectory = function( callback )
+	this.getDirectory = function( callback = false )
 	{
 		return this.getIcons( callback );
 	}
 	
 	// Get files on current dir
 	// Deprecated
-	this.getIcons = function( callback )
+	this.getIcons = function( callback = false )
 	{
 		Application.sendMessage(
 			{
@@ -9085,7 +9086,7 @@ GuiDesklet = function()
 ///////////////////////////////////////////////////////////////////
 
 // Current versions of the API
-Friend.APIVersion = '1.2';
+Friend.APIVersion = '1.3';
 Friend.APIVersionMinimal = '1.2';			// We might want to change that one day when the number of versions gets too high
 											// but we should not really...
 

@@ -118,8 +118,6 @@ Application.receiveMessage = function( msg )
 		}, 25 );
 	}
 	
-	console.log( 'CONVOS GOT MESSAGE: ', msg );
-	
 	// Receiving message on sender
     if( msg.senderId && !msg.command )
     {

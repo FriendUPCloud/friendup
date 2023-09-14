@@ -7526,7 +7526,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		if( this.fupdialog ) return;
 		
 		let inps = currentMovable.content.getElementsByTagName( 'input' );
-		let path = 'Home:Downloads/';
+		let path = 'Home:Uploads/';
 		for( let a = 0; a < inps.length; a++ )
 		{
 			if( inps[a].name == 'path' )
@@ -9965,22 +9965,22 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				let m = new Library( 'system.library' );
 				m.onExecuted = function( e, d )
 				{
-					//we have a downloads dir in home
+					//we have a uploads dir in home
 					if( e == 'ok' )
 					{
 						Workspace.uploadPastedFile( Workspace.uploadBlob );
 					}
 					else
 					{
-						//no downloads dir - try to make one
+						//no uploads dir - try to make one
 						let m2 = new Library( 'system.library' );
 						m2.onExecuted = function( e, d )
 						{
 							//home drive found. create directory
 							if( e == 'ok' )
 							{
-								let door = Workspace.getDoorByPath( 'Home:Downloads/' );
-								door.dosAction( 'makedir', { path: 'Home:Downloads/' }, function( result )
+								let door = Workspace.getDoorByPath( 'Home:Uploads/' );
+								door.dosAction( 'makedir', { path: 'Home:Uploads/' }, function( result )
 								{
 									let res = result.split( '<!--separate-->' );
 									if( res[0] == 'ok' )
@@ -9990,7 +9990,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									// Failed - alert user
 									else
 									{
-										Notify( { title: i18n( 'i18n_paste_error' ), text: i18n( 'i18n_could_not_create_downloads' ) } );
+										Notify( { title: i18n( 'i18n_paste_error' ), text: i18n( 'i18n_could_not_create_uploads' ) } );
 										return;
 									}
 								});
@@ -10005,18 +10005,18 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						m2.execute( 'file/dir', { path: 'Home:' } );
 					}
 				}
-				m.execute( 'file/dir', { path: 'Home:Downloads/' } );
+				m.execute( 'file/dir', { path: 'Home:Uploads/' } );
 
 			} // if file item
 		} // each pasted iteam
 	},
 	uploadPastedFile: function( file )
 	{
-		//get directory listing for Home:Downloads - create folder if it does not exist...
+		//get directory listing for Home:Uploads - create folder if it does not exist...
 		let j = new cAjax ();
 		
 		let updateurl = '/system.library/file/dir?wr=1'
-		updateurl += '&path=' + encodeURIComponent( 'Home:Downloads' );
+		updateurl += '&path=' + encodeURIComponent( 'Home:Uploads' );
 		updateurl += '&sessionid=' + encodeURIComponent( Workspace.sessionId );
 		
 		j.open( 'get', updateurl, true, true );
@@ -10073,7 +10073,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						return; // no endless loop please	
 					}
 				}
-				Workspace.uploadFileToDownloadsFolder( file, newfilename );
+				Workspace.uploadFileToUploadsFolder( file, newfilename );
 			}
 			else
 			{
@@ -10087,7 +10087,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 
 
 	}, // end of uploadPastedFile
-	uploadFileToDownloadsFolder: function( file, filename )
+	uploadFileToUploadsFolder: function( file, filename )
 	{
 		// Setup a file copying worker
 		let uworker = new Worker( 'js/io/filetransfer.js' );
@@ -10252,7 +10252,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				if( e.data['uploadscomplete'] == 1 )
 				{
 					w.close();
-					Notify({'title':i18n('i18n_pasted_file'),'text':i18n('i18n_pasted_to_downloads') + '(' + filename +')' });
+					Notify({'title':i18n('i18n_pasted_file'),'text':i18n('i18n_pasted_to_uploads') + '(' + filename +')' });
 					return true;
 				}
 				else if( e.data['progress'] )
@@ -10301,7 +10301,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		
 		let fileMessage = {
 			'session': Workspace.sessionId,
-			'targetPath': 'Home:Downloads/',
+			'targetPath': 'Home:Uploads/',
 			'targetVolume': 'Home',
 			'files': [ file ],
 			'filenames': [ filename ]
