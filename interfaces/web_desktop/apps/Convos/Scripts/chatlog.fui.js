@@ -460,8 +460,7 @@ class FUIChatlog extends FUIElement
     	this.domTextarea.addEventListener( 'paste', function( e )
     	{
     		let s = this;
-    		self.handlePasteEvent( e );
-    		setTimeout( function(){ s.innerHTML = ''; s.checkHeight(); }, 100 );
+    		self.handlePasteEvent( e, s );
     	} );
     	this.domTextarea.addEventListener( 'keydown', function( e )
     	{
@@ -1024,7 +1023,7 @@ class FUIChatlog extends FUIElement
         
 		self.busyMessages = false;
     }
-    handlePasteEvent( evt )
+    handlePasteEvent( evt, textarea )
 	{
 		let self = this;
 		let pastedItems = ( evt.clipboardData || evt.originalEvent.clipboardData ).items;
@@ -1036,6 +1035,7 @@ class FUIChatlog extends FUIElement
 				let blob = item.getAsFile();
 				self.uploadBlob = blob;
 				self.uploadPastedFile( self.uploadBlob );
+				setTimeout( function(){ textarea.innerHTML = ''; textarea.checkHeight(); }, 100 );
 			} 
 		}
 	}
