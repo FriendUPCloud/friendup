@@ -177,7 +177,7 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 		{
 			BufStringAdd( allArgsNew, allArgs );
 		}
-		DEBUG( "Request source: %d\n", request->http_RequestSource );
+		//DEBUG( "Request source: %d\n", request->http_RequestSource );
 		
 		// get values from POST 
 		
@@ -195,7 +195,7 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 				quotationFound = TRUE;
 			}
 			
-			DEBUG("Before for\n");
+			//DEBUG("Before for\n");
 			for( ; i < hm->hm_TableSize; i++ )
 			{
 				if( hm->hm_Data[ i ].hme_InUse == TRUE && hm->hm_Data[ i ].hme_Key != NULL && hm->hm_Data[ i ].hme_Data != NULL )
@@ -203,7 +203,7 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 					// if parameter was not passed, it must be taken from POST
 					if( strstr( allArgsNew->bs_Buffer, hm->hm_Data[ i ].hme_Key ) == NULL )
 					{
-						DEBUG("Parameter not found, FC will use one from POST: %s\n", hm->hm_Data[ i ].hme_Key );
+						//DEBUG("Parameter not found, FC will use one from POST: %s\n", hm->hm_Data[ i ].hme_Key );
 						int size = 10 + strlen( hm->hm_Data[ i ].hme_Key ) + strlen ( hm->hm_Data[ i ].hme_Data );
 						char *buffer = NULL;
 						
@@ -219,7 +219,7 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 								quotationFound = TRUE;
 							}
 							
-							DEBUG("Added param '%s'\n", buffer );
+							//DEBUG("Added param '%s'\n", buffer );
 							BufStringAdd( allArgsNew, buffer );
 							FFree( buffer );
 						}
@@ -240,7 +240,7 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 		char *tmpFileName = FMalloc( 1024 );
 		FILE *fp;
 		
-		DEBUG( "The full size is: %ld\n", ( long int )fullsize );
+		//DEBUG( "The full size is: %ld\n", ( long int )fullsize );
 		
 		while( TRUE )
 		{
@@ -255,7 +255,7 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 				fp = fopen( tmpFileName, "wb" );
 				if( fp != NULL )
 				{
-					DEBUG( "File created %s\n", tmpFileName );
+					//DEBUG( "File created %s\n", tmpFileName );
 					fwrite( allArgsNew->bs_Buffer, allArgsNew->bs_Size, 1, fp );
 					fclose( fp );
 					BufStringDelete( allArgsNew );
