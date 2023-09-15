@@ -142,6 +142,11 @@ if( isset( $args->args ) )
                 $s->Avatar = 'default';
                 $s->Own = true;
                 $response->messages[] = $s;
+                $Logger->log( 'Added message. ' . strlen( $out->message ) );
+            }
+            else
+            {
+            	$Logger->log( 'Failed to add message. ' . strlen( $out->message ) );
             }
         }
         
@@ -330,7 +335,7 @@ if( isset( $args->args ) )
             {
                 die( 'ok<!--separate-->' . json_encode( $response ) );
             }
-            die( 'fail<!--separate-->{"response":0,"message":"Failed to retrieve messages."}' . $q );
+            die( 'fail<!--separate-->{"response":0,"message":"Failed to retrieve messages."}' );
         }
         else if( $args->args->method == 'message-edit' ) 
         {

@@ -233,6 +233,26 @@ function FindAppInSearchPaths( $app )
 // Get arguments from argv
 if( isset( $argv ) && isset( $argv[1] ) )
 {
+	// Parameters from path
+	if( $argv[1][0] == '/' && substr( $argv[1], 0, 5 ) == '/tmp/' && !strstr( $argv[1], '..' ) )
+	{
+		$filename = $argv[1];
+		$argv[1] = file_get_contents( $filename );
+		unlink( $filename );
+	}
+	
+	// Got crap in the start of the args list
+	if( $argv[1][0] == '{' )
+	{
+		$argv[1] = explode( '&module=', $argv[1] );
+		$argv[1] = 'module=' . $argv[1][1];
+	}
+	// POST JSON
+	// TODO: This should be refactored, it is ugly
+	if( strstr( $argv[1], '?post_json=' ) )
+	{
+		$argv[1] = str_replace( '?post_json=', '&post_json=', $argv[1] );
+	}
 	if( $args = explode( '&', $argv[1] ) )
 	{
 		/*
@@ -282,8 +302,26 @@ if( isset( $argv ) && isset( $argv[1] ) )
 					}
 					if( $value && ( $value[0] == '{' || $value[0] == '[' ) )
 					{
-						if( $data = json_decode( $value) )
+						if( $data = json_decode( $value ) )
 						{
+							// We got a "post_json" element, which used POST
+							if( $key == 'post_json' )
+							{
+								$key = 'args';
+								$data = $data->args;
+							}
+							$kvdata->$key = $data;
+							continue;
+						}
+						// Try to strip
+						else if( $data = json_decode( stripslashes( $value ) ) )
+						{
+							// We got a "post_json" element, which used POST
+							if( $key == 'post_json' )
+							{
+								$key = 'args';
+								$data = $data->args;
+							}
 							$kvdata->$key = $data;
 							continue;
 						}
