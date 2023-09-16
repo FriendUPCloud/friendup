@@ -8279,7 +8279,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					{
 						name: i18n( 'i18n_new_memo' ),
 	                    icon: 'file-text',
-	                    command: function() { Workspace.newmemo(); }
+	                    command: function() { Workspace.newmemo(); },
+	                    disabled: !( currentMovable && currentMovable.content.directoryview )
 					},
 					{
 						name:	i18n( 'menu_new_weblink' ),
@@ -8652,7 +8653,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	showContextMenu: function( menu, e, extra )
 	{
 		e = e || {}
-		
 		// Do not do it double
 		if( this.contextMenuShowing && !extra?.applicationId ) return;
 		
@@ -8682,7 +8682,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				}
 			}
 		}
-		
 		// Always refresh menu when we have a targtt
 		if( e && e.target && !menu )
 		{
