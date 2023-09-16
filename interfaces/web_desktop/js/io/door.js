@@ -150,7 +150,7 @@ Door.prototype.get = function( path )
 	return door;
 };
 
-Door.prototype.getIcons = function( fileInfo, callback, flags )
+Door.prototype.getIcons = function( fileInfo = false, callback, flags )
 {
 	if( !this.path && this.deviceName )
 	{

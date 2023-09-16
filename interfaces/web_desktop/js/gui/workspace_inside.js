@@ -5379,8 +5379,31 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	newmemo: function( path )
 	{
 		if( !path ) path = currentMovable.content.fileInfo.Path;
-		let f = new File( path + 'new_memo.memo' );
-		f.save();
+		let d = new Door( path );
+		d.getIcons( false, function( data )
+		{
+			let fn = 'new_memo';
+			let ext = 'memo';
+			let found = true;
+			let num = 1;
+			let cand;
+			while( found )
+			{
+				found = false;
+				cand = fn + ( num > 1 ? ( '_' + num ) : '' ) + '.' + ext;
+				for( let a = 0; a < data.length; a++ )
+				{
+					if( data[a].Type == 'File' && data[a].Filename == cand )
+					{
+						num++;
+						found = true;
+						break;
+					}
+				}
+			}
+			let f = new File( path + cand );
+			f.save();
+		} );
 	},
 	// Create a new web link!
 	weblink: function( path )
