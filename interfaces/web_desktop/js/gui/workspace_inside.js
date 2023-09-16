@@ -3710,7 +3710,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				Workspace.mimeTypes = s;
 			}
 		}
-		m.execute( 'mimetypes' );
+		m.execute( 'getmimetypes' );
 	},
 	// Refresh an open window by path
 	// TODO: Make less aggressive! Use settimeouts f.ex. so we can abort multiple
@@ -6473,7 +6473,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				title: ( icon.Type == 'Door' ? i18n( 'i18n_volumeicon_information' ) : i18n( 'i18n_icon_information' ) ) +
 					' "' + ( icon.Filename ? icon.Filename : icon.Title ) + '"',
 				width: 640,
-				height: 350
+				height: 390
 			} );
 			this.seed++;
 
