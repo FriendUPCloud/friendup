@@ -5956,8 +5956,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			// Open window
 			let w = new View( {
 				title:  i18n( 'i18n_copying_files' ),
-				width:  320,
-				height: 100,
+				width:  390,
+				height: 110,
 				id:     'fileops',
 				dialog: true,
 				dockable: true
@@ -7480,8 +7480,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		
 		let options = {
 			title: i18n( 'i18n_choose_file_to_upload' ),
-			width: 370,
-			'min-width': 370,
+			width: 390,
+			'min-width': 390,
 			height: 220,
 			'min-height': 220,
 			id: 'fileupload',
@@ -10120,8 +10120,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		// Open window
 		let w = new View( {
 			title:  i18n( 'i18n_copying_files' ),
-			width:  320,
-			height: 100,
+			width:  390,
+			height: 110,
 			id:     'fileops',
 			dialog: true,
 			dockable: true

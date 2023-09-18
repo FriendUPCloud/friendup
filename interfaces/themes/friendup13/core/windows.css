@@ -1732,9 +1732,10 @@ html body.Loading #FriendScreenOverlay
 .ProgressBar > .Info 
 {
     display: inline-block;
-    width: 200px;
+    width: calc(100% - 100px);
     vertical-align: top;
     padding: 0;
+    line-height: 29px;
 }
 
 .ProgressBar > .Info > div#transfernotice

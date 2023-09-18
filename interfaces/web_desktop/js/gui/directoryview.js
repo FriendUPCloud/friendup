@@ -1708,8 +1708,8 @@ DirectoryView.prototype.InitWindow = function( winobj )
 					// Open window
 					let w = new View( {
 						title:  i18n( 'i18n_copying_files' ),
-						width:  320,
-						height: 100,
+						width:  390,
+						height: 110,
 						dialog: true,
 						dockable: true
 					} );
