@@ -1662,7 +1662,10 @@ Application.handleImageLoad = function( ele, originalFileSrc = false, filename =
 	let mes = document.querySelector( '.Messages' );
 	if( !mes ) return;
 	if( ele.naturalWidth < ele.parentNode.offsetWidth )
+	{
 		ele.style.width = ele.naturalWidth + 'px';
+		ele.classList.add( 'ActualSize' );
+	}
 	mes.style.scrollBehavior = 'initial';
 	mes.scrollTop = mes.scrollHeight;
 	setTimeout( function()

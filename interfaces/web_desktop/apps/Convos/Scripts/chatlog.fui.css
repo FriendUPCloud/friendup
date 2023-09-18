@@ -591,6 +591,11 @@ body.Charcoal .FUIChatlog .Message.Own[seen=yes] .Date:before
     transition: opacity 0.25s;
 }
 
+html .FUIChatlog .Message img.Attachment.ActualSize
+{
+	width: auto !important;
+}
+
 .FUIChatlog .Message img.Attachment.Loaded
 {
 	opacity: 1;
