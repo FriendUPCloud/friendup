@@ -96,7 +96,8 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 	FBOOL both = request->http_Content && request->http_Uri && request->http_Uri->uri_QueryRaw ? TRUE : FALSE;
 	if( request->http_Content != NULL ) size += strlen( request->http_Content );
 	if( request->http_Uri && request->http_Uri->uri_QueryRaw != NULL ) size += strlen( request->http_Uri->uri_QueryRaw );
-	char *allArgsNew = NULL;
+	
+	BufString *allArgsNew = BufStringNew();
 	
 	//fprintf( log, " CONTENT : %s\n\n\n\n\n", request->content );
 	
@@ -118,8 +119,6 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 	char *allArgs = FCallocAlign( fullsize, sizeof(char) );
 	if( allArgs != NULL )
 	{
-		allArgsNew = FCallocAlign( fullsize + 100, sizeof(char) );
-	
 		if( both == TRUE )
 		{
 			if( request->http_ContentType == HTTP_CONTENT_TYPE_APPLICATION_JSON )
@@ -147,12 +146,6 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 			sprintf( allArgs, "%s", request->http_Uri->uri_QueryRaw );
 		}
 		
-		if( allArgsNew == NULL )
-		{
-			FFree( allArgs );
-			return NULL;
-		}
-	
 		// application/json are used to communicate with another tools like onlyoffce
 		char *sessptr = NULL;
 		if( request->http_ContentType != HTTP_CONTENT_TYPE_APPLICATION_JSON )
@@ -176,15 +169,15 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 			}
 			
 			//DEBUG("Sessptr !NULL\n");
-			memcpy( allArgsNew, allArgs, fullsize );
+			BufStringAdd( allArgsNew, allArgs );
 			
 			//fprintf( log, "\n\n\n\n\n\n\n\nSIZE ALLAGRS %lu  ALLARGSNEW %lu\n\n\n\n\n\n", strlen( allArgs ), strlen( allArgsNew ) );
 		}
 		else
 		{
-			strcpy( allArgsNew, allArgs );
+			BufStringAdd( allArgsNew, allArgs );
 		}
-		DEBUG( "Request source: %d\n", request->http_RequestSource );
+		//DEBUG( "Request source: %d\n", request->http_RequestSource );
 		
 		// get values from POST 
 		
@@ -197,24 +190,24 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 			//fprintf( log, "AllAgrs : '%s'\n", allArgs );
 			//fprintf( log, "Now POST parameters will be added module request. Number of post parameters '%d'\n", hm->table_size );
 			
-			if( strstr( allArgsNew, "?" ) != NULL )
+			if( strstr( allArgsNew->bs_Buffer, "?" ) != NULL )
 			{
 				quotationFound = TRUE;
 			}
 			
-			DEBUG("Before for\n");
+			//DEBUG("Before for\n");
 			for( ; i < hm->hm_TableSize; i++ )
 			{
 				if( hm->hm_Data[ i ].hme_InUse == TRUE && hm->hm_Data[ i ].hme_Key != NULL && hm->hm_Data[ i ].hme_Data != NULL )
 				{
 					// if parameter was not passed, it must be taken from POST
-					if( strstr( allArgsNew, hm->hm_Data[ i ].hme_Key ) == NULL )
+					if( strstr( allArgsNew->bs_Buffer, hm->hm_Data[ i ].hme_Key ) == NULL )
 					{
-						DEBUG("Parameter not found, FC will use one from POST: %s\n", hm->hm_Data[ i ].hme_Key );
+						//DEBUG("Parameter not found, FC will use one from POST: %s\n", hm->hm_Data[ i ].hme_Key );
 						int size = 10 + strlen( hm->hm_Data[ i ].hme_Key ) + strlen ( hm->hm_Data[ i ].hme_Data );
-						char *buffer;
+						char *buffer = NULL;
 						
-						if( ( buffer = FCalloc( size, sizeof(char) ) ) != NULL )
+						if( ( buffer = FCalloc( size + 1, sizeof(char) ) ) != NULL )
 						{
 							if( quotationFound == TRUE )
 							{
@@ -226,8 +219,8 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 								quotationFound = TRUE;
 							}
 							
-							DEBUG("Added param '%s'\n", buffer );
-							strcat( allArgsNew, buffer );
+							//DEBUG("Added param '%s'\n", buffer );
+							BufStringAdd( allArgsNew, buffer );
 							FFree( buffer );
 						}
 					}
@@ -247,6 +240,8 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 		char *tmpFileName = FMalloc( 1024 );
 		FILE *fp;
 		
+		//DEBUG( "The full size is: %ld\n", ( long int )fullsize );
+		
 		while( TRUE )
 		{
 			FILE *f;
@@ -260,16 +255,16 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 				fp = fopen( tmpFileName, "wb" );
 				if( fp != NULL )
 				{
-					//DEBUG("File created\n");
-					fwrite( allArgsNew, 1, strlen( allArgsNew ), fp );
+					//DEBUG( "File created %s\n", tmpFileName );
+					fwrite( allArgsNew->bs_Buffer, allArgsNew->bs_Size, 1, fp );
 					fclose( fp );
-					FFree( allArgsNew );
+					BufStringDelete( allArgsNew );
 					int len2 = len + 128;
 					// we are returning now name of the file which contain all parameters
-					allArgsNew = FMalloc( len2 );
+					allArgsNew = BufStringNew();
 					if( allArgsNew != NULL )
 					{
-						snprintf( allArgsNew, len2, MODULE_FILE_CALL_STRING, tmpFileName );
+						BufStringAdd( allArgsNew, tmpFileName );
 					}
 					break;
 				}
@@ -292,16 +287,6 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 		}
 		
 		FFree( tmpFileName );
-		
-		/*
-		int len = strlen( "fail<!--separate-->{\"message\":\"Max length of varargs exceeded\",\"response\":-1}" );
-		allArgsNew = FMalloc( len+16 );
-		if( allArgsNew != NULL )
-		{
-			strncpy( allArgsNew, "fail<!--separate-->{\"message\":\"Max length of varargs exceeded\",\"response\":-1}", len );
-		}
-		return allArgsNew;
-		*/
 	}
 	else
 	{
@@ -309,7 +294,11 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 	}
 	DEBUG("End all args new\n");
 	
-	return allArgsNew;
+	char *returnBuf = allArgsNew->bs_Buffer;
+	allArgsNew->bs_Buffer = NULL;
+	BufStringDelete( allArgsNew );
+	
+	return returnBuf;
 }
 
 

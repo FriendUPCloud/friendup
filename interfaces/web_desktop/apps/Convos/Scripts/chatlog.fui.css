@@ -246,6 +246,7 @@ body:not([mobile]) .FUIChatlog .Input .MobileMen:hover,
 .FUIChatlog .Input > div.Textarea.Grown
 {
     border-radius: 3px 3px 0 0;
+    overflow: auto;
 }
 
 

@@ -1484,7 +1484,7 @@ DirectoryView.prototype.InitWindow = function( winobj )
 				cancelBubble( e );
 				return false;
 			}
-			let hasDownload = false;
+			let hasUploads = false;
 			
 			function makeTransferDirectory()
 			{
@@ -1495,24 +1495,24 @@ DirectoryView.prototype.InitWindow = function( winobj )
 				{
 					for( let a = 0; a < items.length; a++ )
 					{
-						if( items[a].Path == 'Home:Downloads/' )
+						if( items[a].Path == 'Home:Uploads/' )
 						{
-							hasDownload = true;
+							hasUploads = true;
 							return;
 						}
 					}
-					if( !hasDownload )
+					if( !hasUploads )
 					{
-						d.dosAction( 'makedir', { path: 'Home:Downloads/' }, function( result )
+						d.dosAction( 'makedir', { path: 'Home:Uploads/' }, function( result )
 						{
 							if( result.substr( 0, 3 ) == 'ok<' )
 							{
-								hasDownload = true;
+								hasUploads = true;
 							}
 							else
 							{
-								Alert( 'Error uploading', 'The Home:Downloads/ folder could not be created.' );
-								hasDownload = 'aborted';
+								Alert( 'Error uploading', 'The Home:Uploads/ folder could not be created.' );
+								hasUploads = 'aborted';
 							}
 						} );
 					}
@@ -1547,7 +1547,7 @@ DirectoryView.prototype.InitWindow = function( winobj )
 				{
 					info = {
 						'session': Workspace.sessionId,
-						'targetPath': 'Home:Downloads/',
+						'targetPath': 'Home:Uploads/',
 						'targetVolume': 'Home:',
 						'files': files
 					};
@@ -1586,10 +1586,10 @@ DirectoryView.prototype.InitWindow = function( winobj )
 					let busyTimeout = null;
 					function busyChecker()
 					{
-						if( busyTimeout || hasDownload == false || hasDownload == 'aborted' )
+						if( busyTimeout || hasUploads == false || hasUploads == 'aborted' )
 							clearTimeout( busyTimeout );
 						// Aborted
-						if( hasDownload == 'aborted' )
+						if( hasUploads == 'aborted' )
 							return;
 						busyTimeout = setTimeout( function()
 						{
@@ -1708,8 +1708,8 @@ DirectoryView.prototype.InitWindow = function( winobj )
 					// Open window
 					let w = new View( {
 						title:  i18n( 'i18n_copying_files' ),
-						width:  320,
-						height: 100,
+						width:  390,
+						height: 110,
 						dialog: true,
 						dockable: true
 					} );
@@ -1868,7 +1868,7 @@ DirectoryView.prototype.InitWindow = function( winobj )
 
 								Notify( { title: i18n( 'i18n_upload_completed' ), 'text':i18n('i18n_uploaded') }, false, function()
 								{
-									OpenWindowByFileinfo( { Title: 'Downloads', Path: info.targetPath ? info.targetPath : 'Home:Downloads/', Type: 'Directory', MetaType: 'Directory' } );
+									OpenWindowByFileinfo( { Title: 'Uploads', Path: info.targetPath ? info.targetPath : 'Home:Uploads/', Type: 'Directory', MetaType: 'Directory' } );
 								} );
 								return true;
 							}
@@ -4656,8 +4656,6 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 		let v = Friend.startImageViewer( iconObject, { parentView: currentMovable, recent: fromFolder ? false : 'dashboard' } );
 		
 		initContext( v );
-		
-		console.log( ' > Check: ', v );
 	}
 	else if( iconObject.extension.toLowerCase() == 'pdf' )
 	{

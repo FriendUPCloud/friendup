@@ -264,7 +264,7 @@ function createGroup()
 	let v = new View( {
 		title: i18n( 'i18n_create_group' ),
 		width: 500,
-		height: 210
+		height: 250
 	} );
 	
 	let vid = v.getViewId()

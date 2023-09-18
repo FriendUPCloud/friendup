@@ -431,7 +431,7 @@ function deleteGroup()
 							
 							var data = JSON.parse( d );
 							
-							console.log( { e:e, d:(data?data:d) } );
+							//console.log( { e:e, d:(data?data:d) } );
 							
 							if( data.roomId )
 							{
@@ -439,13 +439,13 @@ function deleteGroup()
 									roomId : data.roomId
 								};
 								
-								console.log( '[1]', { type: 0, path: '/room/remove', params: json, servername: null } );
+								//console.log( '[1]', { type: 0, path: '/room/remove', params: json, servername: null } );
 								
 								var dp = new Library( 'system.library' );
 								dp.onExecuted = function( ee, dd )
 								{
 									
-									console.log( '[2]', { type: 0, path: '/room/remove', params: json, servername: null, ee: ee, dd:dd } );
+									//console.log( '[2]', { type: 0, path: '/room/remove', params: json, servername: null, ee: ee, dd:dd } );
 									
 									if( ee == 'fail' )
 									{
@@ -485,18 +485,37 @@ function saveGroup()
 {
 	function joinGroup( gid, cb )
 	{
-		m = new Module( 'system' );
-		m.onExecuted = function( e, d ){ if( cb ) cb(); }
-		m.execute( 'joingroup', { groupId: gid } );
+		let l = new XMLHttpRequest();
+		l.open( 'POST', '/system.library/group/addusers/?authid=' + Application.authId + '&id=' + gid + '&users=' + Application.userId, true );
+		l.onload = function()
+		{
+			// Do nothing
+			//console.log( 'Result of add users: ', this.responseText );
+		}
+		l.send();
 	}
 	
-	function connectFriendChatRoom( gid, roomid, cb )
+	function connectFriendChatRoom( gid, roomid = false, cb = false )
 	{
-		
-		let wmd = new Module( 'system' );
-		wmd.onExecuted = function( e, d ){ if( cb ) cb( e, d ); }
-		wmd.execute( 'workgroupaddmetadata', { groupId: gid, roomId: roomid } );
-		
+		// Convos way
+		if( 1 )
+		{
+			let chat = new Module( 'system' );
+			chat.onExecuted = function( me, md )
+			{
+				Application.sendMessage( { command: 'refreshgroups' } );
+				if( cb ) cb( me, md );
+			}
+			chat.execute( 'convos', { method: 'addroom', parent: gid } );
+		}
+		// Old Friend Chat way
+		else
+		{
+			// TODO: Deprecate
+			let wmd = new Module( 'system' );
+			wmd.onExecuted = function( e, d ){ if( cb ) cb( e, d ); }
+			wmd.execute( 'workgroupaddmetadata', { groupId: gid, roomId: roomid } );
+		}
 	}
 	
 	let t = new Library( 'system.library' );
@@ -533,20 +552,18 @@ function saveGroup()
 				if( t.id && t.uuid && ge( 'ChatRoomCreate' ) && ge( 'ChatRoomCreate' ).checked )
 				{
 					
-					var json = {
-                            name : ge( 'groupName' ).value + ' (' + Application.fullName + ')',
-                            workgroups : [ t.uuid ]
+					let json = {
+		                name : ge( 'groupName' ).value + ' (' + Application.fullName + ')',
+		                workgroups : [ t.uuid ]
                     };
 
                     let cp = new Library( 'system.library' );
                     cp.onExecuted = function( server )
                     {
-			
-                        console.log( { type: 0, path: '/room/create', params: json, servername: null, server:server } );
-						
+                    	console.log( 'What is: ', server )
                         if( server && server.roomId )
                         {
-                            connectFriendChatRoom( t.id, server.roomId, function ( ee, dd )
+                            connectFriendChatRoom( t.id, server.roomId, function( ee, dd )
                             {
 									
                                     if( ee == 'fail' )
@@ -556,12 +573,14 @@ function saveGroup()
 
                             } );
                         }
-                        else
+                        else if( server || ge( 'ChatRoomCreate' ).checked )
                         {
-                        	console.log( server );
+                        	connectFriendChatRoom( t.id, false, function( ee, dd )
+                        	{
+                        		console.log( 'Done' );
+                        	} );
+                        	console.log( 'Want server: ', server );
                         }
-							
-
                     }
                     cp.execute( 'service/request', {
                             type: 0,

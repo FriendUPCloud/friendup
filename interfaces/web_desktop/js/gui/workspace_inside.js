@@ -3710,7 +3710,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				Workspace.mimeTypes = s;
 			}
 		}
-		m.execute( 'mimetypes' );
+		m.execute( 'getmimetypes' );
 	},
 	// Refresh an open window by path
 	// TODO: Make less aggressive! Use settimeouts f.ex. so we can abort multiple
@@ -5379,8 +5379,31 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	newmemo: function( path )
 	{
 		if( !path ) path = currentMovable.content.fileInfo.Path;
-		let f = new File( path + 'new_memo.memo' );
-		f.save();
+		let d = new Door( path );
+		d.getIcons( false, function( data )
+		{
+			let fn = 'new_memo';
+			let ext = 'memo';
+			let found = true;
+			let num = 1;
+			let cand;
+			while( found )
+			{
+				found = false;
+				cand = fn + ( num > 1 ? ( '_' + num ) : '' ) + '.' + ext;
+				for( let a = 0; a < data.length; a++ )
+				{
+					if( data[a].Type == 'File' && data[a].Filename == cand )
+					{
+						num++;
+						found = true;
+						break;
+					}
+				}
+			}
+			let f = new File( path + cand );
+			f.save();
+		} );
 	},
 	// Create a new web link!
 	weblink: function( path )
@@ -5933,8 +5956,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			// Open window
 			let w = new View( {
 				title:  i18n( 'i18n_copying_files' ),
-				width:  320,
-				height: 100,
+				width:  390,
+				height: 110,
 				id:     'fileops',
 				dialog: true,
 				dockable: true
@@ -6450,7 +6473,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				title: ( icon.Type == 'Door' ? i18n( 'i18n_volumeicon_information' ) : i18n( 'i18n_icon_information' ) ) +
 					' "' + ( icon.Filename ? icon.Filename : icon.Title ) + '"',
 				width: 640,
-				height: 350
+				height: 390
 			} );
 			this.seed++;
 
@@ -7457,8 +7480,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		
 		let options = {
 			title: i18n( 'i18n_choose_file_to_upload' ),
-			width: 370,
-			'min-width': 370,
+			width: 390,
+			'min-width': 390,
 			height: 220,
 			'min-height': 220,
 			id: 'fileupload',
@@ -7526,7 +7549,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		if( this.fupdialog ) return;
 		
 		let inps = currentMovable.content.getElementsByTagName( 'input' );
-		let path = 'Home:Downloads/';
+		let path = 'Home:Uploads/';
 		for( let a = 0; a < inps.length; a++ )
 		{
 			if( inps[a].name == 'path' )
@@ -8279,7 +8302,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					{
 						name: i18n( 'i18n_new_memo' ),
 	                    icon: 'file-text',
-	                    command: function() { Workspace.newmemo(); }
+	                    command: function() { Workspace.newmemo(); },
+	                    disabled: !( currentMovable && currentMovable.content.directoryview )
 					},
 					{
 						name:	i18n( 'menu_new_weblink' ),
@@ -8652,7 +8676,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	showContextMenu: function( menu, e, extra )
 	{
 		e = e || {}
-		
 		// Do not do it double
 		if( this.contextMenuShowing && !extra?.applicationId ) return;
 		
@@ -8682,7 +8705,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				}
 			}
 		}
-		
 		// Always refresh menu when we have a targtt
 		if( e && e.target && !menu )
 		{
@@ -9965,22 +9987,22 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				let m = new Library( 'system.library' );
 				m.onExecuted = function( e, d )
 				{
-					//we have a downloads dir in home
+					//we have a uploads dir in home
 					if( e == 'ok' )
 					{
 						Workspace.uploadPastedFile( Workspace.uploadBlob );
 					}
 					else
 					{
-						//no downloads dir - try to make one
+						//no uploads dir - try to make one
 						let m2 = new Library( 'system.library' );
 						m2.onExecuted = function( e, d )
 						{
 							//home drive found. create directory
 							if( e == 'ok' )
 							{
-								let door = Workspace.getDoorByPath( 'Home:Downloads/' );
-								door.dosAction( 'makedir', { path: 'Home:Downloads/' }, function( result )
+								let door = Workspace.getDoorByPath( 'Home:Uploads/' );
+								door.dosAction( 'makedir', { path: 'Home:Uploads/' }, function( result )
 								{
 									let res = result.split( '<!--separate-->' );
 									if( res[0] == 'ok' )
@@ -9990,7 +10012,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									// Failed - alert user
 									else
 									{
-										Notify( { title: i18n( 'i18n_paste_error' ), text: i18n( 'i18n_could_not_create_downloads' ) } );
+										Notify( { title: i18n( 'i18n_paste_error' ), text: i18n( 'i18n_could_not_create_uploads' ) } );
 										return;
 									}
 								});
@@ -10005,18 +10027,18 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						m2.execute( 'file/dir', { path: 'Home:' } );
 					}
 				}
-				m.execute( 'file/dir', { path: 'Home:Downloads/' } );
+				m.execute( 'file/dir', { path: 'Home:Uploads/' } );
 
 			} // if file item
 		} // each pasted iteam
 	},
 	uploadPastedFile: function( file )
 	{
-		//get directory listing for Home:Downloads - create folder if it does not exist...
+		//get directory listing for Home:Uploads - create folder if it does not exist...
 		let j = new cAjax ();
 		
 		let updateurl = '/system.library/file/dir?wr=1'
-		updateurl += '&path=' + encodeURIComponent( 'Home:Downloads' );
+		updateurl += '&path=' + encodeURIComponent( 'Home:Uploads' );
 		updateurl += '&sessionid=' + encodeURIComponent( Workspace.sessionId );
 		
 		j.open( 'get', updateurl, true, true );
@@ -10073,7 +10095,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						return; // no endless loop please	
 					}
 				}
-				Workspace.uploadFileToDownloadsFolder( file, newfilename );
+				Workspace.uploadFileToUploadsFolder( file, newfilename );
 			}
 			else
 			{
@@ -10087,7 +10109,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 
 
 	}, // end of uploadPastedFile
-	uploadFileToDownloadsFolder: function( file, filename )
+	uploadFileToUploadsFolder: function( file, filename )
 	{
 		// Setup a file copying worker
 		let uworker = new Worker( 'js/io/filetransfer.js' );
@@ -10098,8 +10120,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		// Open window
 		let w = new View( {
 			title:  i18n( 'i18n_copying_files' ),
-			width:  320,
-			height: 100,
+			width:  390,
+			height: 110,
 			id:     'fileops',
 			dialog: true,
 			dockable: true
@@ -10252,7 +10274,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				if( e.data['uploadscomplete'] == 1 )
 				{
 					w.close();
-					Notify({'title':i18n('i18n_pasted_file'),'text':i18n('i18n_pasted_to_downloads') + '(' + filename +')' });
+					Notify({'title':i18n('i18n_pasted_file'),'text':i18n('i18n_pasted_to_uploads') + '(' + filename +')' });
 					return true;
 				}
 				else if( e.data['progress'] )
@@ -10301,7 +10323,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		
 		let fileMessage = {
 			'session': Workspace.sessionId,
-			'targetPath': 'Home:Downloads/',
+			'targetPath': 'Home:Uploads/',
 			'targetVolume': 'Home',
 			'files': [ file ],
 			'filenames': [ filename ]

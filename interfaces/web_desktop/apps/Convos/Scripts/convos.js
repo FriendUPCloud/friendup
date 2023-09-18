@@ -118,8 +118,6 @@ Application.receiveMessage = function( msg )
 		}, 25 );
 	}
 	
-	console.log( 'CONVOS GOT MESSAGE: ', msg );
-	
 	// Receiving message on sender
     if( msg.senderId && !msg.command )
     {
@@ -598,8 +596,10 @@ Application.holdConnection = function( flags )
 	let m = new XMLHttpRequest();
 	
 	let uqkey = flags.roomType + ':' + flags.cid;
-	
-	m.open( 'POST', '/system.library/module/?module=system&command=convos&authid=' + Application.authId + '&args=' + JSON.stringify( args ), true );
+	let post = JSON.stringify( {
+		args: args
+	} );
+	m.open( 'POST', '/system.library/module/?module=system&command=convos&authid=' + Application.authId, true );
 	m.onload = function( data )
 	{
 	    if( args.outgoing && args.outgoing.length )
@@ -706,11 +706,11 @@ Application.holdConnection = function( flags )
             }
             catch( e )
             {
-                console.log( 'Uncaught error.' );
+                console.log( 'Uncaught error.', e, this.response );
             }
 		}
 	}
-	m.send();
+	m.send( post );
 }
 
 // Things to do on interval

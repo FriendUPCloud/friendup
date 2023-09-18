@@ -142,6 +142,11 @@ if( isset( $args->args ) )
                 $s->Avatar = 'default';
                 $s->Own = true;
                 $response->messages[] = $s;
+                $Logger->log( 'Added message. ' . strlen( $out->message ) );
+            }
+            else
+            {
+            	$Logger->log( 'Failed to add message. ' . strlen( $out->message ) );
             }
         }
         
@@ -330,7 +335,7 @@ if( isset( $args->args ) )
             {
                 die( 'ok<!--separate-->' . json_encode( $response ) );
             }
-            die( 'fail<!--separate-->{"response":0,"message":"Failed to retrieve messages."}' . $q );
+            die( 'fail<!--separate-->{"response":0,"message":"Failed to retrieve messages."}' );
         }
         else if( $args->args->method == 'message-edit' ) 
         {
@@ -996,14 +1001,26 @@ if( isset( $args->args ) )
         }
         else if( $args->args->method == 'addroom' )
         {
+        	// Support parent
+        	$parentSet = false;
+        	if( isset( $args->args->parent ) )
+        	{
+        		$l = new dbIO( 'FUserGroup' );
+        		$l->UserID = $User->ID;
+        		$l->ID = $args->args->parent;
+        		if( $l->Load() )
+        		{
+        			$parentSet = $l;
+        		}
+        	}
         	$o = new dbIO( 'FUserGroup' );
         	$o->UserID = $User->ID;
-        	$o->ParentID = 0;
-        	$o->Name = $args->args->roomName;
+        	$o->ParentID = $parentSet ? $parentSet->ID : 0;
+        	$o->Name = $parentSet ? ( $parentSet->Name . ' chat' ) : $args->args->roomName;
         	$o->Description = $args->args->roomDescription;
         	$o->Type = 'chatroom';
         	$o->Status = 0;
-        	$o->UniqueID = hash( 'sha256', 'chatroom|' . $o->Name . '|' . $User->ID );
+        	$o->UniqueID = hash( 'sha256', 'chatroom|' . $o->Name . '|' . $User->ID . '|' . mktime() );
         	$o->Save();
         	if( $o->ID > 0 )
         	{

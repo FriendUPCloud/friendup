@@ -610,10 +610,10 @@ i18n_no_description_on_group            : This group lacks a description.
 i18n_invite_to_no_group                 : Invite user without assigning to group.
 
 i18n_paste_error                        : Paste error
-i18n_could_not_create_downloads:        : Could not create Downloads folder in your Home: drive
+i18n_could_not_create_uploads:          : Could not create Uploads folder in your Home: drive
 i18n_no_home_drive                      : Could not find your Home: drive
 i18n_pasted_file                        : Paste your content
-i18n_pasted_to_downloads                : Your clipboard contents have been pasted to Downloads
+i18n_pasted_to_uploads                  : Your clipboard contents have been pasted to Uploads
 i18n_uploaded                           : Your file(s) have been uploaded.
 
 #Locale ------------------------------------------------------------------------

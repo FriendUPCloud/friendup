@@ -457,6 +457,11 @@ class FUIChatlog extends FUIElement
 				} );
     		}
     	} );
+    	this.domTextarea.addEventListener( 'paste', function( e )
+    	{
+    		let s = this;
+    		self.handlePasteEvent( e, s );
+    	} );
     	this.domTextarea.addEventListener( 'keydown', function( e )
     	{
     	    if( e.which == 16 )
@@ -1018,6 +1023,76 @@ class FUIChatlog extends FUIElement
         
 		self.busyMessages = false;
     }
+    handlePasteEvent( evt, textarea )
+	{
+		let self = this;
+		let pastedItems = ( evt.clipboardData || evt.originalEvent.clipboardData ).items;
+		for( let i in pastedItems )
+		{
+			let item = pastedItems[i];
+			if( item.kind === 'file' )
+			{
+				let blob = item.getAsFile();
+				self.uploadBlob = blob;
+				self.uploadPastedFile( self.uploadBlob );
+				setTimeout( function(){ textarea.innerHTML = ''; textarea.checkHeight(); }, 100 );
+			} 
+		}
+	}
+	uploadPastedFile( file )
+	{
+		let self = this;
+		
+		function fileExists( filename, cbk )
+		{
+			let d = new Door( 'Home:Uploads/' );
+			d.getIcons( function( list )
+			{
+				let ext = filename.split( '.' ).pop();
+				let original = filename.substr( 0, filename.length - ( ext.length + 1 ) );
+				
+				let exists = false;
+				let num = 0;
+				let cand = '';
+				do
+				{
+					exists = false;
+					cand = original + ( num > 0 ? ( '_' + num ) : '' ) + '.' + ext;
+					for( let a = 0; a < list.length; a++ )
+					{
+						if( list[a].Type == 'File' && list[a].Filename == cand )
+						{
+							exists = true;
+							break;
+						}
+					}
+					num++;
+				}
+				while( exists );
+				
+				if( cbk )
+				{
+					cbk( cand );
+				}
+			} );
+		}
+	
+		// Check if file exists
+		fileExists( file.name, function( resname )
+		{
+			let formData = new FormData();
+			formData.append( resname, file, resname );
+			let xhr = new XMLHttpRequest();
+			xhr.open( 'POST', '/system.library/file/upload?authid=' + Application.authId + '&filename=' + resname + '&path=Home:Uploads/', true);
+			xhr.onload = function (e) {
+				if (xhr.readyState === 4 && xhr.status === 200) 
+				{
+					self.shareImageAndPost( 'Home:Uploads/' + resname );
+				}
+			};
+			xhr.send( formData );
+		} );
+	}
     setTopic( topic, type = false )
     {
     	// Jeanie is a top level chat
