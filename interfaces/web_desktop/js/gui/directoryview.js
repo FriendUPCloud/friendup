@@ -44,6 +44,9 @@ function _getBase64Image( img, type )
 }
 
 Friend = window.Friend || {};
+// We need this
+if( !Friend.fileTransfers )
+	Friend.fileTransfers = {};
 
 // Setup icon cache
 if( !Friend.iconCache )
@@ -1489,6 +1492,24 @@ DirectoryView.prototype.InitWindow = function( winobj )
 			}
 			let hasUploads = false;
 			
+			// Make content hash
+			let transferStr = '';
+			let num = 0;
+			for( let a in e.dataTransfer.files )
+			{
+				//transferStr += e.dataTransfer.files[a];
+				if( e.dataTransfer.files[a].name )
+				{
+					if( num > 0 )
+						transferStr += '|';
+					transferStr += e.dataTransfer.files[a].name;
+					num++;						
+				}
+			}
+			if( Friend.fileTransfers[ MD5( transferStr ) ] )
+				return;
+			Friend.fileTransfers[ MD5( transferStr ) ] = true;
+			
 			function makeTransferDirectory()
 			{
 				// Check the destination
@@ -1524,6 +1545,7 @@ DirectoryView.prototype.InitWindow = function( winobj )
 			
 			// Make sure we have it
 			makeTransferDirectory();
+			
 			// Do the actual transfer
 			doTheTransfer();
 			
@@ -1730,6 +1752,7 @@ DirectoryView.prototype.InitWindow = function( winobj )
 						w.connectedworker = this.connectedworker;
 						w.onClose = function()
 						{
+							delete Friend.fileTransfers[ MD5( transferStr ) ];
 							Workspace.diskNotification( [ winobj ], 'refresh' );
 							if( this.connectedworker ) this.connectedworker.postMessage({'terminate':1});
 						}
