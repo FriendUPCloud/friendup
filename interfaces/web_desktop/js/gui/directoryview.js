@@ -1478,6 +1478,9 @@ DirectoryView.prototype.InitWindow = function( winobj )
 		// formatted is used to handle a formatted, recursive list
 		function handleHostFileSelect( e )
 		{	
+			// no more events please
+			cancelBubble( e );
+			
 			if( winobj && winobj.fileInfo && winobj.fileInfo.Path.indexOf( 'Shared:' ) == 0 )
 			{
 				Notify( { title: i18n( 'i18n_not_upload_target' ), text: i18n( 'i18n_not_upload_target_desc' ) } );
@@ -1719,7 +1722,6 @@ DirectoryView.prototype.InitWindow = function( winobj )
 					
 					let groove = false, bar = false, frame = false, progressbar = false, progress = false;
 
-
 					uprogress.onLoad = function( data )
 					{
 						data = data.split( '{cancel}' ).join( i18n( 'i18n_cancel' ) );
@@ -1910,8 +1912,8 @@ DirectoryView.prototype.InitWindow = function( winobj )
 
 		winobj.parentNode.addEventListener( 'dragleave', handleHostDragOut,    false );
 		winobj.parentNode.addEventListener( 'dragover',  handleHostDragOver,   false );
-		winobj.parentNode.addEventListener( 'drop',      handleHostFileSelect, false );
 		winobj.parentNode.addEventListener( 'drop',      handleHostDragOut,    false );
+		winobj.parentNode.addEventListener( 'drop',      handleHostFileSelect, false );
 
 	} // end of check for html5 file upload capabilities
 

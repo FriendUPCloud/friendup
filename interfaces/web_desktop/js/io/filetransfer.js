@@ -54,11 +54,14 @@ var makedirBuf = {};
 self.checkVolume = function()
 {
 	xhr = new XMLHttpRequest();
+	xhr.completed = false;
 	xhr.onreadystatechange = function()
 	{
 		if( this.readyState == 4 && this.status == 200 )
 		{
-			//console.log( 'Response from server: ', this.responseText );
+			if( this.completed )
+				return;
+			this.completed = true;
 			// Don't abort if we succeeded anyway
 			if( self.delayedAbort )
 			{
@@ -143,10 +146,13 @@ self.checkVolume = function()
 } // end of checkVolumne
 
 // -----------------------------------------------------------------------------
+self.uploading = false;
 self.uploadFiles = function()
 {
 	var filesList = self.files;
-
+	// Do not trigger twice
+	if( this.uploading ) return;
+	this.uploading = true;
 
 	self.postMessage( {'filelist': filesList } );
 	
