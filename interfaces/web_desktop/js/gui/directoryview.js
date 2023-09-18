@@ -44,6 +44,9 @@ function _getBase64Image( img, type )
 }
 
 Friend = window.Friend || {};
+// We need this
+if( !Friend.fileTransfers )
+	Friend.fileTransfers = {};
 
 // Setup icon cache
 if( !Friend.iconCache )
@@ -1478,6 +1481,9 @@ DirectoryView.prototype.InitWindow = function( winobj )
 		// formatted is used to handle a formatted, recursive list
 		function handleHostFileSelect( e )
 		{	
+			// no more events please
+			cancelBubble( e );
+			
 			if( winobj && winobj.fileInfo && winobj.fileInfo.Path.indexOf( 'Shared:' ) == 0 )
 			{
 				Notify( { title: i18n( 'i18n_not_upload_target' ), text: i18n( 'i18n_not_upload_target_desc' ) } );
@@ -1485,6 +1491,24 @@ DirectoryView.prototype.InitWindow = function( winobj )
 				return false;
 			}
 			let hasUploads = false;
+			
+			// Make content hash
+			let transferStr = '';
+			let num = 0;
+			for( let a in e.dataTransfer.files )
+			{
+				//transferStr += e.dataTransfer.files[a];
+				if( e.dataTransfer.files[a].name )
+				{
+					if( num > 0 )
+						transferStr += '|';
+					transferStr += e.dataTransfer.files[a].name;
+					num++;						
+				}
+			}
+			if( Friend.fileTransfers[ MD5( transferStr ) ] )
+				return;
+			Friend.fileTransfers[ MD5( transferStr ) ] = true;
 			
 			function makeTransferDirectory()
 			{
@@ -1521,6 +1545,7 @@ DirectoryView.prototype.InitWindow = function( winobj )
 			
 			// Make sure we have it
 			makeTransferDirectory();
+			
 			// Do the actual transfer
 			doTheTransfer();
 			
@@ -1719,7 +1744,6 @@ DirectoryView.prototype.InitWindow = function( winobj )
 					
 					let groove = false, bar = false, frame = false, progressbar = false, progress = false;
 
-
 					uprogress.onLoad = function( data )
 					{
 						data = data.split( '{cancel}' ).join( i18n( 'i18n_cancel' ) );
@@ -1728,6 +1752,7 @@ DirectoryView.prototype.InitWindow = function( winobj )
 						w.connectedworker = this.connectedworker;
 						w.onClose = function()
 						{
+							delete Friend.fileTransfers[ MD5( transferStr ) ];
 							Workspace.diskNotification( [ winobj ], 'refresh' );
 							if( this.connectedworker ) this.connectedworker.postMessage({'terminate':1});
 						}
@@ -1910,8 +1935,8 @@ DirectoryView.prototype.InitWindow = function( winobj )
 
 		winobj.parentNode.addEventListener( 'dragleave', handleHostDragOut,    false );
 		winobj.parentNode.addEventListener( 'dragover',  handleHostDragOver,   false );
-		winobj.parentNode.addEventListener( 'drop',      handleHostFileSelect, false );
 		winobj.parentNode.addEventListener( 'drop',      handleHostDragOut,    false );
+		winobj.parentNode.addEventListener( 'drop',      handleHostFileSelect, false );
 
 	} // end of check for html5 file upload capabilities
 
