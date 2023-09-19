@@ -1487,8 +1487,8 @@ class FUIChatlog extends FUIElement
        	
        	// Remove all redundant HTML
        	string = string.split( /\<br[\/]{0,1}\>/i ).join( "\n" );
-       	string = string.split( /\<[\/]{0,1}div.*?\>/i ).join( "\n" );
-       	string = string.split( "\n\n" ).join( "\n" );
+       	string = string.split( /\<[\/]{0,1}div.*?\>/i ).join( "\r" );
+       	string = string.split( "\r\r" ).join( "\n" );
        	
         let fnd = 0;
         while( 1 )
@@ -1502,6 +1502,7 @@ class FUIChatlog extends FUIElement
             }
             break;
         }
+        
         if( fnd )
         {
             string = string.split( 'fnds://' ).join( 'https://' ).split( 'fnd://' ).join( 'http://' );
@@ -1520,6 +1521,9 @@ class FUIChatlog extends FUIElement
 			}
 			break;
         }
+        
+        // Restore line breaks
+        string = string.split( "\n" ).join( "<br>" );
         
         // Take attachments
         while( 1 )
