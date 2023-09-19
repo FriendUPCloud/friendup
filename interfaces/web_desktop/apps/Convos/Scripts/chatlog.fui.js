@@ -1484,6 +1484,12 @@ class FUIChatlog extends FUIElement
     replaceUrls( string )
     {
        	let self = this;
+       	
+       	// Remove all redundant HTML
+       	string = string.split( /\<br[\/]{0,1}\>/i ).join( "\n" );
+       	string = string.split( /\<[\/]{0,1}div.*?\>/i ).join( "\n" );
+       	string = string.split( "\n\n" ).join( "\n" );
+       	
         let fnd = 0;
         while( 1 )
         {
@@ -1502,13 +1508,18 @@ class FUIChatlog extends FUIElement
         }
         
         // Fix code blocks
-        let tr = string.match( /(```<br>*(.*?)<br>```)/ );
-        if( tr )
+        let replacements = 0;
+        while( 1 )
         {
-        	//console.log( tr );
-        	string = string.split( tr[0] ).join( '<codeblock>' + Trim( tr[2] ) + '</codeblock>' );
-        	string = string.split( '<codeblock><br>' ).join( '<codeblock>' );
-    	}
+		    let tr = string.match( /(```\n([^`]*?)```)/ );
+		    if( tr )
+		    {
+		    	string = string.split( tr[0] ).join( '<codeblock><pre>' + Trim( tr[2] ) + '</pre></codeblock>' );
+		    	string = string.split( '<codeblock><br>' ).join( '<codeblock>' );
+		    	continue;
+			}
+			break;
+        }
         
         // Take attachments
         while( 1 )

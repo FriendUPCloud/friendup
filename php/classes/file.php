@@ -316,7 +316,7 @@ class File
 		$u->SetAuthContext( $ctx[0], $ctx[1] );
 		if( $u->Load( $thumbFN ) && isset( $u->_content ) && substr( $u->_content, 0, 5 ) != 'fail<' )
 		{
-			$Logger->log( '[GenerateThumbnail] This already exists..' );
+			//$Logger->log( '[GenerateThumbnail] This already exists..' );
 			$this->_thumbnailObject = $u;
 			return $u->GetContent();
 		}
@@ -371,7 +371,7 @@ class File
 		
 		// Create new image which will be resized
 		$image2 = imagecreatetruecolor( $csizex, $csizey );
-		imagecopyresized( $image2, $data, 0, 0, 0, 0, $csizex, $csizey, $osizex, $osizey );
+		imagecopyresampled( $image2, $data, 0, 0, 0, 0, $csizex, $csizey, $osizex, $osizey );
 		
 		// Save this file
 		$u = new File( $thumbFN );
