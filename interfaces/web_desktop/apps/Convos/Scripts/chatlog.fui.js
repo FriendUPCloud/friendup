@@ -112,10 +112,13 @@ class FUIChatlog extends FUIElement
             
             let vid = document.createElement( 'div' );
             vid.className = 'Video';
+            vid.title = i18n( 'i18n_init_video_call' );
             vid.innerHTML = '';
             vid.onclick = function()
             {
-            	self.setVideoCall( false );
+            	let c = FUI.getElementByUniqueId( 'contacts' );
+            	if( c )
+            		return c.initVideoChat( false );
             }
             this.domTopic.appendChild( vid );
         }
@@ -669,13 +672,6 @@ class FUIChatlog extends FUIElement
 			zmsg.groupId = self.options.cid;
 		}
 		m.execute( 'convos', zmsg );
-    }
-    setVideoCall( data, init = false )
-    {
-    	// initVideoCall( data )
-    	let contacts = FUI.getElementByUniqueId( 'contacts' );
-    	if( contacts )
-    		contacts.setVideoCall( data, init );
     }
     // Just updates a message
     updateMessage( messageId, content )
@@ -1484,6 +1480,12 @@ class FUIChatlog extends FUIElement
     replaceUrls( string )
     {
        	let self = this;
+       	
+       	// Remove all redundant HTML
+       	string = string.split( /\<br[\/]{0,1}\>/i ).join( "\n" );
+       	string = string.split( /\<[\/]{0,1}div.*?\>/i ).join( "\r" );
+       	string = string.split( "\r\r" ).join( "\n" );
+       	
         let fnd = 0;
         while( 1 )
         {
@@ -1496,19 +1498,28 @@ class FUIChatlog extends FUIElement
             }
             break;
         }
+        
         if( fnd )
         {
             string = string.split( 'fnds://' ).join( 'https://' ).split( 'fnd://' ).join( 'http://' );
         }
         
         // Fix code blocks
-        let tr = string.match( /(```<br>*(.*?)<br>```)/ );
-        if( tr )
+        let replacements = 0;
+        while( 1 )
         {
-        	//console.log( tr );
-        	string = string.split( tr[0] ).join( '<codeblock>' + Trim( tr[2] ) + '</codeblock>' );
-        	string = string.split( '<codeblock><br>' ).join( '<codeblock>' );
-    	}
+		    let tr = string.match( /(```\n([^`]*?)```)/ );
+		    if( tr )
+		    {
+		    	string = string.split( tr[0] ).join( '<codeblock><pre>' + Trim( tr[2] ) + '</pre></codeblock>' );
+		    	string = string.split( '<codeblock><br>' ).join( '<codeblock>' );
+		    	continue;
+			}
+			break;
+        }
+        
+        // Restore line breaks
+        string = string.split( "\n" ).join( "<br>" );
         
         // Take attachments
         while( 1 )
@@ -1570,6 +1581,15 @@ class FUIChatlog extends FUIElement
         	codeblocks.push( res[1] );
         	string = string.split( res[1] ).join( '<!--block--' + codeblocks.length + '>' );
         }
+        // Fix code divs
+        let divblocks = [];
+        while( 1 )
+        {
+        	let res = string.match( /(\<div[^>]*?\>.*?\<\/div\>)/i );
+        	if( !res ) break;
+        	divblocks.push( res[1] );
+        	string = string.split( res[1] ).join( '<!--divblock--' + divblocks.length + '>' );
+        }
         
         // Fix links
         let hrefs = [];
@@ -1587,11 +1607,6 @@ class FUIChatlog extends FUIElement
             string = string.split( smilies[a] ).join( '<span contenteditable="false" class="Emoji">' + emotes[a] + '</span>' );
         }        
         
-        for( let a = 0; a < smilies.length; a++ )
-        {
-            string = string.split( smilies[a] ).join( '<span contenteditable="false" class="Emoji">' + emotes[a] + '</span>' );
-        }
-        
         while( 1 )
         {
             let res = string.match( /\:(.*?)\:/i );
@@ -1601,6 +1616,18 @@ class FUIChatlog extends FUIElement
             }
             else break;
         }
+        
+        // Reconstitute div blocks
+        if( divblocks.length )
+        {
+        	let n = 0;
+        	while( 1 )
+        	{
+        		let res = string.match( /\<\!\-\-divblock\-\-([0-9]*?)\>/i );
+        		if( !res ) break;
+        		string = string.split( res[0] ).join( divblocks[ n++ ] );
+        	}
+	    }
         
         // Reconstitute code blocks
         if( codeblocks.length )
@@ -1662,7 +1689,10 @@ Application.handleImageLoad = function( ele, originalFileSrc = false, filename =
 	let mes = document.querySelector( '.Messages' );
 	if( !mes ) return;
 	if( ele.naturalWidth < ele.parentNode.offsetWidth )
+	{
 		ele.style.width = ele.naturalWidth + 'px';
+		ele.classList.add( 'ActualSize' );
+	}
 	mes.style.scrollBehavior = 'initial';
 	mes.scrollTop = mes.scrollHeight;
 	setTimeout( function()

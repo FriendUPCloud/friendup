@@ -64,7 +64,7 @@ class FUIContacts extends FUIElement
     }
     getBasicTemplate()
     {
-    	let ex = this.options.groupid ? '<div class="Group"></div>' : '<div class="Videocall"></div>';
+    	let ex = this.options.groupid ? '<div class="Group"></div>' : '';
         let add = this.options.groupid ? '<div class="Add"></div>' : '';
         
         if( this.options.own != 'true' )
@@ -109,26 +109,6 @@ class FUIContacts extends FUIElement
 			}
 			else conts[ a ].bubble.classList.remove( 'Showing' );
     	}
-    }
-    setVideoCall( data = false, init = false )
-    {
-    	let vid = this.domSettings.querySelector( '.Videocall' );
-    	if( data )
-    	{
-    		window.currentPeerId = data;
-    		vid.classList.add( 'Pending' );
-    		if( init )
-    		{
-    			vid.onclick();
-    		}
-		}
-    	else 
-    	{
-    		window.videoCallData = null;
-    		vid.classList.remove( 'Pending' );
-    		if( self.videoCall )
-	    		self.videoCall.close();
-		}
     }
     attachDomElement()
     {
@@ -202,48 +182,6 @@ class FUIContacts extends FUIElement
         	}
         }
         
-        // Video calls
-        let vid = this.domSettings.querySelector( '.Videocall' );
-        if( vid )
-        {
-        	vid.onclick = function()
-        	{
-        		if( self.videoCall )
-        			return self.videoCall.activate();
-    			
-        		self.videoCall = new View( {
-        			title: i18n( 'i18n_video_call' ) + ' - ' + self.record.Fullname,
-        			width: 650,
-        			height: 512
-        		} );
-        		self.videoCall.record = self.record;
-        		self.videoCall.onClose = function()
-        		{
-        			self.videoCall = null;
-        			self.domSettings.querySelector( '.Videocall' ).classList.remove( 'Pending' );
-        			
-        			// Say hang up!
-    				Application.SendUserMsg( {
-						recipientId: self.record.ID,
-						message: {
-							command: 'broadcast-stop',
-							peerId: window.currentPeerId
-						}
-					} );
-					
-    				window.currentPeerId = null;
-        		}
-        		let f = new File( 'Progdir:Markup/videocall.html' );
-        		f.replacements = { 'currentPeerId': '', 'remotePeerId': '' };
-        		f.i18n();
-        		f.onLoad = function( data )
-        		{
-        			self.videoCall.setContent( data );
-        		}
-        		f.load();
-        	}
-        }
-        
         // Cache this globally!
         if( window.myAvatar )
         {
@@ -283,6 +221,43 @@ class FUIContacts extends FUIElement
         
         // Set stuff on this.domElement.innerHTML
         this.refreshDom();
+    }
+    initVideoChat()
+    {
+    	let self = this;
+    	
+    	if( self.videoCall )
+			return self.videoCall.activate();
+		
+		self.videoCall = new View( {
+			title: i18n( 'i18n_video_call' ) + ' - ' + self.record.Fullname,
+			width: 650,
+			height: 512
+		} );
+		self.videoCall.record = self.record;
+		self.videoCall.onClose = function()
+		{
+			self.videoCall = null;
+			
+			// Say hang up!
+			Application.SendUserMsg( {
+				recipientId: self.record.ID,
+				message: {
+					command: 'broadcast-stop',
+					peerId: window.currentPeerId
+				}
+			} );
+			
+			window.currentPeerId = null;
+		}
+		let f = new File( 'Progdir:Markup/videocall.html' );
+		f.replacements = { 'currentPeerId': '', 'remotePeerId': '' };
+		f.i18n();
+		f.onLoad = function( data )
+		{
+			self.videoCall.setContent( data );
+		}
+		f.load();
     }
     grabAttributes( domElement )
     {

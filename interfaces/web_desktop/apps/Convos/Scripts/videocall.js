@@ -1,57 +1,95 @@
 // Just a global peer object
 window.peer = false;
 window.peerCall = false;
+currentScreenShare = null;
 
-document.querySelector( '.HangUp' ).onclick = function(){ CloseView(); }
-document.querySelector( '.Mute' ).onclick = function()
+function muteAudioVideo( type = false )
 {
-	let s = this;
-	navigator.mediaDevices.getUserMedia( { audio: true } )
+	let astate = document.querySelector( '.Mute' );
+	let vstate = document.querySelector( '.Vision' );
+
+	navigator.mediaDevices.getUserMedia( { video: true, audio: true } )
 	.then( ( stream ) => {
 		const localVideo = document.getElementById( 'VideoStream' );
 		localVideo.srcObject = stream;
-		stream.getAudioTracks().forEach( ( track ) => {
-		  	if( s.classList.contains( 'Muted' ) )
+		currentVideoStream = stream;
+		
+		const audtrack = stream.getAudioTracks()[0];
+		const vidtrack = stream.getVideoTracks()[0];
+		
+		if( currentScreenShare )
+		{
+			vidtrack = currentScreenShare.getVideoTracks()[0];
+		}
+		
+		// Sync audio with button state
+		if( type == 'audio' )
+		{
+			if( astate.classList.contains( 'Muted' ) )
 			{
-				s.classList.remove( 'Muted' );
-				track.enabled = true;
+				ge( 'VideoArea' ).classList.remove( 'NoAudio' );
+				astate.classList.remove( 'Muted' );
+				audtrack.enabled = true;
 			}
 			else
 			{
-				s.classList.add( 'Muted' );
-				track.enabled = false;
+				ge( 'VideoArea' ).classList.add( 'NoAudio' );
+				astate.classList.add( 'Muted' );
+				audtrack.enabled = false;
+				audtrack.stop();
 			}
-			setTimeout( function(){ videoPoll(); }, 100 );
-		} );
+			// Continue audio (video disabled audio normally)
+			if( vstate.classList.contains( 'Muted' ) )
+			{
+				const audioOnlyStream = new MediaStream([audtrack]);
+			    localVideo.srcObject = audioOnlyStream;
+		    }
+		}
+	  	// Sync video with button state
+	  	if( type == 'video' )
+	  	{
+			if( vstate.classList.contains( 'Muted' ) )
+			{
+				ge( 'VideoArea' ).classList.remove( 'NoVideo' );
+				vstate.classList.remove( 'Muted' );
+				vidtrack.enabled = true;
+			}
+			else
+			{
+				ge( 'VideoArea' ).classList.add( 'NoVideo' );
+				vstate.classList.add( 'Muted' );
+				vidtrack.enabled = false;
+				vidtrack.stop();
+			}
+			// Continue audio (video disabled audio normally)
+			if( !astate.classList.contains( 'Muted' ) )
+			{
+				if( vstate.classList.contains( 'Muted' ) )
+				{
+					const audioOnlyStream = new MediaStream([audtrack]);
+				    localVideo.srcObject = audioOnlyStream;
+			    }
+			}
+		}
+		videoPoll();
+		setTimeout( function(){ videoPoll(); }, 100 );
 	} )
 	.catch( ( error ) => {
 		console.error( 'Error accessing media devices:', error );
 	} );
+}
+
+document.querySelector( '.HangUp' ).onclick = function()
+{
+	CloseView(); 
+}
+document.querySelector( '.Mute' ).onclick = function()
+{
+	muteAudioVideo( 'audio' );
 };
 document.querySelector( '.Vision' ).onclick = function()
 {
-	let s = this;
-	navigator.mediaDevices.getUserMedia( { video: true } )
-	.then( ( stream ) => {
-		const localVideo = document.getElementById( 'VideoStream' );
-		localVideo.srcObject = stream;
-		stream.getVideoTracks().forEach( ( track ) => {
-		  	if( s.classList.contains( 'Muted' ) )
-			{
-				s.classList.remove( 'Muted' );
-				track.enabled = true;
-			}
-			else
-			{
-				s.classList.add( 'Muted' );
-				track.enabled = false;
-			}
-			setTimeout( function(){ videoPoll(); }, 100 );
-		} );
-	} )
-	.catch( ( error ) => {
-		console.error( 'Error accessing media devices:', error );
-	} );
+	muteAudioVideo( 'video' );
 };
 document.querySelector( '.ScreenShare' ).onclick = function()
 {
@@ -277,13 +315,19 @@ function videoPoll()
 // Function to start screen sharing
 function startScreenShare( el, retries = 5 ) 
 {
-	navigator.mediaDevices.getDisplayMedia( { video: true } )
+	navigator.mediaDevices.getDisplayMedia( { video: true, auto: true } )
 		.then( ( stream ) => {
 			// Replace video track with screen sharing track
 			const localVideoTrack = currentVideoStream.getVideoTracks()[0];
 			localVideoTrack.stop();
+			
+			currentScreenShare = stream;
+			
 			currentVideoStream.removeTrack(localVideoTrack);
 			currentVideoStream.addTrack( stream.getVideoTracks()[ 0 ] );
+			
+			// Access the audio track from the 'stream' variable
+	      	stream.addTrack( currentVideoStream.getAudioTracks()[0] );
 
 			const localVideo = document.getElementById('VideoStream');
 			localVideo.srcObject = stream;
@@ -297,7 +341,7 @@ function startScreenShare( el, retries = 5 )
 			videoPoll();
 		} )
 		.catch( ( error ) => {
-			console.error( 'Error accessing screen share:', error );
+			return;
 			if( retries > 0 )
 			{
 				return setTimeout( function()
@@ -313,6 +357,9 @@ function stopScreenShare( el, retries = 5 )
 {
 	navigator.mediaDevices.getUserMedia( { video: true, audio: true } )
 		.then( ( stream ) => {
+			
+			currentScreenShare = null;
+			
 			// Replace screen sharing track with video track
 			const screenShareTrack = currentVideoStream.getVideoTracks()[ 0 ];
 			screenShareTrack.stop();
