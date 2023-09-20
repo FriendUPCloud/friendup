@@ -494,7 +494,6 @@ function takeVideoCall( incomingPeerId )
 	contacts.videoCall.onClose = function()
 	{
 		contacts.videoCall = null;
-		contacts.domSettings.querySelector( '.Videocall' ).classList.remove( 'Pending' );
 		
 		// Say hang up!
 		Application.SendUserMsg( {

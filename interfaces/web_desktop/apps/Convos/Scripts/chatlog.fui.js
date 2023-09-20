@@ -119,7 +119,6 @@ class FUIChatlog extends FUIElement
             	let c = FUI.getElementByUniqueId( 'contacts' );
             	if( c )
             		return c.initVideoChat( false );
-            	self.setVideoCall( false );
             }
             this.domTopic.appendChild( vid );
         }
@@ -673,13 +672,6 @@ class FUIChatlog extends FUIElement
 			zmsg.groupId = self.options.cid;
 		}
 		m.execute( 'convos', zmsg );
-    }
-    setVideoCall( data, init = false )
-    {
-    	// initVideoCall( data )
-    	let contacts = FUI.getElementByUniqueId( 'contacts' );
-    	if( contacts )
-    		contacts.setVideoCall( data, init );
     }
     // Just updates a message
     updateMessage( messageId, content )

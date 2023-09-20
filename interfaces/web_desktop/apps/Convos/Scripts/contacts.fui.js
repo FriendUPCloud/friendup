@@ -110,26 +110,6 @@ class FUIContacts extends FUIElement
 			else conts[ a ].bubble.classList.remove( 'Showing' );
     	}
     }
-    setVideoCall( data = false, init = false )
-    {
-    	let vid = this.domSettings.querySelector( '.Videocall' );
-    	if( data )
-    	{
-    		window.currentPeerId = data;
-    		vid.classList.add( 'Pending' );
-    		if( init )
-    		{
-    			vid.onclick();
-    		}
-		}
-    	else 
-    	{
-    		window.videoCallData = null;
-    		vid.classList.remove( 'Pending' );
-    		if( self.videoCall )
-	    		self.videoCall.close();
-		}
-    }
     attachDomElement()
     {
         super.attachDomElement();
@@ -258,7 +238,6 @@ class FUIContacts extends FUIElement
 		self.videoCall.onClose = function()
 		{
 			self.videoCall = null;
-			self.domSettings.querySelector( '.Videocall' ).classList.remove( 'Pending' );
 			
 			// Say hang up!
 			Application.SendUserMsg( {
