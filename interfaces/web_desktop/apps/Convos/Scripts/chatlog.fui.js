@@ -112,6 +112,7 @@ class FUIChatlog extends FUIElement
             
             let vid = document.createElement( 'div' );
             vid.className = 'Video';
+            vid.title = i18n( 'i18n_init_video_call' );
             vid.innerHTML = '';
             vid.onclick = function()
             {

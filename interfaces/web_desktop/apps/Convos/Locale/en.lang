@@ -74,6 +74,7 @@ i18n_accepted_invite                   : accepted your invite.
 
 i18n_start_conversation                : Start a conversation.
 
+i18n_init_video_call                   : Create a new video call
 i18n_video_call                        : Video call
 i18n_video_call_button                 : Click to join video call.
 i18n_sharing_screen                    : You are sharing your screen.
