@@ -1585,6 +1585,15 @@ class FUIChatlog extends FUIElement
         	codeblocks.push( res[1] );
         	string = string.split( res[1] ).join( '<!--block--' + codeblocks.length + '>' );
         }
+        // Fix code divs
+        let divblocks = [];
+        while( 1 )
+        {
+        	let res = string.match( /(\<div[^>]*?\>.*?\<\/div\>)/i );
+        	if( !res ) break;
+        	divblocks.push( res[1] );
+        	string = string.split( res[1] ).join( '<!--divblock--' + divblocks.length + '>' );
+        }
         
         // Fix links
         let hrefs = [];
@@ -1616,6 +1625,18 @@ class FUIChatlog extends FUIElement
             }
             else break;
         }
+        
+        // Reconstitute div blocks
+        if( divblocks.length )
+        {
+        	let n = 0;
+        	while( 1 )
+        	{
+        		let res = string.match( /\<\!\-\-divblock\-\-([0-9]*?)\>/i );
+        		if( !res ) break;
+        		string = string.split( res[0] ).join( divblocks[ n++ ] );
+        	}
+	    }
         
         // Reconstitute code blocks
         if( codeblocks.length )
