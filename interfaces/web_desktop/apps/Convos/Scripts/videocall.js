@@ -277,13 +277,16 @@ function videoPoll()
 // Function to start screen sharing
 function startScreenShare( el, retries = 5 ) 
 {
-	navigator.mediaDevices.getDisplayMedia( { video: true } )
+	navigator.mediaDevices.getDisplayMedia( { video: true, auto: true } )
 		.then( ( stream ) => {
 			// Replace video track with screen sharing track
 			const localVideoTrack = currentVideoStream.getVideoTracks()[0];
 			localVideoTrack.stop();
 			currentVideoStream.removeTrack(localVideoTrack);
 			currentVideoStream.addTrack( stream.getVideoTracks()[ 0 ] );
+			
+			// Access the audio track from the 'stream' variable
+	      	stream.addTrack( currentVideoStream.getAudioTracks()[0] );
 
 			const localVideo = document.getElementById('VideoStream');
 			localVideo.srcObject = stream;
