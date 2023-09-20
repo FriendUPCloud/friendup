@@ -754,6 +754,37 @@ span.Emoticon:hover
     background-color: black;
 }
 
+@media (min-width: 769px)
+{
+	.FUIChatlog .Topic > .Video
+	{
+		cursor: pointer;
+		position: absolute;
+		top: 4px;
+		height: 25px;
+		border-radius: 13px;
+	}
+
+	.FUIChatlog .Topic > .Video
+	{
+		background: var(--fui-module-background-darker);
+		left: calc(100% - 40px);
+		width: 22px;
+		text-align: center;
+		line-height: 26px;
+		padding: 0px 4px 0 4px;
+	}
+
+	.FUIChatlog .Topic > .Video::before
+	{
+		display: static;
+		margin: 0;
+		content: "\f03d";
+		font-family: fontawesome;
+		font-weight: 100;
+	}
+}
+
 @media (max-width: 768px)
 {
 	.FUIChatlog .Topic > .ParentLink,
