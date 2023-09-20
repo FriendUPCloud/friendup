@@ -1611,11 +1611,6 @@ class FUIChatlog extends FUIElement
             string = string.split( smilies[a] ).join( '<span contenteditable="false" class="Emoji">' + emotes[a] + '</span>' );
         }        
         
-        for( let a = 0; a < smilies.length; a++ )
-        {
-            string = string.split( smilies[a] ).join( '<span contenteditable="false" class="Emoji">' + emotes[a] + '</span>' );
-        }
-        
         while( 1 )
         {
             let res = string.match( /\:(.*?)\:/i );
