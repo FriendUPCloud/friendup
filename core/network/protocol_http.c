@@ -69,6 +69,8 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 inline char *ParseUrlRewrites( char *input )
 {
 	// TODO: Find and parse rules
+	// Examples: 
+	// https://url.com/version-23456/datafile.txt will resolve to https://url.com/datafile.txt
 	return input;
 }
 
