@@ -1561,6 +1561,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 									HttpWrite( response, sock );
 									result = 200;
 								}
+								// Insertion point for file rewrite
 								else
 								{
 									Path *base = PathNew( "resources" );
