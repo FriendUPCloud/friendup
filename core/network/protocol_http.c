@@ -60,6 +60,18 @@ char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession, FBOOL
 
 #define USE_NPOPEN_POLL
 
+/**
+ * If found, parses rewrite rules in input url
+ *
+ * @param input pointer to url provided as string
+ * @return same string or new string with rules parsed
+ */
+inline char *ParseUrlRewrites( char *input )
+{
+	// TODO: Find and parse rules
+	return input;
+}
+
 // 
 //	TODO: This should be moved
 //It is to help us with fallback PHP support
@@ -1573,6 +1585,10 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 									{
 										LocFile* file = NULL;
 										char *decoded = UrlDecodeToMem( completePath->p_Raw );
+										
+										// Rewrite based on potential rules
+										decoded = ParseUrlRewrites( decoded );
+										
 										if( SLIB->sl_CacheFiles == 1 )
 										{
 											Log( FLOG_DEBUG, "[ProtocolHttp] Read single file, first from cache %s\n", decoded );
