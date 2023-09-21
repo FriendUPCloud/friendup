@@ -1461,6 +1461,7 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 								char *newUrl = NULL;
 								FBOOL fromUrl = FALSE;
 
+								// If we are running in a cluster and we are landing on the "front door"
 								if( SLIB->fcm->fcm_ClusterMaster
 									&&
 									strcmp( path->p_Parts[ 0 ], "webclient" ) == 0 &&
