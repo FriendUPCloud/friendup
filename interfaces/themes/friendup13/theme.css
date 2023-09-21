@@ -2175,6 +2175,11 @@ html .View .DirectoryToolbar > .Group
 {
 	top: 0px;
 	left: calc(50% - 54px);
+	display: flex;
+}
+.Group > span.VerticalLine, .ToggleGroup > span.VerticalLine
+{
+	top: 9px;
 }
 
 html body .View .DirectoryToolbar > .ToggleGroup > button:hover:before,
