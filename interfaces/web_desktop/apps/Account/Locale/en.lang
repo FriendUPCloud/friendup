@@ -37,7 +37,7 @@ i18n_generate_keypair                : Generate keypair
 
 i18n_extended_information            : Extended information
 i18n_telephone                       : Telephone
-i18n_email_address                   : E-mail address
+i18n_email_address                   : E-mail
 i18n_account_image                   : Account image
 i18n_save                            : Save
 i18n_cancel                          : Cancel
