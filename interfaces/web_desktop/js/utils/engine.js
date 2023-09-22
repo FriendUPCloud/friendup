@@ -2968,6 +2968,41 @@ function GetFilenameExtension( filename )
 	return filename[ filename.length - 1 ].toLowerCase();
 }
 
+function getColorFromImage( img, flags = false )
+{
+	let d = document.createElement( 'canvas' );
+	d.setAttribute( 'width', img.naturalWidth );
+	d.setAttribute( 'height', img.naturalHeight );
+	let c = d.getContext( '2d' );
+	c.drawImage( img, 0, 0 );
+	let step = img.naturalWidth / 20;
+	let buf = { r: 0, g: 0, b: 0 };
+	let n = 0;
+	let y = 0;
+	if( flags )
+	{
+		if( flags.row )
+		{
+			if( flags.row == 'center' )
+			{
+				y = img.naturalHeight >> 1;
+			}
+		}
+	}
+	for( let x = 0; x < img.naturalWidth; x += step )
+	{
+		let i = c.getImageData( x, y, 1, 1 ).data;
+		buf.r += i[0];
+		buf.g += i[1];
+		buf.b += i[2];
+		n++;
+	}
+	buf.r /= n;
+	buf.g /= n;
+	buf.b /= n;
+	return 'rgb(' + buf.r + ',' + buf.g + ',' + buf.b + ')';
+}
+
 // Clean the properties of a Javascript object
 function CleanArray( keys, exclude )
 {

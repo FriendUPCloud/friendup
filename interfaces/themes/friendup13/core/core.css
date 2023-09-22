@@ -3021,6 +3021,14 @@ html body[viewlist=dockedlist] #Statusbar #Tray > div.Hidden
     margin: auto;
     display: block;
     border: 0;
+    opacity: 0;
+    transition: opacity 0.15s;
+    background-color: rgba(0,0,0,0.25);
+}
+
+.Desklet .Launcher .AppIcon.Loaded
+{
+	opacity: 1;
 }
 
 .Desklet .Launcher span
