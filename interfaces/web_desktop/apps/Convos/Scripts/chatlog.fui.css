@@ -754,6 +754,11 @@ span.Emoticon:hover
     background-color: black;
 }
 
+.FUIChatlog .Topic.Chatroom > .Video
+{
+	display: none;
+}
+
 @media (min-width: 769px)
 {
 	.FUIChatlog .Topic > .Video

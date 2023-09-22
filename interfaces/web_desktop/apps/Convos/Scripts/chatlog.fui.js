@@ -63,6 +63,11 @@ class FUIChatlog extends FUIElement
         <div class="Input"></div>\
         ';
         
+        if( this.options.type == 'chatroom' )
+		{
+			data = data.split( '"Topic"' ).join( '"Topic Chatroom"' );
+		}
+        
         this.domElement.innerHTML = data;
         
         this.domTopic = this.domElement.querySelector( '.Topic' );
