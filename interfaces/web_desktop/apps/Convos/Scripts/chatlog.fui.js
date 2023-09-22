@@ -63,6 +63,8 @@ class FUIChatlog extends FUIElement
         <div class="Input"></div>\
         ';
         
+        // Hide the chat icon by adding the Chatroom class
+        // TODO: Don't do this once we got group video chat
         if( this.options.type == 'chatroom' )
 		{
 			data = data.split( '"Topic"' ).join( '"Topic Chatroom"' );
