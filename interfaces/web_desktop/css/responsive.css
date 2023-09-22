@@ -990,7 +990,7 @@ html .Desklet .Launcher
 
 .Desklet .Launcher .AppIcon 
 {
-    width: calc(100% - 20px);
+    width: calc(100% - 24px);
     height: inherit;
     background-size: cover;
     background-position: center;

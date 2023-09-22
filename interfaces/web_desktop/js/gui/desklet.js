@@ -903,9 +903,12 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 				i.src = o.src;
 				i.onload = function()
 				{
-					ic.style.backgroundColor = getColorFromImage( this, {
-						row: 'center'
-					} );
+					if( isMobile )
+					{
+						ic.style.backgroundColor = getColorFromImage( this, {
+							row: 'center'
+						} );
+					}
 					ic.style.backgroundImage = 'url(\'' + o.src + '\')';
 					ic.classList.add( 'Loaded' );
 				}
