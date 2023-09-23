@@ -774,6 +774,16 @@ span.Emoticon:hover
 	background: var(--fui-list-background);
 }
 
+@media (max-width: 480px)
+{
+    html .FUIChatlog .ChannelInfo.Showing
+	{
+		left: 0;
+		width: 100%;
+		z-index: 11;
+	}
+}
+
 .FUIChatlog .ChannelInfo.Showing
 {
 	left: calc(100% - 320px);

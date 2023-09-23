@@ -99,13 +99,19 @@ class FUIChatlog extends FUIElement
 					"groupid": self.options.cid
 				};
 				i.src = '/system.library/module/?module=system&command=convos&args=' + encodeURIComponent( JSON.stringify( std ) ) + '&authid=' + Application.authId;
+				let d = document.createElement( 'div' );
+			    d.className = 'Avatar';
 				i.onload = function()
 				{
-				    let d = document.createElement( 'div' );
-				    d.className = 'Avatar';
+				    d.classList.add( 'Loaded' );
 				    d.style.backgroundImage = 'url(' + this.src + ')';
-				    info.appendChild( d );
 				}
+			    info.appendChild( d );
+			    
+			    let ds = document.createElement( 'div' );
+			    ds.className = 'Description';
+			    ds.innerHTML = '<p>' + contacts.record.Description.split( "\n" ).join( "<br>" ) + '</p>';
+			    info.appendChild( ds );
         	}
         	else
         	{
