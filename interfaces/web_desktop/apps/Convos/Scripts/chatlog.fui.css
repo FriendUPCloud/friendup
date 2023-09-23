@@ -11,7 +11,8 @@
 	opacity: 1;
 }
 
-.FUIChatlog .Topic
+.FUIChatlog .Topic,
+.FUIChatlog .ChannelInfo .ChannelTopic
 {
 	position: absolute;
 	left: 0;
@@ -25,6 +26,7 @@
 	box-sizing: border-box;
 	font-weight: bold;
 	line-height: 25px;
+	cursor: pointer;
 }
 
 .FUIChatlog .Messages > div
@@ -757,6 +759,92 @@ span.Emoticon:hover
 .FUIChatlog .Topic.Chatroom > .Video
 {
 	display: none;
+}
+
+.FUIChatlog .ChannelInfo
+{
+	position: absolute;
+	top: 0;
+	left: 100%;
+	width: 0px;
+	max-width: 100%;
+	display: none;
+	transition: left,width 0.15s,0.15s;
+	height: 100%;
+	background: var(--fui-list-background);
+}
+
+.FUIChatlog .ChannelInfo.Showing
+{
+	left: calc(100% - 320px);
+	width: 320px;
+	display: block;
+}
+
+.FUIChatlog .ChannelInfo .Info
+{
+	position: absolute;
+	left: 0;
+	top: 35px;
+	width: 100%;
+	height: calc(100% - 35px);
+	overflow: auto;
+	scroll-behavior: smooth;
+	padding: 10px;
+	box-sizing: border-box;
+}
+
+.FUIChatlog .ChannelInfo .Info .Avatar
+{
+	display: block;
+	width: 100%;
+	min-height: 240px;
+	border-radius: 15px;
+	background-size: cover;
+	background-position: center;
+	background-repeat: no-repeat;
+	border-radius: 10px;
+}
+
+.FUIChatlog.ChannelInfoShowing .Messages,
+.FUIChatlog.ChannelInfoShowing .Input,
+.FUIChatlog.ChannelInfoShowing .Topic
+{
+	max-width: calc(100% - 320px);
+}
+
+.FUIChatlog .ChannelInfo .ChannelTopic > .Close
+{
+	position: absolute;
+	width: 35px;
+	height: 100%;
+	left: 0;
+	top: 0;
+	line-height: 35px;
+}
+
+.FUIChatlog .ChannelInfo .ChannelTopic > .Title
+{
+	position: absolute;
+	box-sizing: border-box;
+	text-align: left;
+	width: calc(100% - 35px);
+	height: 100%;
+	left: 35px;
+	top: 0;
+	line-height: 35px;
+	padding: 0 10px 0 10px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.FUIChatlog .ChannelInfo .ChannelTopic > .Close:after
+{
+	display: block;
+	content: "\f00d";
+	color: var(--fui-module-color);
+	font-family: fontawesome;
 }
 
 @media (min-width: 769px)

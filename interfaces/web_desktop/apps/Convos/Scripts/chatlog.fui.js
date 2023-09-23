@@ -61,6 +61,7 @@ class FUIChatlog extends FUIElement
         <div class="Topic"></div>\
         <div class="Messages"><div class="Incoming"></div><div class="Queue"></div></div>\
         <div class="Input"></div>\
+        <div class="ChannelInfo"><div class="ChannelTopic"><div class="Close"></div><div class="Title"></div></div><div class="Info"></div></div>\
         ';
         
         // Hide the chat icon by adding the Chatroom class
@@ -73,6 +74,58 @@ class FUIChatlog extends FUIElement
         this.domElement.innerHTML = data;
         
         this.domTopic = this.domElement.querySelector( '.Topic' );
+        this.domChannelInfo = this.domElement.querySelector( '.ChannelInfo' );
+        this.domChannelInfo.querySelector( '.Close' ).onclick = function()
+        {
+        	self.domChannelInfo.classList.remove( 'Showing' );
+        	self.domElement.classList.remove( 'ChannelInfoShowing' );
+        }
+        
+        this.domTopic.onclick = function()
+        {
+        	let tt = self.options.type == 'chatroom' ? i18n( 'i18n_group_info' ) : i18n( 'i18n_user_info' );
+        	self.domChannelInfo.querySelector( '.Title' ).innerHTML = tt;
+        
+        	let info = self.domChannelInfo.querySelector( '.Info' );
+        	info.innerHTML = '';
+        
+        	if( self.options.type == 'chatroom' )
+        	{
+        		let contacts = FUI.getElementByUniqueId( 'contacts' );
+        		if( !contacts ) return;
+		    	let i = new Image();
+				let std = {
+					"method": "getroomavatar",
+					"groupid": self.options.cid
+				};
+				i.src = '/system.library/module/?module=system&command=convos&args=' + encodeURIComponent( JSON.stringify( std ) ) + '&authid=' + Application.authId;
+				i.onload = function()
+				{
+				    let d = document.createElement( 'div' );
+				    d.className = 'Avatar';
+				    d.style.backgroundImage = 'url(' + this.src + ')';
+				    info.appendChild( d );
+				}
+        	}
+        	else
+        	{
+        		let contacts = FUI.getElementByUniqueId( 'contacts' );
+        		if( !contacts ) return;
+		    	let i = new Image();
+				i.src = '/system.library/module/?module=system&command=getavatar&userid=' + contacts.userList[ self.options.cid ].userid + '&width=128&height=128&authid=' + Application.authId;
+				i.onload = function()
+				{
+				    let d = document.createElement( 'div' );
+				    d.className = 'Avatar';
+				    d.style.backgroundImage = 'url(' + this.src + ')';
+				    info.appendChild( d );
+				}
+			}
+        
+        	self.domChannelInfo.classList.add( 'Showing' );
+        	self.domElement.classList.add( 'ChannelInfoShowing' );
+        }
+        
         this.domMessages = this.domElement.querySelector( '.Messages' );
         this.domInput = this.domElement.querySelector( '.Input' );
         
@@ -121,11 +174,14 @@ class FUIChatlog extends FUIElement
             vid.className = 'Video';
             vid.title = i18n( 'i18n_init_video_call' );
             vid.innerHTML = '';
-            vid.onclick = function()
+            vid.onclick = function( e )
             {
             	let c = FUI.getElementByUniqueId( 'contacts' );
             	if( c )
+            	{
+            		cancelBubble( e );
             		return c.initVideoChat( false );
+        		}
             }
             this.domTopic.appendChild( vid );
         }
