@@ -890,7 +890,6 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 			{
 				let ic = document.createElement( 'div' );
 				ic.className = 'AppIcon';
-				ic.style.backgroundImage = 'url(\'' + o.src + '\')';
 				div.setAttribute('data-exename', o.exe );
 				div.setAttribute('data-workspace', ( o.workspace ? o.workspace : 0 ) );
 				div.setAttribute('data-displayname', ( o.displayname ? o.displayname: o.exe ) );
@@ -902,9 +901,24 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 				div.appendChild( sp );
 				let i = new Image();
 				i.src = o.src;
+				i.onload = function()
+				{
+					if( isMobile )
+					{
+						ic.style.backgroundColor = getColorFromImage( this, {
+							row: 'center'
+						} );
+					}
+					ic.style.backgroundImage = 'url(\'' + o.src + '\')';
+					ic.classList.add( 'Loaded' );
+				}
 				i.onerror = function( e )
 				{
 					ic.style.backgroundImage = 'url(/iconthemes/friendup15/File_Function.svg)';
+				}
+				if( i.naturalWidth > 0 )
+				{
+					i.onload();
 				}
 			}
 			

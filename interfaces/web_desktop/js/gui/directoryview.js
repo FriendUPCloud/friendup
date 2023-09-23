@@ -4722,7 +4722,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 		let jsx = iconObject.Path + iconObject.folderInfo.jsx;
 		return ExecuteApplication( 'FriendShell', "execute " + jsx, ocallback );
 	}
-	else if( iconObject.extension == 'ogv' || iconObject.extension == 'mov' || iconObject.extension == 'avi' || iconObject.extension == 'mp4' || iconObject.extension == 'mpg' )
+	else if( iconObject.extension == 'webm' || iconObject.extension == 'ogv' || iconObject.extension == 'mov' || iconObject.extension == 'avi' || iconObject.extension == 'mp4' || iconObject.extension == 'mpg' )
 	{
 		let rr = iconObject;
 

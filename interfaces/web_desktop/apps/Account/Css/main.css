@@ -327,3 +327,18 @@ html div > .Disk.Assign:after
 	color: #222222;
 }
 
+@media (max-width: 360px)
+{
+	.Expand.HContent50
+	{
+		width: 100%;
+	}
+	.Expand > .HContent95
+	{
+		width: 100%;
+	}
+	.Expand > .HContent5
+	{
+		display: none;
+	}
+}

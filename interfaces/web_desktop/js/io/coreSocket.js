@@ -733,8 +733,8 @@ if( !window.FriendWebSocket )
 				//console.log( 'We need to chunk this one! ' + str.length + ' >= ' + self.maxStrLength );
 				
 				let realString = new String( str );
-				strBlob = new Blob( realString );
-				if( strBlob.size >= self.maxFCBytes )
+				let strBlob = new Blob( realString );
+				if( strBlob && strBlob.size >= self.maxFCBytes )
 				{
 					return true;
 				}

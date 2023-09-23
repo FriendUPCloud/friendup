@@ -514,6 +514,20 @@ html > body[mobile=mobile] .Widget.Raised
 	z-index: 2000000000;
 }
 
+html > body[mobile=mobile] .Widget.Raised:not(.Hiding):before
+{
+	z-index: 2000000000;
+	position: fixed;
+	left: 100%;
+	width: 100%;
+	top: 0;
+	height: 100%;
+	content: " ";
+	display: block;
+	background: rgba(0,0,0,0.0);
+	pointer-events: all;
+}
+
 html > body[mobile=mobile] .Widget.Raised .MenuItems.Open
 {
 	height: 100% !important;
@@ -836,7 +850,7 @@ body.ViewMaximized .ViewContainer.Active .ViewIcon
 	left: 10px;
 	width: 20px;
 	height: 20px;
-	border-radius: 0;
+	border-radius: 5px;
 	background-size: contain;
 	background-position: center;
 	background-repeat: no-repeat;
@@ -990,7 +1004,7 @@ html .Desklet .Launcher
 
 .Desklet .Launcher .AppIcon 
 {
-    width: calc(100% - 20px);
+    width: calc(100% - 24px);
     height: inherit;
     background-size: cover;
     background-position: center;
