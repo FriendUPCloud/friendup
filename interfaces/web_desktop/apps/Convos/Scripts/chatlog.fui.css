@@ -804,6 +804,7 @@ span.Emoticon:hover
 	background-position: center;
 	background-repeat: no-repeat;
 	border-radius: 10px;
+	background-color: var(--fui-module-background);
 }
 
 .FUIChatlog.ChannelInfoShowing .Messages,
