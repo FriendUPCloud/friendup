@@ -854,6 +854,7 @@ function handleServerMessage( e )
 		
 		if( !found || Workspace.currentViewState == 'inactive' )
 		{
+			console.log( 'Can not find app ' + e.appname + ' and trying ', e.message );
 			// Check if we have a generic message
 			// Check that we have message
 		    if( e.message && e.message.message )
