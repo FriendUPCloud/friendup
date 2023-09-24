@@ -19,7 +19,10 @@ function collabInvite()
 		width: 480,
 		height: 480,
 		assets: [
-			'Progdir:Templates/collaboration_invite.html'
+			'Progdir:Templates/collaboration_invite.html',
+			'Progdir:Scripts/fui.invitedialog.js',
+			'Progdir:Scripts/fui.invitedialog.css',
+			'Progdir:Scripts/invitedialog.js'
 		]
 	} );
 	collabWin.onClose = function()

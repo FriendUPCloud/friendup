@@ -247,7 +247,7 @@ Application.run = function( msg )
 			items: [
 				{
 					name: i18n( 'menu_collaboration_invite' ),
-					command: 'collab_invote'
+					command: 'collab_invite'
 				}
 			]
 		}
