@@ -24,6 +24,7 @@ Application.run = function( msg )
 			'Progdir:Templates/main.html',
 			'Progdir:Templates/main.css',
 			'Progdir:Scripts/preload.js',
+			'Progdir:Scripts/collaboration.js',
 			'Progdir:Libraries/Ace/src-min-noconflict/ace.js',
 			'System:js/gui/filebrowser.js',
 			'Progdir:Scripts/main.js'
@@ -240,6 +241,15 @@ Application.run = function( msg )
 					command: 'package_generate'
 				}
 			]
+		}, 
+		{
+			name: i18n( 'menu_collaboration' ),
+			items: [
+				{
+					name: i18n( 'menu_collaboration_invite' ),
+					command: 'collab_invote'
+				}
+			]
 		}
 	] );
 }
@@ -274,6 +284,9 @@ Application.receiveMessage = function( msg )
 				{
 					mainWindow.sendMessage( { command: 'updatemountlist' } );
 				}
+				break;
+			case 'collab_invite':
+				mainWindow.sendMessage( { command: 'collab_invite' } );
 				break;
 		}
 	}

@@ -2328,6 +2328,10 @@ Application.receiveMessage = function( msg )
 	{
 		switch( msg.command )
 		{
+			case 'collab_invite':
+				if( window.collabInvite )
+					collabInvite();
+				break;
 			case 'updatemountlist':
 				if( gui.sideBar ) gui.sideBar.render( 1 );
 				break;
