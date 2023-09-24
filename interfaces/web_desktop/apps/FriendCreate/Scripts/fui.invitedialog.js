@@ -125,7 +125,8 @@ class FUIInvitedialog extends FUIElement
 				groupId: self.options.groupId,
 				type: 'invite',
 				sender: Application.fullName,
-				message: Application.fullName + ' ' + i18n( 'i18n_want_collaboration_session' )
+				message: Application.fullName + ' ' + i18n( 'i18n_want_collaboration_session' ),
+				message_i18n: [ Application.fullName, ' ', 'i18n_want_collaboration_session' ]
 			}
 		} );
 	}
