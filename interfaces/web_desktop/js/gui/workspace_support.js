@@ -854,6 +854,7 @@ function handleServerMessage( e )
 		
 		if( !found || Workspace.currentViewState == 'inactive' )
 		{
+			// Check if we have a generic message
 			// Check that we have message
 		    if( e.message && e.message.message )
 		    {
@@ -867,7 +868,14 @@ function handleServerMessage( e )
 		        catch( e2 ){};
 		        if( text != undefined )
 		        {
-					Sounds.newMessage.play();
+		        	// Check for preferred sound
+		        	if( e.sound && Sounds[ e.sound ] )
+		        	{
+		        		Sounds[ e.sound ].play();
+		        	}
+		        	// Default sound
+					else Sounds.newMessage.play();
+					
 					Notify( {
 						    title: 'From ' + e.message.sender,
 						    text: text,
@@ -876,7 +884,7 @@ function handleServerMessage( e )
 						function( k )
 						{
 							e.message.source = 'notification';
-						    ExecuteApplication( 'Convos', JSON.stringify( e.message ) );
+						    ExecuteApplication( e.appname, JSON.stringify( e.message ) );
 					    }
 					);
 				}
