@@ -2324,11 +2324,14 @@ function UnmountProjectServer( p, cb )
 var abw = manual = false;
 Application.receiveMessage = function( msg )
 {
-	console.log( 'Message coming in!', msg );
 	if( msg.command )
 	{
 		switch( msg.command )
 		{
+			// Gets nested arguments
+			case 'arguments':
+				
+				break;
 			case 'collab_invite':
 				if( window.collabInvite )
 					collabInvite();
