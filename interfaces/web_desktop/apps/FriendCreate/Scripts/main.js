@@ -2503,7 +2503,12 @@ Application.receiveMessage = function( msg )
 					new EditorFile( msg.file );
 				}
 				break;
+			default:
+				//console.log( 'Uncaught message: ', msg );
+				break;
 		}
+		return;
 	}
+	console.log( 'uncaught message: ', msg );
 }
 

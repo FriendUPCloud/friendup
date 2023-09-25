@@ -34,7 +34,7 @@ function collabInvite()
 // Collaboration user structure
 class CollabUser
 {
-	function constructor( userinfo )
+	constructor( userinfo )
 	{
 	}
 }
@@ -42,12 +42,12 @@ class CollabUser
 // Collaboration file structure
 class CollabFile
 {
-	function constructor()
+	constructor()
 	{
 	
 	}
 	
-	function addUser( userObject )
+	addUser( userObject )
 	{
 		this.users.push( userObject );
 	}
