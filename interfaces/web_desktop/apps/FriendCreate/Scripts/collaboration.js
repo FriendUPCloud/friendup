@@ -30,3 +30,31 @@ function collabInvite()
 		collabWin = null;
 	}
 }
+
+// Collaboration user structure
+class CollabUser
+{
+	function constructor( userinfo )
+	{
+	}
+}
+
+// Collaboration file structure
+class CollabFile
+{
+	function constructor()
+	{
+	
+	}
+	
+	function addUser( userObject )
+	{
+		this.users.push( userObject );
+	}
+}
+
+// The collab matrix holds all collaboration processes
+window.collabMatrix = {
+	files: {}
+};
+
