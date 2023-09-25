@@ -873,6 +873,9 @@ window.Shell = function( appObject )
 			rawLine = input[index];
 			
 			// Fix newline support ...
+			if( !rawLine.split && rawLine.join )
+				rawLine = rawLine.join( "\n" );
+			
 			cmd = rawLine.split( "\\n" ).join( "\n" );
 			
 			// Fix tab support ...

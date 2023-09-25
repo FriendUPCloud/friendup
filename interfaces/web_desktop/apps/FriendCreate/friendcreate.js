@@ -34,7 +34,11 @@ Application.run = function( msg )
 		},
 		onready: function()
 		{
-			if( msg.args && msg.args.indexOf( ':' ) > 0 )
+			if( msg.args && typeof( msg.args ) == 'object' )
+			{
+				mainWindow.sendMessage( msg.args );
+			}
+			else if( msg.args && msg.args.indexOf( ':' ) > 0 )
 			{
 				mainWindow.sendMessage( { command: 'launchwith', file: msg.args } );
 			}
