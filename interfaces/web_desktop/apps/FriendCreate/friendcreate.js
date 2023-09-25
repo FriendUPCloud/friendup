@@ -36,8 +36,7 @@ Application.run = function( msg )
 		{
 			if( msg.args && typeof( msg.args ) == 'object' )
 			{
-				console.log( 'Sending as is', msg.args );
-				mainWindow.sendMessage( msg.args );
+				mainWindow.sendMessage( { command: 'arguments', args: msg.args } );
 			}
 			else if( msg.args && msg.args.indexOf( ':' ) > 0 )
 			{

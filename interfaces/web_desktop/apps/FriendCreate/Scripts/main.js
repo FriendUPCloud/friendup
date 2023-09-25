@@ -2324,6 +2324,7 @@ function UnmountProjectServer( p, cb )
 var abw = manual = false;
 Application.receiveMessage = function( msg )
 {
+	console.log( 'Message coming in!', msg );
 	if( msg.command )
 	{
 		switch( msg.command )
@@ -2503,12 +2504,7 @@ Application.receiveMessage = function( msg )
 					new EditorFile( msg.file );
 				}
 				break;
-			default:
-				//console.log( 'Uncaught message: ', msg );
-				break;
 		}
-		return;
 	}
-	console.log( 'uncaught message: ', msg );
 }
 
