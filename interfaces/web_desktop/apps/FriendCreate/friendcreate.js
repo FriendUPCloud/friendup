@@ -252,6 +252,10 @@ Application.run = function( msg )
 				{
 					name: i18n( 'menu_collaboration_invite' ),
 					command: 'collab_invite'
+				},
+				{
+					name: i18n( 'menu_collaboration_disconnect' ),
+					command: 'collab_disconnect'
 				}
 			]
 		}

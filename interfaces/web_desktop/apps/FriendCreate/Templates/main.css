@@ -507,14 +507,25 @@ body[mobile]:not(.Editing) #CodeArea
 	50% { background-color: #00cc33; }
 	100% { background-color: #008811; }
 }
+@keyframes orangepulse
+{
+	0% { background-color: #aa7700; }
+	50% { background-color: #cc9900; }
+	100% { background-color: #aa7700; }
+}
 
 body.CollabHost #CollabStatus,
 body.CollabClient #CollabStatus
 {
+	animation: orangepulse 1s infinite;
+}
+body.CollabHost.ConnectionEstablished #CollabStatus,
+body.CollabClient.ConnectionEstablished #CollabStatus
+{
 	animation: greenpulse 1s infinite;
 }
 
-body.CollabMode #CollabStatus > span,
+body.CollabHost #CollabStatus > span,
 body.CollabClient #CollabStatus > span
 {
 	opacity: 1;

@@ -43,6 +43,7 @@ function collabInvite()
 					else
 					{
 						document.body.classList.remove( 'CollabMode' );
+						document.body.classList.remove( 'ConnectionEstablished' );
 					}
 				}
 			}
@@ -56,6 +57,7 @@ function collabInvite()
 				else
 				{
 					document.body.classList.remove( 'CollabMode' );
+					document.body.classList.remove( 'ConnectionEstablished' );
 				}
 			}
 			collabWin = null;
@@ -63,7 +65,7 @@ function collabInvite()
 	} );
 }
 
-function activateCollaboration( cbk )
+function activateCollaboration( cbk = false )
 {
 	let c = window.collabMatrix;
 	if( c.hostPeer ) return; // Already have a peer
@@ -78,15 +80,31 @@ function activateCollaboration( cbk )
 		c.hostPeerId = hostPeerId;
 		document.body.classList.add( 'CollabHost' );
 		if( cbk ) cbk( hostPeerId );
+		c.hostPeer.on( 'connection', function( conn )
+		{
+			c.hostConn = conn;
+			c.hostConn.on( 'open', function()
+			{
+				c.hostConn.on( 'data', function( data )
+				{
+					if( data == 'HELLO' )
+					{
+						document.body.classList.add( 'ConnectionEstablished' );
+					}
+				} );
+				c.hostConn.send( 'HELLO' );
+			} );
+		} );
 	} );
 	c.hostPeer.on( 'close', () => {
 		c.hostPeerId = null;
 		c.hostPeer = null;
 		document.body.classList.remove( 'CollabHost' );
+		document.body.classList.remove( 'ConnectionEstablished' );
 	} );
 }
 
-function receiveCollabSession( msg )
+function receiveCollabSession( msg, cbk = false )
 {
 	let c = window.collabMatrix;
 	if( c.clientPeer ) return; // Already have a peer
@@ -101,13 +119,30 @@ function receiveCollabSession( msg )
 	c.clientPeer = new Peer();
 	c.clientPeer.on( 'open', ( clientPeerId ) => {
 		c.clientPeerId = clientPeerId;
+		
 		document.body.classList.add( 'CollabClient' );
+		
 		if( cbk ) cbk( clientPeerId );
+		
+		c.clientConn = c.clientPeer.connect( c.hostPeerId );
+		c.clientConn.on( 'open', function()
+		{
+			// We are connected..
+			c.clientConn.on( 'data', function( data )
+			{
+				if( data == 'HELLO' )
+				{
+					document.body.classList.add( 'ConnectionEstablished' );
+				}
+			} );
+			c.clientConn.send( 'HELLO' );
+		} );
 	} );
 	c.clientPeer.on( 'close', () => {
 		c.clientPeerId = null;
 		c.clientPeer = null;
 		document.body.classList.remove( 'CollabClient' );
+		document.body.classList.remove( 'ConnectionEstablished' );
 	} );
 }
 

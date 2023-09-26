@@ -49,6 +49,7 @@ menu_package_generate               : Generate package
 
 menu_collaboration                  : Collaboration
 menu_collaboration_invite           : Invite
+menu_collaboration_disconnect       : Disconnect
 
 i18n_invite_user                    : Invite a user
 i18n_invite_to_collab_session       : Invite users to a collaboration session
