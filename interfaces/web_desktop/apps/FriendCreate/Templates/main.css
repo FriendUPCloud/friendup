@@ -508,12 +508,14 @@ body[mobile]:not(.Editing) #CodeArea
 	100% { background-color: #008811; }
 }
 
-body.CollabMode #CollabStatus
+body.CollabHost #CollabStatus,
+body.CollabClient #CollabStatus
 {
 	animation: greenpulse 1s infinite;
 }
 
-body.CollabMode #CollabStatus > span
+body.CollabMode #CollabStatus > span,
+body.CollabClient #CollabStatus > span
 {
 	opacity: 1;
 }

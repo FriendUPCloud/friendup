@@ -68,17 +68,46 @@ function activateCollaboration( cbk )
 	let c = window.collabMatrix;
 	if( c.hostPeer ) return; // Already have a peer
 	
+	// We can not host and join a collab session at the same time (yet)
+	if( c.hostPeerId ) c.hostPeerId = null;
+	if( c.clientPeer ) c.clientPeer.destroy();
+	
 	// Set up hosting peer
 	c.hostPeer = new Peer();
 	c.hostPeer.on( 'open', ( hostPeerId ) => {
 		c.hostPeerId = hostPeerId;
-		document.body.classList.add( 'CollabMode' );
+		document.body.classList.add( 'CollabHost' );
 		if( cbk ) cbk( hostPeerId );
 	} );
 	c.hostPeer.on( 'close', () => {
 		c.hostPeerId = null;
 		c.hostPeer = null;
-		document.body.classList.remove( 'CollabMode' );
+		document.body.classList.remove( 'CollabHost' );
+	} );
+}
+
+function receiveCollabSession( msg )
+{
+	let c = window.collabMatrix;
+	if( c.clientPeer ) return; // Already have a peer
+	
+	// We cannot host and join a collab session at the same time (yet)
+	if( c.hostPeer )
+		c.hostPeer.destroy();
+	
+	c.hostPeerId = msg.hostPeerId;
+	
+	// Set up hosting peer
+	c.clientPeer = new Peer();
+	c.clientPeer.on( 'open', ( clientPeerId ) => {
+		c.clientPeerId = clientPeerId;
+		document.body.classList.add( 'CollabClient' );
+		if( cbk ) cbk( clientPeerId );
+	} );
+	c.clientPeer.on( 'close', () => {
+		c.clientPeerId = null;
+		c.clientPeer = null;
+		document.body.classList.remove( 'CollabClient' );
 	} );
 }
 

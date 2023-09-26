@@ -2330,7 +2330,8 @@ Application.receiveMessage = function( msg )
 		{
 			// Gets nested arguments
 			case 'arguments':
-				console.log( 'Got something!: ', msg );
+				if( window.receiveCollabSession )
+					receiveCollabSession( msg.args );
 				break;
 			case 'collab_invite':
 				if( window.collabInvite )
