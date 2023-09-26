@@ -16,8 +16,8 @@ function collabInvite()
 	
 	collabWin = new View( {
 		title: i18n( 'i18n_invite_user' ),
-		width: 480,
-		height: 480,
+		width: 380,
+		height: 380,
 		assets: [
 			'Progdir:Templates/collaboration_invite.html',
 			'Progdir:Scripts/fui.invitedialog.js',
@@ -25,8 +25,37 @@ function collabInvite()
 			'Progdir:Scripts/invitedialog.js'
 		]
 	} );
+	
+	activateCollaboration();
+	
 	collabWin.onClose = function()
 	{
+		if( window.collabMatrix.users  )
+		{
+			if( window.collabMatrix.users.length == 0 )
+			{
+				if( window.collabMatrix.hostPeer )
+				{
+					window.collabMatrix.hostPeer.destroy();
+				}
+				else
+				{
+					document.body.classList.remove( 'CollabMode' );
+				}
+			}
+		}
+		// No users at all
+		else
+		{
+			if( window.collabMatrix.hostPeer )
+			{
+				window.collabMatrix.hostPeer.destroy();
+			}
+			else
+			{
+				document.body.classList.remove( 'CollabMode' );
+			}
+		}
 		collabWin = null;
 	}
 }
@@ -34,12 +63,18 @@ function collabInvite()
 function activateCollaboration()
 {
 	let c = window.collabMatrix;
-	if( c.peer ) return; // Already have a peer
+	if( c.hostPeer ) return; // Already have a peer
 	
 	// Set up hosting peer
 	c.hostPeer = new Peer();
-	peer.on( 'open', ( hostPeerId ) => {
+	c.hostPeer.on( 'open', ( hostPeerId ) => {
 		c.hostPeerId = hostPeerId;
+		document.body.classList.add( 'CollabMode' );
+	} );
+	c.hostPeer.on( 'close', () => {
+		c.hostPeerId = null;
+		c.hostPeer = null;
+		document.body.classList.remove( 'CollabMode' );
 	} );
 }
 

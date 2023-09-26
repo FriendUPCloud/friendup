@@ -477,3 +477,29 @@ body[mobile]:not(.Editing) #CodeArea
 	padding: 1px 8px;
 }
 
+/* Collaboration ------------------------------------------------------------ */
+
+#CollabStatus
+{
+	position: absolute;
+	top: 17px;
+	right: 10px;
+	width: 10px;
+	height: 10px;
+	border-radius: 100%;
+	background-color: transparent;
+	transition: background-color 0.2s;
+}
+
+@keyframes greenpulse
+{
+	0% { background-color: #00aa00; }
+	50% { background-color: #00cc33; }
+	100% { background-color: #008811; }
+}
+
+body.CollabMode #CollabStatus
+{
+	animation: greenpulse 1s infinite;
+}
+
