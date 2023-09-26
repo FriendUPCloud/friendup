@@ -31,6 +31,18 @@ function collabInvite()
 	}
 }
 
+function activateCollaboration()
+{
+	let c = window.collabMatrix;
+	if( c.peer ) return; // Already have a peer
+	
+	// Set up hosting peer
+	c.hostPeer = new Peer();
+	peer.on( 'open', ( hostPeerId ) => {
+		c.hostPeerId = hostPeerId;
+	} );
+}
+
 // Collaboration user structure
 class CollabUser
 {
