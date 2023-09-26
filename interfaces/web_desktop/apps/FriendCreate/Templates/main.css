@@ -491,6 +491,16 @@ body[mobile]:not(.Editing) #CodeArea
 	transition: background-color 0.2s;
 }
 
+#CollabStatus > span
+{
+	position: absolute;
+	right: 15px;
+	top: -4px;
+	pointer-events: none;
+	opacity: 0;
+	transition: opacity 0.3s;
+}
+
 @keyframes greenpulse
 {
 	0% { background-color: #00aa00; }
@@ -501,5 +511,10 @@ body[mobile]:not(.Editing) #CodeArea
 body.CollabMode #CollabStatus
 {
 	animation: greenpulse 1s infinite;
+}
+
+body.CollabMode #CollabStatus > span
+{
+	opacity: 1;
 }
 

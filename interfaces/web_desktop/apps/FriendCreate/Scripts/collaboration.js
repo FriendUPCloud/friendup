@@ -14,25 +14,40 @@ function collabInvite()
 {
 	if( collabWin ) return collabWin.activate();
 	
-	collabWin = new View( {
-		title: i18n( 'i18n_invite_user' ),
-		width: 380,
-		height: 380,
-		assets: [
-			'Progdir:Templates/collaboration_invite.html',
-			'Progdir:Scripts/fui.invitedialog.js',
-			'Progdir:Scripts/fui.invitedialog.css',
-			'Progdir:Scripts/invitedialog.js'
-		]
-	} );
-	
-	activateCollaboration();
-	
-	collabWin.onClose = function()
+	activateCollaboration( function( hostPeerId )
 	{
-		if( window.collabMatrix.users  )
+		collabWin = new View( {
+			title: i18n( 'i18n_invite_user' ),
+			width: 380,
+			height: 380,
+			replacements: {
+				hostPeerId: hostPeerId
+			},
+			assets: [
+				'Progdir:Templates/collaboration_invite.html',
+				'Progdir:Scripts/fui.invitedialog.js',
+				'Progdir:Scripts/fui.invitedialog.css',
+				'Progdir:Scripts/invitedialog.js'
+			]
+		} );
+		collabWin.onClose = function()
 		{
-			if( window.collabMatrix.users.length == 0 )
+			if( window.collabMatrix.users  )
+			{
+				if( window.collabMatrix.users.length == 0 )
+				{
+					if( window.collabMatrix.hostPeer )
+					{
+						window.collabMatrix.hostPeer.destroy();
+					}
+					else
+					{
+						document.body.classList.remove( 'CollabMode' );
+					}
+				}
+			}
+			// No users at all
+			else
 			{
 				if( window.collabMatrix.hostPeer )
 				{
@@ -43,24 +58,12 @@ function collabInvite()
 					document.body.classList.remove( 'CollabMode' );
 				}
 			}
+			collabWin = null;
 		}
-		// No users at all
-		else
-		{
-			if( window.collabMatrix.hostPeer )
-			{
-				window.collabMatrix.hostPeer.destroy();
-			}
-			else
-			{
-				document.body.classList.remove( 'CollabMode' );
-			}
-		}
-		collabWin = null;
-	}
+	} );
 }
 
-function activateCollaboration()
+function activateCollaboration( cbk )
 {
 	let c = window.collabMatrix;
 	if( c.hostPeer ) return; // Already have a peer
@@ -70,6 +73,7 @@ function activateCollaboration()
 	c.hostPeer.on( 'open', ( hostPeerId ) => {
 		c.hostPeerId = hostPeerId;
 		document.body.classList.add( 'CollabMode' );
+		if( cbk ) cbk( hostPeerId );
 	} );
 	c.hostPeer.on( 'close', () => {
 		c.hostPeerId = null;
