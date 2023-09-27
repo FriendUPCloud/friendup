@@ -42,7 +42,7 @@ function collabInvite()
 					}
 					else
 					{
-						document.body.classList.remove( 'CollabMode' );
+						document.body.classList.remove( 'CollabClient' );
 						document.body.classList.remove( 'ConnectionEstablished' );
 					}
 				}
@@ -56,7 +56,7 @@ function collabInvite()
 				}
 				else
 				{
-					document.body.classList.remove( 'CollabMode' );
+					document.body.classList.remove( 'CollabClient' );
 					document.body.classList.remove( 'ConnectionEstablished' );
 				}
 			}
@@ -65,6 +65,7 @@ function collabInvite()
 	} );
 }
 
+// Host activates collaboration mode
 function activateCollaboration( cbk = false )
 {
 	let c = window.collabMatrix;
@@ -87,12 +88,58 @@ function activateCollaboration( cbk = false )
 			{
 				c.hostConn.on( 'data', function( data )
 				{
-					if( data == 'HELLO' )
+					if( typeof( data ) == 'object' )
 					{
-						document.body.classList.add( 'ConnectionEstablished' );
+						if( data.command == 'hello' )
+						{
+							let us = new CollabUser( {
+								fullname: data.fullname,
+								uniqueid: data.uniqueid,
+								userid: data.userid
+							} );
+							c.users.push( us );
+							
+							document.body.classList.add( 'ConnectionEstablished' );
+							
+							// Just send the currently shared document
+							let tmsg = {
+								command: 'setcurrentfile',
+								filename: Application.currentFile.filename,
+								path: Application.currentFile.path,
+								data: Application.currentFile.editor.getValue()
+							};
+							c.hostConn.send( tmsg );
+							
+							// Make sure we have events
+							Application.currentFile.editor.container.addEventListener( 'keyup', function( e )
+							{
+								c.hostConn.send( {
+									command: 'character-up',
+									character: e.key,
+									position: Application.currentFile.editor.getCursorPosition(),
+									time: ( new Date() ).getTime()
+								} );
+							} );
+							// Make sure we have events
+							Application.currentFile.editor.container.addEventListener( 'keydown', function( e )
+							{
+								c.hostConn.send( {
+									command: 'character-down',
+									character: e.key,
+									position: Application.currentFile.editor.getCursorPosition(),
+									time: ( new Date() ).getTime()
+								} );
+							} );
+						}
 					}
 				} );
-				c.hostConn.send( 'HELLO' );
+				c.hostConn.send( {
+					command: 'hello',
+					fullname: Application.fullName,
+					uniqueid: Application.uniqueId,
+					userid: Application.userId,
+					time: ( new Date() ).getTime()
+				} );
 			} );
 		} );
 	} );
@@ -104,6 +151,7 @@ function activateCollaboration( cbk = false )
 	} );
 }
 
+// Client receives collaboration session from a host
 function receiveCollabSession( msg, cbk = false )
 {
 	let c = window.collabMatrix;
@@ -130,12 +178,68 @@ function receiveCollabSession( msg, cbk = false )
 			// We are connected..
 			c.clientConn.on( 'data', function( data )
 			{
-				if( data == 'HELLO' )
+				// Receiving an object
+				if( typeof( data ) == 'object' )
 				{
-					document.body.classList.add( 'ConnectionEstablished' );
+					if( data.command == 'hello' )
+					{
+						document.body.classList.add( 'ConnectionEstablished' );
+						let us = new CollabUser( {
+							fullname: data.fullname,
+							uniqueid: data.uniqueid,
+							userid: data.userid
+						} );
+						c.users.push( us );
+					}
+					else if( data.command == 'setcurrentfile' )
+					{
+						let f = new EditorFile();
+						f.filename = 'Remote: ' + data.filename;
+						f.updateTab();
+						f.editor.setValue( data.data );
+						f.editor.clearSelection();
+						RefreshFiletypeSelect();
+					}
+					// Keyboard press
+					else if( data.command == 'character-down' )
+					{
+						c.addKeyboardEvent( {
+							type: 'down',
+							character: data.character,          // Named char
+							position: data.position,            // Cursor pos
+							time: data.time,                    // Remote time
+							localtime: ( new Date() ).getTime() // Local time
+						} );
+					}
+					// Keyboard release
+					else if( data.command == 'character-up' )
+					{
+						c.addKeyboardEvent( {
+							type: 'up',
+							character: data.character,          // Named char
+							position: data.position,            // Cursor pos
+							time: data.time,                    // Remote time
+							localtime: ( new Date() ).getTime() // Local time
+						} );
+					}
+					// Keyboard release
+					else if( data.command == 'ping' )
+					{
+						c.addKeyboardEvent( {
+							type: 'ping',
+							time: data.time,                    // Remote time
+							localtime: ( new Date() ).getTime() // Local time
+						} );
+					}
 				}
 			} );
-			c.clientConn.send( 'HELLO' );
+			c.clientConn.send( {
+				command: 'hello',
+				fullname: Application.fullName,
+				uniqueid: Application.uniqueId,
+				userid: Application.userId,
+				time: ( new Date() ).getTime()
+			} );
 		} );
 	} );
 	c.clientPeer.on( 'close', () => {
@@ -146,11 +250,24 @@ function receiveCollabSession( msg, cbk = false )
 	} );
 }
 
+function disconnectCollaboration()
+{
+	let c = window.collabMatrix;
+	if( c.clientPeer )
+		c.clientPeer.destroy();
+	if( c.hostPeer )
+		c.hostPeer.destroy();
+	document.body.classList.remove( 'CollabHost' );
+	document.body.classList.remove( 'CollabClient' );
+	document.body.classList.remove( 'ConnectionEstablished' );
+}
+
 // Collaboration user structure
 class CollabUser
 {
 	constructor( userinfo )
 	{
+		this.userinfo = userinfo;
 	}
 }
 
@@ -170,6 +287,127 @@ class CollabFile
 
 // The collab matrix holds all collaboration processes
 window.collabMatrix = {
-	files: {}
+	files: {},
+	users: [],
+	keyboard: {
+		shift: false,
+		ctrl: false,
+		alt: false,
+		altgr: false,
+		meta: false
+	},
+	eventLock: false,
+	keyboardEvents: [],
+	addKeyboardEvent( evt )
+	{
+		let self = this;
+		// Incoming event is added by remote time
+		if( this.eventLock )
+			return setTimeout( function(){ self.addKeyboardEvent( evt ); }, 25 );
+		this.eventLock = true;
+		this.keyboardEvents.push( evt );
+		this.processKeyboardEvents( function()
+		{
+			self.eventLock = false;
+		} ); // Sort and process
+	},
+	// Process by delay
+	processKeyboardEvents( cbk = false )
+	{
+		let self = this;
+		
+		let sortList = [];
+		let maxTime = -1;
+		for( let a = 0; a < self.keyboardEvents.length; a++ )
+		{
+			if( self.keyboardEvents[ a ].time > maxTime )
+				maxTime = self.keyboardEvents[ a ].time;
+			sortList[ self.keyboardEvents[ a ].time ] = self.keyboardEvents[ a ];
+		}
+		let outList = []; // List to not be processed
+		let execOrder = []; // List of times to be processed
+		let execEvents = {}; // List of events to be processed
+		for( let a in sortList )
+		{
+			// if the event is half a second old, execute immediately and in order
+			if( maxTime - a > 500 )
+			{
+				execOrder.push( a );
+				execEvents[ a ] = sortList[ a ];
+			}
+			else
+			{
+				outList.push( sortList[ a ] );
+			}
+		}
+		self.keyboardEvents = outList;
+		
+		execOrder.sort();
+		for( let a = 0; a < execOrder.length; a++ )
+			self.executeEvent( execEvents[ execOrder[ a ] ] );
+		
+		// Done
+		if( cbk ){ cbk(); }
+	},
+	executeEvent( evt )
+	{
+		let self = this;
+		
+		console.log( 'Event to execute: ', data );
+		
+		if( data.type == 'up' )
+		{
+			switch( data.character )
+			{
+				case 'Shift': self.keyboard.shift = false; break;
+				case 'Alt':   self.keyboard.alt =   false; break;
+				case 'AltGr': self.keyboard.altgr = false; break;
+				case 'Ctrl':  self.keyboard.ctrl =  false; break;
+				default:
+					break;
+			}
+		}
+		else if( data.type == 'down' )
+		{
+			switch( data.character )
+			{
+				case 'Shift': self.keyboard.shift = true; break;
+				case 'Alt':   self.keyboard.alt =   true; break;
+				case 'AltGr': self.keyboard.altgr = true; break;
+				case 'Ctrl':  self.keyboard.ctrl =  true; break;
+				default:
+					let char = data.character;
+					if( self.keyboard.shift )
+					{
+						char = char.toUpperCase();
+					}
+					Application.currentFile.editor.session.insert( data.position, char );
+					break;
+			}
+		}
+	}
 };
+// Poll collab events
+window.collabMatrix.intr = setInterval( function()
+{
+	if( window.collabMatrix.eventLock )
+		return;
+	window.collabMatrix.eventLock = true;
+	window.collabMatrix.processKeyboardEvents( function(){ window.collabMatrix.eventLock = false; } );
+}, 500 );
+// Poll collab events
+window.collabMatrix.intr = setInterval( function()
+{
+	if( document.body.classList.contains( 'CollabHost' ) && window.collabMatrix.hostConn )
+	{
+		window.collabMatrix.hostConn.send( {
+			command: 'ping',
+			fullname: Application.fullName,
+			uniqueid: Application.uniqueId,
+			userid: Application.userId,
+			time: ( new Date() ).getTime()
+		} );
+	}
+	
+}, 1000 );
 

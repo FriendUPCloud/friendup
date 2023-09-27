@@ -296,6 +296,9 @@ Application.receiveMessage = function( msg )
 			case 'collab_invite':
 				mainWindow.sendMessage( { command: 'collab_invite' } );
 				break;
+			case 'collab_disconnect':
+				mainWindow.sendMessage( { command: 'collab_disconnect' } );
+				break;
 		}
 	}
 }

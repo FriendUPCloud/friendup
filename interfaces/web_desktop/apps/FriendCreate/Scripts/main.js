@@ -135,7 +135,12 @@ Application.checkFileType = function( path )
 function RefreshFiletypeSelect()
 {
 	if( !Application.currentFile ) return;
-	var ext = Application.currentFile.path ? Application.currentFile.path.split( '.' ).pop().toLowerCase() : 'txt';
+	var ext;
+	if( Application.currentFile.path )
+		ext = Application.currentFile.path.split( '.' ).pop().toLowerCase();
+	else if( Application.currentFile.filename )
+		ext = Application.currentFile.filename.split( '.' ).pop().toLowerCase();
+	else ext = 'txt';
 	
 	var types = {
 		'php': 'ace/mode/php',
@@ -2332,6 +2337,9 @@ Application.receiveMessage = function( msg )
 			case 'arguments':
 				if( window.receiveCollabSession )
 					receiveCollabSession( msg.args );
+				break;
+			case 'collab_disconnect':
+				
 				break;
 			case 'collab_invite':
 				if( window.collabInvite )
