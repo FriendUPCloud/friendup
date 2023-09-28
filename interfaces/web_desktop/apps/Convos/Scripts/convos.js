@@ -538,8 +538,15 @@ Application.SendUserMsg = function( opts )
 }
 
 // Start polling
+let prevConnection = null;
 Application.holdConnection = function( flags )
 {
+	if( prevConnection )
+	{
+		prevConnection.abort();
+		prevConnection.onload = null;
+		prevConnection = null;
+	}
 	let self = this;
 	
 	if( flags && flags != 'refresh')
@@ -593,6 +600,7 @@ Application.holdConnection = function( flags )
 	let now = Math.floor( new Date().getTime() / 1000 );
 	
 	let m = new XMLHttpRequest();
+	prevConnection = m;
 	
 	let uqkey = flags.roomType + ':' + flags.cid;
 	let post = JSON.stringify( {
@@ -601,6 +609,10 @@ Application.holdConnection = function( flags )
 	m.open( 'POST', '/system.library/module/?module=system&command=convos&authid=' + Application.authId, true );
 	m.onload = function( data )
 	{
+		// Remove ref if self
+		if( prevConnection == m )
+			prevConnection = null;
+			
 	    if( args.outgoing && args.outgoing.length )
 	    {
 	        // Alert the other user
