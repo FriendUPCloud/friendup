@@ -110,26 +110,31 @@ function activateCollaboration( cbk = false )
 							};
 							c.hostConn.send( tmsg );
 							
-							// Make sure we have events
-							Application.currentFile.editor.container.addEventListener( 'keyup', function( e )
+							Application.currentFile.editor.session.on( 'change', function ( delta )
 							{
-								c.hostConn.send( {
-									command: 'character-up',
-									character: e.key,
-									position: Application.currentFile.editor.getCursorPosition(),
-									time: ( new Date() ).getTime()
-								} );
+								if( !window.clientChanges )
+								{
+									c.hostConn.send( {
+										command: 'change',
+										delta: delta,
+										time: ( new Date() ).getTime()
+									} );
+								}
 							} );
-							// Make sure we have events
-							Application.currentFile.editor.container.addEventListener( 'keydown', function( e )
+						}
+						// Comes in from the client
+						else if( data.command == 'change' )
+						{
+							window.clientChanges = true;
+							Application.currentFile.editor.session.getDocument().applyDeltas( [ data.delta ] );
+							window.clientChanges = false;
+							
+							// Update minimap
+							if( Application.currentFile.refreshBuffer )
 							{
-								c.hostConn.send( {
-									command: 'character-down',
-									character: e.key,
-									position: Application.currentFile.editor.getCursorPosition(),
-									time: ( new Date() ).getTime()
-								} );
-							} );
+								Application.currentFile.refreshBuffer();
+								Application.currentFile.refreshMinimap();
+							}
 						}
 					}
 				} );
@@ -184,6 +189,7 @@ function receiveCollabSession( msg, cbk = false )
 					if( data.command == 'hello' )
 					{
 						document.body.classList.add( 'ConnectionEstablished' );
+						
 						let us = new CollabUser( {
 							fullname: data.fullname,
 							uniqueid: data.uniqueid,
@@ -194,35 +200,38 @@ function receiveCollabSession( msg, cbk = false )
 					else if( data.command == 'setcurrentfile' )
 					{
 						let f = new EditorFile();
-						f.filename = 'Remote: ' + data.filename;
+						f.remote = true;
+						f.filename = data.filename;
+						f.path = data.path;
 						f.updateTab();
 						f.editor.setValue( data.data );
 						f.editor.clearSelection();
+						f.editor.session.on( 'change', function( delta )
+						{
+							if( !window.hostChanges )
+							{
+								c.clientConn.send( {
+									command: 'change',
+									delta: delta,
+									time: ( new Date() ).getTime()
+								} );
+							}
+						} );
+						
+						
 						RefreshFiletypeSelect();
 					}
-					// Keyboard press
-					else if( data.command == 'character-down' )
+					// Change
+					else if( data.command == 'change' )
 					{
 						c.addKeyboardEvent( {
-							type: 'down',
-							character: data.character,          // Named char
-							position: data.position,            // Cursor pos
-							time: data.time,                    // Remote time
+							type: 'change',
+							delta: data.delta,
+							time: data.time,
 							localtime: ( new Date() ).getTime() // Local time
 						} );
 					}
-					// Keyboard release
-					else if( data.command == 'character-up' )
-					{
-						c.addKeyboardEvent( {
-							type: 'up',
-							character: data.character,          // Named char
-							position: data.position,            // Cursor pos
-							time: data.time,                    // Remote time
-							localtime: ( new Date() ).getTime() // Local time
-						} );
-					}
-					// Keyboard release
+					// Just ping
 					else if( data.command == 'ping' )
 					{
 						c.addKeyboardEvent( {
@@ -285,7 +294,7 @@ class CollabFile
 	}
 }
 
-// The collab matrix holds all collaboration processes
+// The collab matrix holds all collaboration processes -------------------------
 window.collabMatrix = {
 	files: {},
 	users: [],
@@ -306,12 +315,10 @@ window.collabMatrix = {
 			return setTimeout( function(){ self.addKeyboardEvent( evt ); }, 25 );
 		this.eventLock = true;
 		this.keyboardEvents.push( evt );
-		this.processKeyboardEvents( function()
-		{
-			self.eventLock = false;
-		} ); // Sort and process
+		// Sort and process
+		this.processKeyboardEvents( function() { self.eventLock = false; } );
 	},
-	// Process by delay
+	// Process by delay (500ms)
 	processKeyboardEvents( cbk = false )
 	{
 		let self = this;
@@ -325,12 +332,12 @@ window.collabMatrix = {
 			sortList[ self.keyboardEvents[ a ].time ] = self.keyboardEvents[ a ];
 		}
 		let outList = []; // List to not be processed
-		let execOrder = []; // List of times to be processed
+		let execOrder = []; // List of unique time slots to be processed // TODO Double check that they are unique
 		let execEvents = {}; // List of events to be processed
 		for( let a in sortList )
 		{
 			// if the event is half a second old, execute immediately and in order
-			if( maxTime - a > 500 )
+			if( maxTime - a > 250 )
 			{
 				execOrder.push( a );
 				execEvents[ a ] = sortList[ a ];
@@ -340,8 +347,9 @@ window.collabMatrix = {
 				outList.push( sortList[ a ] );
 			}
 		}
-		self.keyboardEvents = outList;
+		self.keyboardEvents = outList; // This contains the untouched events
 		
+		// Sorts the events by time
 		execOrder.sort();
 		for( let a = 0; a < execOrder.length; a++ )
 			self.executeEvent( execEvents[ execOrder[ a ] ] );
@@ -353,36 +361,16 @@ window.collabMatrix = {
 	{
 		let self = this;
 		
-		console.log( 'Event to execute: ', data );
-		
-		if( data.type == 'up' )
+		if( evt.type == 'change' )
 		{
-			switch( data.character )
+			window.hostChanges = true;
+			Application.currentFile.editor.session.getDocument().applyDeltas( [ evt.delta ] );
+			window.hostChanges = false;
+			// Update minimap
+			if( Application.currentFile.refreshBuffer )
 			{
-				case 'Shift': self.keyboard.shift = false; break;
-				case 'Alt':   self.keyboard.alt =   false; break;
-				case 'AltGr': self.keyboard.altgr = false; break;
-				case 'Ctrl':  self.keyboard.ctrl =  false; break;
-				default:
-					break;
-			}
-		}
-		else if( data.type == 'down' )
-		{
-			switch( data.character )
-			{
-				case 'Shift': self.keyboard.shift = true; break;
-				case 'Alt':   self.keyboard.alt =   true; break;
-				case 'AltGr': self.keyboard.altgr = true; break;
-				case 'Ctrl':  self.keyboard.ctrl =  true; break;
-				default:
-					let char = data.character;
-					if( self.keyboard.shift )
-					{
-						char = char.toUpperCase();
-					}
-					Application.currentFile.editor.session.insert( data.position, char );
-					break;
+				Application.currentFile.refreshBuffer();
+				Application.currentFile.refreshMinimap();
 			}
 		}
 	}
