@@ -21,6 +21,9 @@ class FUIChatlog extends FUIElement
         	window.currentChatLog.destroy();
         window.currentChatLog = this
         
+        // Dividers for new dates
+        self.messageDateDividers = {};
+        
         // Do stuff
         this.messageList = {};
         this.messageListOrder = [];
@@ -680,7 +683,7 @@ class FUIChatlog extends FUIElement
 			self.refreshDom();
 		}, 250 );
     }
-    parseDate( instr )
+    parseDate( instr, full = false )
     {
         let now = new Date();
         let time = new Date( instr );
@@ -689,22 +692,25 @@ class FUIChatlog extends FUIElement
         let secs = Math.floor( now.getTime() / 1000 ) - Math.floor( time.getTime() / 1000 );
         let mins = Math.floor( secs / 60 );
         
-        if( secs <= 60 )
+        if( !full )
         {
-            if( secs < 1 )
-            {
-                return i18n( 'i18n_just_now' );
-            }
-            return secs.toFixed( 0 ) + ' ' + i18n( 'i18n_seconds_ago' ) + '.';
-        }
-        else if( secs <= 3600 )
-        {
-            return mins + ' ' + i18n( 'i18n_minutes_ago' ) + '.';
-        }
-        else if( secs <= 86400 )
-        {
-            return Math.floor( secs / 60 / 60 ) + ' ' + i18n( 'i18n_hours_ago' );
-        }
+		    if( secs <= 60 )
+		    {
+		        if( secs < 1 )
+		        {
+		            return i18n( 'i18n_just_now' );
+		        }
+		        return secs.toFixed( 0 ) + ' ' + i18n( 'i18n_seconds_ago' ) + '.';
+		    }
+		    else if( secs <= 3600 )
+		    {
+		        return mins + ' ' + i18n( 'i18n_minutes_ago' ) + '.';
+		    }
+		    else if( secs <= 86400 )
+		    {
+		        return Math.floor( secs / 60 / 60 ) + ' ' + i18n( 'i18n_hours_ago' );
+		    }
+	    }
         instr = this.getMonthName( time.getMonth() ) + ' ' + this.getDay( time.getDate() ) + ', ' + time.getFullYear();
         if( test == instr.substr( 0, test.length ) )
             return instr.substr( test.length, instr.length - test.length );
@@ -917,6 +923,7 @@ class FUIChatlog extends FUIElement
 				    {
 				    	Confirm( i18n( 'i18n_deleting_message' ), i18n( 'i18n_deleting_message_text' ), function( response )
 				    	{
+				    		if( self.destroying ) return;
 				    		if( response.data == true )
 				    		{
 				    			let mo = new Module( 'system' );
@@ -1261,7 +1268,7 @@ class FUIChatlog extends FUIElement
         let scrolled = this.checkScrolled();
         
     	let dom = document.createElement( 'div' );
-    	dom.className = 'Message Own';
+    	dom.className = 'Message Own Queue';
     	dom.innerHTML = '<p>' + string + '</p>';
     	dom.setAttribute( 'timestamp', ( new Date() ).getTime() );
     	this.domMessages.querySelector( '.Queue' ).appendChild( dom );
@@ -1405,6 +1412,10 @@ class FUIChatlog extends FUIElement
         super.refreshDom();
         let self = this;
         
+        if( this.refreshing ) return setTimeout( function(){ self.refreshDom( evaluated ); }, 50 );
+        this.refreshing = true;
+        
+        // Check if messages were seen
         self.checkSeen();
         
         // Let's do some message owner management for styling
@@ -1421,20 +1432,61 @@ class FUIChatlog extends FUIElement
         for( let a = 0; a < source.length; a++ )
         {
         	// Skip hiddens
-        	if( !source[ a ].getAttribute( 'hidden' ) ) 
+        	if( !source[ a ].getAttribute( 'hidden' ) && !source[ a ].classList.contains( 'Queue' ) ) 
         		messages.push( source[ a ] );
         }
         
         let lastOwner = false;
         let lastDate = false;
+        let prevDate = false;
+        
+        // Make date dividers
+        let outMessages = [];
+        for( let a = 0; a < messages.length; a++ )
+        {
+        	if( messages[ a ].classList.contains( 'MessageDateDivider' ) )
+        	{
+        		outMessages.push( messages[ a ] );
+        		continue;
+        	}
+        	let date = messages[ a ].querySelector( '.Date' );
+        	let tstm = messages[ a ].getAttribute( 'slotid' )
+        	let day = parseInt( tstm.split( '-' )[2] ) * 1000;
+        	let dt = new Date( day );
+        	let dateCand = dt.getDate() + '-' + ( dt.getMonth() + 1 );
+        	if( !self.messageDateDividers[ dateCand ] && prevDate != dateCand )
+        	{
+	        	let s = document.createElement( 'div' );
+	        	s.className = 'Slot';
+	        	messages[a].parentNode.parentNode.insertBefore( s, messages[a].parentNode );
+	        	let nd = document.createElement( 'div' );
+	        	nd.className = 'Message MessageDateDivider Showing';
+	        	nd.innerHTML = self.parseDate( day, true );
+	        	nd.setAttribute( 'owner', '--' );
+	        	nd.setAttribute( 'slotid', tstm + '-divider' );
+	        	s.appendChild( nd );
+	        	outMessages.push( nd );
+	        	prevDate = dateCand;
+	        	self.toBottom();
+	        	
+		    	self.messageDateDividers[ dateCand ] = true;
+	    	}
+	    	outMessages.push( messages[ a ] );
+	    	prevDate = dateCand;
+        }
+        
+        // Parsed
+        messages = outMessages;
         
         for( let a = 0; a < messages.length; a++ )
         {
         	let date = messages[ a ].querySelector( '.Date' );
             let tstm = messages[ a ].getAttribute( 'slotid' );
-            if( tstm )
+            
+            if( tstm && date )
             {
-                let newDate = self.parseDate( parseInt( tstm.split( '-' )[2] ) * 1000 );
+	            let day = parseInt( tstm.split( '-' )[2] ) * 1000;
+                let newDate = self.parseDate( day );
                 date.innerHTML = newDate;
             }
             
@@ -1481,6 +1533,8 @@ class FUIChatlog extends FUIElement
         }
         
         this.domElement.classList.add( 'Initialized' );
+        
+        this.refreshing = false;
        
     }
     // Get markup for object

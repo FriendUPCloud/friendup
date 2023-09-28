@@ -393,6 +393,14 @@ body:not([mobile]) .FUIChatlog .Input .MobileMen:hover,
     display: none;
 }
 
+.FUIChatlog .Message.Showing.MessageDateDivider
+{
+	margin: 20px auto;
+    display: block;
+    text-align: center;
+    background-color: transparent;
+}
+
 .Message.ConceilOwner.LastForOwner
 {
 	padding-bottom: 15px;
