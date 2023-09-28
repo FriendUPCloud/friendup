@@ -1785,6 +1785,7 @@ class FUIChatlog extends FUIElement
                     ne.appendChild( ln );
                     self.remDataLoading( m );
                 }
+                m.forceHTTP = true;
                 m.execute( 'websitegraph', { 'link': el.getAttribute( 'href' ) } );
             } )( ele );
         }
