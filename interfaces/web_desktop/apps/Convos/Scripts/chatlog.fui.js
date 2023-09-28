@@ -1478,6 +1478,13 @@ class FUIChatlog extends FUIElement
         let ele = div.querySelector( '.WebLink' );
         if( !ele ) return;
         
+        // Out of scroll view - postphone
+        if( ( GetElementTop( ele )  + ele.offsetHeight + self.domMessages.offsetHeight ) < self.domMessages.scrollTop  )
+        {
+        	console.log( ( GetElementTop( ele ) + ele.offsetHeight + self.domMessages.offsetHeight )  + ' < ' + self.domMessages.scrollTop );
+        	return;
+        }
+        
         if( !ele.classList.contains( 'LinkChecked' ) )
         {
             ele.classList.add( 'LinkChecked' );
