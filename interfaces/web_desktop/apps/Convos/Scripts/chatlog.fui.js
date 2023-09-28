@@ -194,6 +194,11 @@ class FUIChatlog extends FUIElement
         
         this.domMessages.addEventListener( 'scroll', function( e )
         {
+        	if( !self.programmedScroll )
+        	{
+        		self.hasScrolled = true;
+    		}
+        	
         	self.checkSeen();
         	if( self.scrollFunction )
         	{
@@ -862,8 +867,8 @@ class FUIChatlog extends FUIElement
                 fullname: m.Own ? i18n( 'i18n_you' ) : ( m.FullName ? m.FullName : m.Name ),
                 toolbar: toolbar
             };
-            d.innerHTML = FUI.getFragment( 'chat-message-head', replacements );
-            
+		    d.innerHTML = FUI.getFragment( 'chat-message-head', replacements );
+	                    
             ( function( message, par )
             {
 		        let td = par.querySelector( '.Delete' );
@@ -970,7 +975,6 @@ class FUIChatlog extends FUIElement
             // Update a message in a time slot
             if( this.messageList[ slot ] && this.messageList[ slot ].parentNode )
             {
-                //console.log( 'Add message to existing slot: ' + slot, m.Message );
                 let found = false;
                 for( let b = 0; b < this.messageList[ slot ].childNodes.length; b++ )
                 {
@@ -986,7 +990,6 @@ class FUIChatlog extends FUIElement
                 	// Only update content that changed
                 	if( found.getAttribute( 'message-hash' ) != mess )
                 	{
-		            	//console.log( 'Replacing because ' + mess + ' != ' + found.getAttribute( 'message-hash' ) );
 		                this.messageList[ slot ].replaceChild( d, found );
 	                }
                 }
@@ -1002,8 +1005,7 @@ class FUIChatlog extends FUIElement
                 let grp = document.createElement( 'div' );
                 grp.className = 'Slot';
                 grp.appendChild( d );
-                //let dy = new Date( slot * 1000 );
-                //grp.title = dy.getFullYear() + '-' + ( dy.getMonth() + 1 ) + '-' + dy.getDate() + '(' + slot + ')';
+                
                 this.messageList[ slot ] = grp;
                 
                 // Just holds a list of slot identifiers
@@ -1057,8 +1059,6 @@ class FUIChatlog extends FUIElement
             }
         }
         
-        //console.log( this.messageListOrder );
-        
         // New scroll height
         if( history )
         {
@@ -1082,7 +1082,9 @@ class FUIChatlog extends FUIElement
         else
         {
 		    if( !scrolled )
-			    this.toBottom();
+		    {
+				this.toBottom();
+			}
 		}
         this.refreshDom();
         
@@ -1179,19 +1181,30 @@ class FUIChatlog extends FUIElement
     // Did we scroll?
     checkScrolled()
     {
-    	return  this.domMessages.scrollTop + 50 < this.domMessages.scrollHeight - this.domMessages.offsetHeight;
+    	return this.hasScrolled && this.domMessages.scrollTop + 50 < this.domMessages.scrollHeight - this.domMessages.offsetHeight;
     }
     // Scroll to the bottom of messages
     toBottom( way = false )
     {
     	let self = this;
+    	this.hasScrolled = false; // No we are on par
         if( way == 'smooth' )
         {
+        	this.programmedScroll = true;
             this.domMessages.scrollTop = this.domMessages.scrollHeight;
+            setTimeout( function()
+		    {
+		    	self.programmedScroll = false;
+			}, 50 );
             return;
         }
         this.domMessages.style.scrollBehavior = 'inherit';
+        this.programmedScroll = true;
         this.domMessages.scrollTop = this.domMessages.scrollHeight;
+        setTimeout( function()
+        {
+        	self.programmedScroll = false;
+    	}, 50 );
         setTimeout( function(){ self.domMessages.style.scrollBehavior = 'smooth'; }, 5 );
     }
     queueMessage( string )
@@ -1467,7 +1480,6 @@ class FUIChatlog extends FUIElement
                         ln.className = 'WebLinkP';
                         ln.appendChild( el );
                         
-                        
                         let ogs = {};
                         while( 1 )
                         {
@@ -1480,6 +1492,11 @@ class FUIChatlog extends FUIElement
                             }
                             break;
                         }
+                        
+                        let w = false;
+                        let h = false;
+                        if( ogs[ 'image:height' ] ) h = ogs[ 'image:height' ];
+                        if( ogs[ 'image:width' ] ) w = ogs[ 'image:width' ];
                         
                         let sn = false;
                         if( ogs.site_name )
@@ -1529,14 +1546,38 @@ class FUIChatlog extends FUIElement
                             {
                                 n.style.position = '';
                                 ne.classList.add( 'Showing' );
-                                self.toBottom();
+                                n.width = n.naturalWidth;
+                                n.height = n.naturalHeight;
+                                let scrolled = self.checkScrolled();
+                                if( !scrolled )
+                                {
+	                                setTimeout( function(){ self.toBottom(); }, 50 );
+	                            }
                             }
+                            if( w && h )
+                            {
+                            	n.width = w;
+                            	n.height = h;
+                        	}
+                        	else
+                        	{
+                        		n.width = 1920;
+                        		n.height = 1080;
+                        		let scrolled = self.checkScrolled();
+                                if( !scrolled )
+                            		self.toBottom();
+                        	}
                             if( n.width ) n.onload();
                             d.appendChild( n );
                         }
                         else
                         {
                             ne.classList.add( 'Showing' );
+                            setTimeout( function(){ 
+                            	let scrolled = self.checkScrolled();
+                                if( !scrolled )
+                                	self.toBottom(); 
+                        	}, 50 );
                         }
                         
                         ne.appendChild( ln );
@@ -1755,6 +1796,8 @@ Application.handleImageError = function( ele )
 
 Application.handleImageLoad = function( ele, originalFileSrc = false, filename = false )
 {
+	let messages = FUI.getElementByUniqueId( 'messages' );
+	
 	let mes = document.querySelector( '.Messages' );
 	if( !mes ) return;
 	if( ele.naturalWidth < ele.parentNode.offsetWidth )
@@ -1762,13 +1805,19 @@ Application.handleImageLoad = function( ele, originalFileSrc = false, filename =
 		ele.style.width = ele.naturalWidth + 'px';
 		ele.classList.add( 'ActualSize' );
 	}
-	mes.style.scrollBehavior = 'initial';
-	mes.scrollTop = mes.scrollHeight;
-	setTimeout( function()
-	{
-		mes.style.scrollBehavior = '';
-		ele.classList.add( 'Loaded' );
-	}, 10 );
+	
+	let scrolled = messages.checkScrolled();
+    if( !scrolled )
+    {
+		mes.style.scrollBehavior = 'initial';
+		mes.scrollTop = mes.scrollHeight;
+		setTimeout( function()
+		{
+			mes.style.scrollBehavior = '';
+			ele.classList.add( 'Loaded' );
+		}, 10 );
+	}
+	
 	// Open the image in image viewer
 	ele.onclick = function()
 	{
