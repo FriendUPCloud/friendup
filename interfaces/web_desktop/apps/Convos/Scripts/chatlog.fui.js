@@ -2014,11 +2014,8 @@ Application.handleImageLoad = function( ele, originalFileSrc = false, filename =
 		ele.classList.add( 'ActualSize' );
 	}
 	
-	//mes.style.scrollBehavior = 'initial';
-	
 	setTimeout( function()
 	{
-		//mes.style.scrollBehavior = '';
 		ele.classList.add( 'Loaded' );
 	}, 10 );
 	
