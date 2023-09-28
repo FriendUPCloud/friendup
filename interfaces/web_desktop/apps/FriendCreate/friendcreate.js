@@ -245,7 +245,7 @@ Application.run = function( msg )
 					command: 'package_generate'
 				}
 			]
-		}/*, 
+		}, 
 		{
 			name: i18n( 'menu_collaboration' ),
 			items: [
@@ -258,7 +258,7 @@ Application.run = function( msg )
 					command: 'collab_disconnect'
 				}
 			]
-		}*/
+		}
 	] );
 }
 
