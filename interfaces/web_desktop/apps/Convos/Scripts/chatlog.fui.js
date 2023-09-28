@@ -204,6 +204,17 @@ class FUIChatlog extends FUIElement
         	{
         		self.hasScrolled = true;
     		}
+    		
+    		// Delayed check
+    		for( let a in self.messageList )
+    		{
+    			let offt = self.messageList[a].offsetTop
+    			let mhei = self.domMessages.offsetHeight;
+    			if( offt >= self.domMessages.scrollTop - mhei && offt < self.domMessages.scrollTop + mhei )
+    			{
+    				self.checkLink( self.messageList[a] );
+    			}
+    		}
         	
         	self.checkSeen();
         	if( self.scrollFunction )
@@ -1481,7 +1492,6 @@ class FUIChatlog extends FUIElement
         // Out of scroll view - postphone
         if( ( GetElementTop( ele )  + ele.offsetHeight + self.domMessages.offsetHeight ) < self.domMessages.scrollTop  )
         {
-        	console.log( ( GetElementTop( ele ) + ele.offsetHeight + self.domMessages.offsetHeight )  + ' < ' + self.domMessages.scrollTop );
         	return;
         }
         

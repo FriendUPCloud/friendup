@@ -727,6 +727,7 @@ span.Emoticon:hover
     height: auto;
     display: block;
     cursor: pointer;
+    transition: height 0.1s;
 }
 
 .FUIChatlog .Messages .WebLinkPreview p.WebLinkP
