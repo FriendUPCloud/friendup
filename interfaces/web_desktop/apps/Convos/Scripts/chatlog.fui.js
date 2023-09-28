@@ -13,8 +13,14 @@ class FUIChatlog extends FUIElement
     constructor( options )
     {
         super( options );
-        // Do stuff
         
+        // We use this on our calls
+        this.ajaxUniqueId = md5( UniqueHash() );
+        if( window.currentChatLog )
+        	window.currentChatLog.destroy();
+        window.currentChatLog = this
+        
+        // Do stuff
         this.messageList = {};
         this.messageListOrder = [];
         this.lastId = 0;
@@ -218,6 +224,7 @@ class FUIChatlog extends FUIElement
 	    			let m = new Module( 'system' );
 	    			m.onExecuted = function( me, md )
 	    			{
+	    				if( self.destroying ) return;
 	    				if( me == 'ok' )
 	    				{
 	    					let news = JSON.parse( md );
@@ -689,6 +696,7 @@ class FUIChatlog extends FUIElement
     	let m = new Module( 'system' );
 		m.onExecuted = function( me, md )
 		{
+			if( self.destroying ) return;
 			if( me == 'ok' )
 			{
 				let res = JSON.parse( md );
@@ -722,6 +730,7 @@ class FUIChatlog extends FUIElement
     	let m = new Module( 'system' );
 		m.onExecuted = function( me, md )
 		{
+			if( self.destroying ) return;
 			if( me == 'ok' )
 			{
 				let res = JSON.parse( md );
@@ -883,6 +892,7 @@ class FUIChatlog extends FUIElement
 				    			let mo = new Module( 'system' );
 				    			mo.onExecuted = function( me, md )
 				    			{
+				    				if( self.destroying ) return;
 				    				if( me == 'ok' )
 				    				{
 										d.parentNode.removeChild( par );
@@ -945,6 +955,7 @@ class FUIChatlog extends FUIElement
 								let mo = new Module( 'system' );
 								mo.onExecuted = function( mm, mr )
 								{
+									if( self.destroying ) return;
 									// Signal others!
 									if( mm == 'ok' )
 									{
@@ -1476,6 +1487,7 @@ class FUIChatlog extends FUIElement
                 let m = new Module( 'system' );
                 m.onExecuted = function( me, md )
                 {
+                	if( self.destroying ) return;
                     if( !el.parentNode ) return;
                     if( me != 'ok' )
                         return;
@@ -1792,6 +1804,10 @@ class FUIChatlog extends FUIElement
             default: break;
         }
         return '<span contenteditable="false" class="Emoji">' + s + '</span>';
+    }
+    destroy()
+    {
+    	this.destroying = true;
     }
 }
 FUI.registerClass( 'chatlog', FUIChatlog );

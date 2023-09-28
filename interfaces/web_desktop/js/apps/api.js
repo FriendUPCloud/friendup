@@ -3937,6 +3937,7 @@ function Module( module )
 		
 		Application.sendMessage( ms );
 	}
+	
 	this.addVar = function( key, value )
 	{
 		this.vars[key] = value;
