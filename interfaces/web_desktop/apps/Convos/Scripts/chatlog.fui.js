@@ -36,6 +36,7 @@ class FUIChatlog extends FUIElement
         this.loadingData = 0;
         this.loadObjects = {};
         
+        this.hasScrolled = false;
         this.scrollEndEvent = function()
         {
         	self.refreshDom();
@@ -227,9 +228,7 @@ class FUIChatlog extends FUIElement
         {
         	// Did we scroll up?
         	if( self.domMessages.scrollTop < self.prevScrollTop )
-        	{
         		self.hasScrolled = true;
-    		}
     		
     		self.prevScrollTop = self.domMessages.scrollTop;
     		
@@ -1132,6 +1131,10 @@ class FUIChatlog extends FUIElement
                         }
                     }
                 }
+                if( !this.checkScrolled() )
+				{
+					this.toBottom();
+				}
             }
         }
         
@@ -1251,7 +1254,7 @@ class FUIChatlog extends FUIElement
     // Did we scroll?
     checkScrolled()
     {
-    	return self.hasScrolled && this.domMessages.scrollTop + 50 < this.domMessages.scrollHeight - this.domMessages.offsetHeight;
+    	return self.hasScrolled && Math.ceil( this.domMessages.scrollTop ) + 100 < this.domMessages.scrollHeight - this.domMessages.offsetHeight;
     }
     // Scroll to the bottom of messages
     toBottom( way = false )
@@ -1355,7 +1358,7 @@ class FUIChatlog extends FUIElement
     	// Check if all is loaded
 		if( cnt == 0 )
 		{
-			if( !this.hasScrolled )
+			if( !this.checkScrolled() )
 			{
 				this.toBottom();
 			}
