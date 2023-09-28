@@ -13,6 +13,7 @@ class FUIChatlog extends FUIElement
     constructor( options )
     {
         super( options );
+        let self = this;
         
         // We use this on our calls
         this.ajaxUniqueId = md5( UniqueHash() );
@@ -24,6 +25,11 @@ class FUIChatlog extends FUIElement
         this.messageList = {};
         this.messageListOrder = [];
         this.lastId = 0;
+        
+        this.scrollEndEvent = function()
+        {
+        	self.refreshDom();
+        }
         
         this.emojis = {
             'Smilies': '😀😃😄😁😆😅😂🤣🥲🥹☺️😊😇🙂🙃😉😌😍🥰😘😗😙😚😋😛😝😜🤪🤨🧐🤓😎🥸🤩🥳😏😒😞😔😟😕🙁☹️😣😖😫😩🥺😢😭😮‍💨😤😠😡🤬🤯😳🥵🥶😱😨😰😥😓🫣🤗🫡🤔🫢🤭🤫🤥😶😶‍🌫️😐😑😬🫨🫠🙄😯😦😧😮😲🥱😴🤤😪😵😵‍💫🫥🤐🥴🤢🤮🤧😷🤒🤕🤑🤠😈👿👹👺🤡💩👻💀☠️👽👾🤖🎃😺😸😹😻😼😽🙀😿😾',
@@ -205,6 +211,18 @@ class FUIChatlog extends FUIElement
         		self.hasScrolled = true;
     		}
     		
+    		if( self.scrollEndTimeo )
+    			clearTimeout( self.scrollEndTimeo );
+			self.scrollEndTimeo = setTimeout( function()
+			{
+				self.scrollEndTimeo = null;
+				if( self.scrollEndEvent )
+				{
+					self.scrollEndEvent();
+					self.scrollEndEvent = null;
+				}
+			}, 100 );
+    		
     		// Delayed check
     		for( let a in self.messageList )
     		{
@@ -212,6 +230,7 @@ class FUIChatlog extends FUIElement
     			let mhei = self.domMessages.offsetHeight;
     			if( offt >= self.domMessages.scrollTop - mhei && offt < self.domMessages.scrollTop + mhei )
     			{
+    				self.checkQueuedImage( self.messageList[a] );
     				self.checkLink( self.messageList[a] );
     			}
     		}
@@ -1482,18 +1501,54 @@ class FUIChatlog extends FUIElement
     {
         this.domElement.innerHTML = '<h2 class="Error">' + string + '</h2>';
     }
+    checkQueuedImage( div )
+    {
+    	let self = this;
+    	
+    	// Out of scroll view - postphone
+    	if( self.programmedScroll )
+    		return;
+        if( ( GetElementTop( div ) + div.offsetHeight + self.domMessages.offsetHeight ) < self.domMessages.scrollTop )
+        	return;
+        
+        let q = div.getElementsByTagName( 'queued-img' );
+    	if( q && q[0] )
+    	{
+    		q = q[0]; 
+    		
+    		let i = document.createElement( 'img' );
+    		for( let a in q.attributes )
+    		{
+    			let n = q.attributes[a].nodeName;
+    			if( q.attributes[a].nodeValue && n != 'onload' && n != 'prestr' && n != 'od' )
+	    			i.setAttribute( q.attributes[a].nodeName, q.attributes[a].nodeValue );
+    		}
+    		i.onload = function()
+    		{
+    			Application.handleImageLoad( this, q.getAttribute( 'prestr' ) + q.getAttribute( 'od' ), false );
+			}
+			i.onerror= function()
+			{
+				Application.handleImageError( this );
+			}
+    		q.parentNode.replaceChild( i, q );
+    		if( i.naturalWidth )
+	    		i.onload();
+    	}
+    }
     checkLink( div )
     {
         let self = this;
+        
+        if( self.programmedScroll )
+    		return;
         
         let ele = div.querySelector( '.WebLink' );
         if( !ele ) return;
         
         // Out of scroll view - postphone
         if( ( GetElementTop( ele )  + ele.offsetHeight + self.domMessages.offsetHeight ) < self.domMessages.scrollTop  )
-        {
         	return;
-        }
         
         if( !ele.classList.contains( 'LinkChecked' ) )
         {
@@ -1689,7 +1744,7 @@ class FUIChatlog extends FUIElement
 	    			}
         		}
         		let prestr = document.location.href.split( '/webclient/' )[0] + '/';
-        		string = string.split( res[ 0 ] ).join( '<div class="AttachmentElement" contenteditable="false"><a class="Download" target="_blank" href="' + od + '"></a><img width="' + w + '" height="' + h + '" onload="Application.handleImageLoad( this, \'' + prestr + od + '\', false )" onerror="Application.handleImageError( this )" src="' + res[1] + '&authid=' + Application.authId + '" class="Attachment"/></div>' );
+        		string = string.split( res[ 0 ] ).join( '<div class="AttachmentElement" contenteditable="false"><a class="Download" target="_blank" href="' + od + '"></a><queued-img od="' + od + '" prestr="' + prestr + '" width="' + w + '" height="' + h + '" src="' + res[1] + '&authid=' + Application.authId + '" class="Attachment"/></div>' );
         		continue;
         	}
         	// Files
@@ -1848,17 +1903,13 @@ Application.handleImageLoad = function( ele, originalFileSrc = false, filename =
 		ele.classList.add( 'ActualSize' );
 	}
 	
-	let scrolled = messages.checkScrolled();
-    if( !scrolled )
-    {
-		mes.style.scrollBehavior = 'initial';
-		mes.scrollTop = mes.scrollHeight;
-		setTimeout( function()
-		{
-			mes.style.scrollBehavior = '';
-			ele.classList.add( 'Loaded' );
-		}, 10 );
-	}
+	//mes.style.scrollBehavior = 'initial';
+	
+	setTimeout( function()
+	{
+		//mes.style.scrollBehavior = '';
+		ele.classList.add( 'Loaded' );
+	}, 10 );
 	
 	// Open the image in image viewer
 	ele.onclick = function()
