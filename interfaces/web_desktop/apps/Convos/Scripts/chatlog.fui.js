@@ -29,6 +29,13 @@ class FUIChatlog extends FUIElement
         this.messageListOrder = [];
         this.lastId = 0;
         
+        // Scrolling
+        this.prevScrollTop = 0;
+        
+        // Load events
+        this.loadingData = 0;
+        this.loadObjects = {};
+        
         this.scrollEndEvent = function()
         {
         	self.refreshDom();
@@ -207,12 +214,24 @@ class FUIChatlog extends FUIElement
             this.domTopic.appendChild( vid );
         }
         
+        this.domMessages.addEventListener( 'scrollend', function( e )
+        {
+        	// We are at bottom
+        	if( Math.ceil( self.domMessages.scrollTop ) == self.domMessages.scrollHeight - self.domMessages.offsetHeight )
+        	{
+        		self.hasScrolled = false;
+        	}
+        } );
+        
         this.domMessages.addEventListener( 'scroll', function( e )
         {
-        	if( !self.programmedScroll )
+        	// Did we scroll up?
+        	if( self.domMessages.scrollTop < self.prevScrollTop )
         	{
         		self.hasScrolled = true;
     		}
+    		
+    		self.prevScrollTop = self.domMessages.scrollTop;
     		
     		if( self.scrollEndTimeo )
     			clearTimeout( self.scrollEndTimeo );
@@ -224,21 +243,11 @@ class FUIChatlog extends FUIElement
 					self.scrollEndEvent();
 					self.scrollEndEvent = null;
 				}
-			}, 100 );
+			}, 50 );
     		
-    		// Delayed check
-    		for( let a in self.messageList )
-    		{
-    			let offt = self.messageList[a].offsetTop
-    			let mhei = self.domMessages.offsetHeight;
-    			if( offt >= self.domMessages.scrollTop - mhei && offt < self.domMessages.scrollTop + mhei )
-    			{
-    				self.checkQueuedImage( self.messageList[a] );
-    				self.checkLink( self.messageList[a] );
-    			}
-    		}
-        	
+    		self.checkUnloadedVisibleElements();
         	self.checkSeen();
+        	
         	if( self.scrollFunction )
         	{
         		self.scrollFunction();
@@ -835,10 +844,13 @@ class FUIChatlog extends FUIElement
     {
         let self = this;
         
+        // We are busy adding messages, try later
         if( self.busyMessages )
         {
-        	return setTimeout( function(){ self.addMessages( messageList, flags ); }, 150 );
+        	return setTimeout( function(){ self.addMessages( messageList, flags ); }, 100 );
         }
+        
+        // Now we are busy
         self.busyMessages = true;
         
         // Fix the unread messages
@@ -848,6 +860,7 @@ class FUIChatlog extends FUIElement
         	let cnvs = FUI.getElementByUniqueId( 'convos' );
         	cnvs.updateActivityBubble();
         }
+        // Same for users
         else if( self.options.type == 'dm-user' && window.unreadMessages && unreadMessages.dms[ self.options.cid ] )
         {
         	unreadMessages.dms[ self.options.cid ] = [];
@@ -859,18 +872,21 @@ class FUIChatlog extends FUIElement
         if( flags && flags.history )
         	history = true;
         
+        // Check if we have scrolled
         let scrolled = this.checkScrolled();
        
        	// Current scroll height
         let currScrollHeight = self.domMessages.scrollHeight;
+       
         let newMessages = [];
         let firstMessage = self.domMessages.querySelector( '.Message' );
         
+        // Add oldest messages first
         for( let a = messageList.length - 1; a >= 0; a-- )
         {
             let m = messageList[a];
             
-            if( !m.ID ) continue; // Skip unregistered ones
+            if( !m.ID ) continue; // Skip unregistered messages
             
             // Find highest message ID
             if( parseInt( m.ID ) > self.lastId )
@@ -899,7 +915,7 @@ class FUIChatlog extends FUIElement
             
             // Get toolbar to handle own messages
             let toolbar = FUI.getFragment( 'chat-message-toolbar' );
-            //let toolbarAdmin = FUI.getFragment( 'chat-message-admin' ); // <- todo
+            
             if( !m.Own )
             	toolbar = '';
             
@@ -914,6 +930,7 @@ class FUIChatlog extends FUIElement
             };
 		    d.innerHTML = FUI.getFragment( 'chat-message-head', replacements );
 	                    
+            // Setup message input events static function
             ( function( message, par )
             {
 		        let td = par.querySelector( '.Delete' );
@@ -964,7 +981,18 @@ class FUIChatlog extends FUIElement
 			    		let original = t.innerHTML;
 			    		let edited = false;
 			    		t.onblur = function(){ edt(); }
-			    		t.onkeydown = function( e ){ if( e.which == 27 ){ t.removeAttribute( 'contenteditable' ); t.innerHTML = original; return cancelBubble( e ); }; if( !e.shiftKey && e.which == 13 ){ edt(); return cancelBubble( e ); } }
+			    		t.onkeydown = function( e )
+			    		{ 
+			    			if( e.which == 27 )
+			    			{ 
+			    				t.removeAttribute( 'contenteditable' ); t.innerHTML = original; 
+		    					return cancelBubble( e ); 
+	    					}
+	    					if( !e.shiftKey && e.which == 13 )
+	    					{ 
+	    						edt(); return cancelBubble( e ); 
+    						} 
+    					}
 			    		function edt()
 			    		{
 			    			if( edited ) return;
@@ -1127,13 +1155,7 @@ class FUIChatlog extends FUIElement
     		}
 			self.scrollFunction();
 	    }
-        else
-        {
-		    if( !scrolled )
-		    {
-				this.toBottom();
-			}
-		}
+        
         this.refreshDom();
         
 		self.busyMessages = false;
@@ -1229,32 +1251,23 @@ class FUIChatlog extends FUIElement
     // Did we scroll?
     checkScrolled()
     {
-    	return this.hasScrolled && this.domMessages.scrollTop + 50 < this.domMessages.scrollHeight - this.domMessages.offsetHeight;
+    	return self.hasScrolled && this.domMessages.scrollTop + 50 < this.domMessages.scrollHeight - this.domMessages.offsetHeight;
     }
     // Scroll to the bottom of messages
     toBottom( way = false )
     {
     	let self = this;
-    	this.hasScrolled = false; // No we are on par
+    	this.checkUnloadedVisibleElements();
         if( way == 'smooth' )
         {
-        	this.programmedScroll = true;
             this.domMessages.scrollTop = this.domMessages.scrollHeight;
-            setTimeout( function()
-		    {
-		    	self.programmedScroll = false;
-			}, 100 );
             return;
         }
         this.domMessages.style.scrollBehavior = 'inherit';
-        this.programmedScroll = true;
         this.domMessages.scrollTop = this.domMessages.scrollHeight;
-        setTimeout( function()
-        {
-        	self.programmedScroll = false;
-    	}, 100 );
         setTimeout( function(){ self.domMessages.style.scrollBehavior = 'smooth'; }, 5 );
     }
+    // Message is added via input gui
     queueMessage( string )
     {
         let self = this;
@@ -1301,10 +1314,8 @@ class FUIChatlog extends FUIElement
     	{
     		dom.classList.add( 'Showing' );
 		}, 2 );
-		
-		if( !scrolled )
-			this.toBottom( 'smooth' );
     }
+    // Just do a message refresh from the last id
     refreshMessages()
     {
         let msg = { 
@@ -1313,8 +1324,44 @@ class FUIChatlog extends FUIElement
             cid: this.options.cid ? this.options.cid : '',
             lastId: this.lastId
         };
+        console.trace();
         Application.holdConnection( msg );
     }
+    // Add element of loading data
+    addDataLoading( id )
+    {
+    	if( !this.loadObjects[ id ] )
+    	{
+			this.loadObjects[ id ] = true;
+			this.loadingData++;
+		}
+    }
+    // Element stopped loading data
+    remDataLoading( id )
+    {
+    	let o = {};
+    	let cnt = 0;
+    	for( let a in this.loadObjects )
+    	{
+    		if( a != id )
+    		{
+    			o[ a ] = this.loadObjects[ a ];
+    			cnt++;
+    		}
+    	}
+    	this.loadObjects = o;
+    	this.loadingData = cnt;
+    	
+    	// Check if all is loaded
+		if( cnt == 0 )
+		{
+			if( !this.hasScrolled )
+			{
+				this.toBottom();
+			}
+		}
+    }
+    // Clear input submission queue
     clearQueue()
     {
         let self = this;
@@ -1355,6 +1402,21 @@ class FUIChatlog extends FUIElement
         
         let parentElement = domElement.getAttribute( 'parentelement' );
         if( parentElement ) this.options.parentElement = parentElement;
+    }
+    // Check the elements that haven't loaded, but should be visible
+    checkUnloadedVisibleElements()
+    {
+    	let self = this;
+    	// Delayed check
+    	let messages = self.domMessages.getElementsByClassName( 'Message' );
+		for( let a = 0; a < messages.length; a++ )
+		{
+			if( self.elementVisible( messages[ a ] ) )
+			{
+				self.checkQueuedImage( messages[a] );
+				self.checkLink( messages[a] );
+			}
+		}
     }
     // Check if a message was seen
     checkSeen( setYes = false )
@@ -1467,7 +1529,6 @@ class FUIChatlog extends FUIElement
 	        	s.appendChild( nd );
 	        	outMessages.push( nd );
 	        	prevDate = dateCand;
-	        	self.toBottom();
 	        	
 		    	self.messageDateDividers[ dateCand ] = true;
 	    	}
@@ -1488,6 +1549,11 @@ class FUIChatlog extends FUIElement
 	            let day = parseInt( tstm.split( '-' )[2] ) * 1000;
                 let newDate = self.parseDate( day );
                 date.innerHTML = newDate;
+                if( self.elementVisible( messages[ a ] ) )
+                {
+                	self.checkQueuedImage( messages[ a ] );
+					self.checkLink( messages[ a ] );
+                }
             }
             
             let owner = messages[ a ].getAttribute( 'owner' ); // current user
@@ -1537,6 +1603,13 @@ class FUIChatlog extends FUIElement
         this.refreshing = false;
        
     }
+    elementVisible( ele )
+    {
+    	let t = GetElementTop( ele );
+    	if( t + ele.offsetHeight > this.domMessages.scrollTop && t < this.domMessages.scrollTop + this.domMessages.offsetHeight )
+    		return true;
+    	return false;
+    }
     // Get markup for object
     getMarkup( data )
     {
@@ -1559,18 +1632,13 @@ class FUIChatlog extends FUIElement
     {
     	let self = this;
     	
-    	// Out of scroll view - postphone
-    	if( self.programmedScroll )
-    		return;
-        if( ( GetElementTop( div ) + div.offsetHeight + self.domMessages.offsetHeight ) < self.domMessages.scrollTop )
-        	return;
-        
         let q = div.getElementsByTagName( 'queued-img' );
     	if( q && q[0] )
     	{
     		q = q[0]; 
     		
     		let i = document.createElement( 'img' );
+    		self.addDataLoading( i );
     		for( let a in q.attributes )
     		{
     			let n = q.attributes[a].nodeName;
@@ -1579,10 +1647,12 @@ class FUIChatlog extends FUIElement
     		}
     		i.onload = function()
     		{
+    			self.remDataLoading( i );
     			Application.handleImageLoad( this, q.getAttribute( 'prestr' ) + q.getAttribute( 'od' ), false );
 			}
 			i.onerror= function()
 			{
+				self.remDataLoading();
 				Application.handleImageError( this );
 			}
     		q.parentNode.replaceChild( i, q );
@@ -1594,15 +1664,8 @@ class FUIChatlog extends FUIElement
     {
         let self = this;
         
-        if( self.programmedScroll )
-    		return;
-        
         let ele = div.querySelector( '.WebLink' );
         if( !ele ) return;
-        
-        // Out of scroll view - postphone
-        if( ( GetElementTop( ele )  + ele.offsetHeight + self.domMessages.offsetHeight ) < self.domMessages.scrollTop  )
-        	return;
         
         if( !ele.classList.contains( 'LinkChecked' ) )
         {
@@ -1610,12 +1673,16 @@ class FUIChatlog extends FUIElement
             ( function( el )
             {
                 let m = new Module( 'system' );
+                self.addDataLoading( m );
                 m.onExecuted = function( me, md )
                 {
-                	if( self.destroying ) return;
-                    if( !el.parentNode ) return;
+                	if( self.destroying ) return self.remDataLoading( m );
+                    if( !el.parentNode ) return self.remDataLoading( m );
                     if( me != 'ok' )
+                    {
+                    	self.remDataLoading( m );
                         return;
+                    }
                     let ne = document.createElement( 'div' );
                     ne.className = 'WebLinkPreview';
                     el.parentNode.replaceChild( ne, el );
@@ -1685,18 +1752,14 @@ class FUIChatlog extends FUIElement
                         n.src = ogs.image;
                         n.style.position = 'absolute';
                         n.style.pointerEvents = 'none';
+                        self.addDataLoading( n );
                         n.onload = function()
                         {
                             n.style.position = '';
                             ne.classList.add( 'Showing' );
                             n.width = n.naturalWidth;
                             n.height = n.naturalHeight;
-                            let scrolled = self.checkScrolled();
-                            if( !scrolled )
-                            {
-                            	self.toBottom();
-                                setTimeout( function(){ self.toBottom(); }, 50 );
-                            }
+                           	self.remDataLoading( n );
                         }
                         if( w && h )
                         {
@@ -1707,9 +1770,6 @@ class FUIChatlog extends FUIElement
                     	{
                     		n.width = 1920;
                     		n.height = 1080;
-                    		let scrolled = self.checkScrolled();
-                            if( !scrolled )
-                        		self.toBottom();
                     	}
                         if( n.width ) n.onload();
                         d.appendChild( n );
@@ -1717,17 +1777,10 @@ class FUIChatlog extends FUIElement
                     else
                     {
                         ne.classList.add( 'Showing' );
-                        let scrolled = self.checkScrolled();
-                        if( !scrolled )
-                        {
-                        	self.toBottom(); 
-		                    setTimeout( function(){    	
-		                       	self.toBottom(); 
-		                	}, 50 );
-	                	}
                     }
                     
                     ne.appendChild( ln );
+                    self.remDataLoading( m );
                 }
                 m.execute( 'websitegraph', { 'link': el.getAttribute( 'href' ) } );
             } )( ele );
