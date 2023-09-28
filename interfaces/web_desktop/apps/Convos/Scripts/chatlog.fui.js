@@ -1206,7 +1206,7 @@ class FUIChatlog extends FUIElement
             setTimeout( function()
 		    {
 		    	self.programmedScroll = false;
-			}, 50 );
+			}, 100 );
             return;
         }
         this.domMessages.style.scrollBehavior = 'inherit';
@@ -1215,7 +1215,7 @@ class FUIChatlog extends FUIElement
         setTimeout( function()
         {
         	self.programmedScroll = false;
-    	}, 50 );
+    	}, 100 );
         setTimeout( function(){ self.domMessages.style.scrollBehavior = 'smooth'; }, 5 );
     }
     queueMessage( string )
@@ -1380,6 +1380,7 @@ class FUIChatlog extends FUIElement
         // Let's do some message owner management for styling
         let source = this.domElement.getElementsByClassName( 'Message' );
         let messages = [];
+        
         // Fix links
         for( let a = source.length - 1; a > 0; a-- )
         {
@@ -1390,10 +1391,8 @@ class FUIChatlog extends FUIElement
         for( let a = 0; a < source.length; a++ )
         {
         	// Skip hiddens
-        	if( source[ a ].getAttribute( 'hidden' ) ) 
-        		continue;
-        	
-        	messages.push( source[ a ] );
+        	if( !source[ a ].getAttribute( 'hidden' ) ) 
+        		messages.push( source[ a ] );
         }
         
         let lastOwner = false;
