@@ -1822,6 +1822,7 @@ Application.handleImageError = function( ele )
 Application.handleImageLoad = function( ele, originalFileSrc = false, filename = false )
 {
 	let messages = FUI.getElementByUniqueId( 'messages' );
+	if( messages.destroying ) return;
 	
 	let mes = document.querySelector( '.Messages' );
 	if( !mes ) return;
