@@ -583,6 +583,9 @@ function Notify( message, callback = false, clickcallback = false )
 		
 		// Strip HTML
 		message.text = message.text.split( /\<.*?\>/ ).join( '' );
+		message.text = message.text.split( /\&.*?\;/ ).join( '' );
+		message.title = message.title.split( /\<.*?\>/ ).join( '' );
+		message.title = message.title.split( /\&.*?\;/ ).join( '' );
 		
 		if( window.Notification )
 		{
