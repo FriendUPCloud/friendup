@@ -878,17 +878,28 @@ function handleServerMessage( e )
 					
 					text = text.split( /\<.*?\>/ ).join( '' );
 					
-					Notify( {
-						    title: 'From ' + e.message.sender,
-						    text: text,
-						},
-						null,
-						function( k )
-						{
-							e.message.source = 'notification';
-						    ExecuteApplication( e.appname, JSON.stringify( e.message ) );
-					    }
-					);
+					let sender = e.message.sender ? e.message.sender : false;
+					if( !sender && e.message.fullname )
+						sender = e.message.fullname;
+					
+					if( sender )
+					{
+						Notify( {
+								title: 'From ' + sender,
+								text: i18n( text ),
+							},
+							null,
+							function( k )
+							{
+								e.message.source = 'notification';
+								ExecuteApplication( e.appname, JSON.stringify( e.message ) );
+							}
+						);
+					}
+					else
+					{
+						console.log( 'wtf: ', e );
+					}
 				}
 			}
 		}
