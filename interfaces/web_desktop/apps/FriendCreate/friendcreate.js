@@ -24,6 +24,7 @@ Application.run = function( msg )
 			'Progdir:Templates/main.html',
 			'Progdir:Templates/main.css',
 			'Progdir:Scripts/preload.js',
+			'Progdir:Scripts/collaboration.js',
 			'Progdir:Libraries/Ace/src-min-noconflict/ace.js',
 			'System:js/gui/filebrowser.js',
 			'Progdir:Scripts/main.js'
@@ -33,7 +34,11 @@ Application.run = function( msg )
 		},
 		onready: function()
 		{
-			if( msg.args && msg.args.indexOf( ':' ) > 0 )
+			if( msg.args && typeof( msg.args ) == 'object' )
+			{
+				mainWindow.sendMessage( { command: 'arguments', args: msg.args } );
+			}
+			else if( msg.args && msg.args.indexOf( ':' ) > 0 )
 			{
 				mainWindow.sendMessage( { command: 'launchwith', file: msg.args } );
 			}
@@ -240,7 +245,20 @@ Application.run = function( msg )
 					command: 'package_generate'
 				}
 			]
-		}
+		}/*, 
+		{
+			name: i18n( 'menu_collaboration' ),
+			items: [
+				{
+					name: i18n( 'menu_collaboration_invite' ),
+					command: 'collab_invite'
+				},
+				{
+					name: i18n( 'menu_collaboration_disconnect' ),
+					command: 'collab_disconnect'
+				}
+			]
+		}*/
 	] );
 }
 
@@ -274,6 +292,12 @@ Application.receiveMessage = function( msg )
 				{
 					mainWindow.sendMessage( { command: 'updatemountlist' } );
 				}
+				break;
+			case 'collab_invite':
+				mainWindow.sendMessage( { command: 'collab_invite' } );
+				break;
+			case 'collab_disconnect':
+				mainWindow.sendMessage( { command: 'collab_disconnect' } );
 				break;
 		}
 	}

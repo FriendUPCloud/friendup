@@ -477,3 +477,57 @@ body[mobile]:not(.Editing) #CodeArea
 	padding: 1px 8px;
 }
 
+/* Collaboration ------------------------------------------------------------ */
+
+#CollabStatus
+{
+	position: absolute;
+	top: 17px;
+	right: 10px;
+	width: 10px;
+	height: 10px;
+	border-radius: 100%;
+	background-color: transparent;
+	transition: background-color 0.2s;
+}
+
+#CollabStatus > span
+{
+	position: absolute;
+	right: 15px;
+	top: -4px;
+	pointer-events: none;
+	opacity: 0;
+	transition: opacity 0.3s;
+}
+
+@keyframes greenpulse
+{
+	0% { background-color: #00aa00; }
+	50% { background-color: #00cc33; }
+	100% { background-color: #008811; }
+}
+@keyframes orangepulse
+{
+	0% { background-color: #aa7700; }
+	50% { background-color: #cc9900; }
+	100% { background-color: #aa7700; }
+}
+
+body.CollabHost #CollabStatus,
+body.CollabClient #CollabStatus
+{
+	animation: orangepulse 1s infinite;
+}
+body.CollabHost.ConnectionEstablished #CollabStatus,
+body.CollabClient.ConnectionEstablished #CollabStatus
+{
+	animation: greenpulse 1s infinite;
+}
+
+body.CollabHost #CollabStatus > span,
+body.CollabClient #CollabStatus > span
+{
+	opacity: 1;
+}
+

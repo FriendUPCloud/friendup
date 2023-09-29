@@ -135,7 +135,12 @@ Application.checkFileType = function( path )
 function RefreshFiletypeSelect()
 {
 	if( !Application.currentFile ) return;
-	var ext = Application.currentFile.path ? Application.currentFile.path.split( '.' ).pop().toLowerCase() : 'txt';
+	var ext;
+	if( Application.currentFile.path )
+		ext = Application.currentFile.path.split( '.' ).pop().toLowerCase();
+	else if( Application.currentFile.filename )
+		ext = Application.currentFile.filename.split( '.' ).pop().toLowerCase();
+	else ext = 'txt';
 	
 	var types = {
 		'php': 'ace/mode/php',
@@ -242,11 +247,11 @@ function InitGui()
 
 var EditorFile = function( path )
 {
-	var self = this;
+	let self = this;
 	
-	var returnable = false;
+	let returnable = false;
 	
-	for( var a = 0; a < files.length; a++ )
+	for( let a = 0; a < files.length; a++ )
 	{
 		if( files[ a ].path == path )
 		{
@@ -264,15 +269,15 @@ var EditorFile = function( path )
 	// Load file
 	if( path && path.indexOf( ':' ) > 0 )
 	{
-		var s = new Library( 'system.library' );
+		let s = new Library( 'system.library' );
 		s.onExecuted = function( e, d )
 		{
 			if( e == 'ok' )
 			{
-				var json = {};
+				let json = {};
 				try { json = JSON.parse( d ); } catch( e ){};
 			
-				var ext = path.split( '.' ).pop().toLowerCase();
+				let ext = path.split( '.' ).pop().toLowerCase();
 				if( ext == 'jpg' || ext == 'gif' || ext == 'jpeg' || ext == 'png' )
 				{
 					self.filename = json.Filename;
@@ -287,7 +292,7 @@ var EditorFile = function( path )
 				}
 				else
 				{
-					var f = new File( path );
+					let f = new File( path );
 					f.onLoad = function( data )
 					{
 						self.filename = json.Filename;
@@ -320,9 +325,9 @@ var EditorFile = function( path )
 
 EditorFile.prototype.close = function()
 {
-	var out = [];
+	let out = [];
 	this.updateState( '' );
-	for( var a = 0; a < files.length; a++ )
+	for( let a = 0; a < files.length; a++ )
 	{
 		if( files[ a ] == this ) continue;
 		out.push( files[ a ] );
@@ -347,7 +352,7 @@ EditorFile.prototype.updateState = function( state )
 
 EditorFile.prototype.activate = function()
 {
-	for( var a in projectFiles )
+	for( let a in projectFiles )
 	{
 		if( a == this.path )
 		{
@@ -363,7 +368,7 @@ EditorFile.prototype.activate = function()
 
 EditorFile.prototype.updateTab = function()
 {
-	this.tab.getElementsByTagName( 'span' )[0].innerHTML = this.filename;
+	this.tab.getElementsByTagName( 'span' )[0].innerHTML = ( this.remote ? 'Remote: ' : '' ) + this.filename;
 }
 
 function NewFile()
@@ -948,9 +953,12 @@ function SaveFile( file, saveas )
 {
 	if( !saveas ) saveas = false;
 	
+	// We do not save remote files
+	if( file.remote ) return;
+	
 	if( !saveas && file.path )
 	{
-		var f = new File( file.path );
+		let f = new File( file.path );
 		StatusMessage( i18n( 'i18n_saving' ) );
 		f.onSave = function( res )
 		{
@@ -959,7 +967,7 @@ function SaveFile( file, saveas )
 			RefreshFiletypeSelect();
 			CheckProjectFile( file );
 		}
-		var v = file.editor.getValue();
+		let v = file.editor.getValue();
 		f.save( v.length ? v : '\n' );
 	}
 	else
@@ -975,7 +983,7 @@ function SaveFile( file, saveas )
 					file.filename = file.filename.split( '/' );
 					file.filename = file.filename[ file.filename.length - 1 ];
 				}
-				var f = new File( filename );
+				let f = new File( filename );
 				StatusMessage( i18n( 'i18n_saving' ) );
 				f.onSave = function( res )
 				{
@@ -985,7 +993,7 @@ function SaveFile( file, saveas )
 					RefreshFiletypeSelect();
 					CheckProjectFile( file );
 				}
-				var v = file.editor.getValue();
+				let v = file.editor.getValue();
 				f.save( v.length ? v : '\n' );
 			},
 			filename: '',
@@ -1119,19 +1127,19 @@ var Project = function()
 
 function NewProject()
 {
-	var p = new Project();
+	let p = new Project();
 	p.Path = 'Home:';
 	p.ProjectPath = 'Home:';
 	p.ID = Sha256.hash( ( new Date() ).getTime() + '.' + Math.random() ).toString();
-	var found = false;
-	var b = 1;
+	let found = false;
+	let b = 1;
 	do
 	{
 		p.ProjectName = i18n( 'i18n_unnamed_project' );
 		if( b > 1 )
 			p.ProjectName += ' ' + b;
 		found = false;
-		for( var a = 0; a < projects.length; a++ )
+		for( let a = 0; a < projects.length; a++ )
 		{
 			if( projects[ a ].ProjectName == p.ProjectName )
 			{
@@ -2328,6 +2336,18 @@ Application.receiveMessage = function( msg )
 	{
 		switch( msg.command )
 		{
+			// Gets nested arguments
+			case 'arguments':
+				if( window.receiveCollabSession )
+					receiveCollabSession( msg.args );
+				break;
+			case 'collab_disconnect':
+				
+				break;
+			case 'collab_invite':
+				if( window.collabInvite )
+					collabInvite();
+				break;
 			case 'updatemountlist':
 				if( gui.sideBar ) gui.sideBar.render( 1 );
 				break;

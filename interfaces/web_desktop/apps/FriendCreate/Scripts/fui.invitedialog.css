@@ -1,0 +1,172 @@
+.FUIInvitedialog
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background: rgba(0,0,0,0.7);
+	opacity: 0;
+	transition: opacity 0.25s;
+	z-index: 11;
+}
+.FUIInvitedialog.Showing
+{
+	opacity: 1;
+}
+
+.FUIInvitedialog > .Dia
+{
+	position: absolute;
+	opacity: 0;
+	height: 0px;
+	top: 50%;
+	left: calc(50% - 200px);
+	width: 400px;
+	overflow: hidden;
+	transition: opacity,top,height 0.2s,0.2s,0.2s;
+	border-radius: 15px;
+	background: var(--fui-background);
+	color: var(--fui-color);
+	padding: 15px;
+	box-sizing: border-box;
+}
+
+@media (max-width: 480px)
+{
+	html body > .FUIInvitedialog > .Dia.Showing
+	{
+		top: 0;
+		left: 0;
+		height: 100%;
+		width: 100%;
+		border-radius: 0;
+		padding: 0;
+	}
+	html body > .FUIInvitedialog.FUIGroupsettings > .Dia .TheForm > .Form
+	{
+		width: 100%;
+	}
+	html body > .FUIInvitedialog.FUIGroupsettings > .Dia .TheForm > .Form > .Flow
+	{
+		position: relative;
+		gap: 15px;
+		display: flex;
+		flex-wrap: wrap;
+		align-content: stretch;
+		justify-content: space-evenly;
+		align-items: stretch;
+		flex-direction: column;
+	}
+	
+}
+
+@media (max-width: 500px)
+{
+	.FUIInvitedialog > .Dia
+	{
+		width: calc(100% - 40px);
+		left: 20px;
+	}
+}
+
+.FUIInvitedialog > .Dia.Showing
+{
+	top: 20px;
+	height: calc(100% - 40px);
+	opacity: 1;
+}
+
+@media (min-height: 600px)
+{
+	html .FUIInvitedialog > .Dia.Showing 
+	{
+		top: 15%;
+		height: 65%;
+		opacity: 1;
+	}
+}
+
+.FUIInvitedialog > hr
+{
+	position: absolute;
+	top: 50px;
+	left: 15px;
+	width: calc(100% - 30px);
+}
+
+.FUIInvitedialog > .Dia .TheForm
+{
+	position: absolute;
+	top: 0px;
+	left: 0px;
+	width: 100%;
+	height: 100%;
+	overflow: hidden;
+}
+
+.FUIInvitedialog > .Dia .TheForm > .Form
+{
+	position: absolute;
+	top: 0;
+	left: 15px;
+	width: calc(100% - 30px);
+	height: 100px;
+}
+
+.FUIInvitedialog > .Dia .TheForm input
+{
+	width: 100%;
+}
+
+.FUIInvitedialog > .Dia .TheForm > .SearchResults
+{
+	position: absolute;
+	top: 100px;
+	left: 0;
+	width: 100%;
+	height: calc(100% - 100px);
+	border-top: 1px solid rgba(0,0,0,0.1);
+	overflow: auto;
+	padding: 15px;
+	box-sizing: border-box;
+}
+
+.FUIInvitedialog .SearchResult.Contact 
+{
+    padding: 10px;
+    background: var(--fui-background-foreground);
+    margin: 0 0 10px 0;
+    border-radius: 15px;
+    display: flex;
+    flex-wrap: nowrap;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.FUIInvitedialog .SearchResult .Button
+{
+	display: flex;
+    gap: 5px;
+    align-items: center;
+}
+
+.FUIInvitedialog .SearchResult .Button:before 
+{
+    content: "\f234";
+    font-family: 'FontAwesome';
+}
+
+.FUIInvitedialog .SearchResult .Button.Disabled
+{
+	opacity: 0.7;
+	pointer-events: none;
+}
+
+.FUIInvitedialog .SearchResult.Error .Button
+{
+	background-color: var(--ColorBgStError);
+    color: var(--ColorStError);
+}
+

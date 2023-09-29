@@ -446,6 +446,7 @@ class FUIContacts extends FUIElement
         {
             this.userList[ contact[ listKey ] ] = document.createElement( 'div' );
             this.userList[ contact[ listKey ] ].className = 'Slot';
+            this.userList[ contact[ listKey ] ].userid = contact.UserID;
             parentEl.appendChild( this.userList[ contact[ listKey ] ] );
             // Add to slot
             this.userList[ contact[ listKey ] ].appendChild( d );
