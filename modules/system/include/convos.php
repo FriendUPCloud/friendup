@@ -305,6 +305,7 @@ if( isset( $args->args ) )
                 }
             }
             // We got rows!
+            $tz = date_default_timezone_get();
             if( $rows && count( $rows ) > 0 )
             {
                 $outlist = [];
@@ -320,6 +321,7 @@ if( isset( $args->args ) )
 	                    $out->FullName = $v->FullName;
                     $out->Message = $v->Message;
                     $out->Date = $v->Date;
+                    $out->Timezone = $tz;
                     $out->Timestamp = strtotime( $v->Date );
                     $out->Own = false;
                     $out->Seen = $v->Seen;

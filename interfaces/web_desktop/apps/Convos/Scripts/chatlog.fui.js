@@ -691,12 +691,18 @@ class FUIChatlog extends FUIElement
 			self.refreshDom();
 		}, 250 );
     }
-    parseDate( instr, full = false )
+    parseDate( instr, full = false, tz = false )
     {
-        let now = new Date();
+        let now = tz ? ( 
+        	new Date( new Date().toLocaleString( 'en-US', { timeZone: tz } ) )
+        ) : new Date();
+        
         let time = new Date( instr );
         let test = time.getFullYear() + '-' + StrPad( time.getMonth() + 1, 2, '0' ) + '-' + StrPad( time.getDate(), 2, '0' ) + 
         	' ' + StrPad( time.getHours(), 2, '0' ) + ':' + StrPad( time.getMinutes(), 2, '0' ) + ':' + StrPad( time.getSeconds(), 2, '0' );
+        //let secsnow = Math.floor( now.getTime() / 1000 );
+        //let secsthen = Math.floor( time.getTime() / 1000 );
+        //let secs = secsnow > secsthen ? ( secsnow - secsthen ) : ( secsthen - secsnow );
         let secs = Math.floor( now.getTime() / 1000 ) - Math.floor( time.getTime() / 1000 );
         let mins = Math.floor( secs / 60 );
         
@@ -894,6 +900,7 @@ class FUIChatlog extends FUIElement
             let d = document.createElement( 'div' );
             d.className = 'Message';
             d.classList.add( 'Showing' );
+            d.setAttribute( 'tz', m.Timezone );
             d.setAttribute( 'owner', m.Name );
 	        d.setAttribute( 'seen', m.Seen == 1 ? 'yes' : 'no' );
             if( history )
@@ -918,11 +925,13 @@ class FUIChatlog extends FUIElement
             if( !m.Own )
             	toolbar = '';
             
+            let newd = new Date( m.Date ).toLocaleString( 'en-US', { timeZone: m.Timezone } );
+           
             let replacements = {
                 message: self.replaceEmojis( self.replaceUrls( text ) ),
                 i18n_date: i18n( 'i18n_date' ),
                 i18n_fullname: i18n( 'i18n_fullname' ),
-                date: self.parseDate( m.Date ),
+                date: self.parseDate( newd, false, m.Timezone ),
                 signature: '',
                 fullname: m.Own ? i18n( 'i18n_you' ) : ( m.FullName ? m.FullName : m.Name ),
                 toolbar: toolbar
@@ -1039,7 +1048,7 @@ class FUIChatlog extends FUIElement
 			    }
 	        } )( m, d );
             
-            let timestamp = Math.floor( ( new Date( m.Date ) ).getTime() / 1000 );
+            let timestamp = Math.floor( ( new Date( newd ) ).getTime() / 1000 );
             if( m.Own ) d.classList.add( 'Own' );
             
             // Get slot
@@ -1327,7 +1336,6 @@ class FUIChatlog extends FUIElement
             cid: this.options.cid ? this.options.cid : '',
             lastId: this.lastId
         };
-        console.trace();
         Application.holdConnection( msg );
     }
     // Add element of loading data
@@ -1521,12 +1529,13 @@ class FUIChatlog extends FUIElement
         	let dateCand = dt.getDate() + '-' + ( dt.getMonth() + 1 );
         	if( !self.messageDateDividers[ dateCand ] && prevDate != dateCand )
         	{
+        		let tz = messages[ a ].getAttribute( 'tz' );
 	        	let s = document.createElement( 'div' );
 	        	s.className = 'Slot';
 	        	messages[a].parentNode.parentNode.insertBefore( s, messages[a].parentNode );
 	        	let nd = document.createElement( 'div' );
 	        	nd.className = 'Message MessageDateDivider Showing';
-	        	nd.innerHTML = self.parseDate( day, true );
+	        	nd.innerHTML = self.parseDate( day, true, tz );
 	        	nd.setAttribute( 'owner', '--' );
 	        	nd.setAttribute( 'slotid', tstm + '-divider' );
 	        	s.appendChild( nd );
@@ -1549,8 +1558,9 @@ class FUIChatlog extends FUIElement
             
             if( tstm && date )
             {
+	            let tz = messages[ a ].getAttribute( 'tz' );
 	            let day = parseInt( tstm.split( '-' )[2] ) * 1000;
-                let newDate = self.parseDate( day );
+                let newDate = self.parseDate( day, false, tz );
                 date.innerHTML = newDate;
                 if( self.elementVisible( messages[ a ] ) )
                 {
