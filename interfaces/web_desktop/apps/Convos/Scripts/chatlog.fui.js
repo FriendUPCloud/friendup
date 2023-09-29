@@ -693,16 +693,20 @@ class FUIChatlog extends FUIElement
     }
     parseDate( instr, full = false, tz = false )
     {
-        let now = tz ? ( 
-        	new Date( new Date().toLocaleString( 'en-US', { timeZone: tz } ) )
-        ) : new Date();
+        let now  = tz ? ( new Date( new Date(       ).toLocaleString( 'en-US', { timeZone: tz } ) ) ) : new Date();        
         
-        let time = new Date( instr );
+        // Make diff
+        let dif1 = tz ? ( new Date( new Date().toLocaleString( 'en-US', { timeZone: tz } ) ) ) : new Date( instr );
+        let dif2 = new Date();
+        
+        // Fix the time difference
+        instr -= ( dif1.getTime() - dif2.getTime() );
+        
+        let time = tz ? ( new Date( new Date( instr ).toLocaleString( 'en-US', { timeZone: tz } ) ) ) : new Date( instr );
+        
         let test = time.getFullYear() + '-' + StrPad( time.getMonth() + 1, 2, '0' ) + '-' + StrPad( time.getDate(), 2, '0' ) + 
         	' ' + StrPad( time.getHours(), 2, '0' ) + ':' + StrPad( time.getMinutes(), 2, '0' ) + ':' + StrPad( time.getSeconds(), 2, '0' );
-        //let secsnow = Math.floor( now.getTime() / 1000 );
-        //let secsthen = Math.floor( time.getTime() / 1000 );
-        //let secs = secsnow > secsthen ? ( secsnow - secsthen ) : ( secsthen - secsnow );
+        
         let secs = Math.floor( now.getTime() / 1000 ) - Math.floor( time.getTime() / 1000 );
         let mins = Math.floor( secs / 60 );
         
@@ -925,13 +929,11 @@ class FUIChatlog extends FUIElement
             if( !m.Own )
             	toolbar = '';
             
-            let newd = new Date( m.Date ).toLocaleString( 'en-US', { timeZone: m.Timezone } );
-           
             let replacements = {
                 message: self.replaceEmojis( self.replaceUrls( text ) ),
                 i18n_date: i18n( 'i18n_date' ),
                 i18n_fullname: i18n( 'i18n_fullname' ),
-                date: self.parseDate( newd, false, m.Timezone ),
+                date: self.parseDate( m.Date, false, m.Timezone ),
                 signature: '',
                 fullname: m.Own ? i18n( 'i18n_you' ) : ( m.FullName ? m.FullName : m.Name ),
                 toolbar: toolbar
@@ -1048,7 +1050,7 @@ class FUIChatlog extends FUIElement
 			    }
 	        } )( m, d );
             
-            let timestamp = Math.floor( ( new Date( newd ) ).getTime() / 1000 );
+            let timestamp = Math.floor( ( new Date( m.Date ) ).getTime() / 1000 );
             if( m.Own ) d.classList.add( 'Own' );
             
             // Get slot
