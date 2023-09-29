@@ -319,6 +319,7 @@ class FUIContacts extends FUIElement
                 
                 if( text != undefined && ele.record.Fullname != undefined )
                 {
+                	text = text.split( /\<.*?\>/ ).join( '' );
 				    Notify( {
 				    	title: 'From ' + ele.record.Fullname, 
 				    	text: text
