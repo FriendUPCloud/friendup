@@ -535,9 +535,9 @@ function InitEditArea( file )
 	{
 		if( !e ) e = window.event;
 		
-		var prev = null;
-		var eles = ge( 'CodeArea' ).getElementsByClassName( 'Tab' );
-		for( var a = 0; a < eles.length; a++ )
+		let prev = null;
+		let eles = ge( 'CodeArea' ).getElementsByClassName( 'Tab' );
+		for( let a = 0; a < eles.length; a++ )
 		{
 			if( a > 0 && eles[ a - 1 ] == t )
 			{
@@ -546,7 +546,7 @@ function InitEditArea( file )
 			}
 		}
 		
-		if( t.file.state == 'Editing' )
+		if( !t.file.remote && t.file.state == 'Editing' )
 		{
 			Confirm( i18n( 'i18n_are_you_sure' ), i18n( 'i18n_this_will_close' ), function( di )
 			{

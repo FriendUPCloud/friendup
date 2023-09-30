@@ -206,7 +206,7 @@ function hostAddCollaborationOnFile( file )
 function hostRemCollaborationOnFile( file )
 {
 	let c = window.collabMatrix;
-	
+	console.log( 'Removing collab file: ' + file.filename );
 	file.hasCollaboration = false;
 	
 	// Just send the currently shared document
@@ -216,9 +216,9 @@ function hostRemCollaborationOnFile( file )
 		filePath: file.path
 	};
 	c.hostConn.send( tmsg );
-	file.editor.session.on( 'change', false );
+	file.editor.session.removeListener( 'change', file.changeFunc );
 	
-	ge( 'CollaborationSwitch' ).classList.add( 'Off' );
+	ge( 'CollaborationSwitch' ).classList.remove( 'On' );
 }
 
 // Client functions ------------------------------------------------------------
@@ -269,7 +269,10 @@ function receiveCollabSession( msg, cbk = false )
 						// DO IT!
 						let f = getRemoteFileByPath( data.filePath );
 						if( f ) 
-							f.tabClose;
+						{
+							f.editor.destroy();
+							f.tabClose();
+						}
 					}
 					else if( data.command == 'setcollabfile' )
 					{
@@ -280,18 +283,19 @@ function receiveCollabSession( msg, cbk = false )
 							f.updateTab();
 							f.editor.setValue( data.data );
 							f.editor.clearSelection();
-							f.editor.session.on( 'change', function( delta )
+							f.changeFunc = function( delta )
 							{
 								if( !window.applyingHostChanges )
 								{
-									c.clientConn.send( {
-										command: 'change',
-										delta: delta,
-										filePath: f.path,
-										time: ( new Date() ).getTime()
-									} );
-								}
-							} );
+										c.clientConn.send( {
+											command: 'change',
+											delta: delta,
+											filePath: f.path,
+											time: ( new Date() ).getTime()
+										} );
+									}
+							}
+							f.editor.session.on( 'change', f.changeFunc );
 							RefreshFiletypeSelect();
 						}
 					}
