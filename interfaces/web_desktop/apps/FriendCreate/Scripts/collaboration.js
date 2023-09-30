@@ -287,7 +287,7 @@ function receiveCollabSession( msg, cbk = false )
 									c.clientConn.send( {
 										command: 'change',
 										delta: delta,
-										filePath: f.editor.path,
+										filePath: f.path,
 										time: ( new Date() ).getTime()
 									} );
 								}
