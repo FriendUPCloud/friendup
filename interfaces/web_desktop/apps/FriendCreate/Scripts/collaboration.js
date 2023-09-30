@@ -187,7 +187,8 @@ function hostAddCollaborationOnFile( file )
 		data: file.editor.getValue()
 	};
 	c.hostConn.send( tmsg );
-	file.editor.session.on( 'change', function ( delta )
+	
+	file.changeFunc = function ( delta )
 	{
 		if( !window.applyingClientChanges )
 		{
@@ -198,7 +199,9 @@ function hostAddCollaborationOnFile( file )
 				time: ( new Date() ).getTime()
 			} );
 		}
-	} );
+	};
+	
+	file.editor.session.on( 'change', file.changeFunc );
 	
 	ge( 'CollaborationSwitch' ).classList.add( 'On' );
 }
@@ -215,7 +218,7 @@ function hostRemCollaborationOnFile( file )
 		filePath: file.path
 	};
 	c.hostConn.send( tmsg );
-	file.editor.session.removeAllListeners( 'change' );
+	file.editor.session.off( 'change', file.changeFunc );
 	
 	ge( 'CollaborationSwitch' ).classList.remove( 'On' );
 }
@@ -392,6 +395,13 @@ function disconnectCollaboration()
 		command: 'disconnect',
 		time: ( new Date() ).getTime()
 	} );
+	for( let a in allFiles )
+	{
+		if( allFiles[ a ].hasCollaboration )
+		{
+			hostRemCollaborationOnFile( allFiles[ a ] );
+		}
+	}
 	setTimeout( function()
 	{
 		let c = window.collabMatrix;
