@@ -100,73 +100,57 @@ function activateCollaboration( cbk = false )
 							c.users.push( us );
 							
 							document.body.classList.add( 'ConnectionEstablished' );
-							
-							// Just send the currently shared document
-							let tmsg = {
-								command: 'setcurrentfile',
-								filename: Application.currentFile.filename,
-								path: Application.currentFile.path,
-								data: Application.currentFile.editor.getValue()
-							};
-							c.hostConn.send( tmsg );
-							
-							Application.currentFile.editor.session.on( 'change', function ( delta )
-							{
-								if( !window.applyingClientChanges )
-								{
-									c.hostConn.send( {
-										command: 'change',
-										delta: delta,
-										time: ( new Date() ).getTime()
-									} );
-								}
-							} );
 						}
 						// Comes in from the client
 						else if( data.command == 'change' )
 						{
-							window.applyingClientChanges = true;
-							Application.currentFile.editor.session.getDocument().applyDeltas( [ data.delta ] );
-							
-							// Only if we are on the same row, do a merge to keep master copy!
-							// DANGEROUS!
-							if( data.delta.start.row == Application.currentFile.editor.getCursorPosition().row )
+							let file = allFiles[ data.filePath ];
+							if( file )
 							{
-								// Send affected buffers
-								// a) Get data block
-								let block = '';
-								let codeLen = Application.currentFile.editor.session.getLength;
-								let starty = data.delta.start.row + 1;
-								let endy = data.delta.end.row + 1;
-								for( let yi = starty; yi <= endy; yi++ )
-									 block += Application.currentFile.editor.session.getLine( yi - 1 );
+								window.applyingClientChanges = true;
+								file.editor.session.getDocument().applyDeltas( [ data.delta ] );
 								
-								c.hostConn.send( {
-									command: 'merge',
-									mergeBlocks: [
-										{ 
-											blockRange: {
-												startRow: starty - 1,
-												endRow: endy - 1
-											}, 
-											data: block
-										}
-									],
-									time: ( new Date() ).getTime()
-								} );
-							}
-							
-							window.applyingClientChanges = false;
-							
-							// Update minimap
-							setTimeout( function()
-							{
-								if( Application.currentFile.refreshBuffer )
+								// Only if we are on the same row, do a merge to keep master copy!
+								// DANGEROUS!
+								if( data.delta.start.row == file.editor.getCursorPosition().row )
 								{
-									Application.currentFile.refreshBuffer();
-									Application.currentFile.refreshMinimap();
+									// Send affected buffers
+									// a) Get data block
+									let block = '';
+									let codeLen = file.editor.session.getLength;
+									let starty = data.delta.start.row + 1;
+									let endy = data.delta.end.row + 1;
+									for( let yi = starty; yi <= endy; yi++ )
+										 block += file.editor.session.getLine( yi - 1 );
+									
+									c.hostConn.send( {
+										command: 'merge',
+										mergeBlocks: [
+											{ 
+												blockRange: {
+													startRow: starty - 1,
+													endRow: endy - 1
+												}, 
+												data: block
+											}
+										],
+										filePath: file.filePath,
+										time: ( new Date() ).getTime()
+									} );
 								}
-							}, 5 );
+								
+								window.applyingClientChanges = false;
+								
+								// Update minimap
+								setTimeout( function()
+								{
+									if( file.refreshBuffer )
+									{
+										file.refreshBuffer();
+										file.refreshMinimap();
+									}
+								}, 5 );
+							}
 						}
 					}
 				} );
@@ -187,6 +171,57 @@ function activateCollaboration( cbk = false )
 		document.body.classList.remove( 'ConnectionEstablished' );
 	} );
 }
+
+// Add a file for collaboration
+function hostAddCollaborationOnFile( file )
+{
+	let c = window.collabMatrix;
+	
+	file.hasCollaboration = true;
+	
+	// Just send the currently shared document
+	let tmsg = {
+		command: 'setcollabfile',
+		filename: file.filename,
+		filePath: file.path,
+		data: file.editor.getValue()
+	};
+	c.hostConn.send( tmsg );
+	file.editor.session.on( 'change', function ( delta )
+	{
+		if( !window.applyingClientChanges )
+		{
+			c.hostConn.send( {
+				command: 'change',
+				filePath: file.path,
+				delta: delta,
+				time: ( new Date() ).getTime()
+			} );
+		}
+	} );
+	
+	ge( 'CollaborationSwitch' ).classList.add( 'On' );
+}
+
+function hostRemCollaborationOnFile( file )
+{
+	let c = window.collabMatrix;
+	
+	file.hasCollaboration = false;
+	
+	// Just send the currently shared document
+	let tmsg = {
+		command: 'remcollabfile',
+		filename: file.filename,
+		filePath: file.path
+	};
+	c.hostConn.send( tmsg );
+	file.editor.session.on( 'change', false );
+	
+	ge( 'CollaborationSwitch' ).classList.add( 'Off' );
+}
+
+// Client functions ------------------------------------------------------------
 
 // Client receives collaboration session from a host
 function receiveCollabSession( msg, cbk = false )
@@ -229,60 +264,68 @@ function receiveCollabSession( msg, cbk = false )
 						} );
 						c.users.push( us );
 					}
-					else if( data.command == 'setcurrentfile' )
+					else if( data.command == 'remcollabfile' )
 					{
-						let f = new EditorFile();
-						f.remote = true;
-						f.filename = data.filename;
-						f.path = data.path;
-						f.updateTab();
-						f.editor.setValue( data.data );
-						f.editor.clearSelection();
-						f.editor.session.on( 'change', function( delta )
+						// DO IT!
+						let f = getRemoteFileByPath( data.filePath );
+						if( f ) 
+							f.tabClose;
+					}
+					else if( data.command == 'setcollabfile' )
+					{
+						let f = RemoteFile( data.filePath );
+						if( f )
 						{
-							if( !window.applyingHostChanges )
+							f.filename = data.filename;
+							f.updateTab();
+							f.editor.setValue( data.data );
+							f.editor.clearSelection();
+							f.editor.session.on( 'change', function( delta )
 							{
-								c.clientConn.send( {
-									command: 'change',
-									delta: delta,
-									time: ( new Date() ).getTime()
-								} );
-								
-								// Save this instance
-								c.changeMemoryBuffer = {
-									cursorPosition: f.editor.getCursorPosition(),
-									data: f.editor.getValue()
-								};
-							}
-						} );
-						RefreshFiletypeSelect();
+								if( !window.applyingHostChanges )
+								{
+									c.clientConn.send( {
+										command: 'change',
+										delta: delta,
+										filePath: f.editor.path,
+										time: ( new Date() ).getTime()
+									} );
+								}
+							} );
+							RefreshFiletypeSelect();
+						}
 					}
 					// Merge comes from host, and updates lines of code
 					// to the original source state, with a simple merge
 					else if( data.command == 'merge' )
 					{
-						c.addKeyboardEvent( {
-							type: 'merge',
-							data: data.mergeBlocks[0].data,
-							row: data.mergeBlocks[0].blockRange.startRow,
-							time: data.time,
-							localtime: ( new Date() ).getTime(), // Local time
-							file: Application.currentFile
-						} );
-						
-						// Clear change memory buffer..
-						c.changeMemoryBuffer = null;
+						let file = getRemoteFileByPath( data.filePath );
+						if( file )
+						{
+							c.addKeyboardEvent( {
+								type: 'merge',
+								data: data.mergeBlocks[0].data,
+								row: data.mergeBlocks[0].blockRange.startRow,
+								time: data.time,
+								localtime: ( new Date() ).getTime(), // Local time
+								file: file
+							} );
+						}
 					}
 					// Change
 					else if( data.command == 'change' )
 					{
-						console.log( 'Added change from host: ', data.delta.lines );
-						c.addKeyboardEvent( {
-							type: 'change',
-							delta: data.delta,
-							time: data.time,
-							localtime: ( new Date() ).getTime() // Local time
-						} );
+						let file = getRemoteFileByPath( data.filePath );
+						if( file )
+						{
+							c.addKeyboardEvent( {
+								type: 'change',
+								delta: data.delta,
+								time: data.time,
+								localtime: ( new Date() ).getTime(), // Local time
+								file: file
+							} );
+						}
 					}
 					// Just ping
 					else if( data.command == 'ping' )
@@ -417,14 +460,14 @@ window.collabMatrix = {
 		if( evt.type == 'change' )
 		{
 			window.applyingHostChanges = true;
-			Application.currentFile.editor.session.getDocument().applyDeltas( [ evt.delta ] );
+			evt.file.editor.session.getDocument().applyDeltas( [ evt.delta ] );
 			window.applyingHostChanges = false;
 			
 			// Update minimap
-			if( Application.currentFile.refreshBuffer )
+			if( evt.file.refreshBuffer )
 			{
-				Application.currentFile.refreshBuffer();
-				Application.currentFile.refreshMinimap();
+				evt.file.refreshBuffer();
+				evt.file.refreshMinimap();
 			}
 		}
 		else if( evt.type == 'merge' )
@@ -440,10 +483,10 @@ window.collabMatrix = {
 			window.applyingHostChanges = false;
 			
 			// Update minimap
-			if( Application.currentFile.refreshBuffer )
+			if( evt.file.refreshBuffer )
 			{
-				Application.currentFile.refreshBuffer();
-				Application.currentFile.refreshMinimap();
+				evt.file.refreshBuffer();
+				evt.file.refreshMinimap();
 			}
 		}
 	}

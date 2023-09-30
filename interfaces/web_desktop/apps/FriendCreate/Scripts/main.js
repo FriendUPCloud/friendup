@@ -82,6 +82,7 @@ Application.run = function( msg )
 		( new EditorFile( 'New file' ) );
 	}
 	RefreshProjects();
+	RefreshCollaborationSwitch();
 }
 
 
@@ -130,6 +131,75 @@ Application.checkFileType = function( path )
 		default:
 			return false;
 	}
+}
+
+function RefreshCollaborationSwitch()
+{
+	if( !ge( 'CollaborationSwitch' ) )
+	{
+		let d = CreateToggleBox( 'CollaborationSwitch', 'Co-editing', ge( 'StatusBar' ) );
+		d.on = function()
+		{
+			hostAddCollaborationOnFile( Application.currentFile );
+		}
+		d.off = function()
+		{
+			hostRemCollaborationOnFile( Application.currentFile );
+		}
+		return d;
+	}
+	return false;
+}
+
+// Create a tobble box
+function CreateToggleBox( id, label, pelement = false )
+{
+	let d = document.createElement( 'div' );
+	d.id = id;
+	d.className = 'CToggle';
+	d.innerHTML = '<div class="Groove"><div class="Knob"></div></div><div class="Info">' + label + '</div>';
+	d.onclick = function()
+	{
+		let self = this;
+		if( !this.classList.contains( 'On' ) )
+		{
+			
+			if( this.on )
+			{
+				this.on( function( result )
+				{
+					if( result )
+					{
+						self.classList.add( 'On' );
+					}
+				} );
+			}
+			else
+			{
+				this.classList.add( 'On' );
+			}
+		}
+		else
+		{
+			if( this.off )
+			{
+				this.off( function( result )
+				{
+					if( result )
+					{
+						self.classList.remove( 'On' );
+					}
+				} );
+			}
+			else
+			{
+				this.classList.remove( 'On' );
+			}
+		}
+	}
+	if( pelement )
+		pelement.appendChild( d );
+	return d;
 }
 
 function RefreshFiletypeSelect()
@@ -245,11 +315,17 @@ function InitGui()
 
 // File class ------------------------------------------------------------------
 
+window.allFiles = {};
+
 var EditorFile = function( path )
 {
 	let self = this;
 	
+	allFiles[ path ] = this;
+	
 	let returnable = false;
+	
+	this.hasCoollaboration = false; // Default setting
 	
 	for( let a = 0; a < files.length; a++ )
 	{
@@ -364,11 +440,38 @@ EditorFile.prototype.activate = function()
 		}
 	}
 	SetCurrentProject( this.ProjectID );
+	
+	if( this.hasCollaboration && document.body.classList.contains( 'CollabHost' ) )
+	{
+		ge( 'CollaborationSwitch' ).classList.add( 'On' );
+	}
+	else
+	{
+		ge( 'CollaborationSwitch' ).classList.remove( 'On' );
+	}
 }
 
 EditorFile.prototype.updateTab = function()
 {
 	this.tab.getElementsByTagName( 'span' )[0].innerHTML = ( this.remote ? 'Remote: ' : '' ) + this.filename;
+}
+
+function RemoteFile( path )
+{
+	let n = new EditorFile();
+	n.path = path;
+	n.remote = true;
+	allFiles[ '_remote_' + path ] = n;
+	return n;
+}
+
+function getRemoteFileByPath( path )
+{
+	if( typeof( allFiles[ '_remote_' + path ] ) != 'undefined' )
+	{
+		return allFiles[ '_remote_' + path ];
+	}
+	return false;
 }
 
 function NewFile()
@@ -428,8 +531,10 @@ function InitEditArea( file )
 		CheckPlayStopButtons();
 	} );
 	
-	c.addEventListener( 'mousedown', function( e )
+	file.tabClose = function( e )
 	{
+		if( !e ) e = window.event;
+		
 		var prev = null;
 		var eles = ge( 'CodeArea' ).getElementsByClassName( 'Tab' );
 		for( var a = 0; a < eles.length; a++ )
@@ -477,6 +582,11 @@ function InitEditArea( file )
 			if( eles && eles[ 0 ] )
 				eles[ 0 ].onclick();
 		}
+	}
+	
+	c.addEventListener( 'mousedown', function( e )
+	{
+		file.tabClose( e );
 	} );
 	
 	// Initialize the content editor
@@ -509,6 +619,11 @@ function InitEditArea( file )
 		file.refreshMinimap();
 	
 	RefreshFiletypeSelect();
+}
+
+function GetEditorFileByPath()
+{
+	
 }
 
 function RemoveEditArea( file )
