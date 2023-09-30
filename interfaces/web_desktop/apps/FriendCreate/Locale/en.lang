@@ -21,6 +21,8 @@ i18n_open_file                      : Open file
 i18n_are_you_sure                   : Are you sure?
 i18n_this_will_close                : This will close your current document.
 
+i18n_sure_disconnect_collab         : This will terminate your collaboration session immediately.
+
 menu_file                           : File
 menu_file_about                     : About Friend Create
 menu_file_manual                    : Manual

@@ -215,7 +215,7 @@ function hostRemCollaborationOnFile( file )
 		filePath: file.path
 	};
 	c.hostConn.send( tmsg );
-	file.editor.session.removeListener( 'change', file.changeFunc );
+	file.editor.session.removeAllListeners( 'change' );
 	
 	ge( 'CollaborationSwitch' ).classList.remove( 'On' );
 }
@@ -262,6 +262,33 @@ function receiveCollabSession( msg, cbk = false )
 							userid: data.userid
 						} );
 						c.users.push( us );
+					}
+					else if( data.command == 'disconnect' )
+					{
+						let o = {};
+						for( let a in allFiles )
+						{
+							if( allFiles[ a ].remote )
+							{
+								try
+								{
+									allFiles[a].editor.destroy();
+									allFiles[a].tabClose();
+								}
+								catch( e )
+								{}
+							}
+							else
+							{
+								o[ a ] = allFiles[ a ];
+							}
+						}
+						allFiles = o;
+						let c = window.collabMatrix;
+						if( c.clientPeer )
+							c.clientPeer.destroy();
+						document.body.classList.remove( 'CollabClient' );
+						document.body.classList.remove( 'ConnectionEstablished' );
 					}
 					else if( data.command == 'remcollabfile' )
 					{
@@ -361,13 +388,18 @@ function receiveCollabSession( msg, cbk = false )
 function disconnectCollaboration()
 {
 	let c = window.collabMatrix;
-	if( c.clientPeer )
-		c.clientPeer.destroy();
-	if( c.hostPeer )
-		c.hostPeer.destroy();
-	document.body.classList.remove( 'CollabHost' );
-	document.body.classList.remove( 'CollabClient' );
-	document.body.classList.remove( 'ConnectionEstablished' );
+	c.hostConn.send( {
+		command: 'disconnect',
+		time: ( new Date() ).getTime()
+	} );
+	setTimeout( function()
+	{
+		let c = window.collabMatrix;
+		if( c.hostPeer )
+			c.hostPeer.destroy();
+		document.body.classList.remove( 'CollabHost' );
+		document.body.classList.remove( 'ConnectionEstablished' );
+	}, 25 );
 }
 
 // Collaboration user structure

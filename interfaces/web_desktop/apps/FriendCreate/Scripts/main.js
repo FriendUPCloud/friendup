@@ -2457,7 +2457,13 @@ Application.receiveMessage = function( msg )
 					receiveCollabSession( msg.args );
 				break;
 			case 'collab_disconnect':
-				
+				Confirm( i18n( 'i18n_are_you_sure' ), i18n( 'i18n_sure_disconnect_collab' ), function( d )
+				{
+					if( d.data )
+					{
+						disconnectCollaboration();
+					}
+				} );
 				break;
 			case 'collab_invite':
 				if( window.collabInvite )
