@@ -112,7 +112,7 @@ function activateCollaboration( cbk = false )
 							
 							Application.currentFile.editor.session.on( 'change', function ( delta )
 							{
-								if( !window.clientChanges )
+								if( !window.applyingClientChanges )
 								{
 									c.hostConn.send( {
 										command: 'change',
@@ -125,16 +125,48 @@ function activateCollaboration( cbk = false )
 						// Comes in from the client
 						else if( data.command == 'change' )
 						{
-							window.clientChanges = true;
+							window.applyingClientChanges = true;
 							Application.currentFile.editor.session.getDocument().applyDeltas( [ data.delta ] );
-							window.clientChanges = false;
+							
+							// Only if we are on the same row, do a merge to keep master copy!
+							// DANGEROUS!
+							if( data.delta.start.row == Application.currentFile.editor.getCursorPosition().row )
+							{
+								// Send affected buffers
+								// a) Get data block
+								let block = '';
+								let codeLen = Application.currentFile.editor.session.getLength;
+								let starty = data.delta.start.row + 1;
+								let endy = data.delta.end.row + 1;
+								for( let yi = starty; yi <= endy; yi++ )
+									 block += Application.currentFile.editor.session.getLine( yi - 1 );
+								
+								c.hostConn.send( {
+									command: 'merge',
+									mergeBlocks: [
+										{ 
+											blockRange: {
+												startRow: starty - 1,
+												endRow: endy - 1
+											}, 
+											data: block
+										}
+									],
+									time: ( new Date() ).getTime()
+								} );
+							}
+							
+							window.applyingClientChanges = false;
 							
 							// Update minimap
-							if( Application.currentFile.refreshBuffer )
+							setTimeout( function()
 							{
-								Application.currentFile.refreshBuffer();
-								Application.currentFile.refreshMinimap();
-							}
+								if( Application.currentFile.refreshBuffer )
+								{
+									Application.currentFile.refreshBuffer();
+									Application.currentFile.refreshMinimap();
+								}
+							}, 5 );
 						}
 					}
 				} );
@@ -208,22 +240,43 @@ function receiveCollabSession( msg, cbk = false )
 						f.editor.clearSelection();
 						f.editor.session.on( 'change', function( delta )
 						{
-							if( !window.hostChanges )
+							if( !window.applyingHostChanges )
 							{
 								c.clientConn.send( {
 									command: 'change',
 									delta: delta,
 									time: ( new Date() ).getTime()
 								} );
+								
+								// Save this instance
+								c.changeMemoryBuffer = {
+									cursorPosition: f.editor.getCursorPosition(),
+									data: f.editor.getValue()
+								};
 							}
 						} );
-						
-						
 						RefreshFiletypeSelect();
+					}
+					// Merge comes from host, and updates lines of code
+					// to the original source state, with a simple merge
+					else if( data.command == 'merge' )
+					{
+						c.addKeyboardEvent( {
+							type: 'merge',
+							data: data.mergeBlocks[0].data,
+							row: data.mergeBlocks[0].blockRange.startRow,
+							time: data.time,
+							localtime: ( new Date() ).getTime(), // Local time
+							file: Application.currentFile
+						} );
+						
+						// Clear change memory buffer..
+						c.changeMemoryBuffer = null;
 					}
 					// Change
 					else if( data.command == 'change' )
 					{
+						console.log( 'Added change from host: ', data.delta.lines );
 						c.addKeyboardEvent( {
 							type: 'change',
 							delta: data.delta,
@@ -363,9 +416,29 @@ window.collabMatrix = {
 		
 		if( evt.type == 'change' )
 		{
-			window.hostChanges = true;
+			window.applyingHostChanges = true;
 			Application.currentFile.editor.session.getDocument().applyDeltas( [ evt.delta ] );
-			window.hostChanges = false;
+			window.applyingHostChanges = false;
+			
+			// Update minimap
+			if( Application.currentFile.refreshBuffer )
+			{
+				Application.currentFile.refreshBuffer();
+				Application.currentFile.refreshMinimap();
+			}
+		}
+		else if( evt.type == 'merge' )
+		{
+			let range = new ace.Range( 
+				evt.row, 0,
+				evt.row, Number.MAX_VALUE
+			);
+			
+			// Write that line
+			window.applyingHostChanges = true;
+			evt.file.editor.session.replace( range, evt.data );
+			window.applyingHostChanges = false;
+			
 			// Update minimap
 			if( Application.currentFile.refreshBuffer )
 			{
