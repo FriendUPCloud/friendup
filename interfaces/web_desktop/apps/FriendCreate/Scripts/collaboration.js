@@ -206,7 +206,6 @@ function hostAddCollaborationOnFile( file )
 function hostRemCollaborationOnFile( file )
 {
 	let c = window.collabMatrix;
-	console.log( 'Removing collab file: ' + file.filename );
 	file.hasCollaboration = false;
 	
 	// Just send the currently shared document
