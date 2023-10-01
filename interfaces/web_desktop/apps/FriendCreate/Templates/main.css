@@ -690,6 +690,20 @@ body #SideBar > #Participants .Participant .Name
 
 body #SideBar > #Participants .Participant .Kick
 {
-	width: 30px;
+	width: 15px;
+	cursor: pointer;
+	filter: contrast(1);
+	transform: filter 0.2s;
+}
+body #SideBar > #Participants .Participant .Kick:hover
+{
+	filter: contrast(0.2);
+}
+
+
+body #SideBar > #Participants .Participant .Kick:after
+{
+	content: "\f00d";
+	font-family: fontawesome;	
 }
 

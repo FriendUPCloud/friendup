@@ -22,6 +22,10 @@ Application.SendUserMsg = function( opts )
         'appname': 'FriendCreate',
         'dstuniqueid': opts.recipientId
     };
+    if( opts.dstonly )
+    {
+    	amsg.dstonly = '1';
+    }
     if( opts.message )
     {
     	amsg.msg = JSON.stringify( opts.message );

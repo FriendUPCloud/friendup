@@ -121,6 +121,7 @@ class FUIInvitedialog extends FUIElement
 		// Notify user that we invited them!
 		Application.SendUserMsg( {
 			recipientId: contact.ID,
+			dstonly: true,
 			message: {
 				groupId: self.options.groupId,
 				type: 'invite',
