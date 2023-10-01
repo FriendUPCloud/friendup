@@ -639,8 +639,8 @@ body #SideBar > #Participants > .header
 {
 	position: absolute;
 	top: 0;
-	left: var(--PaddingBox);
-	width: calc(100% - var(--PaddingBox) - var(--PaddingBox));
+	left: var(--PaddingBoxLarger);
+	width: calc(100% - var(--PaddingBoxLarger) - var(--PaddingBoxLarger));
 	height: 25px;
 	font-weight: bold;
 	border-bottom: 1px solid var(--ColorBorder);
@@ -654,7 +654,7 @@ body #SideBar > #Participants > .body
 	width: 100%;
 	height: calc(100% - 30px);
 	overflow: auto;
-	padding: 5px var(--PaddingBox);
+	padding: 5px var(--PaddingBoxLarger);
     box-sizing: border-box;
 }
 
