@@ -83,33 +83,37 @@ function activateCollaboration( cbk = false )
 		if( cbk ) cbk( hostPeerId );
 		c.hostPeer.on( 'connection', function( conn )
 		{
-			c.hostConn = conn;
-			c.hostConn.on( 'open', function()
+			let o = { conn: conn };
+			c.hostConn.push( o );
+			conn.on( 'open', function()
 			{
-				c.hostConn.on( 'data', function( data )
+				conn.on( 'data', function( data )
 				{
 					if( typeof( data ) == 'object' )
 					{
 						if( data.command == 'hello' )
 						{
+							o.uniqueid = data.uniqueid; // Assign to conn
 							c.addUser( new CollabUser( {
 								fullname: data.fullname,
 								uniqueid: data.uniqueid,
 								userid: data.userid
 							} ) );
 							document.body.classList.add( 'ConnectionEstablished' );
+							if( collabWin )
+								collabWin.close();
 						}
 						// Comes in from the client
 						else if( data.command == 'change' )
 						{
-							let file = allFiles[ data.filePath ];
+							let file = allFiles[ data.uniqueId ];
 							if( file )
 							{
 								window.applyingClientChanges = true;
 								file.editor.session.getDocument().applyDeltas( [ data.delta ] );
 								
 								// Only if we are on the same row, do a merge to keep master copy!
-								// DANGEROUS!
+								// DANGEROUS! (Fixed with cursor line block)
 								if( data.delta.start.row == file.editor.getCursorPosition().row )
 								{
 									// Send affected buffers
@@ -121,7 +125,8 @@ function activateCollaboration( cbk = false )
 									for( let yi = starty; yi <= endy; yi++ )
 										 block += file.editor.session.getLine( yi - 1 );
 									
-									c.hostConn.send( {
+									// Merge to all clients
+									c.sendFromHost( {
 										command: 'merge',
 										mergeBlocks: [
 											{ 
@@ -133,8 +138,20 @@ function activateCollaboration( cbk = false )
 											}
 										],
 										filePath: file.filePath,
+										uniqueId: file.uniqueId,
 										time: ( new Date() ).getTime()
 									} );
+								}
+								// Update the other participants
+								else
+								{
+									for( let i = 0; i < c.hostConn.length; i++ )
+									{
+										if( c.hostConn[ i ].conn != conn )
+										{
+											c.hostConn[ i ].conn.send( data );
+										}
+									}
 								}
 								
 								window.applyingClientChanges = false;
@@ -152,7 +169,7 @@ function activateCollaboration( cbk = false )
 						}
 					}
 				} );
-				c.hostConn.send( {
+				conn.send( {
 					command: 'hello',
 					fullname: Application.fullName,
 					uniqueid: Application.uniqueId,
@@ -182,17 +199,19 @@ function hostAddCollaborationOnFile( file )
 		command: 'setcollabfile',
 		filename: file.filename,
 		filePath: file.path,
+		uniqueId: file.uniqueId,
 		data: file.editor.getValue()
 	};
-	c.hostConn.send( tmsg );
+	c.sendFromHost( tmsg );
 	
 	file.changeFunc = function ( delta )
 	{
 		if( !window.applyingClientChanges )
 		{
-			c.hostConn.send( {
+			c.sendFromHost( {
 				command: 'change',
 				filePath: file.path,
+				uniqueId: file.uniqueId,
 				delta: delta,
 				time: ( new Date() ).getTime()
 			} );
@@ -213,9 +232,10 @@ function hostRemCollaborationOnFile( file )
 	let tmsg = {
 		command: 'remcollabfile',
 		filename: file.filename,
-		filePath: file.path
+		filePath: file.path,
+		uniqueId: file.uniqueId
 	};
-	c.hostConn.send( tmsg );
+	c.sendFromHost( tmsg );
 	file.editor.session.off( 'change', file.changeFunc );
 	
 	ge( 'CollaborationSwitch' ).classList.remove( 'On' );
@@ -262,7 +282,7 @@ function receiveCollabSession( msg, cbk = false )
 							uniqueid: data.uniqueid,
 							userid: data.userid
 						} );
-						c.users.push( us );
+						c.addUser( us );
 					}
 					else if( data.command == 'disconnect' )
 					{
@@ -294,7 +314,7 @@ function receiveCollabSession( msg, cbk = false )
 					else if( data.command == 'remcollabfile' )
 					{
 						// DO IT!
-						let f = getRemoteFileByPath( data.filePath );
+						let f = getFileById( data.uniqueId );
 						if( f ) 
 						{
 							f.editor.destroy();
@@ -303,7 +323,7 @@ function receiveCollabSession( msg, cbk = false )
 					}
 					else if( data.command == 'setcollabfile' )
 					{
-						let f = RemoteFile( data.filePath );
+						let f = RemoteFile( data.filePath, data.uniqueId ); 
 						if( f )
 						{
 							f.filename = data.filename;
@@ -316,8 +336,10 @@ function receiveCollabSession( msg, cbk = false )
 								{
 										c.clientConn.send( {
 											command: 'change',
+											useruniqueid: Application.uniqueId,
 											delta: delta,
 											filePath: f.path,
+											uniqueId: f.uniqueId,
 											time: ( new Date() ).getTime()
 										} );
 									}
@@ -330,7 +352,7 @@ function receiveCollabSession( msg, cbk = false )
 					// to the original source state, with a simple merge
 					else if( data.command == 'merge' )
 					{
-						let file = getRemoteFileByPath( data.filePath );
+						let file = getFileById( data.uniqueId );
 						if( file )
 						{
 							c.addKeyboardEvent( {
@@ -346,7 +368,7 @@ function receiveCollabSession( msg, cbk = false )
 					// Change
 					else if( data.command == 'change' )
 					{
-						let file = getRemoteFileByPath( data.filePath );
+						let file = getFileById( data.uniqueId );
 						if( file )
 						{
 							c.addKeyboardEvent( {
@@ -389,7 +411,7 @@ function receiveCollabSession( msg, cbk = false )
 function disconnectCollaboration()
 {
 	let c = window.collabMatrix;
-	c.hostConn.send( {
+	c.sendFromHost( {
 		command: 'disconnect',
 		time: ( new Date() ).getTime()
 	} );
@@ -437,6 +459,7 @@ class CollabFile
 window.collabMatrix = {
 	files: {},
 	users: [],
+	hostConn: [],
 	keyboard: {
 		shift: false,
 		ctrl: false,
@@ -545,7 +568,7 @@ window.collabMatrix = {
 	{
 		for( let a = 0; a < this.users.length; a++ )
 		{
-			if( this.users[ a ].uniqueid == cuser.uniqueid )
+			if( this.users[ a ].userinfo.uniqueid == cuser.userinfo.uniqueid )
 				return false;
 		}
 		this.users.push( cuser );
@@ -556,7 +579,7 @@ window.collabMatrix = {
 		let o = [];
 		for( let a = 0; a < this.users.length; a++ )
 		{
-			if( this.users[ a ].uniqueid != uniqueid )
+			if( this.users[ a ].userinfo.uniqueid != uniqueid )
 				o.push( this.users[ a ] );
 		}
 		this.users = o;
@@ -574,6 +597,13 @@ window.collabMatrix = {
 			str += '<div class="Participant""><div class="Knob"><span style="background: rgb(' + cl + ');"></span></div><div class="Name">' + this.users[ a ].userinfo.fullname + '</div><div class="Kick"></div></div>';
 		}
 		b.innerHTML = str;
+	},
+	sendFromHost( msg )
+	{
+		for( let i = 0; i < this.hostConn.length; i++ )
+		{
+			this.hostConn[ i ].conn.send( msg );
+		}
 	}
 };
 // Poll collab events
@@ -587,9 +617,9 @@ window.collabMatrix.intr = setInterval( function()
 // Poll collab events
 window.collabMatrix.intr = setInterval( function()
 {
-	if( document.body.classList.contains( 'CollabHost' ) && window.collabMatrix.hostConn )
+	if( document.body.classList.contains( 'CollabHost' ) && window.collabMatrix.hostConn.length )
 	{
-		window.collabMatrix.hostConn.send( {
+		window.collabMatrix.sendFromHost( {
 			command: 'ping',
 			fullname: Application.fullName,
 			uniqueid: Application.uniqueId,

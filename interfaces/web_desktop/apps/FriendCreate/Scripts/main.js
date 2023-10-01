@@ -321,7 +321,9 @@ var EditorFile = function( path )
 {
 	let self = this;
 	
-	allFiles[ path ] = this;
+	this.uniqueId = md5( UniqueHash() );
+	
+	allFiles[ this.uniqueId ] = this;
 	
 	let returnable = false;
 	
@@ -456,20 +458,21 @@ EditorFile.prototype.updateTab = function()
 	this.tab.getElementsByTagName( 'span' )[0].innerHTML = ( this.remote ? 'Remote: ' : '' ) + this.filename;
 }
 
-function RemoteFile( path )
+function RemoteFile( path, id )
 {
 	let n = new EditorFile();
 	n.path = path;
+	n.uniqueId = id;
 	n.remote = true;
-	allFiles[ '_remote_' + path ] = n;
+	allFiles[ id ] = n;
 	return n;
 }
 
-function getRemoteFileByPath( path )
+function getFileById( id )
 {
-	if( typeof( allFiles[ '_remote_' + path ] ) != 'undefined' )
+	if( typeof( allFiles[ id ] ) != 'undefined' )
 	{
-		return allFiles[ '_remote_' + path ];
+		return allFiles[ id ];
 	}
 	return false;
 }

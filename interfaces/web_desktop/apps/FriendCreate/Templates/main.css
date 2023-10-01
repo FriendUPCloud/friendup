@@ -665,6 +665,12 @@ body #SideBar > #Participants .Participant
     background: var(--BackgroundHeavier);
     padding: var(--PaddingButton) var(--PaddingBox);
     vertical-align: middle;
+    margin: 0 0 5px 0;
+}
+
+body #SideBar > #Participants .Participant:last-child
+{
+	margin: 0;
 }
 
 body #SideBar > #Participants .Participant .Knob
