@@ -713,3 +713,16 @@ body #SideBar > #Participants .Participant .Kick:after
 	font-family: fontawesome;	
 }
 
+/* User colors */
+
+.User1 { background-color: rgb(200,30,30); }
+.User2 { background-color: rgb(30,200,30); }
+.User3 { background-color: rgb(30,30,200); }
+.User4 { background-color: rgb(150,150,30); }
+.User5 { background-color: rgb(30,150,150); }
+.User6 { background-color: rgb(150,30,150); }
+.User1, .User2, .User3, .User4, .User5, .User6
+{
+	position: absolute;
+}
+

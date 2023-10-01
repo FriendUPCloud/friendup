@@ -10,6 +10,41 @@
 
 // Just start the collaboration window, to add people to the current session
 let collabWin = null;
+collabUserLimit = 6; // 6 users right now
+
+// Maintain some things
+window.addEventListener( 'keyup', _collab_maintain );
+window.addEventListener( 'mouseup', _collab_maintain );
+function _collab_maintain( e )
+{
+	let f = Application.currentFile;
+	if( !f ) return;
+	let c = window.collabMatrix;
+	
+	// Client || no collab
+	if( !document.body.classList.contains( 'CollabHost' ) )
+	{
+		if( !document.body.classList.contains( 'CollabClient' ) )
+			return;
+		// Collab client
+		if( !f.remote ) return;
+		c.clientConn.send( {
+			command: 'update',
+			uniqueId: f.uniqueId,
+			cursorpos: f.editor.getCursorPosition(),
+			useruniqueid: Application.uniqueId
+		} );
+	}
+	if( !f.hasCollaboration ) return;
+	c.sendFromHost( {
+		command: 'update',
+		uniqueId: f.uniqueId,
+		cursorpos: f.editor.getCursorPosition(),
+		useruniqueid: Application.uniqueId
+	} );
+};
+
+
 function collabInvite()
 {
 	if( collabWin ) return collabWin.activate();
@@ -103,12 +138,21 @@ function activateCollaboration( cbk = false )
 							if( collabWin )
 								collabWin.close();
 						}
+						else if( data.command == 'update' )
+						{
+							let file = getFileById( data.uniqueId );
+							if( file && data.cursorpos )
+							{
+								c.updateUserCursor( data.useruniqueid, data.cursorpos, file );
+							}
+						}
 						// Comes in from the client
 						else if( data.command == 'change' )
 						{
 							let file = allFiles[ data.uniqueId ];
 							if( file )
 							{
+								c.updateUserCursor( data.useruniqueid, data.cursorpos, file );
 								window.applyingClientChanges = true;
 								file.editor.session.getDocument().applyDeltas( [ data.delta ] );
 								
@@ -150,6 +194,12 @@ function activateCollaboration( cbk = false )
 										if( c.hostConn[ i ].conn != conn )
 										{
 											c.hostConn[ i ].conn.send( data );
+											c.hostConn[ i ].conn.send( {
+												command: 'update',
+												uniqueId: file.uniqueId,
+												cursorpos: file.editor.getCursorPosition(),
+												useruniqueid: Application.uniqueId
+											} );
 										}
 									}
 								}
@@ -200,6 +250,8 @@ function hostAddCollaborationOnFile( file )
 		filename: file.filename,
 		filePath: file.path,
 		uniqueId: file.uniqueId,
+		cursorpos: file.editor.getCursorPosition(),
+		useruniqueid: Application.uniqueId,
 		data: file.editor.getValue()
 	};
 	c.sendFromHost( tmsg );
@@ -213,12 +265,34 @@ function hostAddCollaborationOnFile( file )
 				filePath: file.path,
 				uniqueId: file.uniqueId,
 				delta: delta,
+				useruniqueid: Application.uniqueId,
+				cursorpos: file.editor.getCursorPosition(),
 				time: ( new Date() ).getTime()
 			} );
 		}
 	};
+	// Host exec
+	file.execFunc = function( e )
+	{
+		let p = file.editor.getCursorPosition();
+		for( let i in c.users )
+		{
+			if( c.users[ i ].marker && c.users[ i ].userinfo.uniqueid != Application.uniqueId )
+			{
+				if( p.row == c.users[ i ].markerPosition.row )
+				{
+					e.stopPropagation();
+					cancelBubble( e );
+					return { command: "null", passEvent: false };
+				}
+			}
+		}
+		return true;
+	}
 	
 	file.editor.session.on( 'change', file.changeFunc );
+	file.editor.session.on( 'exec', file.execFunc );
+	file.editor.keyBinding.addKeyboardHandler( { handleKeyboard: file.execFunc } );
 	
 	ge( 'CollaborationSwitch' ).classList.add( 'On' );
 }
@@ -237,6 +311,7 @@ function hostRemCollaborationOnFile( file )
 	};
 	c.sendFromHost( tmsg );
 	file.editor.session.off( 'change', file.changeFunc );
+	file.editor.session.off( 'exec', file.execFunc );
 	
 	ge( 'CollaborationSwitch' ).classList.remove( 'On' );
 }
@@ -340,11 +415,33 @@ function receiveCollabSession( msg, cbk = false )
 											delta: delta,
 											filePath: f.path,
 											uniqueId: f.uniqueId,
+											cursorpos: f.editor.getCursorPosition(),
 											time: ( new Date() ).getTime()
 										} );
 									}
 							}
+							// Client exec
+							f.execFunc = function( e )
+							{
+								// Host exec
+								let p = f.editor.getCursorPosition();
+								for( let i in c.users )
+								{
+									if( c.users[ i ].marker )
+									{
+										if( p.row == c.users[ i ].markerPosition.row )
+										{
+											e.stopPropagation();
+											cancelBubble( e );
+											return false;
+										}
+									}
+								}
+							}
 							f.editor.session.on( 'change', f.changeFunc );
+							f.editor.session.on( 'exec', f.execFunc );
+							f.editor.keyBinding.addKeyboardHandler( { handleKeyboard: f.execFunc } );
+							c.updateUserCursor( data.useruniqueid, data.cursorpos, f );
 							RefreshFiletypeSelect();
 						}
 					}
@@ -378,6 +475,15 @@ function receiveCollabSession( msg, cbk = false )
 								localtime: ( new Date() ).getTime(), // Local time
 								file: file
 							} );
+							c.updateUserCursor( data.useruniqueid, data.cursorpos, file );
+						}
+					}
+					else if( data.command == 'update' )
+					{
+						let file = getFileById( data.uniqueId );
+						if( file && data.cursorpos )
+						{
+							c.updateUserCursor( data.useruniqueid, data.cursorpos, file );
 						}
 					}
 					// Just ping
@@ -467,13 +573,14 @@ window.collabMatrix = {
 		altgr: false,
 		meta: false
 	},
+	// Only support 6 users right now
 	palette: [
-		{ r: 200, g: 30, b: 30 },
-		{ r: 30, g: 200, b: 30 },
-		{ r: 30, g: 30, b: 200 },
-		{ r: 150, g: 150, b: 30 },
-		{ r: 30, g: 150, b: 150 },
-		{ r: 150, g: 30, b: 150 }
+		'User1',
+		'User2',
+		'User3',
+		'User4',
+		'User5',
+		'User6'
 	],
 	eventLock: false,
 	keyboardEvents: [],
@@ -592,9 +699,11 @@ window.collabMatrix = {
 		for( let a = 0; a < this.users.length; a++ )
 		{
 			if( !this.users[ a ].color )
+			{
 				this.users[ a ].color = this.palette[ a % this.palette.length ];
-			let cl = this.users[ a ].color.r + ',' + this.users[ a ].color.g + ',' + this.users[ a ].color.b;
-			str += '<div class="Participant""><div class="Knob"><span style="background: rgb(' + cl + ');"></span></div><div class="Name">' + this.users[ a ].userinfo.fullname + '</div><div class="Kick"></div></div>';
+			}
+			let cl = this.users[ a ].color;
+			str += '<div class="Participant""><div class="Knob"><span class="' + cl + '"></span></div><div class="Name">' + this.users[ a ].userinfo.fullname + '</div><div class="Kick"></div></div>';
 		}
 		b.innerHTML = str;
 	},
@@ -604,6 +713,32 @@ window.collabMatrix = {
 		{
 			this.hostConn[ i ].conn.send( msg );
 		}
+	},
+	updateUserCursor( useruniqueid, cursorpos, file )
+	{
+		let marker = null;
+		let u = null;
+		for( let i in this.users )
+		{
+			if( this.users[ i ].userinfo.uniqueid == useruniqueid )
+			{
+				u = this.users[ i ];
+			}
+		}
+		// Unknown user
+		if( !u ) return;
+		
+		// Remove previous marker
+		if( u.marker )
+		{
+			u.session.removeMarker( u.marker );
+			u.marker = null;
+		}
+		
+		// Add new marker in the right color
+		u.marker = file.editor.session.addMarker(new ace.Range(cursorpos.row, 0, cursorpos.row, Number.MAX_SAFE_INTEGER), u.color, "fullLine" );
+		u.markerPosition = cursorpos;
+		u.session = file.editor.session;
 	}
 };
 // Poll collab events
