@@ -59,6 +59,16 @@ html body #Toolbar button.IconButton:not(:hover), html body #Toolbar .Button.Ico
 	height: calc(100% - 100px);
 }
 
+#SideBarTabs
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	transition: height 0.15s;
+}
+
 #SideBarTabs > .Page
 {
 	position: absolute;
@@ -533,7 +543,6 @@ body.CollabClient #CollabStatus > span
 
 /* Toggle */
 
-
 .CToggle
 {
 	position: absolute;
@@ -589,5 +598,98 @@ body.CollabHost .CToggle
 	left: 50%;
 	background-color: var(--fui-checkbox-checked);
 	border-radius: 15px;
+}
+
+/* Participants */
+
+body.ConnectionEstablished #SideBar > .Tabs
+{
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: calc(100% - 150px);
+}
+
+body #SideBar > #Participants
+{
+	position: absolute;
+	top: 100%;
+	left: 0;
+	width: 100%;
+	height: 0%;
+	overflow: hidden;
+	transition: height,top 0.15s,0.15s;
+}
+
+body.ConnectionEstablished #SideBar > #Participants
+{
+	position: absolute;
+	top: calc(100% - 145px);
+	height: 145px;
+}
+
+
+body #SideBar > #Participants > .header > p
+{
+	margin: 0;
+}
+
+body #SideBar > #Participants > .header
+{
+	position: absolute;
+	top: 0;
+	left: var(--PaddingBox);
+	width: calc(100% - var(--PaddingBox) - var(--PaddingBox));
+	height: 25px;
+	font-weight: bold;
+	border-bottom: 1px solid var(--ColorBorder);
+}
+
+body #SideBar > #Participants > .body
+{
+	position: absolute;
+	top: 30px;
+	left: 0;
+	width: 100%;
+	height: calc(100% - 30px);
+	overflow: auto;
+	padding: 5px var(--PaddingBox);
+    box-sizing: border-box;
+}
+
+body #SideBar > #Participants .Participant
+{
+	border-radius: 10px;
+	display: flex;
+    background: var(--BackgroundHeavier);
+    padding: var(--PaddingButton) var(--PaddingBox);
+    vertical-align: middle;
+}
+
+body #SideBar > #Participants .Participant .Knob
+{
+	width: 15px;
+	position: relative;
+}
+
+body #SideBar > #Participants .Participant .Knob > span
+{
+	position: absolute;
+	top: 5px;
+	left: 0px;
+	border-radius: 100%;
+	width: 8px;
+	height: 8px;
+}
+
+body #SideBar > #Participants .Participant .Name
+{
+	flex: 1;
+}
+
+body #SideBar > #Participants .Participant .Kick
+{
+	width: 30px;
 }
 

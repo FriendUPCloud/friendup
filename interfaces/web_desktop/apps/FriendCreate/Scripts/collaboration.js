@@ -92,13 +92,11 @@ function activateCollaboration( cbk = false )
 					{
 						if( data.command == 'hello' )
 						{
-							let us = new CollabUser( {
+							c.addUser( new CollabUser( {
 								fullname: data.fullname,
 								uniqueid: data.uniqueid,
 								userid: data.userid
-							} );
-							c.users.push( us );
-							
+							} ) );
 							document.body.classList.add( 'ConnectionEstablished' );
 						}
 						// Comes in from the client
@@ -446,6 +444,14 @@ window.collabMatrix = {
 		altgr: false,
 		meta: false
 	},
+	palette: [
+		{ r: 200, g: 30, b: 30 },
+		{ r: 30, g: 200, b: 30 },
+		{ r: 30, g: 30, b: 200 },
+		{ r: 150, g: 150, b: 30 },
+		{ r: 30, g: 150, b: 150 },
+		{ r: 150, g: 30, b: 150 }
+	],
 	eventLock: false,
 	keyboardEvents: [],
 	addKeyboardEvent( evt )
@@ -534,6 +540,40 @@ window.collabMatrix = {
 				evt.file.refreshMinimap();
 			}
 		}
+	},
+	addUser( cuser )
+	{
+		for( let a = 0; a < this.users.length; a++ )
+		{
+			if( this.users[ a ].uniqueid == cuser.uniqueid )
+				return false;
+		}
+		this.users.push( cuser );
+		this.refreshUsers();
+	},
+	removeUser( uniqueid )
+	{
+		let o = [];
+		for( let a = 0; a < this.users.length; a++ )
+		{
+			if( this.users[ a ].uniqueid != uniqueid )
+				o.push( this.users[ a ] );
+		}
+		this.users = o;
+		this.refreshUsers();
+	},
+	refreshUsers()
+	{
+		let b = ge( 'Participants' ).querySelector( '.body' );
+		let str = '';
+		for( let a = 0; a < this.users.length; a++ )
+		{
+			if( !this.users[ a ].color )
+				this.users[ a ].color = this.palette[ a % this.palette.length ];
+			let cl = this.users[ a ].color.r + ',' + this.users[ a ].color.g + ',' + this.users[ a ].color.b;
+			str += '<div class="Participant""><div class="Knob"><span style="background: rgb(' + cl + ');"></span></div><div class="Name">' + this.users[ a ].userinfo.fullname + '</div><div class="Kick"></div></div>';
+		}
+		b.innerHTML = str;
 	}
 };
 // Poll collab events
@@ -557,6 +597,5 @@ window.collabMatrix.intr = setInterval( function()
 			time: ( new Date() ).getTime()
 		} );
 	}
-	
 }, 1000 );
 
