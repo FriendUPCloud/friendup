@@ -274,6 +274,12 @@ function hostAddCollaborationOnFile( file )
 	// Host exec
 	file.execFunc = function( e )
 	{
+		if( !e ) e = window.event;
+		if( e && e.which )
+		{
+			if( e.key == 'ArrowUp' ) return true;
+			else if( e.key == 'ArrowDown' ) return true;			
+		}
 		let p = file.editor.getCursorPosition();
 		for( let i in c.users )
 		{
@@ -281,7 +287,7 @@ function hostAddCollaborationOnFile( file )
 			{
 				if( p.row == c.users[ i ].markerPosition.row )
 				{
-					e.stopPropagation();
+					if( e && e.stopPropagation ) e.stopPropagation();
 					cancelBubble( e );
 					return { command: "null", passEvent: false };
 				}
@@ -289,10 +295,13 @@ function hostAddCollaborationOnFile( file )
 		}
 		return true;
 	}
-	
+	file.keyboardHandler = function( data, hash, keyString, keyCode, event )
+	{
+		return file.execFunc( event );
+	}
 	file.editor.session.on( 'change', file.changeFunc );
 	file.editor.session.on( 'exec', file.execFunc );
-	file.editor.keyBinding.addKeyboardHandler( { handleKeyboard: file.execFunc } );
+	file.editor.keyBinding.addKeyboardHandler( { handleKeyboard: file.keyboardHandler } );
 	
 	ge( 'CollaborationSwitch' ).classList.add( 'On' );
 }
@@ -311,6 +320,7 @@ function hostRemCollaborationOnFile( file )
 	};
 	c.sendFromHost( tmsg );
 	file.editor.session.off( 'change', file.changeFunc );
+	file.editor.keyBinding.removeKeyboardHandler( file.keyboardHandler );
 	file.editor.session.off( 'exec', file.execFunc );
 	
 	ge( 'CollaborationSwitch' ).classList.remove( 'On' );
@@ -423,6 +433,13 @@ function receiveCollabSession( msg, cbk = false )
 							// Client exec
 							f.execFunc = function( e )
 							{
+								if( !e ) e = window.event;
+								if( e && e.which )
+								{
+									if( e.key == 'ArrowUp' ) return true;
+									else if( e.key == 'ArrowDown' ) return true;			
+								}
+								
 								// Host exec
 								let p = f.editor.getCursorPosition();
 								for( let i in c.users )
@@ -438,9 +455,13 @@ function receiveCollabSession( msg, cbk = false )
 									}
 								}
 							}
+							f.keyboardHandler = function( data, hash, keyString, keyCode, event )
+							{
+								return f.execFunc( event );
+							}
 							f.editor.session.on( 'change', f.changeFunc );
 							f.editor.session.on( 'exec', f.execFunc );
-							f.editor.keyBinding.addKeyboardHandler( { handleKeyboard: f.execFunc } );
+							f.editor.keyBinding.addKeyboardHandler( { handleKeyboard: f.keyboardHandler } );
 							c.updateUserCursor( data.useruniqueid, data.cursorpos, f );
 							RefreshFiletypeSelect();
 						}
