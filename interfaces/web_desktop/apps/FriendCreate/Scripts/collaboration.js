@@ -110,6 +110,11 @@ function activateCollaboration( cbk = false )
 	if( c.hostPeerId ) c.hostPeerId = null;
 	if( c.clientPeer ) c.clientPeer.destroy();
 	
+	Application.sendMessage( {
+		command: 'refreshmenu',
+		options: { collaborating: true }
+	} );
+	
 	// Set up hosting peer
 	c.hostPeer = new Peer();
 	c.hostPeer.on( 'open', ( hostPeerId ) => {
@@ -128,11 +133,11 @@ function activateCollaboration( cbk = false )
 					{
 						if( data.command == 'hello' )
 						{
-							o.uniqueid = data.uniqueid; // Assign to conn
 							c.addUser( new CollabUser( {
 								fullname: data.fullname,
 								uniqueid: data.uniqueid,
-								userid: data.userid
+								userid: data.userid,
+								conn: conn
 							} ) );
 							document.body.classList.add( 'ConnectionEstablished' );
 							if( collabWin )
@@ -216,6 +221,11 @@ function activateCollaboration( cbk = false )
 									}
 								}, 5 );
 							}
+						}
+						else if( data.command == 'disconnect' )
+						{
+							let c = window.collabMatrix;
+							c.removeUser( data.useruniqueid );
 						}
 					}
 				} );
@@ -334,6 +344,11 @@ function receiveCollabSession( msg, cbk = false )
 	let c = window.collabMatrix;
 	if( c.clientPeer ) return; // Already have a peer
 	
+	Application.sendMessage( {
+		command: 'refreshmenu',
+		options: { collaborating: true }
+	} );
+	
 	// We cannot host and join a collab session at the same time (yet)
 	if( c.hostPeer )
 		c.hostPeer.destroy();
@@ -395,6 +410,11 @@ function receiveCollabSession( msg, cbk = false )
 							c.clientPeer.destroy();
 						document.body.classList.remove( 'CollabClient' );
 						document.body.classList.remove( 'ConnectionEstablished' );
+						
+						Application.sendMessage( {
+							command: 'refreshmenu',
+							options: { collaborating: false }
+						} );
 					}
 					else if( data.command == 'remcollabfile' )
 					{
@@ -538,10 +558,22 @@ function receiveCollabSession( msg, cbk = false )
 function disconnectCollaboration()
 {
 	let c = window.collabMatrix;
-	c.sendFromHost( {
-		command: 'disconnect',
-		time: ( new Date() ).getTime()
-	} );
+	if( c.hostPeer )
+	{
+		c.sendFromHost( {
+			command: 'disconnect',
+			time: ( new Date() ).getTime()
+		} );
+	}
+	// Client
+	else if( c.clientConn )
+	{
+		c.clientConn.send( {
+			command: 'disconnect',
+			time: ( new Date() ).getTime(),
+			useruniqueid: Application.uniqueId
+		} );
+	}
 	for( let a in allFiles )
 	{
 		if( allFiles[ a ].hasCollaboration )
@@ -549,14 +581,28 @@ function disconnectCollaboration()
 			hostRemCollaborationOnFile( allFiles[ a ] );
 		}
 	}
+	for( let a = 0; a < c.users.length; a++ )
+	{
+		if( c.users[ a ].marker )
+		{
+			c.users[ a ].session.removeMarker( c.users[ a ].marker );
+		}
+	}
+	
 	setTimeout( function()
 	{
 		let c = window.collabMatrix;
 		if( c.hostPeer )
 			c.hostPeer.destroy();
+		if( c.clientPeer )
+			c.clientPeer.destroy();
 		document.body.classList.remove( 'CollabHost' );
 		document.body.classList.remove( 'ConnectionEstablished' );
 	}, 25 );
+	Application.sendMessage( {
+		command: 'refreshmenu',
+		options: { collaborating: false }
+	} );
 }
 
 // Collaboration user structure
@@ -565,20 +611,11 @@ class CollabUser
 	constructor( userinfo )
 	{
 		this.userinfo = userinfo;
-	}
-}
-
-// Collaboration file structure
-class CollabFile
-{
-	constructor()
-	{
-	
-	}
-	
-	addUser( userObject )
-	{
-		this.users.push( userObject );
+		if( this.userinfo.conn )
+		{
+			this.conn = this.userinfo.conn;
+			this.userinfo.conn = null;
+		}
 	}
 }
 
@@ -702,6 +739,28 @@ window.collabMatrix = {
 		this.users.push( cuser );
 		this.refreshUsers();
 	},
+	kick( uniqueid )
+	{
+		let self = this;
+		Confirm( i18n( 'i18n_are_you_sure' ), i18n( 'i18n_this_will_remove_user_from_collab_sess' ), function( d )
+		{
+			if( !d.data ) return;
+			for( let a = 0; a < self.users.length; a++ )
+			{
+				if( self.users[ a ].userinfo.uniqueid == uniqueid )
+				{
+					self.users[ a ].conn.send( {
+						command: 'disconnect',
+						time: ( new Date() ).getTime()
+					} );
+				}
+			}
+			setTimeout( function()
+			{
+				self.removeUser( uniqueid );
+			}, 50 );
+		} );
+	},
 	removeUser( uniqueid )
 	{
 		let o = [];
@@ -709,8 +768,19 @@ window.collabMatrix = {
 		{
 			if( this.users[ a ].userinfo.uniqueid != uniqueid )
 				o.push( this.users[ a ] );
+			else
+			{
+				if( this.users[ a ].marker )
+				{
+					this.users[ a ].session.removeMarker( this.users[ a ].marker );
+				}
+			}
 		}
 		this.users = o;
+		if( this.users.length == 0 )
+		{
+			document.body.classList.remove( 'ConnectionEstablished' );
+		}
 		this.refreshUsers();
 	},
 	refreshUsers()
@@ -724,7 +794,7 @@ window.collabMatrix = {
 				this.users[ a ].color = this.palette[ a % this.palette.length ];
 			}
 			let cl = this.users[ a ].color;
-			str += '<div class="Participant""><div class="Knob"><span class="' + cl + '"></span></div><div class="Name">' + this.users[ a ].userinfo.fullname + '</div><div class="Kick"></div></div>';
+			str += '<div class="Participant""><div class="Knob"><span class="' + cl + '"></span></div><div class="Name">' + this.users[ a ].userinfo.fullname + '</div><div class="Kick" onclick="window.collabMatrix.kick(\'' + this.users[a].userinfo.uniqueid + '\')"></div></div>';
 		}
 		b.innerHTML = str;
 	},

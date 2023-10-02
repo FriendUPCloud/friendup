@@ -50,7 +50,7 @@ Application.run = function( msg )
 		// TODO: Check if we haven't saved anything
 		if( !Application.forceQuit )
 		{
-			mainWindow.sendMessage( { command: 'closeprojects' } );
+			mainWindow.sendMessage( { command: 'closeprojects', reason: 'quit' } );
 			return false;
 		}
 	}
@@ -71,6 +71,16 @@ Application.run = function( msg )
 		} );
 	}
 	m.load();*/
+	
+	this.menuConfig = {
+		collaborating: false
+	};
+	this.mainWindow = mainWindow;
+	this.setMenus();
+}
+Application.setMenus = function()
+{
+	let mainWindow = this.mainWindow;
 	
 	// Set up the quick menu items ---------------------------------------------
 	mainWindow.setQuickMenu( [ {
@@ -251,11 +261,13 @@ Application.run = function( msg )
 			items: [
 				{
 					name: i18n( 'menu_collaboration_invite' ),
-					command: 'collab_invite'
+					command: 'collab_invite',
+					disabled: this.menuConfig.collaborating
 				},
 				{
 					name: i18n( 'menu_collaboration_disconnect' ),
-					command: 'collab_disconnect'
+					command: 'collab_disconnect',
+					disabled: !this.menuConfig.collaborating
 				}
 			]
 		}
@@ -268,6 +280,16 @@ Application.receiveMessage = function( msg )
 	{
 		switch( msg.command )
 		{
+			case 'refreshmenu':
+				if( msg.options )
+				{
+					if( msg.options.collaborating )
+					{
+						this.menuConfig.collaborating = msg.options.collaborating;
+					}
+					Application.setMenus();
+				}
+				break;
 			case 'about':
 			case 'manual':
 			case 'open':
@@ -298,6 +320,13 @@ Application.receiveMessage = function( msg )
 				break;
 			case 'collab_disconnect':
 				mainWindow.sendMessage( { command: 'collab_disconnect' } );
+				break;
+			case 'servermessage':
+				if( msg.data && msg.data.type == 'invite' )
+				{
+					msg.data.command = 'incoming_invite';
+					mainWindow.sendMessage( msg.data );
+				}
 				break;
 		}
 	}

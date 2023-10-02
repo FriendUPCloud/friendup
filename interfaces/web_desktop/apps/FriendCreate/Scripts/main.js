@@ -403,6 +403,8 @@ var EditorFile = function( path )
 
 EditorFile.prototype.close = function()
 {
+	if( this.hasCollaboration )
+		hostRemCollaborationOnFile( this );
 	let out = [];
 	this.updateState( '' );
 	for( let a = 0; a < files.length; a++ )
@@ -2454,6 +2456,20 @@ Application.receiveMessage = function( msg )
 	{
 		switch( msg.command )
 		{
+			// We get a collaboration invite across the net
+			case 'incoming_invite':
+				let str = '';
+				for( let a = 0; a < msg.message_i18n.length; a++ )
+					str += i18n( msg.message_i18n[a] );
+				Confirm( i18n( 'i18n_accept_collab_request' ), str, function( d )
+				{
+					if( d.data )
+					{
+						if( window.receiveCollabSession )
+							receiveCollabSession( msg );
+					}
+				} );
+				break;
 			// Gets nested arguments
 			case 'arguments':
 				if( window.receiveCollabSession )
@@ -2521,6 +2537,12 @@ Application.receiveMessage = function( msg )
 					SaveProject( Application.currentProject, true );
 				break;
 			case 'closeprojects':
+				if( msg.reason && msg.reason == 'quit' )
+				{
+					if( window.disconnectCollaboration )
+						disconnectCollaboration();
+				}			
+			
 				document.body.classList.add( 'Loading' );
 				var pl = projects.length;
 				if( pl <= 0 )

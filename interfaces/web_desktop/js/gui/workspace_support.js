@@ -823,7 +823,6 @@ function handleServerMessage( e )
         const binString = atob( base64 );
         return Uint8Array.from( binString, ( m ) => m.codePointAt( 0 ) );
     }
-    
 	if( e.message && e.appname )
 	{
 		// Ignore my own messages
@@ -846,7 +845,7 @@ function handleServerMessage( e )
 					authId: e.message.authId,
 					method: 'servermessage',
 					message: e.message
-				};				
+				};			
 				apps[a].contentWindow.postMessage( nmsg, '*' );
 				found = apps[a];
 			}
