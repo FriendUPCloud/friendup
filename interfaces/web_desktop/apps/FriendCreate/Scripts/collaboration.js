@@ -736,7 +736,10 @@ window.collabMatrix = {
 		}
 		
 		// Add new marker in the right color
-		u.marker = file.editor.session.addMarker(new ace.Range(cursorpos.row, 0, cursorpos.row, Number.MAX_SAFE_INTEGER), u.color, "fullLine" );
+		u.marker = file.editor.session.addMarker( 
+			new ace.Range(cursorpos.row, 0, cursorpos.row, Number.MAX_SAFE_INTEGER ), 
+			u.color, "fullLine" 
+		);
 		u.markerPosition = cursorpos;
 		u.session = file.editor.session;
 	}
