@@ -262,12 +262,12 @@ Application.setMenus = function()
 				{
 					name: i18n( 'menu_collaboration_invite' ),
 					command: 'collab_invite',
-					disabled: this.menuConfig.collaborating
+					disabled: this.menuConfig.collaborating === true
 				},
 				{
 					name: i18n( 'menu_collaboration_disconnect' ),
 					command: 'collab_disconnect',
-					disabled: !this.menuConfig.collaborating
+					disabled: this.menuConfig.collaborating === false
 				}
 			]
 		}
