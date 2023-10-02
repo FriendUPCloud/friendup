@@ -404,6 +404,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			char *appname = NULL;
 			char *authid = NULL;
 			char *uniqueid = NULL;
+			char *dstonly = NULL; // only send to destination user
 		
 			FERROR( "[UMWebRequest] send message" );
 		
@@ -435,6 +436,12 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 			if( el != NULL )
 			{
 				uniqueid = UrlDecodeToMem( (char *)el->hme_Data );
+			}
+			
+			el = HttpGetPOSTParameter( request, "dstonly" );
+			if( el != NULL )
+			{
+				dstonly = UrlDecodeToMem( (char *)el->hme_Data );
 			}
 			
 			User *u = loggedSession->us_User;
@@ -568,7 +575,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 					
 					//DEBUG( "Trying to send to self.\n" );
 					
-					if( 1 )
+					if( dstonly == NULL )
 					{
 						int lenmsg = 0;	
 						
@@ -634,6 +641,11 @@ Http *UMWebRequest( void *m, char **urlpath, Http *request, UserSession *loggedS
 				HttpAddTextContent( response, buffer );
 			}
 		
+			if( dstonly != NULL )
+			{
+				FFree( dstonly );
+			}
+			
 			if( sessionid != NULL )
 			{
 				FFree( sessionid );

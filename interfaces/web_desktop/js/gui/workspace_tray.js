@@ -581,6 +581,12 @@ function Notify( message, callback = false, clickcallback = false )
 			return;
 		}
 		
+		// Strip HTML
+		message.text = message.text.split( /\<.*?\>/ ).join( '' );
+		message.text = message.text.split( /\&.*?\;/ ).join( '' );
+		message.title = message.title.split( /\<.*?\>/ ).join( '' );
+		message.title = message.title.split( /\&.*?\;/ ).join( '' );
+		
 		if( window.Notification )
 		{
 			//mobileDebug( 'Showing desktop notification.' );

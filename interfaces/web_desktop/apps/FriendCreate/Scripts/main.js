@@ -82,6 +82,7 @@ Application.run = function( msg )
 		( new EditorFile( 'New file' ) );
 	}
 	RefreshProjects();
+	RefreshCollaborationSwitch();
 }
 
 
@@ -130,6 +131,75 @@ Application.checkFileType = function( path )
 		default:
 			return false;
 	}
+}
+
+function RefreshCollaborationSwitch()
+{
+	if( !ge( 'CollaborationSwitch' ) )
+	{
+		let d = CreateToggleBox( 'CollaborationSwitch', 'Co-editing', ge( 'StatusBar' ) );
+		d.on = function()
+		{
+			hostAddCollaborationOnFile( Application.currentFile );
+		}
+		d.off = function()
+		{
+			hostRemCollaborationOnFile( Application.currentFile );
+		}
+		return d;
+	}
+	return false;
+}
+
+// Create a tobble box
+function CreateToggleBox( id, label, pelement = false )
+{
+	let d = document.createElement( 'div' );
+	d.id = id;
+	d.className = 'CToggle';
+	d.innerHTML = '<div class="Groove"><div class="Knob"></div></div><div class="Info">' + label + '</div>';
+	d.onclick = function()
+	{
+		let self = this;
+		if( !this.classList.contains( 'On' ) )
+		{
+			
+			if( this.on )
+			{
+				this.on( function( result )
+				{
+					if( result )
+					{
+						self.classList.add( 'On' );
+					}
+				} );
+			}
+			else
+			{
+				this.classList.add( 'On' );
+			}
+		}
+		else
+		{
+			if( this.off )
+			{
+				this.off( function( result )
+				{
+					if( result )
+					{
+						self.classList.remove( 'On' );
+					}
+				} );
+			}
+			else
+			{
+				this.classList.remove( 'On' );
+			}
+		}
+	}
+	if( pelement )
+		pelement.appendChild( d );
+	return d;
 }
 
 function RefreshFiletypeSelect()
@@ -245,11 +315,19 @@ function InitGui()
 
 // File class ------------------------------------------------------------------
 
+window.allFiles = {};
+
 var EditorFile = function( path )
 {
 	let self = this;
 	
+	this.uniqueId = md5( UniqueHash() );
+	
+	allFiles[ this.uniqueId ] = this;
+	
 	let returnable = false;
+	
+	this.hasCoollaboration = false; // Default setting
 	
 	for( let a = 0; a < files.length; a++ )
 	{
@@ -325,6 +403,8 @@ var EditorFile = function( path )
 
 EditorFile.prototype.close = function()
 {
+	if( this.hasCollaboration )
+		hostRemCollaborationOnFile( this );
 	let out = [];
 	this.updateState( '' );
 	for( let a = 0; a < files.length; a++ )
@@ -364,11 +444,39 @@ EditorFile.prototype.activate = function()
 		}
 	}
 	SetCurrentProject( this.ProjectID );
+	
+	if( this.hasCollaboration && document.body.classList.contains( 'CollabHost' ) )
+	{
+		ge( 'CollaborationSwitch' ).classList.add( 'On' );
+	}
+	else
+	{
+		ge( 'CollaborationSwitch' ).classList.remove( 'On' );
+	}
 }
 
 EditorFile.prototype.updateTab = function()
 {
 	this.tab.getElementsByTagName( 'span' )[0].innerHTML = ( this.remote ? 'Remote: ' : '' ) + this.filename;
+}
+
+function RemoteFile( path, id )
+{
+	let n = new EditorFile();
+	n.path = path;
+	n.uniqueId = id;
+	n.remote = true;
+	allFiles[ id ] = n;
+	return n;
+}
+
+function getFileById( id )
+{
+	if( typeof( allFiles[ id ] ) != 'undefined' )
+	{
+		return allFiles[ id ];
+	}
+	return false;
 }
 
 function NewFile()
@@ -428,11 +536,13 @@ function InitEditArea( file )
 		CheckPlayStopButtons();
 	} );
 	
-	c.addEventListener( 'mousedown', function( e )
+	file.tabClose = function( e )
 	{
-		var prev = null;
-		var eles = ge( 'CodeArea' ).getElementsByClassName( 'Tab' );
-		for( var a = 0; a < eles.length; a++ )
+		if( !e ) e = window.event;
+		
+		let prev = null;
+		let eles = ge( 'CodeArea' ).getElementsByClassName( 'Tab' );
+		for( let a = 0; a < eles.length; a++ )
 		{
 			if( a > 0 && eles[ a - 1 ] == t )
 			{
@@ -441,7 +551,7 @@ function InitEditArea( file )
 			}
 		}
 		
-		if( t.file.state == 'Editing' )
+		if( !t.file.remote && t.file.state == 'Editing' )
 		{
 			Confirm( i18n( 'i18n_are_you_sure' ), i18n( 'i18n_this_will_close' ), function( di )
 			{
@@ -477,6 +587,11 @@ function InitEditArea( file )
 			if( eles && eles[ 0 ] )
 				eles[ 0 ].onclick();
 		}
+	}
+	
+	c.addEventListener( 'mousedown', function( e )
+	{
+		file.tabClose( e );
 	} );
 	
 	// Initialize the content editor
@@ -509,6 +624,11 @@ function InitEditArea( file )
 		file.refreshMinimap();
 	
 	RefreshFiletypeSelect();
+}
+
+function GetEditorFileByPath()
+{
+	
 }
 
 function RemoveEditArea( file )
@@ -2336,13 +2456,33 @@ Application.receiveMessage = function( msg )
 	{
 		switch( msg.command )
 		{
+			// We get a collaboration invite across the net
+			case 'incoming_invite':
+				let str = '';
+				for( let a = 0; a < msg.message_i18n.length; a++ )
+					str += i18n( msg.message_i18n[a] );
+				Confirm( i18n( 'i18n_accept_collab_request' ), str, function( d )
+				{
+					if( d.data )
+					{
+						if( window.receiveCollabSession )
+							receiveCollabSession( msg );
+					}
+				} );
+				break;
 			// Gets nested arguments
 			case 'arguments':
 				if( window.receiveCollabSession )
 					receiveCollabSession( msg.args );
 				break;
 			case 'collab_disconnect':
-				
+				Confirm( i18n( 'i18n_are_you_sure' ), i18n( 'i18n_sure_disconnect_collab' ), function( d )
+				{
+					if( d.data )
+					{
+						disconnectCollaboration();
+					}
+				} );
 				break;
 			case 'collab_invite':
 				if( window.collabInvite )
@@ -2397,6 +2537,12 @@ Application.receiveMessage = function( msg )
 					SaveProject( Application.currentProject, true );
 				break;
 			case 'closeprojects':
+				if( msg.reason && msg.reason == 'quit' )
+				{
+					if( window.disconnectCollaboration )
+						disconnectCollaboration();
+				}			
+			
 				document.body.classList.add( 'Loading' );
 				var pl = projects.length;
 				if( pl <= 0 )

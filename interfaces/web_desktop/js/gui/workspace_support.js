@@ -823,7 +823,6 @@ function handleServerMessage( e )
         const binString = atob( base64 );
         return Uint8Array.from( binString, ( m ) => m.codePointAt( 0 ) );
     }
-    
 	if( e.message && e.appname )
 	{
 		// Ignore my own messages
@@ -846,7 +845,7 @@ function handleServerMessage( e )
 					authId: e.message.authId,
 					method: 'servermessage',
 					message: e.message
-				};				
+				};			
 				apps[a].contentWindow.postMessage( nmsg, '*' );
 				found = apps[a];
 			}
@@ -854,7 +853,6 @@ function handleServerMessage( e )
 		
 		if( !found || Workspace.currentViewState == 'inactive' )
 		{
-			console.log( 'Can not find app ' + e.appname + ' and trying ', e.message );
 			// Check if we have a generic message
 			// Check that we have message
 		    if( e.message && e.message.message )
@@ -877,17 +875,30 @@ function handleServerMessage( e )
 		        	// Default sound
 					else Sounds.newMessage.play();
 					
-					Notify( {
-						    title: 'From ' + e.message.sender,
-						    text: text,
-						},
-						null,
-						function( k )
-						{
-							e.message.source = 'notification';
-						    ExecuteApplication( e.appname, JSON.stringify( e.message ) );
-					    }
-					);
+					text = text.split( /\<.*?\>/ ).join( '' );
+					
+					let sender = e.message.sender ? e.message.sender : false;
+					if( !sender && e.message.fullname )
+						sender = e.message.fullname;
+					
+					if( sender )
+					{
+						Notify( {
+								title: 'From ' + sender,
+								text: i18n( text ),
+							},
+							null,
+							function( k )
+							{
+								e.message.source = 'notification';
+								ExecuteApplication( e.appname, JSON.stringify( e.message ) );
+							}
+						);
+					}
+					else
+					{
+						console.log( 'wtf: ', e );
+					}
 				}
 			}
 		}

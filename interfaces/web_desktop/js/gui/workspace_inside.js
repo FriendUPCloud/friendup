@@ -519,28 +519,7 @@ var WorkspaceInside = {
 			{
 				if( !data )
 				{
-					data = [
-						{
-							Link: 'https://intranet.friendup.cloud/invite/372873827',
-							ID: 12,
-							Workgroups: [ { ID: 12, Name: 'Test' }, { ID: 13, Name: 'Flest' }, { ID: 14, Name: 'Vest' } ]
-						},
-						{
-							Link: 'https://intranet.friendup.cloud/invite/654356',
-							ID: 13,
-							Workgroups: false
-						},
-						{
-							Link: 'https://intranet.friendup.cloud/invite/8976987689',
-							ID: 15,
-							Workgroups: false
-						},
-						{
-							Link: 'https://intranet.friendup.cloud/invite/876979',
-							ID: 19,
-							Workgroups: [ { ID: 712, Name: 'Io' }, { ID: 153, Name: 'Gopa' } ]
-						}
-					];
+					return;
 				}
 				
 				let str = '';

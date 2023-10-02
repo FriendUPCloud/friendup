@@ -21,6 +21,8 @@ i18n_open_file                      : Open file
 i18n_are_you_sure                   : Are you sure?
 i18n_this_will_close                : This will close your current document.
 
+i18n_sure_disconnect_collab         : This will terminate your collaboration session immediately.
+
 menu_file                           : File
 menu_file_about                     : About Friend Create
 menu_file_manual                    : Manual
@@ -57,6 +59,8 @@ i18n_invite_contact                 : Invite
 i18n_find_and_add_contacts          : Find and add contacts
 i18n_want_collaboration_session     : wants a collaboration session with you.
 i18n_collaborating                  : Collaborating
+i18n_accept_collab_request          : Accept collaboration request?
+i18n_this_will_remove_user_from_collab_sess : This will remove the user from this collaboration session.
 
 i18n_save_new_project               : Save new project
 
