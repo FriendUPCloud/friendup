@@ -283,9 +283,10 @@ Application.receiveMessage = function( msg )
 			case 'refreshmenu':
 				if( msg.options )
 				{
-					if( msg.options.collaborating )
+					if( msg.options )
 					{
-						this.menuConfig.collaborating = msg.options.collaborating;
+						if( this.menuConfig.collaborating === false || this.menuConfig.collaborating === true )
+							this.menuConfig.collaborating = msg.options.collaborating;
 					}
 					Application.setMenus();
 				}
