@@ -1292,6 +1292,25 @@ class FUIChatlog extends FUIElement
 		string = string.split( /<style.*?\>[\w\W]*?\<\/style\>/i ).join( '' );
 		string = string.split( /<link.*?\>/i ).join( '' );
         
+        // Etherpad links
+        let ebase = document.location.host.split( '.' );
+        if( ebase.length > 2 )
+        	ebase = ebase[ ebase.length - 2 ] + '.' + ebase[ ebase.length - 1 ];
+        else ebase = ebase.join( '.' );
+        ebase = document.location.protocol + '//'+ 'etherpad.' + ebase;
+        let eb = string.indexOf( ebase );
+        if( eb >= 0 )
+        {
+        	let repl = '';
+        	for( let i = eb; i < string.length; i++ )
+        	{
+        		if( string[ i ] == ' ' || string[ i ] == "\t" || string[ i ] == "\n" )
+        			break;
+        		repl += string[ i ];
+        	}
+        	string = string.split( repl ).join( '<attachment etherpad="' + repl + '"/>' );
+        }
+        
         let scrolled = this.checkScrolled();
         
     	let dom = document.createElement( 'div' );
@@ -1817,9 +1836,12 @@ class FUIChatlog extends FUIElement
             let res = string.match( /[\s]{0,1}http([s]{0,1}\:\/\/[^\s]*)/i );
             if( res != null )
             {
-                string = string.split( res[0] ).join( '<a class="WebLink" href="fnd' + res[1] + '" target="_blank">fnd' + res[1] + '</a>' );
-                fnd++;
-                continue;
+            	if( res[0].indexOf( '"' ) < 0 )
+            	{
+		            string = string.split( res[0] ).join( '<a class="WebLink" href="fnd' + res[1] + '" contenteditable="false" target="_blank">fnd' + res[1] + '</a>' );
+		            fnd++;
+		            continue;
+	            }
             }
             break;
         }
@@ -1849,8 +1871,15 @@ class FUIChatlog extends FUIElement
         // Take attachments
         while( 1 )
         {
+        	// Etherpad
+        	let res = string.match( /[\s]{0,1}\<attachment\ .*?etherpad\=\"(.*?)\"(.*?)\/\>/i );
+        	if( res != null )
+        	{
+        		string = string.split( res[ 0 ] ).join( '<a class="WebLink Centered Bold" contenteditable="false" onclick="ExecuteIt(\'Etherpad\',\'' + res[1] + '\')">' + i18n( 'i18n_collaborate_in_etherpad' ) + '</a>' );
+        		continue;
+        	}
         	// Images
-        	let res = string.match( /[\s]{0,1}\<attachment\ .*?image\=\"(.*?)\"(.*?)\/\>/i );
+        	res = string.match( /[\s]{0,1}\<attachment\ .*?image\=\"(.*?)\"(.*?)\/\>/i );
         	if( res != null )
         	{
         		let od = res[1].split( 'getattachment' ).join( 'getoriginal' ) + '&authid=' + Application.authId;
@@ -2011,6 +2040,16 @@ Application.handleImageError = function( ele )
 	let newnode = document.createElement( 'div' );
 	newnode.className = 'ImageError';
 	ele.parentNode.replaceChild( newnode, ele );
+}
+
+function ExecuteIt( app, arg )
+{
+	Application.sendMessage( {
+		type: 'system',
+		command: 'executeapplication',
+		executable: app,
+		args: arg
+	} );
 }
 
 Application.handleImageLoad = function( ele, originalFileSrc = false, filename = false )

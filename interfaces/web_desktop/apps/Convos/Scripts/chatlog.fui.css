@@ -752,6 +752,15 @@ span.Emoticon:hover
     text-decoration: underline;
 }
 
+.FUIChatlog .Messages a.WebLink.Bold.Centered
+{
+	display: block;
+	cursor: pointer;
+	text-align: center;
+	font-weight: bold;
+	padding: 5px;
+}
+
 .FUIChatlog .Messages .WebLinkPreview.Showing
 {
     opacity: 1;
