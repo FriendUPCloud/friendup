@@ -618,11 +618,6 @@ class FUIChatlog extends FUIElement
 			    self.domTextarea.innerHTML = '';	
     			cancelBubble( e );
     			
-    			// Strip scripts and such
-    			val = val.split( /<script.*?\>[\w\W]*?\<\/script\>/i ).join( '' );
-    			val = val.split( /<style.*?\>[\w\W]*?\<\/style\>/i ).join( '' );
-    			val = val.split( /<link.*?\>/i ).join( '' );
-    			
     			// Check white space
     			let candidate = val.split( /\<.*?\>/ ).join( '' );
     			candidate = candidate.split( /[\s]/ ).join( '' ).split( '&nbsp;' ).join( '' );
@@ -1291,6 +1286,11 @@ class FUIChatlog extends FUIElement
         {
             return setTimeout( function(){ self.queueMessage( string ); }, 250 );
         }
+        
+        // Strip scripts and such
+		string = string.split( /<script.*?\>[\w\W]*?\<\/script\>/i ).join( '' );
+		string = string.split( /<style.*?\>[\w\W]*?\<\/style\>/i ).join( '' );
+		string = string.split( /<link.*?\>/i ).join( '' );
         
         let scrolled = this.checkScrolled();
         
