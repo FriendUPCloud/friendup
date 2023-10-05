@@ -446,7 +446,7 @@ class FUIContacts extends FUIElement
         if( window.FUIContactBuf.images[ src ] )
         {
         	i = window.FUIContactBuf.images[ src ];
-        	i.onload();
+        	d.querySelector( '.Avatar' ).style.backgroundImage = 'url(' + i.src + ')';
         	i.style.position = 'absolute';
 		    i.style.visibility = 'hidden';
         }
@@ -457,12 +457,9 @@ class FUIContacts extends FUIElement
 		    i.onload = function()
 		    {
 		        d.querySelector( '.Avatar' ).style.backgroundImage = 'url(' + this.src + ')';
-		        if( i.parentNode == document.body )
-			        document.body.removeChild( i );
 		    }
 		    i.style.position = 'absolute';
 		    i.style.visibility = 'hidden';
-		    document.body.appendChild( i );
         }
         
         // The slot does not exist?
