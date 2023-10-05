@@ -18,6 +18,7 @@ window.Convos = {
 window.Sounds = {}; // Built-in sounds
 Sounds.newMessage = new Audio('/themes/friendup13/sound/new_message.ogg');
 Sounds.sendMessage = new Audio( getImageUrl( 'Progdir:Assets/send.ogg' ) );
+Sounds.incomingCall = new Audio( getImageUrl( 'Progdir:Assets/call.ogg' ) );
 
 // Some events, like refresh and visibility change, ought to refresh messages
 window.addEventListener( 'focus', function()
@@ -195,6 +196,16 @@ Application.receiveMessage = function( msg )
         	}
     	}
     }
+    // Got cli arguments
+    else if( msg.command == 'cliarguments' )
+    {
+    	if( !msg.data )
+    	{
+    		// Just check events
+    		let overview = FUI.getElementByUniqueId( 'convos' );
+    		overview.getEvents();
+		}
+    }
     else if( msg.command == 'message-update' )
     {
     	let mess = FUI.getElementByUniqueId( 'messages' );
@@ -241,6 +252,15 @@ Application.receiveMessage = function( msg )
     			}
     		}
     	}
+    }
+    else if( msg.command == 'kick' )
+    {
+    	let overview = FUI.getElementByUniqueId( 'convos' );
+    	overview.redrawChannels();
+    	Notify( {
+    		title: i18n( 'i18n_removed_from_group' ),
+    		text: i18n( 'i18n_removed_from_the_group' ) + ' ' + msg.groupName + '.'
+    	} );
     }
     // User is broadcasting a call
     else if( msg.command == 'broadcast-call' )
@@ -292,11 +312,14 @@ Application.receiveMessage = function( msg )
     // Callee starts broadcast participation (received signal)
     else if( msg.command == 'broadcast-start' )
     {
+    	Sounds.incomingCall.loop = true;
+    	Sounds.incomingCall.play();
     	let contacts = FUI.getElementByUniqueId( 'contacts' );
     	if( contacts )
     	{
     		Confirm( i18n( 'i18n_receive_video_call' ), msg.senderName + ' ' + i18n( 'i18n_receiving_video_desc' ), function( d )
     		{
+    			Sounds.incomingCall.loop = false;
     			if( d && d.data )
     			{
     				contacts.setChatView( contacts.getContact( msg.senderId ) );
@@ -355,6 +378,11 @@ Application.receiveMessage = function( msg )
     		contacts.videoCall.sendMessage( { command: 'poll', peerId: msg.peerId } );
 		}
     }
+    else if( msg.command == 'group-update' )
+    {
+    	let overview = FUI.getElementByUniqueId( 'convos' );
+    	overview.redrawChannels();
+    }
     else if( msg.type )
     {
     	// Receiving an invite
@@ -377,6 +405,12 @@ Application.receiveMessage = function( msg )
 			{
 				overview.pollChatroom( false, msg.groupId );
 			} );
+			let overview = FUI.getElementByUniqueId( 'convos' );
+			if( msg.groupId )
+				overview.activateGroupTab( msg.groupId );
+			overview.redrawChannels();
+			let contacts = FUI.getElementByUniqueId( 'contacts' );
+			contacts.refreshDom();
     	}
     	// Accepting an invite
     	else if( msg.type == 'update-seen' )

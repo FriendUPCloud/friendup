@@ -66,6 +66,14 @@ Application.receiveMessage = function( msg )
         {
             this.view.sendMessage( msg.data );
         }
+        // Probably empty...
+        else if( msg.command == 'cliarguments' )
+        {
+        	this.view.sendMessage( {
+        		command: 'cliarguments',
+        		data: msg.data ? msg.data : false
+    		} );
+        }
         else if( msg.command == 'app-ready' )
         {
             for( let a = 0; a < serverQueue.length; a++ )
@@ -74,7 +82,6 @@ Application.receiveMessage = function( msg )
             }
             serverQueue = [];
         }
-        // To app
         else if( msg.command == 'broadcast-call' )
         {
         	this.view.sendMessage( msg );

@@ -943,6 +943,19 @@ class FUIChatoverview extends FUIElement
 			}
     	}
     }
+    // Just "click" a group tab
+    activateGroupTab( recordId )
+    {
+	    let gg = this.domChannels.getElementsByClassName( 'Group' );
+		for( let a = 0; a < gg.length; a++ )
+		{
+			if( gg[ a ].id == recordId )
+			{
+				this.currentType == '';
+				gg[ a ].click();
+			}
+		}
+	}
     // Set active channel
     setActiveChannel( label, tab, groupId = false, groupName = false )
     {

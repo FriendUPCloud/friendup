@@ -119,10 +119,15 @@ class FUIGroupsettings extends FUIInvitedialog
 						{
 							if( e == 'ok' )
 							{
+								Application.SendChannelMsg( {
+									command: 'group-update'
+								} );
+								
 								let overView = FUI.getElementByUniqueId( 'convos' );
 								if( overView ) overView.redrawChannels();
 								let mess = FUI.getElementByUniqueId( 'messages' );
 								mess.setTopic( Trim( newName ) );
+								ogn = Trim( newName );
 							}
 						}
 						m.execute( 'convos', { method: 'rename-chatroom', newname: Trim( newName ), cid: self.options.groupId } );
@@ -140,6 +145,12 @@ class FUIGroupsettings extends FUIInvitedialog
 				this.time = setTimeout( function()
 				{
 					let m = new Module( 'system' );
+					m.onExecuted = function()
+					{
+						Application.SendChannelMsg( {
+							command: 'group-update'
+						} );
+					}
 					m.execute( 'convos', { method: 'room-description', desc: groupDesc.value, cid: self.options.groupId } );
 				}, 250 );
 			}
@@ -161,6 +172,9 @@ class FUIGroupsettings extends FUIInvitedialog
 								{
 									let res = JSON.parse( md );
 									self.refreshAvatar();
+									Application.SendChannelMsg( {
+										command: 'group-update'
+									} );
 								}
 							}
 							m.execute( 'convos', { method: 'setroomavatar', path: arr[ 0 ].Path, groupId: self.options.groupId } );

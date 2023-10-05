@@ -96,6 +96,9 @@ i18n_failed_to_join_room               : Failed to join room
 i18n_failed_to_join_desc               : Could not join chat room due to an unexpected error.
 i18n_click_to_view_pdf                 : Click to view PDF
 
+i18n_removed_from_group                : Removed from group
+i18n_removed_from_the_group            : You were removed from the group,
+
 
 i18n_january                           : January
 i18n_february                          : February

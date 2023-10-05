@@ -390,6 +390,17 @@ class FUIContacts extends FUIElement
 								let m = new Module( 'system' );
 								m.onExecuted = function( ne, nd )
 								{
+									Application.SendUserMsg( {
+										recipientId: d.record.ID,
+										message: {
+											command: 'kick',
+											gid: self.record.ID,
+											groupName: self.record.Fullname
+										}
+									} );
+									// Click channel to reload
+									let overview = FUI.getElementByUniqueId( 'convos' );
+									overview.activateGroupTab( self.record.ID );
 									self.refreshDom();
 								}
 								m.execute( 'convos', { method: 'kickuser', uid: d.record.ID, gid: self.record.ID } );
