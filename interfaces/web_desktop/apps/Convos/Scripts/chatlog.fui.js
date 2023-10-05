@@ -8,6 +8,9 @@
 *                                                                              *
 *****************************************************************************©*/
 
+FriendConvos = window.FriendConvos ? window.FriendConvos : {};
+FriendConvos.imageCache = {};
+
 class FUIChatlog extends FUIElement
 {
     constructor( options )
@@ -1679,6 +1682,16 @@ class FUIChatlog extends FUIElement
     			if( q.attributes[a].nodeValue && n != 'onload' && n != 'prestr' && n != 'od' )
 	    			i.setAttribute( q.attributes[a].nodeName, q.attributes[a].nodeValue );
     		}
+    		if( typeof( FriendConvos.imageCache[ i.src ] ) != 'undefined' )
+    		{
+    			i = FriendConvos.imageCache[ i.src ];
+    			i.width = i.naturalWidth;
+    			i.height = i.naturalHeight;
+    		}
+    		else
+    		{
+    			FriendConvos.imageCache[ i.src ] = i;
+    		}
     		i.onload = function()
     		{
     			self.remDataLoading( i );
@@ -1895,6 +1908,7 @@ class FUIChatlog extends FUIElement
 		    			h = wh[2];
 	    			}
         		}
+        		
         		let prestr = document.location.href.split( '/webclient/' )[0] + '/';
         		string = string.split( res[ 0 ] ).join( '<div class="AttachmentElement" contenteditable="false"><a class="Download" target="_blank" href="' + od + '"></a><queued-img od="' + od + '" prestr="' + prestr + '" width="' + w + '" height="' + h + '" src="' + res[1] + '&authid=' + Application.authId + '" class="Attachment"/></div>' );
         		continue;
