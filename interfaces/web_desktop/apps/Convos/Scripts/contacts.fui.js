@@ -9,6 +9,7 @@
 *****************************************************************************©*/
 
 window.FUIContactBuf = window.FUIContactBuf ? window.FUIContactBuf : {};
+window.FUIContactBuf.images = {};
 
 class FUIContacts extends FUIElement
 {
@@ -441,15 +442,28 @@ class FUIContacts extends FUIElement
         
         // Load avatar
         let i = new Image();
-        i.src = '/system.library/module/?module=system&command=getavatar&userid=' + contact.UserID + '&width=128&height=128&authid=' + Application.authId;
-        i.onload = function()
+        let src = '/system.library/module/?module=system&command=getavatar&userid=' + contact.UserID + '&width=128&height=128&authid=' + Application.authId;
+        if( window.FUIContactBuf.images[ src ] )
         {
-            d.querySelector( '.Avatar' ).style.backgroundImage = 'url(' + this.src + ')';
-            document.body.removeChild( i );
+        	i = window.FUIContactBuf.images[ src ];
+        	i.onload();
+        	i.style.position = 'absolute';
+		    i.style.visibility = 'hidden';
         }
-        i.style.position = 'absolute';
-        i.style.visibility = 'hidden';
-        document.body.appendChild( i );
+        else
+        {
+        	window.FUIContactBuf.images[ src ] = i;
+        	i.src = src;
+		    i.onload = function()
+		    {
+		        d.querySelector( '.Avatar' ).style.backgroundImage = 'url(' + this.src + ')';
+		        if( i.parentNode == document.body )
+			        document.body.removeChild( i );
+		    }
+		    i.style.position = 'absolute';
+		    i.style.visibility = 'hidden';
+		    document.body.appendChild( i );
+        }
         
         // The slot does not exist?
         
