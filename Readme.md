@@ -32,13 +32,22 @@ Installation instructions
 =========================
 
 1. Clone this repository into a folder
-2. Install the following dependencies – below, to install for Ubuntu:
+2. Install the following dependencies – below, to install for Ubuntu 20.04:
 
 ```
-sudo apt-get install bash libssh2-1-dev libssh-dev libssl-dev libaio-dev mysql-server php7-cli php7-gd php7-imap php7-mysql php7-curl libmysqlclient-dev build-essential libmatheval-dev libmagic-dev libgd-dev libuv1 rsync valgrind-dbg libxml2-dev php7-readline cmake ssh make libsmbclient-dev libwebsockets-dev libsqlite3-dev
+sudo apt install software-properties-common
+sudo add-apt-repository ppa:ondrej/php
+sudo apt update
+
+sudo apt-get install bash libssh2-1-dev libssh-dev libssl-dev libaio-dev mysql-server php7.4-cli php7.4-gd php7.4-imap php7.4-mysql php7.4-curl libmysqlclient-dev build-essential libmatheval-dev libmagic-dev libgd-dev libuv1 rsync valgrind-dbg libxml2-dev php7.4-readline cmake ssh make libsmbclient-dev libwebsockets-dev libsqlite3-dev
 ```
 
-3. Build FriendCore
+3. change to the repository
+```
+cd friendup
+```
+
+4. Build FriendCore
 
 ```
 echo "USE_SSH_THREADS_LIB=0" >> Config
@@ -48,7 +57,7 @@ make compile
 make install
 ```
 
-4. Create database / access
+5. Create database / access
 
 In your Friend folder:
 
@@ -63,9 +72,9 @@ flush privileges;
 exit
 ```
 
-5. Configure config file, located in build/cfg/cfg.ini (<a href="https://github.com/FriendUPCloud/friendup/blob/master/ConfiguringFriendOS.md">Configuring Friend OS</a>)
+6. Configure config file, located in build/cfg/cfg.ini (<a href="https://github.com/FriendUPCloud/friendup/blob/master/ConfiguringFriendOS.md">Configuring Friend OS</a>)
    Also, note, if you haven't set up this file there's an example installed in build/cfg/cfg.ini.example - which you can rename to cfg.ini once you've set up your settings.
-6. Once you have configured your cfg.ini file, run FriendCore:
+7. Once you have configured your cfg.ini file, run FriendCore:
 
 ```
 cd build/
@@ -99,8 +108,8 @@ Default login
 
 Once the installation script is finished and your local FriendCore is up and running use these credentials to log in: 
 ```
-    User: fadmin
-    Password: securefassword
+User: fadmin
+Password: securefassword
 ```
 The first thing you may want to do, is add a new user : run the 'System' application with "Run command" from the System menu on the Workspace.
 
