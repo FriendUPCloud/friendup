@@ -42,7 +42,7 @@ sudo apt update
 sudo apt-get install bash libssh2-1-dev libssh-dev libssl-dev libaio-dev mysql-server php7.4-cli php7.4-gd php7.4-imap php7.4-mysql php7.4-curl libmysqlclient-dev build-essential libmatheval-dev libmagic-dev libgd-dev libuv1 rsync valgrind-dbg libxml2-dev php7.4-readline cmake ssh make libsmbclient-dev libwebsockets-dev libsqlite3-dev
 ```
 
-3. change to the repository
+3. Change to the repository folder
 ```
 cd friendup
 ```
