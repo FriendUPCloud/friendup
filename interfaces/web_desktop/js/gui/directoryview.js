@@ -4612,7 +4612,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 		fileInfo.Dormant.execute( fileInfo );
 		if( ocallback ) ocallback();
 	}
-	else if( iconObject.extension == 'mp3' || iconObject.extension == 'ogg' )
+	else if( iconObject.extension == 'mp3' || iconObject.extension == 'ogg' || iconObject.extension == 'wav' )
 	{
 		let rr = iconObject;
 
