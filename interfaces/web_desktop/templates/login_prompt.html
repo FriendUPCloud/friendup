@@ -66,20 +66,11 @@
 				},
 				doLogin: function( e )
 				{
-					if( ge( 'Username' ) || ge( 'Password' ) )
-					{
-						if( !Trim( ge( 'Username' ).value ) )
-							return ge( 'Username' ).focus();
-						if( !Trim( ge( 'Password' ).value ) )
-							return ge( 'Password' ).focus();
-					}
-					
 					/*
 						In password recivery mode we do stuff a bit differently...
 					*/
 					if( this.passwordRecoveryMode )
 					{
-						
 						if( Trim( ge( 'Username' ).value ) == '')
 						{
 							ge( 'Username' ).focus();
@@ -94,6 +85,14 @@
 							ge( 'invalidLogin' ).getElementsByTagName( 'p' )[0].innerHTML = ( result == 'ok' ? 'Please check your inbox.' : 'Could not reset password.' );
 						} );
 						return;
+					}
+					
+					if( ge( 'Username' ) || ge( 'Password' ) )
+					{
+						if( !Trim( ge( 'Username' ).value ) )
+							return ge( 'Username' ).focus();
+						if( !Trim( ge( 'Password' ).value ) )
+							return ge( 'Password' ).focus();
 					}
 					
 					// Don't do it many times while working!

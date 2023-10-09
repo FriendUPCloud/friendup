@@ -594,9 +594,12 @@ Friend.User = {
 	{
 		var passWordResetURL = '/forgotpassword/username/' + encodeURIComponent( username );
 		var xhttp = new XMLHttpRequest();
-		xhttp.onreadystatechange = function() {
-		    if (this.readyState == 4 && this.status == 200) {
-		    	if(typeof callback == 'function') callback( this.responseText );
+		xhttp.onload = function() 
+		{
+		    if( this.readyState == 4 && this.status == 200 ) 
+		    {
+		    	if(typeof callback == 'function') 
+		    	    callback( this.responseText );
 			}
 		};
 		xhttp.open( 'GET', passWordResetURL, true);

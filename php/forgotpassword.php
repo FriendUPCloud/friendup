@@ -29,7 +29,7 @@
 					die( 'fail<!--separate-->Could not connect to database.' );
 				$SqlDatabase->SelectDatabase( $cfg['DatabaseUser']['dbname'] );
 				
-				if( $rs = $SqlDatabase->fetchObject('SELECT * FROM FUser WHERE Name = \'' . mysqli_real_escape_string($SqlDatabase->_link, urldecode( $tmp[3] ) ) . '\' OR Email = \'' . mysqli_real_escape_string($SqlDatabase->_link, urldecode( $tmp[3] ) ) . '\' ORDER BY ID ASC LIMIT 1' ) )
+				if( $rs = $SqlDatabase->fetchObject('SELECT * FROM FUser WHERE `Name` = \'' . mysqli_real_escape_string($SqlDatabase->_link, urldecode( $tmp[3] ) ) . '\' OR Email = \'' . mysqli_real_escape_string($SqlDatabase->_link, urldecode( $tmp[3] ) ) . '\' ORDER BY ID ASC LIMIT 1' ) )
 				{
 					$link = '';
 					if( isset( $rs->ID ) && trim($rs->Email) != '' )
@@ -64,7 +64,7 @@
 					}
 					else
 					{
-						die( 'done1' );
+						die( 'fail' );
 					}
 					
 					//now get mail template and out everything together
