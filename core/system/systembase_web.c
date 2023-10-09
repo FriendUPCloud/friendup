@@ -1250,29 +1250,6 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 		
 		*result = 200;
 	}
-	// Chain-load multiple friend core calls
-	// TODO: Enable, complete and test this
-	/*else if( strcmp( urlpath[ 0 ], "chainload" ) == 0 )
-	{
-		HashmapElement *he = HttpGetPOSTParameter( (*request), "call" );
-		if( he != NULL && he->hme_Data != NULL )
-		{
-			char *callString = UrlDecodeToMem( (char *)he->hme_Data );
-			if( char != NULL )
-			{
-				char *calls = strtok( callString, ";" );
-				while( calls != NULL )
-				{
-					char *call = sprintf( "%s", calls );
-					calls = strtok( NULL, ";" );
-					// char *result = callTheChainloadedCall( call );
-					// Concat the Http* structures via SysWebRequest()
-					//Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession *loggedSession, int *result )
-				}
-				FFree( callString );
-			}
-		}
-	}*/
 	else if( strcmp( urlpath[ 0 ], "help" ) == 0 )
 	{
 		struct TagItem tags[] = {

@@ -821,6 +821,51 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 					}
 
 					//
+					// multiple Friend Core calls - chainload multiple POST/GET requests
+					//
+					
+					/*else if( strcmp( path->p_Parts[ 0 ], "chainload" ) == 0 )
+					{
+					    struct TagItem tags[] = {
+							{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate("text/html") },
+							{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+							{ HTTP_HEADER_CACHE_CONTROL, (FULONG )StringDuplicate( "max-age = 3600" ) },
+							{TAG_DONE, TAG_DONE}
+						};
+						
+						response = HttpNewSimple( HTTP_200_OK, tags );
+
+                        HashmapElement *he = HttpGetPOSTParameter( (*request), "call" );
+		                if( he != NULL && he->hme_Data != NULL )
+		                {
+			                char *callString = UrlDecodeToMem( (char *)he->hme_Data );
+			                if( char != NULL )
+			                {
+				                char *calls = strtok( callString, ";" );
+				                while( calls != NULL )
+				                {
+					                char *call = sprintf( "%s", calls );
+					                calls = strtok( NULL, ";" );
+					                
+					                // This function does not exist!
+					                char *result = callTheChainloadedCall( call );
+					                if( result != NULL )
+					                {
+					                    HttpAddTextContent( response, result );
+					                    FFree( result );
+					                }
+				                }
+				                FFree( callString );
+			                }
+		                }
+
+						// write here and set data to NULL!!!!!
+						// return response
+						HttpWrite( response, sock );
+						result = 200;
+					}*/
+					
+					//
 					// share file
 					//
 
