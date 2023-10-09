@@ -400,9 +400,9 @@ class FUIContacts extends FUIElement
 										}
 									} );
 									// Click channel to reload
-									let overview = FUI.getElementByUniqueId( 'convos' );
-									overview.activateGroupTab( self.record.ID );
-									self.refreshDom();
+									let ov = FUI.getElementByUniqueId( 'convos' );
+									ov.activatePMTab();
+                                    ov.redrawChannels();
 								}
 								m.execute( 'convos', { method: 'kickuser', uid: d.record.ID, gid: self.record.ID } );
 							}

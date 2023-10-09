@@ -943,6 +943,20 @@ class FUIChatoverview extends FUIElement
 			}
     	}
     }
+    // Go to PMs
+    activatePMTab()
+    {
+        let ch = this.domChannels.getElementsByClassName( 'Channel' );
+        for( let a = 0; a < ch.length; a++ )
+        {
+            if( ch[ a ].classList.contains( 'DM' ) )
+            {
+                this.currentType = '';
+                ch[ a ].click();
+                return;
+            }
+        }
+    }
     // Just "click" a group tab
     activateGroupTab( recordId )
     {
@@ -951,7 +965,7 @@ class FUIChatoverview extends FUIElement
 		{
 			if( gg[ a ].id == recordId )
 			{
-				this.currentType == '';
+				this.currentType = '';
 				gg[ a ].click();
 			}
 		}

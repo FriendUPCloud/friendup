@@ -228,14 +228,16 @@ function destroyChatroom()
                 {
                     if( ee == 'ok' )
                     {
-                        chat.groupSettings.destroy();
-                        
                         // Signal all to piss off :-D
                         Application.SendChannelMsg( {
-                            method: 'kick',
+                            command: 'kick',
                             gid: chat.record.ID,
 							groupName: chat.record.Fullname
                         } );
+                        let ov = FUI.getElementByUniqueId( 'convos' );
+                        ov.activatePMTab();
+                        ov.redrawChannels();
+                        chat.groupSettings.destroy();
                         return;
                     }
                 }

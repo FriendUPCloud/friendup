@@ -255,8 +255,9 @@ Application.receiveMessage = function( msg )
     }
     else if( msg.command == 'kick' )
     {
-    	let overview = FUI.getElementByUniqueId( 'convos' );
-    	overview.redrawChannels();
+    	let ov = FUI.getElementByUniqueId( 'convos' );
+        ov.activatePMTab();
+        ov.redrawChannels();
     	Notify( {
     		title: i18n( 'i18n_removed_from_group' ),
     		text: i18n( 'i18n_removed_from_the_group' ) + ' ' + msg.groupName + '.'
