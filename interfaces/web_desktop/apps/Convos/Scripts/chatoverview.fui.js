@@ -728,13 +728,27 @@ class FUIChatoverview extends FUIElement
     			md = JSON.parse( md );
     			for( let a = 0; a < md.length; a++ )
     			{
-    				self.domChannels.innerHTML += '<div class="Channel Group" uniqueid="chatroom" name="' + md[a].Name + '" id="' + md[a].UniqueID + '" own="' + md[a].Own + '"></div>';
+    			    let found = false;
+    			    let fnd = self.domChannels.getElementsByClassName( 'Group' );
+    			    for( let b = 0; b < fnd.length; b++ )
+    			    {
+    			        if( fnd[ b ].getAttribute( 'id' ) == md[a].UniquyeID )
+    			        {
+    			            found = true;
+    			            break;
+    			        }
+    			    }
+    			    if( !found )
+        				self.domChannels.innerHTML += '<div class="Channel Group" uniqueid="chatroom" name="' + md[a].Name + '" id="' + md[a].UniqueID + '" own="' + md[a].Own + '"></div>';
     			}
     			self.groupsLoaded = true;
     		}
     		else self.groupsLoaded = false;
     		
-    		self.domChannels.innerHTML += '<div class="Channel Add" uniqueid="add"></div>';
+    		if( !self.domChannels.querySelector( '.Add' ) )
+    		{
+    		    self.domChannels.innerHTML += '<div class="Channel Add" uniqueid="add"></div>';
+		    }
     	
 			let chans = self.domChannels.getElementsByClassName( 'Channel' );
 			for( let a = 0; a < chans.length / 2; a++ )
