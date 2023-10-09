@@ -17,6 +17,18 @@ class FUIGroupsettings extends FUIInvitedialog
 		this.initialized = true;
 	}
 	
+	destroy()
+	{
+	    this.domElement.parentNode.removeChild( this.domElement );
+	    let contacts = FUI.getElementByUniqueId( 'contacts' );
+	    if( contacts )
+	    {
+	        contacts.groupSettings = null
+	    }
+	    let overview = FUI.getElementByUniqueId( 'convos' );
+	    overview.refreshDom();
+	}
+	
 	getClassName()
 	{
 		return 'FUIInvitedialog FUIGroupsettings';
@@ -194,3 +206,46 @@ class FUIGroupsettings extends FUIInvitedialog
 }
 
 FUI.registerClass( 'groupsettings', FUIGroupsettings );
+
+let toggleDelete = false;
+
+FUI.addCallback( 'toggle-delete', function( d )
+{
+    toggleDelete = d;
+} );
+
+function destroyChatroom()
+{
+    if( toggleDelete )
+    {
+        Confirm( i18n( 'i18n_are_you_sure' ), i18n( 'i18n_sure_delete_chatroom' ), function( d )
+        {
+            if( d.data )
+            {
+                let chat = FUI.getElementByUniqueId( 'contacts' );
+                let m = new Module( 'system' );
+                m.onExecuted = function( ee, dd )
+                {
+                    if( ee == 'ok' )
+                    {
+                        chat.groupSettings.destroy();
+                        
+                        // Signal all to piss off :-D
+                        Application.SendChannelMsg( {
+                            method: 'kick',
+                            gid: chat.record.ID,
+							groupName: chat.record.Fullname
+                        } );
+                        return;
+                    }
+                }
+                m.execute( 'convos', { method: 'delete-chatroom', gid: chat.record.ID } );
+            }
+        } );
+    }
+    else
+    {
+        Alert( i18n( 'i18n_error' ), i18n( 'i18n_delete_toggle_not' ) );
+    }
+}
+

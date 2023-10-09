@@ -441,6 +441,23 @@ if( isset( $args->args ) )
         	}
         	die( 'fail<!--separate-->' );
         }
+        else if( $args->args->method == 'delete-chatroom' )
+        {
+            $o = new dbIO( 'FUserGroup' );
+            $o->UniqueID = $args->args->gid;
+            if( $o->Load() )
+            {
+                if( $o->UserID == $User->ID && $o->Type == 'chatroom' )
+                {
+                    // Delete user relations
+                    $SqlDatabase->query( 'DELETE FROM FUserToGroup WHERE UserGroupID=\'' . $o->ID . '\'' );
+                    // Remove group
+                    $o->Delete();
+                    die( 'ok<!--separate-->{"message":"Chatroom deleted.","response":"1"}' );
+                }
+            }
+            die( 'fail<!--separate-->{"message":"Chatroom not found.","response":"-1"}' );
+        }
         // Get the original file OR
         // Get an attachment on ID
         else if( $args->args->method == 'getattachment' || $args->args->method == 'getoriginal' || $args->args->method == 'getupload' )

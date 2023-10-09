@@ -11,14 +11,6 @@
 					</div>
 					<div class="nameChange"></div>
 				</div>
-				<p>
-					<strong>{i18n_group_desc}</strong>
-				</p>
-				<p>
-					<textarea id="groupDescription" name="description" rows="12">{room-description}</textarea>
-				</p>
-			</div>
-			<div class="Section">
 				<p class="AvatarBox">
 					<strong>{i18n_group_avatar}</strong>
 				</p>
@@ -46,6 +38,14 @@
 					</div>
 				</div>
 				<p>
+					<strong>{i18n_group_desc}</strong>
+				</p>
+				<p>
+					<textarea id="groupDescription" name="description" rows="12">{room-description}</textarea>
+				</p>
+			</div>
+			<div class="Section">
+				<p>
 					<strong>{i18n_create_invite}</strong>
 				</p>
 				<div class="InviteBox">
@@ -61,6 +61,20 @@
 						</div>
 					</p>
 				</div>
+				<div class="Dangerzone">
+				    <p>
+					    <strong>{i18n_danger_zone}</strong>
+				    </p>
+				    <div class="Flex">
+				        <div><span>{i18n_delete_group}</span></div>
+				        <div>
+				            <fui-checkbox type="toggle" uniqueid="deletetoggle" onchange="toggle-delete" checked=""/>
+				        </div>
+				        <div>
+				            <button type="button" class="IconSmall fa-warning" onclick="destroyChatroom()">{i18n_execute_delete}</button>
+				        </div>
+				    </div>
+			    </div>
 			</div>
 		</div>
 		<div class="Flow">

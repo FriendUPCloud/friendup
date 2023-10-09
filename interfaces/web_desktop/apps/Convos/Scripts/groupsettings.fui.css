@@ -12,14 +12,9 @@
     top: 0;
     padding: 15px;
     left: 0;
-    width: calc(100% - 30px);
+    width: 100%;
     height: 100%;
     overflow: auto;
-}
-
-.Section > .AvatarBox 
-{
-    margin: auto;
 }
 
 .Section > p
@@ -81,12 +76,27 @@
 .FUIInvitedialog.FUIGroupsettings > .Dia .TheForm > .Form .AvatarBox
 {
 	width: 128px;
-	text-align: center;
+	margin: 0 0 15px 0;
+}
+
+.FUIInvitedialog.FUIGroupsettings > .Dia .TheForm > .Form div.AvatarBox
+{
+    width: 100%;
+    background: var(--BackgroundHeavier);
+    border-radius: 10px;
+    padding: 10px;
+    box-sizing: border-box;
+}
+
+.FUIInvitedialog.FUIGroupsettings > .Dia .TheForm > .Form .AvatarBox p
+{
+    text-align: center;
 }
 
 .FUIInvitedialog.FUIGroupsettings > .Dia .TheForm > .Form .AvatarPreview
 {
-	display: inline-block;
+	display: block;
+	margin: auto;
 	background-size: cover;
 	background-position: center;
 	border-radius: 100%;
