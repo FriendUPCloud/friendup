@@ -235,8 +235,10 @@ function destroyChatroom()
 							groupName: chat.record.Fullname
                         } );
                         let ov = FUI.getElementByUniqueId( 'convos' );
-                        ov.activatePMTab();
-                        ov.redrawChannels();
+                        ov.redrawChannels( function()
+                        {
+                            ov.activatePMTab();
+                        } );
                         chat.groupSettings.destroy();
                         return;
                     }

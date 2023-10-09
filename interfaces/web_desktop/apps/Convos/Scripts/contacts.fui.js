@@ -401,8 +401,10 @@ class FUIContacts extends FUIElement
 									} );
 									// Click channel to reload
 									let ov = FUI.getElementByUniqueId( 'convos' );
-									ov.activatePMTab();
-                                    ov.redrawChannels();
+                                    ov.redrawChannels( function()
+                                    {
+    									ov.activatePMTab();
+									} );
 								}
 								m.execute( 'convos', { method: 'kickuser', uid: d.record.ID, gid: self.record.ID } );
 							}
