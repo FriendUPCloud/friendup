@@ -1037,3 +1037,20 @@ function CleanAjaxCalls( depth = false )
 	return false;
 }
 
+
+// Image loader that respects max connections ----------------------------------
+
+function cImageLoader( src, cbk = false )
+{
+    let i = new Image();
+    if( _cajax_http_connections > _cajax_http_max_connections - 1 ) // Leave one conn open
+        return setTimeout( function(){ cImageLoader( src, cbk ); }, 50 );
+    _cajax_http_connections++     
+    i.src = src;
+    i.onload = function()
+    {
+        _cajax_http_connections--;
+        if( cbk ) cbk( this );
+    }
+}
+

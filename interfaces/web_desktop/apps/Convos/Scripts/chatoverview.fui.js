@@ -35,15 +35,13 @@ class FUIChatoverview extends FUIElement
 			"method": "getroomavatar",
 			"groupid": chan.id
 		};
-		let i = new Image();
-		i.src = '/system.library/module/?module=system&command=convos&args=' + encodeURIComponent( JSON.stringify( std ) ) + '&authid=' + Application.authId;
-		i.onload = function()
+		cImageLoader( '/system.library/module/?module=system&command=convos&args=' + encodeURIComponent( JSON.stringify( std ) ) + '&authid=' + Application.authId, function( i )
 		{
-			let c = document.createElement( 'canvas' );
+		    let c = document.createElement( 'canvas' );
 			let ctx = c.getContext( '2d' );
-			c.width = this.naturalWidth;
-			c.height = this.naturalHeight;
-			ctx.drawImage( this, 0, 0 );
+			c.width = i.naturalWidth;
+			c.height = i.naturalHeight;
+			ctx.drawImage( i, 0, 0 );
 			c.toBlob( function( blob )
 			{
 				let a = new FileReader();
@@ -53,7 +51,7 @@ class FUIChatoverview extends FUIElement
 				}
 				a.readAsDataURL( blob );
 			}, 'image/jpeg', 100 );
-		};
+		} );
 	}
     handleResize()
     {
@@ -221,7 +219,6 @@ class FUIChatoverview extends FUIElement
 				}
 			}
 			self.handleResize();
-			
 		}
 		ev.execute( 'convos', { method: 'getevents' } );
     }
@@ -602,16 +599,10 @@ class FUIChatoverview extends FUIElement
     }
     getAvatarFromUser( userid, cbk )
     {
-        let i = new Image();
-        i.src = '/system.library/module/?module=system&command=getavatar&userid=' + userid + '&width=128&height=128&authid=' + Application.authId;
-        i.onload = function()
+        cImageLoader( '/system.library/module/?module=system&command=getavatar&userid=' + userid + '&width=128&height=128&authid=' + Application.authId, function( i )
         {
-           	cbk( this.src );
-            document.body.removeChild( i );
-        }
-        i.style.position = 'absolute';
-        i.style.visibility = 'hidden';
-        document.body.appendChild( i );
+            cbk( i.src );
+        } );
     }
     renderOverview()
     {

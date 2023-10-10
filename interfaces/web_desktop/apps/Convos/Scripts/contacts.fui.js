@@ -191,18 +191,12 @@ class FUIContacts extends FUIElement
         }
         else
         {
-		    let i = new Image();
-		    window.myAvatar = i;
-		    i.src = '/system.library/module/?module=system&command=getavatar&userid=' + Application.userId + '&width=128&height=128&authid=' + Application.authId;
-		    i.onload = function()
+		    cImageLoader( '/system.library/module/?module=system&command=getavatar&userid=' + Application.userId + '&width=128&height=128&authid=' + Application.authId, function( i )
 		    {
-		        self.domSettings.querySelector( '.Avatar' ).style.backgroundImage = 'url(' + this.src + ')';
+		        window.myAvatar = i;
+		        self.domSettings.querySelector( '.Avatar' ).style.backgroundImage = 'url(' + i.src + ')';
 		        self.domSettings.querySelector( '.Avatar' ).classList.add( 'Loaded' );
-		        document.body.removeChild( i );
-		    }
-		    i.style.position = 'absolute';
-		    i.style.visibility = 'hidden';
-		    document.body.appendChild( i );
+		    } );
 	    }
         
         this.domSearch.addEventListener( 'keyup', function( e )
@@ -688,6 +682,7 @@ class FUIContacts extends FUIElement
             {
             	opts.groupid = this.options.groupid;
             }
+            m.forceHTTP = true;
             m.execute( 'convos', opts );
         }
     }
