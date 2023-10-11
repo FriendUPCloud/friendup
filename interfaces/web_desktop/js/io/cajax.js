@@ -1044,7 +1044,7 @@ function cImageLoader( src, cbk = false )
 {
     let i = new Image();
     if( _cajax_http_connections > _cajax_http_max_connections - 1 ) // Leave one conn open
-        return setTimeout( function(){ cImageLoader( src, cbk ); }, 50 );
+        return setTimeout( function(){ console.log( 'Waiting' ); cImageLoader( src, cbk ); }, 50 );
     _cajax_http_connections++     
     i.src = src;
     i.onload = function()
