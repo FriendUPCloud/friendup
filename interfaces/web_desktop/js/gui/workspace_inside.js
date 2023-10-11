@@ -8282,7 +8282,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						name: i18n( 'i18n_new_memo' ),
 	                    icon: 'file-text',
 	                    command: function() { Workspace.newmemo(); },
-	                    disabled: !( currentMovable && currentMovable.content.directoryview )
+	                    disabled: !( currentMovable && currentMovable.content && currentMovable.content.directoryview )
 					},
 					{
 						name:	i18n( 'menu_new_weblink' ),
