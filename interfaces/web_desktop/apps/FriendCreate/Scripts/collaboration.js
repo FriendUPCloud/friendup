@@ -117,7 +117,6 @@ function activateCollaboration( cbk = false )
 	
 	// Set up hosting peer
 	c.hostPeer = new Peer( {
-        host: 'peerjs-server.herokuapp.com', 
         secure: true, 
         port: 443
     } );
@@ -361,7 +360,6 @@ function receiveCollabSession( msg, cbk = false )
 	
 	// Set up hosting peer
 	c.clientPeer = new Peer( {
-        host: 'peerjs-server.herokuapp.com', 
         secure: true, 
         port: 443
     } );
