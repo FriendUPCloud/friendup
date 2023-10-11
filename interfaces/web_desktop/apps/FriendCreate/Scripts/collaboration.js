@@ -116,7 +116,11 @@ function activateCollaboration( cbk = false )
 	} );
 	
 	// Set up hosting peer
-	c.hostPeer = new Peer();
+	c.hostPeer = new Peer( {
+        host: 'peerjs-server.herokuapp.com', 
+        secure: true, 
+        port: 443
+    } );
 	c.hostPeer.on( 'open', ( hostPeerId ) => {
 		c.hostPeerId = hostPeerId;
 		document.body.classList.add( 'CollabHost' );
@@ -356,7 +360,11 @@ function receiveCollabSession( msg, cbk = false )
 	c.hostPeerId = msg.hostPeerId;
 	
 	// Set up hosting peer
-	c.clientPeer = new Peer();
+	c.clientPeer = new Peer( {
+        host: 'peerjs-server.herokuapp.com', 
+        secure: true, 
+        port: 443
+    } );
 	c.clientPeer.on( 'open', ( clientPeerId ) => {
 		c.clientPeerId = clientPeerId;
 		
