@@ -170,7 +170,10 @@ Application.run = function()
 {
 	let self = this;
 	
-	peer = new Peer();
+	peer = new Peer( {
+        secure: true, 
+        port: 443
+    } );
 	peer.on( 'open', ( peerId ) => {
 		ge( 'currentPeerId' ).value = peerId;
 	  
