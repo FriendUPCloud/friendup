@@ -1,9 +1,9 @@
 [DatabaseUser]
 
 host=localhost
-login=root
-password=root_password
-dbname=FriendMaster
+login=frienduser
+password=somepassword
+dbname=frienddb
 
 [FriendCore]
 fchost = localhost
@@ -19,6 +19,3 @@ enabled = 0
 
 [FriendChat]
 enabled = 0
-
-
-
