@@ -8662,7 +8662,16 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		if( tr == window )
 			tr = document.body;
 		
-		this.menuContext = tr;
+		// We don't show context for everything!
+		if( isMobile )
+		{
+		    if( !tr.classList ) return;
+		    if( !tr.classList.contains( 'File' ) )
+		        return;
+		    if( currentMovable && ( !currentMovable.content || !currentMovable.content.directoryview ) ) return;
+		}
+		
+		this.menuContext = tr;		
 		
 		// Check if we need to activate
 		let iconWindow = false;

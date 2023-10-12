@@ -946,12 +946,14 @@ DirectoryView.prototype.InitWindow = function( winobj )
 	
 	winobj.addEventListener( 'contextmenu', function( e )
 	{
+	    if( isMobile ) return;
 		if( Workspace.contextMenuShowing )
 		{
 			Workspace.contextMenuShowing.hide()
 			Workspace.contextMenuShowing = false;
 		}
 		let tr = e.target ? e.target : e.srcObject;
+		
 		// Enable default behavior on the context menu instead
 		if( tr.classList && tr.classList.contains( 'DefaultContextMenu' ) )
 		{
@@ -972,17 +974,32 @@ DirectoryView.prototype.InitWindow = function( winobj )
 	{
 		winobj.addEventListener( 'touchstart', function( e )
 		{
+			clearTimeout( currentMovable.lastTargetTimeo );
+		    currentMovable.lastTarget = e.target;
+		    currentMovable.lastTargetTimeo = setTimeout( function()
+		    {
+		        currentMovable.lastTargetTimeo = null;
+		        currentMovable.lastTarget = null;
+		    }, 800 );
+			
 			if( window.touchstartCounter )
 				clearTimeout( window.touchstartCounter );
 			window.touchstartCounter = setTimeout( function()
 			{
-				Workspace.showContextMenu( false, e );
+				if( currentMovable.lastTarget == e.target )
+				{
+				    console.log( 'YES: ', e.target, currentMovable.lastTarget );
+				    Workspace.showContextMenu( false, e );
+			    }
 				window.touchstartCounter = false;
 			}, 800 );
 		} );
 		
 		winobj.addEventListener( 'touchend', function( e )
 		{
+			clearTimeout( currentMovable.lastTargetTimeo );
+			currentMovable.lastTargetTimeo = null;
+	        currentMovable.lastTarget = null;
 			clearTimeout( window.touchstartCounter );
 			window.touchstartCounter = false;
 		} );
@@ -3028,6 +3045,7 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 						clearTimeout( window.touchstartCounter );
 					window.touchstartCounter = setTimeout( function()
 					{
+						console.log( 'FOP' );
 						window.touchStartCounter = null;
 						Workspace.showContextMenu( false, e );
 					}, 800 );
@@ -3870,6 +3888,8 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 		// This one driggers dropping icons! (believe it or not)
 		file.onmouseup = function( e )
 		{
+		    clearTimeout( window.touchstartCounter );
+		    
 			if( !( e.button == 0 || !e.button ) )
 				return;
 			if( mousePointer && mousePointer.elements.length )
@@ -4306,6 +4326,25 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 		{
 			if( this.directoryView.filedialog )
 				return;
+				
+			// Store scroll pos
+			if( currentMovable )
+			{
+			    try
+			    {
+			        currentMovable.scrollPosition = currentMovable.content.directoryview.scroller.scrollTop;
+			        if( currentMovable.scrollTimeo )
+			        {
+			            clearTimeout( currentMovable.scrollTimeo );
+			        }
+			        currentMovable.scrollTimeo = setTimeout( function()
+			        {
+			            currentMovable.scrollPosition = null;
+			        }, 500 );
+		        }
+		        catch( e ){};
+		    }
+			
 			// On mobile and tablet, don't click other icons when showing the context menu
 			if( ( isMobile || isTablet ) && Workspace.contextMenuShowing ) 
 			{
@@ -4371,6 +4410,19 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 				return cancelBubble( event );
 			}
 			
+			// We are scrolling!
+			if( currentMovable )
+			{
+			    try
+			    {
+			        if( currentMovable.scrollPosition && currentMovable.content.directoryview.scroller.scrollTop != currentMovable.scrollPosition )
+			        {
+			            return cancelBubble( event );
+			        }
+		        }
+		        catch( e ){};
+		    }
+			
 			// No need
 			if( file.menuTimeout )
 				clearTimeout( file.menuTimeout );
@@ -4413,7 +4465,6 @@ function OpenWindowByUrl( url, fileInfo )
 	function initContext( v )
 	{
 		if( !v ) return;
-		console.log( '!!---------------- Looking at flags: ', fileInfo.flags );
 		// View ID in context sets recent location
 		if( fileInfo.flags && fileInfo.flags.context )
 		{
