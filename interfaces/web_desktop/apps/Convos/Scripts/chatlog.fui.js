@@ -107,8 +107,10 @@ class FUIChatlog extends FUIElement
         	self.domElement.classList.remove( 'ChannelInfoShowing' );
         }
         
-        this.domTopic.onclick = function()
+        this.domTopic.onclick = function( e )
         {
+            if( e.target.nodeName != 'SPAN' ) return;
+            
         	let tt = self.options.type == 'chatroom' ? i18n( 'i18n_group_info' ) : i18n( 'i18n_user_info' );
         	self.domChannelInfo.querySelector( '.Title' ).innerHTML = tt;
         
@@ -172,11 +174,11 @@ class FUIChatlog extends FUIElement
 		            text = dec;
 		        }
 		        catch( e ){};
-		        this.domTopic.innerHTML = text;
+		        this.domTopic.innerHTML = '<span>' + text + '</span>';
         	}
         	else
         	{
-		        this.domTopic.innerHTML = this.options.name;
+		        this.domTopic.innerHTML = '<span>' + this.options.name + '</span>';
 	        }
         }
             
@@ -1259,13 +1261,13 @@ class FUIChatlog extends FUIElement
     	{
     		let p = this.domTopic.querySelector( '.ParentLink' );
     		let u = this.domTopic.querySelector( '.Users' );
-    		this.domTopic.innerHTML = topic;
+    		this.domTopic.innerHTML = '<span>' + topic + '</span>';
 			if( p ) this.domTopic.appendChild( p );
 			if( u ) this.domTopic.appendChild( u );
 		}
 		else
 		{
-			this.domTopic.innerHTML = topic;
+			this.domTopic.innerHTML = '<span>' + topic + '</span>';
 		}
     }
     // Did we scroll?
