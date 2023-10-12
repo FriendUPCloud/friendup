@@ -1832,6 +1832,12 @@ html body[focusmode=clicktofront] .View > .Title > div > .Popout
     top: 3px;
 }
 
+html [mobile] .View > .Title > div > .Popout,
+html body[mobile][focusmode=clicktofront] .View > .Title > div > .Popout 
+{
+    display: none;
+}
+
 html body.MSW .View > .Title > div > .Popout, 
 html body[focusmode=clicktofront].MSW .View > .Title > div > .Popout 
 {
