@@ -1082,6 +1082,8 @@ class FUIChatlog extends FUIElement
                 {
                     this.messageList[ slot ].appendChild( d );
                 }
+                if( !this.checkScrolled() )
+					this.toBottom();
             }
             // Insert a message in a timestamp slot
             else
@@ -1101,6 +1103,8 @@ class FUIChatlog extends FUIElement
                 {
                     // Create group
                     this.domMessages.querySelector( '.Incoming' ).appendChild( grp );
+                    if( !this.checkScrolled() )
+    					this.toBottom();
                 }
                 // We are looking for a place to add
                 else
@@ -1115,7 +1119,7 @@ class FUIChatlog extends FUIElement
                             // Add since we're the last in the list
                             if( last )
                             {
-                                 this.domMessages.querySelector( '.Incoming' ).appendChild( grp );
+                                this.domMessages.querySelector( '.Incoming' ).appendChild( grp );
                             }
                             else if( b == 0 )
                             {
@@ -1129,6 +1133,7 @@ class FUIChatlog extends FUIElement
                         	 	else
                         	 	{
                         	 		this.domMessages.querySelector( '.Incoming' ).appendChild( grp );
+                        	 		
                     	 		}
                             }
                             // Insert before previous
@@ -1136,27 +1141,29 @@ class FUIChatlog extends FUIElement
                             {
                                 this.domMessages.querySelector( '.Incoming' ).insertBefore( grp, this.messageList[ this.messageListOrder[ b + 1 ] ] );
                             }
+                            if( !this.checkScrolled() )
+            					this.toBottom();
                             break;
                         }
                     }
                 }
-                if( !this.checkScrolled() )
-				{
-					this.toBottom();
-				}
             }
         }
         
         // New scroll height
         if( history )
         {
+            let scrollTimeo = null;
 			self.scrollFunction = function()
 			{	
 				self.domMessages.style.scrollBehavior = 'inherit';
 				self.domMessages.scrollTop = firstMessage.offsetTop - 27;
 				self.domMessages.style.scrollBehavior = '';
-				setTimeout( function()
+				if( scrollTimeo )
+    				clearTimeout( scrollTimeo );
+				scrollTimeo = setTimeout( function()
 				{
+				    scrollTimeo = null;
 					self.scrollFunction = null;
 				}, 200 );
 			};
@@ -1166,6 +1173,7 @@ class FUIChatlog extends FUIElement
         		self.scrollFunction();
     		}
 			self.scrollFunction();
+			console.log( 'Scrollfunc' );
 	    }
         
         this.refreshDom();
@@ -1263,7 +1271,8 @@ class FUIChatlog extends FUIElement
     // Did we scroll?
     checkScrolled()
     {
-    	return self.hasScrolled && Math.ceil( this.domMessages.scrollTop ) + 100 < this.domMessages.scrollHeight - this.domMessages.offsetHeight;
+    	let scr = self.hasScrolled && Math.ceil( this.domMessages.scrollTop ) + 100 < this.domMessages.scrollHeight - this.domMessages.offsetHeight;    	
+    	return scr;
     }
     // Scroll to the bottom of messages
     toBottom( way = false )
@@ -1563,6 +1572,9 @@ class FUIChatlog extends FUIElement
 	        	nd.setAttribute( 'owner', '--' );
 	        	nd.setAttribute( 'slotid', tstm + '-divider' );
 	        	s.appendChild( nd );
+	        	
+	        	if( !self.checkScrolled() ) self.toBottom();
+	        	
 	        	outMessages.push( nd );
 	        	prevDate = dateCand;
 	        	
@@ -1636,6 +1648,9 @@ class FUIChatlog extends FUIElement
         }
         
         this.domElement.classList.add( 'Initialized' );
+        
+        if( !this.checkScrolled() )
+			this.toBottom();
         
         this.refreshing = false;
        
