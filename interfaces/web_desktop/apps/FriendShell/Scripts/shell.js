@@ -18,81 +18,76 @@
 *******************************************************************************/
 
 // Extend the applicatino object with a run function
-Application.run = function( packet ) 
-{
+Application.run = function (packet) {
 	this.fileName = 'test1';
-	var w = new View( { 
-		title:  'New Shell', 
-		width:  650,
+	/**
+	 * View instance
+	 * @type {View}
+	 */
+	var w = new View({
+		title: 'New Shell',
+		width: 650,
 		height: 340,
 		scrollable: true,
 		transparent: true
-	} );
+	});
+	/**
+	 * @type {View}
+	 */
 	this.view = w;
-	w.onClose = function(){ Application.quit(); }
-	
+	w.onClose = function () { Application.quit(); }
+
 	// Setup terminal shell instance
-	if ( typeof ( window.shell_instances ) == 'undefined' )
+	if (typeof (window.shell_instances) == 'undefined')
 		window.shell_instances = [];
-	for( var a = 1; a < 9999; a++ )
-	{
-		if ( typeof ( window.shell_instances[a] ) == 'undefined' || !window.shell_instances[a] )
-		{
+	for (var a = 1; a < 9999; a++) {
+		if (typeof (window.shell_instances[a]) == 'undefined' || !window.shell_instances[a]) {
 			window.shell_instances[a] = true;
 			break;
 		}
 	}
 	w.instanceId = a;
-	w.setFlag( 'title', 'New Shell' );
+	w.setFlag('title', 'New Shell');
 	w.currentPath = 'System:';
 	w.currentCLI = false;
 	w.cliTemplate = false;
 	w.instanceNum = a;
-	w.getInstanceNum = function()
-	{
+	w.getInstanceNum = function () {
 		return this.instanceNum;
 	}
-	w.onClose = function()
-	{
-		function doQuit()
-		{
+	w.onClose = function () {
+		function doQuit() {
 			w.onClose = null;
 			Application.quit();
 		}
-		
+
 		var msg = {
 			command: 'quit_shell',
-			callbackId: addCallback( doQuit )
+			callbackId: addCallback(doQuit)
 		};
-		
-		w.sendMessage( msg );
+
+		w.sendMessage(msg);
 		return false;
 	}
 
 	// Load resources
-	var f = new File( 'Progdir:Templates/terminal.html' );
-	f.onLoad = function( data )
-	{
-		w.setContent( data, function()
-		{
-			if( packet.args )
-			{
-				w.sendMessage( {
+	var f = new File('Progdir:Templates/terminal.html');
+	f.onLoad = function (data) {
+		w.setContent(data, function () {
+			if (packet.args) {
+				w.sendMessage({
 					command: 'execute',
 					args: packet.args
-				} );
+				});
 			}
-		} );
+		});
 	}
 	f.load();
 };
 
-Application.receiveMessage = function( msg )
-{
-	if( msg.command )
-	{
-		switch( msg.command )
-		{
+Application.receiveMessage = function (msg) {
+	if (msg.command) {
+		switch (msg.command) {
 			case 'activate':
 				this.view.activate();
 				break;
@@ -100,10 +95,10 @@ Application.receiveMessage = function( msg )
 				this.quit();
 				break;
 			case 'listapplications':
-				this.view.sendMessage( { command: 'applicationlist', data: msg.data } );
+				this.view.sendMessage({ command: 'applicationlist', data: msg.data });
 				break;
 			case 'settitle':
-				this.view.setFlag( 'title', msg.text );
+				this.view.setFlag('title', msg.text);
 				break;
 		}
 	}
