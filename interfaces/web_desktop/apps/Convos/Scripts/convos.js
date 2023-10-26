@@ -15,10 +15,15 @@ window.Convos = {
 	unseenMessages: {} // Count unseen messages
 };
 
+FriendConvos = window.FriendConvos ? window.FriendConvos : {};
+FriendConvos.conferenceMatrix = new VideoConference();
+
 window.Sounds = {}; // Built-in sounds
 Sounds.newMessage = new Audio('/themes/friendup13/sound/new_message.ogg');
 Sounds.sendMessage = new Audio( getImageUrl( 'Progdir:Assets/send.ogg' ) );
 Sounds.incomingCall = new Audio( getImageUrl( 'Progdir:Assets/call.ogg' ) );
+
+
 
 // Some events, like refresh and visibility change, ought to refresh messages
 window.addEventListener( 'focus', function()
@@ -118,6 +123,7 @@ Application.receiveMessage = function( msg )
 			Application.receiveMessage( msg );
 		}, 25 );
 	}
+	let xconference = window.FriendConvos && FriendConvos.conferenceMatrix ? FriendConvos.conferenceMatrix : null;
 	
 	// Receiving message on sender
     if( msg.senderId && !msg.command )
@@ -324,7 +330,7 @@ Application.receiveMessage = function( msg )
     			if( d && d.data )
     			{
     				contacts.setChatView( contacts.getContact( msg.senderId ) );
-    				takeVideoCall( msg.peerId );
+    				xconference.answerVideoCall( msg.peerId );
 	    		}
     			// Say hang up!
 	    		else
@@ -512,46 +518,6 @@ Application.SendChannelMsg = function( msg )
 	}
 }
 
-function takeVideoCall( incomingPeerId )
-{
-	let contacts = FUI.getElementByUniqueId( 'contacts' );
-	if( contacts.videoCall )
-		contacts.videoCall.close();
-	
-	window.currentPeerId = incomingPeerId;
-	
-	contacts.videoCall = new View( {
-		title: i18n( 'i18n_video_call' ) + ' - ' + contacts.record.Fullname,
-		width: 650,
-		height: 512
-	} );
-	contacts.videoCall.record = contacts.record;
-	contacts.videoCall.onClose = function()
-	{
-		contacts.videoCall = null;
-		
-		// Say hang up!
-		Application.SendUserMsg( {
-			recipientId: contacts.record.ID,
-			message: {
-				command: 'broadcast-stop',
-				peerId: window.currentPeerId
-			}
-		} );
-		
-		window.currentPeerId = null;
-	}
-	let f = new File( 'Progdir:Markup/videocall.html' );
-	f.replacements = { 'remotePeerId': incomingPeerId, 'currentPeerId': '' };
-	f.i18n();
-	f.onLoad = function( data )
-	{
-		contacts.videoCall.setContent( data );
-	}
-	f.load();
-}
-
-// Send a message to a Friend OS user on the same server
 Application.SendUserMsg = function( opts )
 {
 	if( !opts.recipientId ) return;

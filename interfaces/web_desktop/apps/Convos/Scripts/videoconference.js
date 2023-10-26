@@ -10,7 +10,7 @@
 
 class VideoConference
 {
-	constructor( userRecord )
+	constructor( userRecord = false )
 	{
 		let self = this;
 		
@@ -34,7 +34,7 @@ class VideoConference
 	
 	setContext( ctx )
 	{
-		this.options.context = ctx;
+		this.options.ctx = ctx;
 	}
 	
 	// Create a new conference
@@ -93,5 +93,46 @@ class VideoConference
 		}
 		this.conferences = o;
 	}
+	
+	
+	answerVideoCall( incomingPeerId )
+	{
+		let contacts = FUI.getElementByUniqueId( 'contacts' );
+		if( contacts.videoCall )
+			contacts.videoCall.close();
+		
+		window.currentPeerId = incomingPeerId;
+		
+		contacts.videoCall = new View( {
+			title: i18n( 'i18n_video_call' ) + ' - ' + contacts.record.Fullname,
+			width: 650,
+			height: 512
+		} );
+		contacts.videoCall.record = contacts.record;
+		contacts.videoCall.onClose = function()
+		{
+			contacts.videoCall = null;
+			
+			// Say hang up!
+			Application.SendUserMsg( {
+				recipientId: contacts.record.ID,
+				message: {
+					command: 'broadcast-stop',
+					peerId: window.currentPeerId
+				}
+			} );
+			
+			window.currentPeerId = null;
+		}
+		let f = new File( 'Progdir:Markup/videocall.html' );
+		f.replacements = { 'remotePeerId': incomingPeerId, 'currentPeerId': '' };
+		f.i18n();
+		f.onLoad = function( data )
+		{
+			contacts.videoCall.setContent( data );
+		}
+		f.load();
+	}
+	
 }
 

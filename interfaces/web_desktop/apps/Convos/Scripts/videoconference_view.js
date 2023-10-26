@@ -69,7 +69,6 @@ Application.run = function()
 						{
 							if( doRetrying )
 							{
-								console.log( 'Retrying here.' );
 								executeCall2();
 							}
 						}, 250 );
