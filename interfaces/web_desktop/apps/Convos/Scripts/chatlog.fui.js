@@ -18,6 +18,11 @@ class FUIChatlog extends FUIElement
         super( options );
         let self = this;
         
+        let c = FUI.getElementByUniqueId( 'contacts' );
+        if( !FriendConvos.conferenceMatrix )
+	        FriendConvos.conferenceMatrix = new VideoConference( c.record );
+	    else FriendConvos.conferenceMatrix.setContext( c.record );
+        
         // We use this on our calls
         this.ajaxUniqueId = md5( UniqueHash() );
         if( window.currentChatLog )
@@ -214,7 +219,7 @@ class FUIChatlog extends FUIElement
             	if( c )
             	{
             		cancelBubble( e );
-            		return c.initVideoChat( false );
+            		return FriendConvos.conferenceMatrix.create( c.record );
         		}
             }
             this.domTopic.appendChild( vid );
