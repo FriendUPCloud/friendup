@@ -774,11 +774,6 @@ span.Emoticon:hover
     background-color: black;
 }
 
-.FUIChatlog .Topic.Chatroom > .Video
-{
-	display: none;
-}
-
 .FUIChatlog .ChannelInfo
 {
 	position: absolute;
