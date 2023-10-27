@@ -17,6 +17,7 @@ Application.run = function()
 {
 	let self = this;
 	
+	// Create a peer Id for others to reach
 	peer = new Peer( {
         secure: true, 
         port: 443
@@ -24,6 +25,7 @@ Application.run = function()
 	peer.on( 'open', ( peerId ) => {
 		ge( 'currentPeerId' ).value = peerId;
 	  
+	  	// Get camera audio and video
 		const localVideo = ge( 'VideoStream' );
 		navigator.mediaDevices.getUserMedia( { video: true, audio: true } )
 			.then( ( stream ) => {
@@ -84,7 +86,9 @@ Application.run = function()
 		{
 			self.sendMessage( {
 				command: 'broadcast-call',
-				peerId: ge( 'currentPeerId' ).value
+				peerId: ge( 'currentPeerId' ).value,
+				conferenceId: ge( 'conferenceId' ).value,
+				conferenceName: ge( 'conferenceName' ).value
 			} );
 		}
 		// We have a currentPeerId from remote, so tell we got it
@@ -94,7 +98,9 @@ Application.run = function()
 			Application.sendMessage( {
 				command: 'broadcast-received',
 				peerId: ge( 'currentPeerId' ).value,
-				remotePeerId: ge( 'remotePeerId' ).value
+				remotePeerId: ge( 'remotePeerId' ).value,
+				conferenceId: ge( 'conferenceId' ).value,
+				conferenceName: ge( 'conferenceName' ).value
 			} );
 		}
 	} );

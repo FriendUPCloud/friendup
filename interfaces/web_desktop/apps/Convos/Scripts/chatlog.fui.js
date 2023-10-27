@@ -218,7 +218,7 @@ class FUIChatlog extends FUIElement
             	if( c )
             	{
             		cancelBubble( e );
-            		return FriendConvos.conferenceMatrix.create( c.record );
+            		return FriendConvos.conferenceMatrix.create( c.record.Fullname );
         		}
             }
             this.domTopic.appendChild( vid );

@@ -37,14 +37,14 @@ class VideoConference
 		this.options.ctx = ctx;
 	}
 	
-	// Create a new conference
-	create()
+	// Create a new conference, and open the conference view
+	create( name = 'unnamed' )
 	{
 		let self = this;
 		
 		let conf = {
 			id: md5( UniqueHash() ),
-			name: 'unnamed',
+			name: name,
 			participants: {},
 			peerId: null
 		}
@@ -52,7 +52,7 @@ class VideoConference
 		self.conferences[ conf.id ] = conf;
 		
     	conf.view = new View( {
-			title: i18n( 'i18n_video_call' ) + ' - ' + self.options.ctx.Fullname,
+			title: i18n( 'i18n_video_call' ) + ' - ' + name,
 			width: 650,
 			height: 512
 		} );
@@ -71,14 +71,18 @@ class VideoConference
 			self.remove( conf.id );
 		}
 		let f = new File( 'Progdir:Markup/videocall.html' );
-		f.replacements = { 'conferenceId': conf.id, 'currentPeerId': '', 'remotePeerId': '' };
+		f.replacements = { 
+			'conferenceId': conf.id, 
+			'currentPeerId': '', 
+			'remotePeerId': '', 
+			'conferenceName': name 
+		};
 		f.i18n();
 		f.onLoad = function( data )
 		{
 			conf.view.setContent( data );
 		}
 		f.load();
-		
 	}
 	
 	// Remove a conference
@@ -94,33 +98,54 @@ class VideoConference
 		this.conferences = o;
 	}
 	
-	
-	answerVideoCall( incomingPeerId )
+	// Answer an incoming call
+	answerVideoCall( incomingPeerId, name, conferenceId, sender )
 	{
 		let contacts = FUI.getElementByUniqueId( 'contacts' );
 		if( contacts.videoCall )
 			contacts.videoCall.close();
 		
-		window.currentPeerId = incomingPeerId;
+		if( !this.conferences[ conferenceId ] )
+		{
+			this.conferences[ conferenceId ] = {
+				peerId: incomingPeerId,
+				id: conferenceId,
+				name: name,
+				participants: [ sender ]
+			};
+		}
+		
+		let conf = this.conferences[ conferenceId ];
 		
 		contacts.videoCall = new View( {
-			title: i18n( 'i18n_video_call' ) + ' - ' + contacts.record.Fullname,
+			title: i18n( 'i18n_video_call' ) + ' - ' + conf.name,
 			width: 650,
 			height: 512
 		} );
+		
 		contacts.videoCall.record = contacts.record;
 		contacts.videoCall.onClose = function()
 		{
 			contacts.videoCall = null;
 			
 			// Say hang up!
-			Application.SendUserMsg( {
-				recipientId: contacts.record.ID,
-				message: {
+			if( contacts.record.Type == 'chatroom' )
+			{
+				Application.SendChannelMsg( {
 					command: 'broadcast-stop',
 					peerId: window.currentPeerId
-				}
-			} );
+				} );
+			}
+			else
+			{
+				Application.SendUserMsg( {
+					recipientId: contacts.record.ID,
+					message: {
+						command: 'broadcast-stop',
+						peerId: window.currentPeerId
+					}
+				} );
+			}
 			
 			window.currentPeerId = null;
 		}
@@ -134,5 +159,81 @@ class VideoConference
 		f.load();
 	}
 	
+	// Broadcast that you are starting a call on peerId to the current audience
+	broadcastStart( peerId, name, confId )
+	{
+		let messages = FUI.getElementByUniqueId( 'messages' );
+		let contacts = FUI.getElementByUniqueId( 'contacts' );
+		if( messages && contacts )
+		{
+			if( !this.conferences[ confId ] ) return false;
+			
+			// Register peer id
+			this.conferences[ confId ].peerId = peerId;
+		
+			// Reach out to everybody in the group
+			if( contacts.record.Type == 'chatroom' )
+			{
+				// Send "video start" to recipient!
+				Application.SendChannelMsg( {
+					command: 'broadcast-start',
+					peerId: peerId,
+					conferenceId: confId,
+					conferenceName: name,
+					senderId: Application.uniqueId,
+					senderName: Application.fullName
+				} );
+			}
+			// Reach out one person in the group
+			else
+			{
+				// Send "video start" to recipient!
+				Application.SendUserMsg( {
+					recipientId: contacts.record.ID,
+					message: {
+						command: 'broadcast-start',
+						peerId: peerId,
+						conferenceId: confId,
+						conferenceName: name,
+						senderId: Application.uniqueId,
+						senderName: Application.fullName
+					}
+				} );
+			}
+		}
+	}	
+	
+	// Accept incoming video on peerId and sender
+	broadcastAccept( peerId, name, conferenceId, sender )
+	{
+		let self = this;
+		
+    	let contacts = FUI.getElementByUniqueId( 'contacts' );
+    	if( contacts )
+    	{
+    		Sounds.incomingCall.loop = true;
+	    	Sounds.incomingCall.play();
+    		Confirm( i18n( 'i18n_receive_video_call' ), sender.name + ' ' + i18n( 'i18n_receiving_video_desc' ), function( d )
+    		{
+    			Sounds.incomingCall.loop = false;
+    			if( d && d.data )
+    			{
+    				contacts.setChatView( contacts.getContact( sender.id ) );
+    				self.answerVideoCall( peerId, name, conferenceId, sender );
+	    		}
+    			// Say hang up!
+	    		else
+	    		{
+					Application.SendUserMsg( {
+						recipientId: msg.senderId,
+						message: {
+							command: 'broadcast-stop',
+							peerId: peerId
+						}
+					} );
+	    		}
+    		} );
+		}
+	}
 }
 

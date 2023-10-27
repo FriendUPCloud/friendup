@@ -272,22 +272,12 @@ Application.receiveMessage = function( msg )
     // User is broadcasting a call
     else if( msg.command == 'broadcast-call' )
     {
-		let messages = FUI.getElementByUniqueId( 'messages' );
-		let contacts = FUI.getElementByUniqueId( 'contacts' );
-		if( messages && contacts )
-		{
-			// Send "video start" to recipient!
-			Application.SendUserMsg( {
-				recipientId: contacts.record.ID,
-				message: {
-					command: 'broadcast-start',
-					peerId: msg.peerId,
-					senderId: Application.uniqueId,
-					senderName: Application.fullName
-				}
-			} );
-			window.currentPeerId = msg.peerId;
-		}
+    	FriendConvos.conferenceMatrix.broadcastStart( msg.peerId, msg.conferenceName, msg.conferenceId );
+    }
+    // An invited user (me) starts broadcast participation (received signal)
+    else if( msg.command == 'broadcast-start' )
+    {
+    	FriendConvos.conferenceMatrix.broadcastAccept( msg.peerId, msg.conferenceName, msg.conferenceId, { id: msg.senderId, name: msg.senderName } );
     }
     // Callee receives a call broadcast, ready to connect
     else if( msg.command == 'broadcast-received' )
@@ -314,36 +304,6 @@ Application.receiveMessage = function( msg )
     		// Switch peerId (current) and remotePeerId ( remote) as it comes
     		// from the remote callee - and their remote is this peer..
 			contacts.videoCall.sendMessage( { command: 'initcall', peerId: msg.remotePeerId, remotePeerId: msg.peerId } );
-		}
-    }
-    // Callee starts broadcast participation (received signal)
-    else if( msg.command == 'broadcast-start' )
-    {
-    	Sounds.incomingCall.loop = true;
-    	Sounds.incomingCall.play();
-    	let contacts = FUI.getElementByUniqueId( 'contacts' );
-    	if( contacts )
-    	{
-    		Confirm( i18n( 'i18n_receive_video_call' ), msg.senderName + ' ' + i18n( 'i18n_receiving_video_desc' ), function( d )
-    		{
-    			Sounds.incomingCall.loop = false;
-    			if( d && d.data )
-    			{
-    				contacts.setChatView( contacts.getContact( msg.senderId ) );
-    				xconference.answerVideoCall( msg.peerId );
-	    		}
-    			// Say hang up!
-	    		else
-	    		{
-					Application.SendUserMsg( {
-						recipientId: msg.senderId,
-						message: {
-							command: 'broadcast-stop',
-							peerId: msg.peerId
-						}
-					} );
-	    		}
-    		} );
 		}
     }
     // Polls broadcast
