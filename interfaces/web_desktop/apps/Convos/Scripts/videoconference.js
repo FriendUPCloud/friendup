@@ -99,11 +99,13 @@ class VideoConference
 	}
 	
 	// Answer an incoming call
-	answerVideoCall( incomingPeerId, name, conferenceId, sender )
+	answerVideoCall( conference, sender )
 	{
-		let contacts = FUI.getElementByUniqueId( 'contacts' );
-		if( contacts.videoCall )
-			contacts.videoCall.close();
+		let self = this;
+		
+		let incomingPeerId = conference.peerId;
+		let name = conference.name;
+		let conferenceId = conference.id;
 		
 		if( !this.conferences[ conferenceId ] )
 		{
@@ -114,54 +116,67 @@ class VideoConference
 				participants: [ sender ]
 			};
 		}
+		else
+		{
+			console.log( 'MAJOR ERROR!' );
+		}
+		
+		let contacts = FUI.getElementByUniqueId( 'contacts' );
 		
 		let conf = this.conferences[ conferenceId ];
 		
-		contacts.videoCall = new View( {
+		conf.view = new View( {
 			title: i18n( 'i18n_video_call' ) + ' - ' + conf.name,
 			width: 650,
 			height: 512
 		} );
 		
-		contacts.videoCall.record = contacts.record;
-		contacts.videoCall.onClose = function()
-		{
-			contacts.videoCall = null;
-			
+		conf.view.record = contacts.record;
+		conf.view.onClose = function()
+		{	
 			// Say hang up!
 			if( contacts.record.Type == 'chatroom' )
 			{
 				Application.SendChannelMsg( {
 					command: 'broadcast-stop',
-					peerId: window.currentPeerId
+					peerId: conf.peerId
 				} );
 			}
 			else
 			{
 				Application.SendUserMsg( {
-					recipientId: contacts.record.ID,
+					recipientId: sender.id,
 					message: {
 						command: 'broadcast-stop',
-						peerId: window.currentPeerId
+						peerId: conf.peerId
 					}
 				} );
 			}
 			
-			window.currentPeerId = null;
+			self.remove( conf.id );
 		}
 		let f = new File( 'Progdir:Markup/videocall.html' );
-		f.replacements = { 'remotePeerId': incomingPeerId, 'currentPeerId': '' };
+		f.replacements = { 
+			'remotePeerId': incomingPeerId, 
+			'currentPeerId': '', 
+			'conferenceId': conf.id, 
+			'conferenceName': conf.name 
+		};
 		f.i18n();
 		f.onLoad = function( data )
 		{
-			contacts.videoCall.setContent( data );
+			conf.view.setContent( data );
 		}
 		f.load();
 	}
 	
 	// Broadcast that you are starting a call on peerId to the current audience
-	broadcastStart( peerId, name, confId )
+	broadcastStart( conference )
 	{
+		let peerId = conference.peerId;
+		let name = conference.name;
+		let confId = conference.id;
+		
 		let messages = FUI.getElementByUniqueId( 'messages' );
 		let contacts = FUI.getElementByUniqueId( 'contacts' );
 		if( messages && contacts )
@@ -177,11 +192,15 @@ class VideoConference
 				// Send "video start" to recipient!
 				Application.SendChannelMsg( {
 					command: 'broadcast-start',
-					peerId: peerId,
-					conferenceId: confId,
-					conferenceName: name,
-					senderId: Application.uniqueId,
-					senderName: Application.fullName
+					conference: {
+						id: confId,
+						peerId: peerId,
+						name: name
+					},
+					sender: {
+						id: Application.uniqueId,
+						name: Application.fullName
+					}
 				} );
 			}
 			// Reach out one person in the group
@@ -192,11 +211,15 @@ class VideoConference
 					recipientId: contacts.record.ID,
 					message: {
 						command: 'broadcast-start',
-						peerId: peerId,
-						conferenceId: confId,
-						conferenceName: name,
-						senderId: Application.uniqueId,
-						senderName: Application.fullName
+						conference: {
+							id: confId,
+							name: name,
+							peerId: peerId
+						},
+						sender: {
+							id: Application.uniqueId,
+							name: Application.fullName
+						}
 					}
 				} );
 			}
@@ -204,9 +227,13 @@ class VideoConference
 	}	
 	
 	// Accept incoming video on peerId and sender
-	broadcastAccept( peerId, name, conferenceId, sender )
+	broadcastAccept( conference, sender )
 	{
 		let self = this;
+		
+		let peerId = conference.peerId;
+		let name = conference.name;
+		let conferenceId = conference.id;
 		
     	let contacts = FUI.getElementByUniqueId( 'contacts' );
     	if( contacts )
@@ -219,13 +246,13 @@ class VideoConference
     			if( d && d.data )
     			{
     				contacts.setChatView( contacts.getContact( sender.id ) );
-    				self.answerVideoCall( peerId, name, conferenceId, sender );
+    				self.answerVideoCall( conference, sender );
 	    		}
     			// Say hang up!
 	    		else
 	    		{
 					Application.SendUserMsg( {
-						recipientId: msg.senderId,
+						recipientId: sender.id,
 						message: {
 							command: 'broadcast-stop',
 							peerId: peerId
@@ -234,6 +261,45 @@ class VideoConference
 	    		}
     		} );
 		}
+	}
+	
+	// Host adds a user's connection and info
+	addConnection( conferenceId, user )
+	{
+		if( !this.conferences[ conferenceId ] ) return false;
+			
+		let conf = this.conferences[ conferenceId ];
+			
+		// Register peer id
+		// Adds a user or updates it
+		let found = false;
+		for( let a in conf.participants )
+		{
+			if( conf.participants[ a ].id == user.id )
+			{
+				conf.participants[ a ] = user;
+				found = true;
+			}
+		}
+		if( !found )
+			conf.participants.push( user );
+		
+		// Tell user to connect
+		Application.SendUserMsg( {
+			recipientId: user.id,
+			message: {
+				command: 'broadcast-connect',
+				userPeerId: user.peerId, // For verification
+				conferenceId: conf.id
+			}
+		} );
+	}
+	
+	connectToHost( conferenceId, userPeerId )
+	{
+		let conf = this.conferences[ conferenceId ];
+		if( !conf ) return;
+		conf.view.sendMessage( { command: 'initcall', hostPeerId: conf.peerId, userPeerId: userPeerId } );
 	}
 }
 

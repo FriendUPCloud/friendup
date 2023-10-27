@@ -1,0 +1,27 @@
+How connection to video conference works
+----------------------------------------
+
+Normal scenario, initiating a call:
+
+Host: Clicks video button
+Host: Creates conference id
+Host: Open video and send from video window: "broadcast-call"
+Host: Runs xconference.broadcastStart()
+Host: Sends 'broadcast-start' to Invitee
+
+Invi: Receives 'broadcast-start'
+Invi: Runs xconference.broadcastAccept()
+Invi: Confirms accepting
+Invi: Runs xconference.answerVideoCall()
+Invi: Creates conference structure with conference id
+Invi: Opens view
+Invi: Sends 'broadcast-received' to Host
+
+Host: Runs xconference.addConnection() to add user to conference by id
+Host: Sends 'broadcast-connect' to Invitee
+
+Invi: Receives 'broadcast-connect'
+Invi: Runs xconference.connectToHost()
+Invi: Sends 'initcall' to view
+
+

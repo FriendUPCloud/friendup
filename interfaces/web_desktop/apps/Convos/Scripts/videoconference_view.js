@@ -8,11 +8,10 @@
 *                                                                              *
 *****************************************************************************©*/
 
-// Just a global peer object
-window.peer = false;
-window.peerCall = false;
-currentScreenShare = null;
+window.peer = null;         // Just a global peer object
+currentScreenShare = null;  // Are we screen sharing?
 
+// Window initializing
 Application.run = function()
 {
 	let self = this;
@@ -43,6 +42,7 @@ Application.run = function()
 					peer.on( 'call', ( c ) => {
 						if( c && c.on )
 						{
+							console.log( 'Something is happening \'call\'' );
 							// Answer the call and display remote stream
 							callList = [];
 							c.answer( stream );
@@ -71,6 +71,7 @@ Application.run = function()
 						{
 							if( doRetrying )
 							{
+								console.log( 'Retrying..' );
 								executeCall2();
 							}
 						}, 250 );
@@ -86,24 +87,339 @@ Application.run = function()
 		{
 			self.sendMessage( {
 				command: 'broadcast-call',
-				peerId: ge( 'currentPeerId' ).value,
-				conferenceId: ge( 'conferenceId' ).value,
-				conferenceName: ge( 'conferenceName' ).value
+				conference: {
+					id: ge( 'conferenceId' ).value,
+					name: ge( 'conferenceName' ).value,
+					peerId: ge( 'currentPeerId' ).value
+				}
 			} );
 		}
 		// We have a currentPeerId from remote, so tell we got it
 		else
 		{
 			ge( 'VideoStream' ).parentNode.classList.add( 'Loading' );
+			// Send back that we received call, with user info and peer id
 			Application.sendMessage( {
 				command: 'broadcast-received',
-				peerId: ge( 'currentPeerId' ).value,
-				remotePeerId: ge( 'remotePeerId' ).value,
-				conferenceId: ge( 'conferenceId' ).value,
-				conferenceName: ge( 'conferenceName' ).value
+				conferenceId: ge( 'conferenceId' ).value, // host conference id
+				user: {
+					id: Application.userId,
+					name: Application.fullName,
+					peerId: ge( 'currentPeerId' ).value // user's peer id
+				}
 			} );
 		}
 	} );
+}
+
+let callList = [];
+let currentVideoStream = null; // Current local stream now
+let currentRemoteStream = null; // Current remote stream now
+let retryTimeo = null;
+let retrying = false;
+let remotePeerId = false;
+
+function muteAudioVideo( type = false )
+{
+	let astate = document.querySelector( '.Mute' );
+	let vstate = document.querySelector( '.Vision' );
+
+	navigator.mediaDevices.getUserMedia( { video: true, audio: true } )
+	.then( ( stream ) => {
+		const localVideo = document.getElementById( 'VideoStream' );
+		localVideo.srcObject = stream;
+		currentVideoStream = stream;
+		
+		const audtrack = stream.getAudioTracks()[0];
+		const vidtrack = stream.getVideoTracks()[0];
+		
+		if( currentScreenShare )
+		{
+			vidtrack = currentScreenShare.getVideoTracks()[0];
+		}
+		
+		// Sync audio with button state
+		if( type == 'audio' )
+		{
+			if( astate.classList.contains( 'Muted' ) )
+			{
+				ge( 'VideoArea' ).classList.remove( 'NoAudio' );
+				astate.classList.remove( 'Muted' );
+				audtrack.enabled = true;
+			}
+			else
+			{
+				ge( 'VideoArea' ).classList.add( 'NoAudio' );
+				astate.classList.add( 'Muted' );
+				audtrack.enabled = false;
+				audtrack.stop();
+			}
+			// Continue audio (video disabled audio normally)
+			if( vstate.classList.contains( 'Muted' ) )
+			{
+				const audioOnlyStream = new MediaStream([audtrack]);
+			    localVideo.srcObject = audioOnlyStream;
+		    }
+		}
+	  	// Sync video with button state
+	  	if( type == 'video' )
+	  	{
+			if( vstate.classList.contains( 'Muted' ) )
+			{
+				ge( 'VideoArea' ).classList.remove( 'NoVideo' );
+				vstate.classList.remove( 'Muted' );
+				vidtrack.enabled = true;
+			}
+			else
+			{
+				ge( 'VideoArea' ).classList.add( 'NoVideo' );
+				vstate.classList.add( 'Muted' );
+				vidtrack.enabled = false;
+				vidtrack.stop();
+			}
+			// Continue audio (video disabled audio normally)
+			if( !astate.classList.contains( 'Muted' ) )
+			{
+				if( vstate.classList.contains( 'Muted' ) )
+				{
+					const audioOnlyStream = new MediaStream([audtrack]);
+				    localVideo.srcObject = audioOnlyStream;
+			    }
+			}
+		}
+		videoPoll();
+		setTimeout( function(){ videoPoll(); }, 100 );
+	} )
+	.catch( ( error ) => {
+		console.error( 'Error accessing media devices:', error );
+	} );
+}
+
+document.querySelector( '.HangUp' ).onclick = function()
+{
+	CloseView(); 
+}
+
+document.querySelector( '.Mute' ).onclick = function()
+{
+	muteAudioVideo( 'audio' );
+};
+
+document.querySelector( '.Vision' ).onclick = function()
+{
+	muteAudioVideo( 'video' );
+};
+
+document.querySelector( '.ScreenShare' ).onclick = function()
+{
+	if( this.classList.contains( 'On' ) )
+	{
+		stopScreenShare( this );	
+	}
+	else
+	{
+		startScreenShare( this );	
+	}
+};
+
+// Get messages ----------------------------------------------------------------
+
+Application.receiveMessage = function( msg )
+{
+	// We were told it is safe to start calling the remote peer
+	if( msg.command == 'initcall' && msg.hostPeerId && ge( 'currentPeerId' ).value == msg.userPeerId )
+	{
+		ge( 'remotePeerId' ).value = msg.hostPeerId;
+		
+		const localVideoStream = ge( 'VideoStream' ).srcObject;
+		
+		retrying = true;
+		
+		let retryTimeo = null;
+		
+		function executeCall()
+		{
+			const c = peer.call( msg.hostPeerId, localVideoStream );
+			if( c && c.on )
+			{
+				c.on( 'stream', ( remoteStream ) => {
+					// Prevent readding the same
+					if( !callList[ c.peer ] )
+					{
+						console.log( 'Invitee - We are initing stream!' );
+						ge( 'VideoArea' ).classList.remove( 'Loading' );
+						ge( 'VideoArea' ).classList.add( 'Connected' );
+						const remoteVideo = ge( 'RemoteVideoStream' );
+						remoteVideo.srcObject = remoteStream;
+						initStreamEvents( remoteVideo );
+						currentRemoteStream = remoteStream; // For safe keeping
+						
+						// In case of reconnects (this happens when remote goes away)
+						callList[ c.peer ] = c;
+					}
+					retrying = false;
+				} );
+				c.on( 'error', ( err ) => {
+					console.log( 'Error with connecting to remote stream.', err );
+				} );
+			}
+			clearTimeout( retryTimeo );
+			retryTimeo = setTimeout( function()
+			{
+				if( retrying )
+				{
+					//console.log( 'Retrying.' );
+					executeCall();
+				}
+			}, 250 );
+		}
+		executeCall();
+	}
+	else if( msg.command == 'poll' )
+	{
+		console.log( 'Was polled', msg );
+	}
+}
+
+// Helpers ---------------------------------------------------------------------
+
+function handleRemoteStreamEnded( e )
+{
+	if( e.type == 'mute' )
+	{
+		const remoteVideo = ge( 'RemoteVideoStream' );
+		//console.log( 'mute: ', e );
+	}
+	else
+	{
+		//console.log( 'End: ', e );
+	}
+	
+}
+function handleRemoteStreamMuted( e )
+{
+	if( e.type == 'mute' )
+	{
+		const remoteVideo = ge( 'RemoteVideoStream' );
+		//console.log( 'mute 2: ', e );
+	}
+	else
+	{
+		//console.log( 'End: ', e );
+	}
+}
+function initStreamEvents( obj )
+{
+	/*peer.on( 'mute', ( err ) => {
+		console.log( 'Mute - event with remote stream.', err );
+	} );
+	peer.on( 'ended', ( err ) => {
+		console.log( 'Ended - event with remote stream.', err );
+	} );*/
+	obj.onerror = function( e )
+	{
+		//console.log( 'Video Element Error: ', e );
+	}
+	obj.srcObject.getTracks().forEach( ( track ) => {
+	  track.onended = handleRemoteStreamEnded;
+	  track.onmute = handleRemoteStreamMuted;
+	  track.onerror = function( e )
+	  {
+	  	//console.log( 'What is it?', e );
+	  }
+	});
+}
+
+function videoPoll()
+{
+	// Call the other
+	if( ge( 'remotePeerId' ).value )
+	{
+		peer.call( ge( 'remotePeerId' ).value, ge( 'VideoStream' ).srcObject );
+		
+		/*// Just nudge our friend!
+		Application.sendMessage( {
+			command: 'broadcast-poll',
+			peerId: ge( 'remotePeerId' ).value
+		} );*/
+	}
+}
+
+// Function to start screen sharing
+function startScreenShare( el, retries = 5 ) 
+{
+	navigator.mediaDevices.getDisplayMedia( { video: true, auto: true } )
+		.then( ( stream ) => {
+			// Replace video track with screen sharing track
+			const localVideoTrack = currentVideoStream.getVideoTracks()[0];
+			localVideoTrack.stop();
+			
+			currentScreenShare = stream;
+			
+			currentVideoStream.removeTrack(localVideoTrack);
+			currentVideoStream.addTrack( stream.getVideoTracks()[ 0 ] );
+			
+			// Access the audio track from the 'stream' variable
+	      	stream.addTrack( currentVideoStream.getAudioTracks()[0] );
+
+			const localVideo = document.getElementById('VideoStream');
+			localVideo.srcObject = stream;
+			
+			currentVideoStream = stream;
+			
+			document.body.classList.add( 'ScreenShare' );
+			
+			el.classList.add( 'On' );
+			
+			videoPoll();
+		} )
+		.catch( ( error ) => {
+			return;
+			if( retries > 0 )
+			{
+				return setTimeout( function()
+				{
+					startScreenShare( el, retries - 1 );
+				}, 100 );
+			}
+		});
+}
+
+// Function to stop screen sharing and return to video call
+function stopScreenShare( el, retries = 5 ) 
+{
+	navigator.mediaDevices.getUserMedia( { video: true, audio: true } )
+		.then( ( stream ) => {
+			
+			currentScreenShare = null;
+			
+			// Replace screen sharing track with video track
+			const screenShareTrack = currentVideoStream.getVideoTracks()[ 0 ];
+			screenShareTrack.stop();
+			currentVideoStream.removeTrack( screenShareTrack );
+			currentVideoStream.addTrack( stream.getVideoTracks()[ 0 ] );
+
+			const localVideo = document.getElementById('VideoStream');
+			localVideo.srcObject = stream;
+			
+			currentVideoStream = stream;
+			
+			document.body.classList.remove( 'ScreenShare' );
+			
+			el.classList.remove( 'On' );
+			
+			videoPoll();
+		} )
+		.catch( ( error ) => {
+			console.error( 'Error accessing user media:', error );
+			if( retries > 0 )
+			{
+				return setTimeout( function()
+				{
+					stopScreenShare( el, retries - 1 );
+				}, 100 );
+			}
+		});
 }
 
 //--- Notes --------------------------------------------------------------------

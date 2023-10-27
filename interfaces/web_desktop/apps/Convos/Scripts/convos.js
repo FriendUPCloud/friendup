@@ -123,6 +123,8 @@ Application.receiveMessage = function( msg )
 			Application.receiveMessage( msg );
 		}, 25 );
 	}
+	
+	// Set up a reference to conference object
 	let xconference = window.FriendConvos && FriendConvos.conferenceMatrix ? FriendConvos.conferenceMatrix : null;
 	
 	// Receiving message on sender
@@ -272,39 +274,22 @@ Application.receiveMessage = function( msg )
     // User is broadcasting a call
     else if( msg.command == 'broadcast-call' )
     {
-    	FriendConvos.conferenceMatrix.broadcastStart( msg.peerId, msg.conferenceName, msg.conferenceId );
+    	xconference.broadcastStart( msg.conference );
     }
     // An invited user (me) starts broadcast participation (received signal)
     else if( msg.command == 'broadcast-start' )
     {
-    	FriendConvos.conferenceMatrix.broadcastAccept( msg.peerId, msg.conferenceName, msg.conferenceId, { id: msg.senderId, name: msg.senderName } );
+    	xconference.broadcastAccept( msg.conference, msg.sender );
     }
     // Callee receives a call broadcast, ready to connect
     else if( msg.command == 'broadcast-received' )
     {
-    	let contacts = FUI.getElementByUniqueId( 'contacts' );
-    	if( contacts )
-    	{
-			Application.SendUserMsg( {
-				recipientId: contacts.record.ID,
-				message: {
-					command: 'broadcast-connect',
-					peerId: msg.peerId,
-					remotePeerId: msg.remotePeerId
-				}
-			} );
-		}
+    	xconference.addConnection( msg.conferenceId, msg.user );
     }
     // This is when the remote is connecting in!
     else if( msg.command == 'broadcast-connect' )
     {
-    	let contacts = FUI.getElementByUniqueId( 'contacts' );
-    	if( contacts && contacts.videoCall )
-    	{
-    		// Switch peerId (current) and remotePeerId ( remote) as it comes
-    		// from the remote callee - and their remote is this peer..
-			contacts.videoCall.sendMessage( { command: 'initcall', peerId: msg.remotePeerId, remotePeerId: msg.peerId } );
-		}
+    	xconference.connectToHost( msg.conferenceId, msg.userPeerId );
     }
     // Polls broadcast
     else if( msg.command == 'broadcast-poll' )
