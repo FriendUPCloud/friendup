@@ -53,6 +53,8 @@ Application.run = function()
 								// Prevent readding the same
 								if( !callList[ c.peer ] )
 								{
+									remotePeerCount++;
+									
 									callList[ c.peer ] = c;
 									
 									ge( 'VideoArea' ).classList.remove( 'Loading' );
@@ -240,10 +242,6 @@ Application.receiveMessage = function( msg )
 	// We were told it is safe to start calling the remote peer
 	if( msg.command == 'initcall' && msg.hostPeerId && ge( 'currentPeerId' ).value == msg.hostPeerId )
 	{
-		console.log( 'Got initcall: ' + msg.hostPeerId + ' :: ' + msg.userPeerId );
-		
-		remotePeerCount++;;
-		
 		const localVideoStream = ge( 'VideoStream' ).srcObject;
 		
 		retrying = true;
@@ -260,6 +258,8 @@ Application.receiveMessage = function( msg )
 					// Prevent readding the same
 					if( !callList[ c.peer ] )
 					{
+						remotePeerCount++;
+						
 						ge( 'VideoArea' ).classList.remove( 'Loading' );
 						ge( 'VideoArea' ).classList.add( 'Connected' );
 						
