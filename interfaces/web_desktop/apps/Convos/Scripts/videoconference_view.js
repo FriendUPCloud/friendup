@@ -29,7 +29,6 @@ Application.run = function()
     } );
 	peer.on( 'open', ( peerId ) => {
 		ge( 'currentPeerId' ).value = peerId;
-	  	console.log( '@Application.run: Peer is \'open\'' );
 	  	// Get camera audio and video
 		const localVideo = ge( 'VideoStream' );
 		navigator.mediaDevices.getUserMedia( { video: true, audio: true } )
@@ -44,11 +43,9 @@ Application.run = function()
 				// Set up call event so we can be called
 				function executeCall2()
 				{
-					console.log( '@Application.run: Setting up listener on \'call\'' );
 					peer.on( 'call', ( c ) => {
 						if( c && c.on )
 						{
-							console.log( '@Something is happening \'call\'' );
 							// Answer the call and display remote stream
 							callList = [];
 							c.answer( stream );
@@ -85,7 +82,6 @@ Application.run = function()
 						}
 						else
 						{
-							console.log( '@Preparing to retry on \'call\'' );
 							clearTimeout( doRetryTimeo );
 							doRetryTimeo = setTimeout( function()
 							{
@@ -257,7 +253,6 @@ Application.receiveMessage = function( msg )
 		
 		function executeCall()
 		{
-			console.log( '@Invitee: Calling host: ' + msg.userPeerId );
 			const c = peer.call( msg.userPeerId, localVideoStream );
 			if( c && c.on )
 			{
@@ -265,7 +260,6 @@ Application.receiveMessage = function( msg )
 					// Prevent readding the same
 					if( !callList[ c.peer ] )
 					{
-						console.log( '@Invitee - We are initing stream!' );
 						ge( 'VideoArea' ).classList.remove( 'Loading' );
 						ge( 'VideoArea' ).classList.add( 'Connected' );
 						
@@ -296,7 +290,6 @@ Application.receiveMessage = function( msg )
 			{
 				if( retrying )
 				{
-					console.log( '@Retrying.' );
 					executeCall();
 				}
 			}, timeo );

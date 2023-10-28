@@ -291,8 +291,6 @@ class VideoConference
 			conf.participants.push( user );
 		
 		// Tell user to connect
-		console.log( 'Invitee sends connect to host user id: ' + user.id );
-		console.log( 'Hmm: ', conf );
 		Application.SendUserMsg( {
 			recipientId: ownerId,
 			message: {
@@ -307,7 +305,6 @@ class VideoConference
 	{
 		let conf = this.conferences[ conferenceId ];
 		if( !conf ) return;
-		console.log( '@Initialize call on user\'s peer: ' + userPeerId + ' (' + conferenceId + ')' );
 		conf.view.sendMessage( { command: 'initcall', hostPeerId: conf.peerId, userPeerId: userPeerId } );
 	}
 }
