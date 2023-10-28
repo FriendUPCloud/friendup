@@ -16,12 +16,12 @@ Invi: Runs xconference.answerVideoCall()
 Invi: Creates conference structure with conference id
 Invi: Opens view
 Invi: Sends 'broadcast-received' to Host
+Invi: Runs xconference.addConnection() to add user to conference by id
+Invi: Sends 'broadcast-connect' to Invitee
 
-Host: Runs xconference.addConnection() to add user to conference by id
-Host: Sends 'broadcast-connect' to Invitee
 
-Invi: Receives 'broadcast-connect'
-Invi: Runs xconference.connectToHost()
-Invi: Sends 'initcall' to view
+Host: Receives 'broadcast-connect'
+Host: Runs xconference.connectToInvitee()
+Host: Sends 'initcall' to view
 
 

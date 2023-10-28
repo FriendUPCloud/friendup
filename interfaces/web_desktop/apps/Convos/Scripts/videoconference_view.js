@@ -8,8 +8,14 @@
 *                                                                              *
 *****************************************************************************©*/
 
-window.peer = null;         // Just a global peer object
-currentScreenShare = null;  // Are we screen sharing?
+window.peer = null;             // Just a global peer object
+let currentScreenShare = null;      // Are we screen sharing?
+let callList = [];              //
+let currentVideoStream = null;  // Current local stream now
+let currentRemoteStream = null; // Current remote stream now
+let retryTimeo = null;          //
+let retrying = false;           //
+let remotePeerId = false;       //
 
 // Window initializing
 Application.run = function()
@@ -23,7 +29,7 @@ Application.run = function()
     } );
 	peer.on( 'open', ( peerId ) => {
 		ge( 'currentPeerId' ).value = peerId;
-	  
+	  	console.log( '@Application.run: Peer is \'open\'' );
 	  	// Get camera audio and video
 		const localVideo = ge( 'VideoStream' );
 		navigator.mediaDevices.getUserMedia( { video: true, audio: true } )
@@ -39,10 +45,11 @@ Application.run = function()
 				// Set up call event so we can be called
 				function executeCall2()
 				{
+					console.log( '@Application.run: Setting up listener on \'call\'' );
 					peer.on( 'call', ( c ) => {
 						if( c && c.on )
 						{
-							console.log( 'Something is happening \'call\'' );
+							console.log( '@Something is happening \'call\'' );
 							// Answer the call and display remote stream
 							callList = [];
 							c.answer( stream );
@@ -66,15 +73,19 @@ Application.run = function()
 								console.log( 'Call error...', err );
 							} );
 						}
-						clearTimeout( doRetryTimeo );
-						doRetryTimeo = setTimeout( function()
+						else
 						{
-							if( doRetrying )
+							console.log( '@Preparing to retry on \'call\'' );
+							clearTimeout( doRetryTimeo );
+							doRetryTimeo = setTimeout( function()
 							{
-								console.log( 'Retrying..' );
-								executeCall2();
-							}
-						}, 250 );
+								if( doRetrying )
+								{
+									console.log( 'Retrying..' );
+									executeCall2();
+								}
+							}, 500 );
+						}
 					} );
 				}
 				executeCall2();
@@ -102,6 +113,7 @@ Application.run = function()
 			Application.sendMessage( {
 				command: 'broadcast-received',
 				conferenceId: ge( 'conferenceId' ).value, // host conference id
+				ownerId: ge( 'ownerId' ).value,
 				user: {
 					id: Application.userId,
 					name: Application.fullName,
@@ -111,13 +123,6 @@ Application.run = function()
 		}
 	} );
 }
-
-let callList = [];
-let currentVideoStream = null; // Current local stream now
-let currentRemoteStream = null; // Current remote stream now
-let retryTimeo = null;
-let retrying = false;
-let remotePeerId = false;
 
 function muteAudioVideo( type = false )
 {
@@ -227,26 +232,29 @@ document.querySelector( '.ScreenShare' ).onclick = function()
 Application.receiveMessage = function( msg )
 {
 	// We were told it is safe to start calling the remote peer
-	if( msg.command == 'initcall' && msg.hostPeerId && ge( 'currentPeerId' ).value == msg.userPeerId )
+	if( msg.command == 'initcall' && msg.hostPeerId && ge( 'currentPeerId' ).value == msg.hostPeerId )
 	{
-		ge( 'remotePeerId' ).value = msg.hostPeerId;
+		console.log( 'Got initcall: ' + msg.hostPeerId + ' :: ' + msg.userPeerId );
+		ge( 'remotePeerId' ).value = msg.userPeerId;
 		
 		const localVideoStream = ge( 'VideoStream' ).srcObject;
 		
 		retrying = true;
 		
 		let retryTimeo = null;
+		let timeo = 750; // Initial timeout
 		
 		function executeCall()
 		{
-			const c = peer.call( msg.hostPeerId, localVideoStream );
+			console.log( '@Invitee: Calling host: ' + msg.userPeerId );
+			const c = peer.call( msg.userPeerId, localVideoStream );
 			if( c && c.on )
 			{
 				c.on( 'stream', ( remoteStream ) => {
 					// Prevent readding the same
 					if( !callList[ c.peer ] )
 					{
-						console.log( 'Invitee - We are initing stream!' );
+						console.log( '@Invitee - We are initing stream!' );
 						ge( 'VideoArea' ).classList.remove( 'Loading' );
 						ge( 'VideoArea' ).classList.add( 'Connected' );
 						const remoteVideo = ge( 'RemoteVideoStream' );
@@ -268,10 +276,13 @@ Application.receiveMessage = function( msg )
 			{
 				if( retrying )
 				{
-					//console.log( 'Retrying.' );
+					console.log( '@Retrying.' );
 					executeCall();
 				}
-			}, 250 );
+			}, timeo );
+			
+			timeo -= 250;
+			if( timeo < 500 ) timeo = 500;
 		}
 		executeCall();
 	}
@@ -321,12 +332,12 @@ function initStreamEvents( obj )
 		//console.log( 'Video Element Error: ', e );
 	}
 	obj.srcObject.getTracks().forEach( ( track ) => {
-	  track.onended = handleRemoteStreamEnded;
-	  track.onmute = handleRemoteStreamMuted;
-	  track.onerror = function( e )
-	  {
-	  	//console.log( 'What is it?', e );
-	  }
+		track.onended = handleRemoteStreamEnded;
+		track.onmute = handleRemoteStreamMuted;
+		track.onerror = function( e )
+		{
+			//console.log( 'What is it?', e );
+		}
 	});
 }
 

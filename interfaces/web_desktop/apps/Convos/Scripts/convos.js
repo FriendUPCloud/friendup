@@ -281,15 +281,16 @@ Application.receiveMessage = function( msg )
     {
     	xconference.broadcastAccept( msg.conference, msg.sender );
     }
-    // Callee receives a call broadcast, ready to connect
+    // Invitee receives a call broadcast, ready to connect
     else if( msg.command == 'broadcast-received' )
     {
-    	xconference.addConnection( msg.conferenceId, msg.user );
+    	xconference.addConnection( msg.conferenceId, msg.ownerId, msg.user );
     }
     // This is when the remote is connecting in!
     else if( msg.command == 'broadcast-connect' )
     {
-    	xconference.connectToHost( msg.conferenceId, msg.userPeerId );
+    	console.log( 'Receiving broadcast-connect' );
+    	xconference.connectToInvitee( msg.conferenceId, msg.userPeerId );
     }
     // Polls broadcast
     else if( msg.command == 'broadcast-poll' )

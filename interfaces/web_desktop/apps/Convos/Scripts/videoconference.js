@@ -113,6 +113,7 @@ class VideoConference
 				peerId: incomingPeerId,
 				id: conferenceId,
 				name: name,
+				ownerId: conference.ownerId,
 				participants: [ sender ]
 			};
 		}
@@ -159,7 +160,8 @@ class VideoConference
 		f.replacements = { 
 			'remotePeerId': incomingPeerId, 
 			'currentPeerId': '', 
-			'conferenceId': conf.id, 
+			'conferenceId': conf.id,
+			'ownerId': conf.ownerId,
 			'conferenceName': conf.name 
 		};
 		f.i18n();
@@ -194,8 +196,9 @@ class VideoConference
 					command: 'broadcast-start',
 					conference: {
 						id: confId,
+						name: name,
 						peerId: peerId,
-						name: name
+						ownerid: Application.uniqueId
 					},
 					sender: {
 						id: Application.uniqueId,
@@ -214,7 +217,8 @@ class VideoConference
 						conference: {
 							id: confId,
 							name: name,
-							peerId: peerId
+							peerId: peerId,
+							ownerId: Application.uniqueId
 						},
 						sender: {
 							id: Application.uniqueId,
@@ -263,8 +267,8 @@ class VideoConference
 		}
 	}
 	
-	// Host adds a user's connection and info
-	addConnection( conferenceId, user )
+	// Client adds a user's connection and info
+	addConnection( conferenceId, ownerId, user )
 	{
 		if( !this.conferences[ conferenceId ] ) return false;
 			
@@ -285,8 +289,10 @@ class VideoConference
 			conf.participants.push( user );
 		
 		// Tell user to connect
+		console.log( 'Invitee sends connect to host user id: ' + user.id );
+		console.log( 'Hmm: ', conf );
 		Application.SendUserMsg( {
-			recipientId: user.id,
+			recipientId: ownerId,
 			message: {
 				command: 'broadcast-connect',
 				userPeerId: user.peerId, // For verification
@@ -295,10 +301,11 @@ class VideoConference
 		} );
 	}
 	
-	connectToHost( conferenceId, userPeerId )
+	connectToInvitee( conferenceId, userPeerId )
 	{
 		let conf = this.conferences[ conferenceId ];
 		if( !conf ) return;
+		console.log( '@Initialize call on user\'s peer: ' + userPeerId + ' (' + conferenceId + ')' );
 		conf.view.sendMessage( { command: 'initcall', hostPeerId: conf.peerId, userPeerId: userPeerId } );
 	}
 }
