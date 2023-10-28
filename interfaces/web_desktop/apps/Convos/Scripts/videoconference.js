@@ -75,7 +75,8 @@ class VideoConference
 			'conferenceId': conf.id, 
 			'currentPeerId': '', 
 			'remotePeerId': '', 
-			'conferenceName': name 
+			'conferenceName': name,
+			'ishost': '1'
 		};
 		f.i18n();
 		f.onLoad = function( data )
@@ -162,7 +163,8 @@ class VideoConference
 			'currentPeerId': '', 
 			'conferenceId': conf.id,
 			'ownerId': conf.ownerId,
-			'conferenceName': conf.name 
+			'conferenceName': conf.name,
+			'ishost': '0'
 		};
 		f.i18n();
 		f.onLoad = function( data )

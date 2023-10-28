@@ -1,7 +1,7 @@
 
 	<div id="VideoArea">
 		<video id="VideoStream" autoplay muted></video>
-		<video id="RemoteVideoStream" autoplay></video>
+		<div id="RemoteStreams"></div>
 		<div class="ScreenShareInfo"><span>{i18n_sharing_screen}</span></div>
 	</div>
 	<div id="Toolbar">
@@ -10,6 +10,7 @@
 		<input type="hidden" id="currentPeerId" value="{currentPeerId}"/>
 		<input type="hidden" id="conferenceName" value="{conferenceName}"/>
 		<input type="hidden" id="ownerId" value="{ownerId}"/>
+		<input type="hidden" id="ishost" value="{ishost}"/>
 		<div class="Buttons">
 			<div class="NiceButton HangUp"><span></span></div>
 			<div class="NiceButton Vision"><span></span></div>

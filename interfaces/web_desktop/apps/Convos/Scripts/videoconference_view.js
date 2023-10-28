@@ -12,10 +12,10 @@ window.peer = null;             // Just a global peer object
 let currentScreenShare = null;      // Are we screen sharing?
 let callList = [];              //
 let currentVideoStream = null;  // Current local stream now
-let currentRemoteStream = null; // Current remote stream now
 let retryTimeo = null;          //
 let retrying = false;           //
-let remotePeerId = false;       //
+let remotePeers = {};           // Remote peers
+let remotePeerCount = 0;        // Count remote peers
 
 // Window initializing
 Application.run = function()
@@ -37,7 +37,6 @@ Application.run = function()
 				localVideo.srcObject = stream;
 				
 				currentVideoStream = stream;
-				const remoteVideo = ge( 'RemoteVideoStream' );
 				
 				let doRetrying = true;
 				let doRetryTimeo = false;
@@ -57,12 +56,23 @@ Application.run = function()
 								// Prevent readding the same
 								if( !callList[ c.peer ] )
 								{
+									callList[ c.peer ] = c;
+									
 									ge( 'VideoArea' ).classList.remove( 'Loading' );
 									ge( 'VideoArea' ).classList.add( 'Connected' );
-									remoteVideo.srcObject = remoteStream;
-									initStreamEvents( remoteVideo );
-									callList[ c.peer ] = c;
-									currentRemoteStream = remoteStream; // For safe keeping
+									
+									// Set up in remote peers
+									let rvd = document.createElement( 'video' );
+									rvd.setAttribute( 'muted', '' );
+									rvd.setAttribute( 'autoplay', 'autoplay' );
+									rvd.srcObject = remoteStream;
+									ge( 'RemoteStreams' ).appendChild( rvd );
+									initStreamEvents( rvd );
+									remotePeers[ c.peer ] = {
+										peerId: c.peer,
+										remoteStream: remoteStream,
+										remoteVideo: rvd
+									};
 								}
 								doRetrying = false;
 							} );
@@ -94,7 +104,7 @@ Application.run = function()
 				console.error( 'Error accessing media devices:', error );
 			} );
 		// We are starting the stream, so broadcast call
-		if( !ge( 'remotePeerId' ).value )
+		if( ge( 'ishost' ).value == '1' )
 		{
 			self.sendMessage( {
 				command: 'broadcast-call',
@@ -235,7 +245,8 @@ Application.receiveMessage = function( msg )
 	if( msg.command == 'initcall' && msg.hostPeerId && ge( 'currentPeerId' ).value == msg.hostPeerId )
 	{
 		console.log( 'Got initcall: ' + msg.hostPeerId + ' :: ' + msg.userPeerId );
-		ge( 'remotePeerId' ).value = msg.userPeerId;
+		
+		remotePeerCount++;;
 		
 		const localVideoStream = ge( 'VideoStream' ).srcObject;
 		
@@ -257,10 +268,19 @@ Application.receiveMessage = function( msg )
 						console.log( '@Invitee - We are initing stream!' );
 						ge( 'VideoArea' ).classList.remove( 'Loading' );
 						ge( 'VideoArea' ).classList.add( 'Connected' );
-						const remoteVideo = ge( 'RemoteVideoStream' );
-						remoteVideo.srcObject = remoteStream;
-						initStreamEvents( remoteVideo );
-						currentRemoteStream = remoteStream; // For safe keeping
+						
+						// Set up in remote peers
+						let rvd = document.createElement( 'video' );
+						rvd.setAttribute( 'muted', '' );
+						rvd.setAttribute( 'autoplay', 'autoplay' );
+						rvd.srcObject = remoteStream;
+						ge( 'RemoteStreams' ).appendChild( rvd );
+						initStreamEvents( rvd );
+						remotePeers[ c.peer ] = {
+							peerId: c.peer,
+							remoteStream: remoteStream,
+							remoteVideo: rvd
+						};
 						
 						// In case of reconnects (this happens when remote goes away)
 						callList[ c.peer ] = c;
@@ -298,7 +318,7 @@ function handleRemoteStreamEnded( e )
 {
 	if( e.type == 'mute' )
 	{
-		const remoteVideo = ge( 'RemoteVideoStream' );
+		//const remoteVideo = ge( 'RemoteVideoStream' );
 		//console.log( 'mute: ', e );
 	}
 	else
@@ -311,7 +331,7 @@ function handleRemoteStreamMuted( e )
 {
 	if( e.type == 'mute' )
 	{
-		const remoteVideo = ge( 'RemoteVideoStream' );
+		//const remoteVideo = ge( 'RemoteVideoStream' );
 		//console.log( 'mute 2: ', e );
 	}
 	else
@@ -344,9 +364,9 @@ function initStreamEvents( obj )
 function videoPoll()
 {
 	// Call the other
-	if( ge( 'remotePeerId' ).value )
+	if( remotePeerCount > 0 )
 	{
-		peer.call( ge( 'remotePeerId' ).value, ge( 'VideoStream' ).srcObject );
+		//peer.call( ge( 'remotePeerId' ).value, ge( 'VideoStream' ).srcObject );
 		
 		/*// Just nudge our friend!
 		Application.sendMessage( {
