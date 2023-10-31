@@ -14,7 +14,7 @@ Friend.iconsSelectedCount = 0;
 Friend.currentMenuItems = 0;
 Friend.scope = 'API';
 
-FriendScope = window.opener ? window.opener : parent;
+FriendScope = window.opener ? window.parent.window.opener : parent;
 
 Friend.lib = Friend.lib || {};
 Friend.GUI = Friend.GUI || {};
@@ -901,6 +901,9 @@ function receiveEvent( event, queued )
 		return;
 	}
 
+	if( dataPacket.friendMode && dataPacket.friendMode == 'native' )
+		window.nativeMode = true;
+
 	// If we have a response, the app has no custom receiveMessage()
 	// This in many cases means that the Application object was not loaded
 	let hasDefaultMethod = Application.receiveMessage( { checkDefaultMethod: 1 } ) == 'yes';
@@ -935,7 +938,7 @@ function receiveEvent( event, queued )
 	}
 	
 	switch( dataPacket.command )
-	{	
+	{
 		// Update clipboard
 		case 'updateclipboard':
 			Friend.clipboard = dataPacket.value;
@@ -6985,7 +6988,8 @@ if( !Friend.noevents && ( typeof( _kresponse ) == 'undefined' || !window._keysAd
 {
 	function _kfocus( e )
 	{
-		//console.log( 'Focusing: ', e.target, document.activeElement );
+		/*console.log( 'Focusing: ', e.target, document.activeElement );
+		*/
 	}
 
 	function _kmousedown( e )

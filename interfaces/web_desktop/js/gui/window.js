@@ -1347,8 +1347,7 @@ function _ActivateWindow( div, nopoll, e )
 		if( window.currentMovable )
 		{
 			if( window.currentMovable != div )
-				window.currentMovable = div;
-			
+				currentMovable = div;
 		}
 		if( globalConfig.focusMode == 'clicktofront' )
 			_WindowToFront( div );
@@ -1983,15 +1982,22 @@ function HasClassname( div, classname )
 // Could one day be moved to the View class...
 function CloseView( win, delayed )
 {
-	if( !win && window.currentMovable )
-		win = window.currentMovable;
+	let appWindow = window.opener ? window.opener.window : window;
+	
+	if( !win )
+	{
+		if( appWindow.currentMovable )
+		{
+			win = appWindow.currentMovable;
+		}
+	}
 	
 	let isDialog = false;
 	
-	let title = win.windowObject.getFlag( 'Title' );
 	
 	if( win )
 	{
+		let title = win.windowObject.getFlag( 'Title' );
 		// Clean up!
 		if( win == window.regionWindow )
 			window.regionWindow = null;
@@ -2595,6 +2601,7 @@ class View
 			bod.innerHTML = '<html><head><link rel="stylesheet" href="/themes/friendup13/theme.css;/themes/friendup13/native.css"/></head><body><div class="ViewContainer"><div class="View"><div class="Title"></div><div class="Content"></div></div></div></body></html>';
 			
 			let content = bod.querySelector( '.Content' );
+			content.windowObject = self;
 			content.viewContainer = bod.querySelector( '.ViewContainer' );
 			content.viewNode = bod.querySelector( '.View' );
 			content.viewNode.windowObject = self;
@@ -2606,7 +2613,6 @@ class View
 			
 			bod.classList.remove( 'Loading' );
 			self.createContentEventFuncs( content );
-			content.windowObject = self;
 			self._window = content;
 			self.content = content;
 			self.content.windowObject = self;
@@ -3258,6 +3264,11 @@ class View
 				dataObject.applicationDisplayName = this.iframe.applicationDisplayName;
 			}
 			if( !dataObject.type ) dataObject.type = 'system';
+			
+			if( self.nativeWindow )
+			{
+				dataObject.friendMode = 'native';
+			}
 			
 			this.iframe.contentWindow.postMessage( 
 				JSON.stringify( dataObject ), origin 
