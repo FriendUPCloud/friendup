@@ -2479,6 +2479,3950 @@ function WindowScrolling( e )
 	}
 }
 
+/**
+ * View class
+ *
+ * The View class is used to created views/windows in Friend - it is the most used class to build the user interface
+ *
+ * The View class has a sibling, the Screen class that creates a new Friend screen.
+ *
+ *
+ *
+ * @param args - an object containing the initial parameters for the view. As an absolute minium title, width and height should be provided
+ * @return View - a pointer to the new instance that justhas been created
+ *
+ */
+class View
+{
+	constructor( args )
+	{
+		let self = this;
+		
+		// Windows on own screen ignores the virtual workspaces
+		if( args.screen && args.screen != Workspace.screen )
+		{
+			if( globalConfig && typeof( globalConfig.workspaceCurrent ) != 'undefined' )
+				this.workspace = globalConfig.workspaceCurrent;
+			else this.workspace = 0;
+		
+			if( args.workspace === 0 || args.workspace )
+			{
+				if( args.workspace < globalConfig.workspacecount - 1 )
+				{
+					this.workspace = args.workspace;
+				}
+			}
+		}
+		
+		// Special hook for dashboard related workspace
+		if( window.hideDashboard && ( !args || !args.invisible ) )
+		{
+			let newApp = true;
+			if( args.applicationId )
+			{
+				for( let a in Workspace.applications )
+				{
+					let app = Workspace.applications[ a ];
+					if( app.applicationId == args.applicationId )
+					{
+						let count = 0;
+						for( let b in app.windows )
+						{
+							count++;
+							if( count > 1 )
+							{
+								newApp = false;
+								break;
+							}
+						}
+					}
+				}
+			}
+			if( newApp )
+				window.hideDashboard();
+		}
+		
+		// Start off
+		if( !args )
+			args = {};
+		this.args = args;
+
+		this.widgets = []; // Widgets stuck to this view window
+
+		// Reaffirm workspace
+		this.setWorkspace = function()
+		{
+			// Ignore windows on own screen
+			if( this.flags && this.flags.screen && this.flags.screen != Workspace.screen ) return;
+			if( globalConfig.workspacecount > 1 )
+			{
+				let ws = this.getFlag( 'left' );
+				ws = parseInt( ws ) / window.innerWidth;
+				this.workspace = Math.floor( ws );
+			}
+		}
+		
+		// Create event functions on content
+		this.createContentEventFuncs = function( cont )
+		{
+			// Create event handler for view window
+			if( !cont.events )
+				cont.events = new Array ();
+			cont.AddEvent = function( event, func )
+			{
+				if( typeof(this.events[event]) == 'undefined' )
+					this.events[event] = [];
+				this.events[event].push( func );
+				return func;
+			}
+			cont.RemoveEvent = function( event, func )
+			{
+				if( typeof( this.events[event] ) == 'undefined' ) return false;
+				let o = [];
+				let found = false;
+				for( var a in this.events[event] )
+				{
+					if( this.events[event][a] != func )
+					{
+						o.push( this.events[event][a] );
+					}
+					else found = true;
+				}
+				this.events[event] = o;
+				return found;
+			}
+		}
+
+		// Clean data
+		this.cleanHTMLData = Friend.GUI.view.cleanHTMLData;
+		this.removeScriptsFromData = Friend.GUI.view.removeScriptsFromData;
+
+		// Setup the dom elements
+		// div = existing DIV dom element or 'CREATE'
+		// titleStr = title string
+		// width = width
+		// height = height (in pixels)
+		// id = window id
+		// flags = list of constructor flags
+		// applicationId = app id..
+		this.createDomElements = function( div, titleStr, width, height, id, flags, applicationId, parentOverride = false )
+		{
+			if( this.created ) 
+			{
+				return;
+			}
+			this.created = true;
+			if ( !div ) return false;
+			
+			// Native mode? Creates a new place for the view
+			this.nativeWindow = false;
+
+			// If we're making a movable window with a unique id, the make sure
+			// it doesn't exist, in case, just return the existing window
+			let contentscreen = false;
+			let parentWindow = false;
+			if( !titleStr )
+				titleStr = '';
+			let transparent = false;
+
+			let filter = [
+				'min-width', 'min-height', 'width', 'height', 'id', 'title', 
+				'screen', 'parentView', 'transparent', 'minimized', 'dialog', 
+				'standard-dialog', 'sidebarManaged'
+			];
+
+			if( !flags.screen )
+			{
+				flags.screen = Workspace.screen;
+			}
+
+			// This needs to be set immediately!
+			self.parseFlags( flags, filter );
+			
+			let app = false;
+			if( window._getAppByAppId )
+			{
+				let app = _getAppByAppId( div.applicationId );
+			}
+			
+			// Set a parent relation to main view
+			if( app && app.mainView	)
+			{
+				self.parentView = app.mainView;
+			}
+			
+			// Set initial workspace
+			if( !flags.screen || flags.screen == Workspace.screen )
+			{
+				if( flags.workspace && flags.workspace > 0 )
+				{
+					self.workspace = flags.workspace;
+				}
+				else
+				{
+					self.workspace = globalConfig.workspaceCurrent;
+				}
+			}
+			
+			if( !self.getFlag( 'min-width' ) )
+				this.setFlag( 'min-width', 100 );
+			if( !self.getFlag( 'min-height' ) )
+				this.setFlag( 'min-height', 100 );
+			
+			// Get newly parsed flags
+			width = self.getFlag( 'width' );
+			height = self.getFlag( 'height' );
+			
+			id = self.getFlag( 'id' );
+			titleStr = self.getFlag( 'title' );
+			if( !titleStr ) titleStr = 'Unnamed window';
+			contentscreen = self.getFlag( 'screen' );
+			parentWindow = self.getFlag( 'parentView' );
+			transparent = self.getFlag( 'transparent' );
+			
+			// Clean ID
+			if( !id )
+			{
+				id = titleStr.split( /[^a-z0-9]+/i ).join( '_' );
+				if( id.substr( 0, 1 ) == '_' )
+					id = 'win' + id;
+				let tmp = id;
+				let num = 2;
+				while( typeof ( movableWindows[ tmp ] ) != 'undefined' )
+				{
+					tmp = id + '_' + (num++);
+				}
+				id = tmp;
+			}
+			// Clean ID
+			else
+			{
+				id = id.split( /[^a-z0-9]+/i ).join( '_' );
+				if( id.substr( 0, 1 ) == '_' )
+					id = 'win' + id;
+			}
+
+			// Make a unique id
+			let uniqueId = id;
+			uniqueId = uniqueId.split( /[ |:]/i ).join ( '_' );
+
+			// Where to add div..
+			let divParent = false;
+			let iconSpan;
+			let viewContainer = null;
+
+			// Window is already taken
+			if( id && typeof( movableWindows[ id ] ) != 'undefined' )
+				return false;
+
+			if( id )
+			{
+				// Make a container to put the view div inside of
+				viewContainer = document.createElement( 'div' );
+				viewContainer.className = 'ViewContainer';
+				viewContainer.style.display = 'none';
+				
+				// Set up view title
+				let viewTitle = document.createElement( 'div' );
+				viewTitle.className = 'ViewTitle';
+				viewContainer.appendChild( viewTitle );
+				
+				// Get icon for visualizations
+				if( applicationId )
+				{
+					for( var a = 0; a < Workspace.applications.length; a++ )
+					{
+						if( Workspace.applications[a].applicationId == applicationId )
+						{
+							if( Workspace.applications[a].icon )
+							{
+								let ic = Workspace.applications[a].icon;
+								iconSpan = document.createElement( 'span' );
+								iconSpan.classList.add( 'ViewIcon' );
+								iconSpan.style.backgroundImage = 'url(\'' + ic + '\')';
+								self.viewIcon = iconSpan;
+								viewContainer.appendChild( iconSpan );
+							}
+						}
+					}
+					
+					// Add mobile back button
+					if( isMobile )
+					{
+						let md = document.createElement( 'div' );
+						md.className = 'MobileBack';
+						self.mobileBack = md;
+						md.ontouchstart =function( e )
+						{
+							if( window._getAppByAppId )
+							{
+								let app = _getAppByAppId( div.applicationId );
+								if( app.mainView )
+								{
+									FocusOnNothing();
+									_ActivateWindow( app.mainView.content.parentNode );
+									self.close();
+									return cancelBubble( e );
+								}
+							}
+							return cancelBubble( e );
+						};
+						viewContainer.appendChild( md );
+					}
+				}
+				else
+				{
+					iconSpan = document.createElement( 'span' );
+					iconSpan.classList.add( 'ViewIcon' );
+					self.viewIcon = iconSpan;
+					iconSpan.style.backgroundImage = 'url(/iconthemes/friendup15/Folder.svg)';
+					viewContainer.appendChild( iconSpan );
+					
+					// Add mobile back button
+					if( isMobile )
+					{
+						let md = document.createElement( 'div' );
+						md.className = 'MobileBack';
+						self.mobileBack = md;
+						md.ontouchstart =function( e )
+						{
+							if( window._getAppByAppId )
+							{
+								let app = _getAppByAppId( div.applicationId );
+								if( app.mainView )
+								{
+									FocusOnNothing();
+									_ActivateWindow( app.mainView.content.parentNode );
+									self.close();
+									return cancelBubble( e );
+								}
+							}
+							return cancelBubble( e );
+						};
+						viewContainer.appendChild( md );
+					}
+					
+				}
+				
+				if( div == 'CREATE' )
+				{	
+					div = document.createElement( 'div' );
+					
+					if( applicationId ) div.applicationId = applicationId;
+					div.parentWindow = false;
+					
+					// Native mode probably
+					if( parentOverride )
+					{
+						divParent = parentOverride;
+					}
+					else if( parentWindow )
+					{
+						divParent = parentWindow._window;
+						div.parentWindow = parentWindow;
+					}
+					// Defined screen (and we're not in multiple workspaces)
+					else if( contentscreen )
+					{
+						divParent = contentscreen.contentDiv ? contentscreen.contentDiv : contentscreen.div;
+					}
+					else if( typeof ( window.currentScreen ) != 'undefined' )
+					{
+						divParent = window.currentScreen;
+					}
+					else 
+					{
+						divParent = document.body;
+					}
+				}
+				
+				div.viewTitle = viewTitle;
+				
+				// Designate
+				movableWindows[ id ] = div;
+				div.titleString = titleStr;
+				div.viewId = id;
+				
+				if( !flags.screen || flags.screen == Workspace.screen )
+				{
+					div.workspace = self.workspace;
+				}
+				else div.workspace = 0;
+			}
+			else if ( div == 'CREATE' )
+			{
+				div = document.createElement ( 'div' );
+				if( applicationId ) div.applicationId = applicationId;
+				div.parentWindow = false;
+				// Native mode probably
+				if( parentOverride )
+				{
+					divParent = parentOverride;
+				}
+				else if( parentWindow )
+				{
+					divParent = parentWindow._window;
+					div.parentWindow = parentWindow;
+				}
+				// Defined screen (and we're not in multiple workspaces)
+				else if( contentscreen )
+				{
+					divParent = contentscreen.contentDiv ? contentscreen.contentDiv : contentscreen.div;
+				}
+				else if( typeof( window.currentScreen ) != 'undefined' )
+				{
+					divParent = window.currentScreen;
+				}
+				else
+				{
+					divParent = document.body;
+				}
+				if( divParent.object && divParent.object._screen )
+				{
+					divParent = divParent.object._screen;
+				}
+
+				// ID must be unique
+				let num = 0;
+				let oid = id;
+				while( ge( id ) )
+					id = oid + '_' + ++num;
+
+				div.id = id ? id : ( 'window_' + Friend.GUI.view.movableViewIdSeed++ );
+				div.viewId = div.id;
+				movableWindows[ div.id ] = div;
+			}
+			// Just register the view
+			else
+			{
+				movableWindows[ div.id ] = div;
+			}
+
+			if( isMobile )
+				Workspace.exitMobileMenu();
+
+		    // Set placeholder quickmenu
+		    div.quickMenu = {
+		        uniqueName: 'placeholder_' + ( div.id ? div.id : MD5( Math.random() * 1000 + ( Math.random() * 1000 ) + '' ) ),
+		        0: {
+		            name: i18n( 'i18n_close' ),
+		            icon: 'remove',
+		            command: function()
+		            {
+		            	div.windowObject.close();
+		            }
+		        }
+		    };
+
+			// Check to set mainview
+			if( window._getAppByAppId )
+			{
+				let app = _getAppByAppId( this.applicationId );
+				if( app )
+				{
+					let l = 0; for( var k in app.windows ) l++;
+					// If we only have one window - it's probably the main window
+					if( l == 0 )
+					{
+						this.setFlag( 'mainView', true );
+					}
+				}
+			}
+
+			// Tell it's opening (not minimized or invisible ones)
+			if( !flags.minimized && !flags.invisible )
+			{
+				// Allow initialized
+				if( window.currentMovable )
+				{
+					viewContainer.classList.add( 'Initialized' );
+					setTimeout( function()
+					{
+						viewContainer.classList.remove( 'Initialized' );
+					}, 25 );
+				}
+				// Allow opening animation
+				viewContainer.classList.add( 'Opening' );
+				div.classList.add( 'Opening' );
+				setTimeout( function()
+				{
+					div.classList.add( 'Opened' );
+					div.classList.remove( 'Opening' );
+					setTimeout( function()
+					{
+						div.classList.remove( 'Opened' );
+						// Give last call to port
+						div.classList.add( 'Redrawing' );
+						setTimeout( function()
+						{
+							viewContainer.classList.remove( 'Opening' );
+							div.classList.remove( 'Redrawing' );
+						}, 250 );
+					}, 250 );
+				}, 250 );
+			}
+
+			if( transparent )
+			{
+				div.setAttribute( 'transparent', 'transparent' );
+			}
+			
+			if( !flags.minimized )
+			{
+				div.style.transform = 'translate3d(0, 0, 0)';
+			}
+
+			let zoom; // for use later - zoom gadget
+
+			let html = div.innerHTML;
+			let contn = document.createElement( 'div' );
+			contn.windowObject = this;
+			div.windowObject = this;
+			this._window = contn;
+			
+			// Set up view states
+			// TODO: More to come!
+			this.states = {
+				'input-focus': false
+			};
+			
+			contn.className = 'Content';
+			contn.innerHTML = html;
+
+
+			// Assign content element to both div and view object
+			div.content = contn;
+			self.content = contn;
+			
+			// Title
+			let titleSpan = document.createElement ( 'span' );
+			titleSpan.innerHTML = titleStr ? titleStr : '- unnamed -';
+
+			contn.applicationId = applicationId;
+			
+			// Virtual window, not for display
+			if( flags.virtual )
+			{
+				div.classList.add( 'Virtual' );
+			}
+
+			div.innerHTML = '';
+
+			// Register mouse over and out
+			if( !window.isMobile )
+			{
+				div.addEventListener( 'mouseover', function( e )
+				{
+					// Keep track of the previous
+					if( typeof( Friend.currentWindowHover ) != 'undefined' && Friend.currentWindowHover )
+						Friend.previousWindowHover = Friend.currentWindowHover;
+					Friend.currentWindowHover = div;
+				
+					if( !div.classList.contains( 'Active' ) )
+					{
+						// Reactivate all iframes
+						let fr = div.windowObject.content.getElementsByTagName( 'iframe' );
+						for( let a = 0; a < fr.length; a++ )
+						{
+							if( fr[ a ].oldSandbox && typeof( fr[ a ].oldSandbox ) == 'string' )
+								fr[ a ].setAttribute( 'sandbox', fr[ a ].oldSandbox );
+						}
+					}
+				
+					// Focus on desktop if we're not over a window.
+					if( Friend.previousWindowHover && Friend.previousWindowHover != div )
+					{
+						// Check first if are focused on an input field
+						// If we are, don't focus on nothing!
+						if( !Friend.GUI.checkWindowState( 'input-focus' ) )
+						{
+							// TODO: If this is an input element, do not lose focus
+							// unless needed. E.g. changing window.
+							//var currentFocus = document.activeElement;
+							window.focus();
+						}
+					}
+				} );
+				div.addEventListener( 'mouseout', function()
+				{
+					if( !div.classList.contains( 'Active' ) )
+					{
+						// Reactivate all iframes
+						let fr = div.windowObject.content.getElementsByTagName( 'iframe' );
+						for( let a = 0; a < fr.length; a++ )
+						{
+							fr[ a ].setAttribute( 'sandbox', 'allow-scripts' );
+						}
+					}
+					
+					// Keep track of the previous
+					if( Friend.currentWindowHover )
+						Friend.previousWindowHover = Friend.currentWindowHover;
+					Friend.currentWindowHover = null;
+				} );
+			}
+
+			if ( !div.id )
+			{
+				// ID must be unique
+				let num = 0;
+				let oid = id;
+				while( ge( id ) )
+					id = oid + '_' + ++num;
+				div.id = id;
+				movableWindows[ div.id ] = div;
+			}
+
+			// Volume gauge
+			if( flags.volume && flags.volume != false )
+			{
+				let gauge = document.createElement( 'div' );
+				gauge.className = 'VolumeGauge';
+				gauge.innerHTML = '<div class="Inner"><div class="Pct"></div></div>';
+				div.appendChild( gauge );
+				div.volumeGauge = gauge.getElementsByTagName( 'div' )[0];
+			}
+
+			// Snap elements
+			let snap = document.createElement( 'div' );
+			snap.className = 'Snap';
+			snap.innerHTML = '<div class="SnapLeft"></div><div class="SnapRight"></div>' +
+				'<div class="SnapUp"></div><div class="SnapDown"></div>';
+
+			// Moveoverlay
+			let molay = document.createElement ( 'div' );
+			molay.className = 'MoveOverlay';
+			molay.onmouseup = function()
+			{
+				WorkspaceMenu.close();
+			}
+
+			// Clean up!
+			Friend.GUI.view.cleanWindowArray( div );
+
+			// Title
+			let title = document.createElement ( 'div' );
+			title.className = 'Title';
+			if( flags.resize == false )
+				title.className += ' NoResize';
+
+			// Resize
+			let resize = document.createElement ( 'div' );
+			resize.className = 'Resize';
+			resize.style.position = 'absolute';
+			resize.style.width = '14px';
+			resize.style.height = '14px';
+			resize.style.zIndex = '100';
+
+			let inDiv = document.createElement( 'div' );
+
+			title.appendChild( inDiv );
+
+			title.onclick = function( e ){ return cancelBubble ( e ); }
+			title.ondragstart = function( e ) { return cancelBubble ( e ); }
+			title.onselectstart = function( e ) { return cancelBubble ( e ); }
+
+			if( !isMobile )
+			{
+				title.onmousedown = function( e, mode )
+				{
+					if ( !e ) e = window.event;
+					
+					div.setAttribute( 'moving', 'moving' );
+
+					// Use correct button
+					if( e.button != 0 && !mode ) return cancelBubble( e );
+
+					let x, y;
+					if( e.touches && ( isTablet || isTouchDevice() ) )
+					{
+						x = e.touches[0].pageX;
+						y = e.touches[0].pageY;
+					}
+					else
+					{
+						x = e.clientX ? e.clientX : e.pageXOffset;
+						y = e.clientY ? e.clientY : e.pageYOffset;
+					}
+					window.mouseDown = FUI_MOUSEDOWN_WINDOW;
+					this.parentNode.offx = x - this.parentNode.offsetLeft;
+					this.parentNode.offy = y - this.parentNode.offsetTop;
+					_ActivateWindow( div, false, e );
+				
+					if( e.shiftKey && div.snapObject )
+					{
+						div.unsnap();
+					}
+					
+					// Make sure the tray is updated
+					PollTray();
+				
+					return cancelBubble( e );
+				}
+
+				// Pawel must win!
+				let method = 'ondblclick';
+				if( document.body.classList.contains( 'ThemeEngine' ) )
+				{
+					method = 'onclick';
+					title.style.cursor = 'pointer';
+				}
+				title[ method ] = function( e )
+				{
+					if( self.flags.clickableTitle )
+					{
+						if( !self.titleClickElement )
+						{
+							let d = document.createElement( 'input' );
+							d.type = 'text';
+							d.className = 'BackgroundHeavier NoMargins Absolute';
+							d.style.position = 'absolute';
+							d.style.outline = 'none';
+							d.style.border = '0';
+							d.style.top = '0px';
+							d.style.left = '0px';
+							d.style.width = '100%';
+							d.style.height = '100%';
+							d.style.textAlign = 'center';
+							d.style.pointerEvents = 'all';
+							d.value = contn.fileInfo.Path;
+							d.onkeydown = function( e )
+							{
+								self.flags.editing = true;
+								setTimeout( function()
+								{
+									self.flags.editing = false;
+								}, 150 );
+							}
+							d.onblur = function()
+							{
+								d.parentNode.removeChild( d );
+								self.titleClickElement = null;
+							}
+							d.onchange = function( e )
+							{
+								let t = this;
+								let f = ( new Door() ).get( this.value );
+								if( f )
+								{
+									f.getIcons( this.value, function( items )
+									{
+										if( items )
+										{
+											self.content.fileInfo.Path = t.value;
+											self.content.refresh();
+										}
+										else
+										{
+											t.value = contn.fileInfo.Path;
+										}
+									} );
+								}
+								else
+								{
+									t.value = contn.fileInfo.Path;
+								}
+							}
+							this.getElementsByTagName( 'SPAN' )[0].appendChild( d );
+							self.titleClickElement = d;
+						}
+						self.titleClickElement.focus();
+						self.titleClickElement.select();
+					}
+					_WindowToFront( div );
+				}
+			}
+
+			// Clicking on window
+			div.onmousedown = function( e )
+			{
+				if( e.button == 0 )
+				{
+					if( !this.viewIcon.classList.contains( 'Remove' ) )
+					{
+						if( isMobile )
+						{
+							let target = this;
+							if( window._getAppByAppId )
+							{
+								let app = _getAppByAppId( this.applicationId );
+								if( app && app.displayedView )
+								{
+									target = app.displayedView;
+								}
+							}
+							_ActivateWindow( target, false, e );
+							return;
+						}
+						_ActivateWindow( this, false, e );
+					}
+				}
+			}
+
+			// Tablets and mobile
+			div.ontouchstart = function( e )
+			{
+				let self = this;
+				
+				if( isMobile && !self.parentNode.classList.contains( 'OnWorkspace' ) )
+					return;
+				
+				else if( e && !div.classList.contains( 'Active' ) )
+				{
+					this.clickOffset = {
+						x: e.touches[0].clientX,
+						y: e.touches[0].clientY,
+						time: ( new Date() ).getTime()
+					};
+				}
+				
+				// Start jiggling on longpress
+				// Only removable after 300 ms
+				this.touchInterval = setInterval( function()
+				{
+					let t = ( new Date() ).getTime();
+					if( self.clickOffset )
+					{
+						if( t - self.clickOffset.time > 100 )
+						{
+							// Update time
+							self.clickOffset.removable = true;
+							self.viewIcon.parentNode.classList.add( 'Flipped' );
+							self.viewIcon.classList.add( 'Dragging' );
+							clearInterval( self.touchInterval );
+							self.touchInterval = null;
+						
+							if( !isTablet || isMobile )
+							{
+								self.viewIcon.classList.add( 'Remove' );
+								self.classList.add( 'Remove' );
+							}
+						}
+					}
+				}, 150 );
+			}
+			
+			// Remove window on drag
+			if( isMobile )
+			{
+				div.ontouchend = function( e )
+				{
+					if( this.touchInterval )
+					{
+						clearInterval( this.touchInterval );
+						this.touchInterval = null;
+					}
+					// Only cancel bubble if view icon is jiggling on mobile
+					if( this.viewIcon.classList.contains( 'Remove' ) )
+					{
+						return cancelBubble( e );
+					}
+				}
+			}
+			
+			// Transparency
+			if( flags.transparent )
+			{
+				contn.style.background = 'transparent';
+				contn.style.backgroundColor = 'transparent';
+			}
+
+			// Depth gadget
+			let depth = document.createElement( 'div' );
+			depth.className = 'Depth';
+			depth.onmousedown = function( e ) { return e.stopPropagation(); }
+			depth.ondragstart = function( e ) { return e.stopPropagation(); }
+			depth.onselectstart = function( e ) { return e.stopPropagation(); }
+			depth.window = div;
+			depth.onclick = function( e )
+			{
+				if( !window.isTablet && e.button != 0 ) return;
+				
+				// Calculate lowest and highest z-index
+				let low = 99999999;	let high = 0;
+				for( var a in movableWindows )
+				{
+					let maxm = movableWindows[a].getAttribute( 'maximized' );
+					if( maxm && maxm.length )
+						continue;
+					let ind = parseInt( movableWindows[a].viewContainer.style.zIndex );
+					if( ind < low ) low = ind;
+					if( ind > high ) high = ind;
+				}
+				movableHighestZindex = high;
+
+				// If we are below, get us on top
+				if ( movableHighestZindex > parseInt( this.window.style.zIndex ) )
+				{
+					this.window.viewContainer.style.zIndex = ++movableHighestZindex;
+					this.window.style.zIndex = this.window.viewContainer.style.zIndex;
+				}
+				// If not, don't
+				else
+				{
+					this.window.viewContainer.style.zIndex = 100;
+					let highest = 0;
+					for( var a in movableWindows )
+					{
+						if( movableWindows[a] != this.window )
+						{
+							movableWindows[a].viewContainer.style.zIndex = parseInt( movableWindows[a].viewContainer.style.zIndex ) + 1;
+							movableWindows[a].style.zIndex = movableWindows[a].viewContainer.style.zIndex;
+							if ( parseInt( movableWindows[a].viewContainer.style.zIndex ) > highest )
+								highest = parseInt( movableWindows[a].viewContainer.style.zIndex );
+						}
+					}
+					movableHighestZindex = highest;
+				}
+				_ActivateWindow( this.window, false, e );
+
+				// Fix it!
+				UpdateWindowContentSize( div );
+
+				return cancelBubble ( e );
+			}
+
+			// Bottom of the window
+			let bottombar = document.createElement ( 'div' );
+			bottombar.className = 'BottomBar';
+
+			// Left border of window
+			let leftbar = document.createElement ( 'div' );
+			leftbar.className = 'LeftBar';
+
+			// Left border of window
+			let rightbar = document.createElement ( 'div' );
+			rightbar.className = 'RightBar';
+
+			// Zoom gadget
+			if( !isMobile )
+			{
+				zoom = document.createElement ( 'div' );
+				zoom.className = 'Zoom';
+				zoom.onmousedown = function ( e ) { return cancelBubble ( e ); }
+				zoom.ondragstart = function ( e ) { return cancelBubble ( e ); }
+				zoom.onselectstart = function ( e ) { return cancelBubble ( e ); }
+				zoom.mode = 'normal';
+				zoom.window = div;
+				zoom.onclick = function ( e )
+				{
+					if( !window.isTablet && e.button != 0 ) return;
+					
+					// Don't animate
+					div.setAttribute( 'moving', 'moving' );
+					setTimeout( function()
+					{
+						div.removeAttribute( 'moving' );
+					}, 50 );
+				
+					if( this.mode == 'normal' )
+					{
+						if( movableHighestZindex > parseInt( this.window.viewContainer.style.zIndex ) )
+						{
+							this.window.viewContainer.style.zIndex = ++movableHighestZindex;
+							this.window.style.zIndex = this.window.viewContainer.style.zIndex;
+						}
+
+						_ActivateWindow( this.window, false, e );
+
+						this.window.setAttribute( 'maximized', 'true' );
+						
+						// Check tiling
+						_setWindowTiles( div );
+						
+						// Tell app
+						if( window._getAppByAppId )
+						{
+							let app = _getAppByAppId( div.applicationId );
+							if( app )
+							{
+								app.sendMessage( {
+									'command': 'notify',
+									'method': 'setviewflag',
+									'flag': 'maximized',
+									'viewId': div.windowObject.viewId,
+									'value': true
+								} );
+							}
+						}
+						
+						// Store it just in case
+						let d = GetWindowStorage( div.id );
+						if( !d ) d = {};
+						d.maximized = true;
+						SetWindowStorage( div.id, d );
+						
+						if( !window.isMobile )
+						{
+							this.prevLeft = parseInt ( this.window.style.left );
+							this.prevTop = parseInt ( this.window.style.top );
+							this.prevWidth = this.window.offsetWidth;
+							this.prevHeight = this.window.offsetHeight;
+							this.window.style.top = '0px';
+							this.window.style.left = '0px';
+							let wid = 0; var hei = 0;
+							if( self.flags.screen )
+							{
+								let cnt2 = this.window.content;
+								let sbar = 0;
+								if( self.flags.screen.div == Ge( 'DoorsScreen' ) )
+									sbar = GetStatusbarHeight( self.flags.screen );
+								wid = self.flags.screen.div.offsetWidth;
+								hei = self.flags.screen.div.offsetHeight - sbar;
+							}
+							ResizeWindow( this.window, wid, hei );
+						}
+						this.mode = 'maximized';					
+					}
+					else
+					{	
+						this.mode = 'normal';
+						this.window.removeAttribute( 'maximized' );
+						
+						_removeWindowTiles( div );
+						
+						// Store it just in case
+						let d = GetWindowStorage( div.id );
+						if( !d ) d = {};
+						d.maximized = false;
+						SetWindowStorage( div.id, d );
+						
+						if( !window.isMobile )
+						{
+							this.window.style.top = this.prevTop + 'px';
+							this.window.style.left = this.prevLeft + 'px';
+							ResizeWindow( this.window, this.prevWidth, this.prevHeight );
+						}
+						
+						// Tell application if any
+						if( window._getAppByAppId )
+						{
+							let app = _getAppByAppId( div.applicationId );
+							if( app )
+							{
+								app.sendMessage( {
+									'command': 'notify',
+									'method': 'setviewflag',
+									'flag': 'maximized',
+									'viewId': div.windowObject.viewId,
+									'value': false
+								} );
+							}
+						}
+					}
+					// Do resize events
+					if( this.window.content && this.window.content.events )
+					{
+						if( typeof(this.window.content.events['resize']) != 'undefined' )
+						{
+							for( var a = 0; a < this.window.content.events['resize'].length; a++ )
+							{
+								this.window.content.events['resize'][a]();
+							}
+						}
+					}
+					
+					// Check maximized
+					CheckMaximizedView();
+					
+					return cancelBubble( e );
+				}
+			}
+
+			resize.onclick = function( e ) { return cancelBubble ( e ); }
+			resize.ondragstart = function( e ) { return cancelBubble ( e ); }
+			resize.onselectstart = function( e ) { return cancelBubble ( e ); }
+			resize.window = div;
+			resize.onmousedown = function( e )
+			{
+				if( !window.isTablet && e.button != 0 ) return;
+				
+				// Offset based on the containing window
+				this.offx = windowMouseX;
+				this.offy = windowMouseY;
+				this.wwid = div.offsetWidth;
+				this.whei = div.offsetHeight;
+
+				// Don't animate
+				div.setAttribute( 'moving', 'moving' );
+
+				window.mouseDown = FUI_MOUSEDOWN_RESIZE;
+				
+				if( !div.parentNode.classList.contains( 'Active' ) )
+					_ActivateWindow( div, false, e );
+				this.window.zoom.mode = 'normal';
+				return cancelBubble ( e );
+			}
+
+			// remember position
+			div.memorize = function ()
+			{
+				if( isMobile ) return;
+				let wenable = this.content && self.flags && self.flags.resize ? true : false;
+
+				// True if we're to enable memory
+				if ( self.flags && self.flags.memorize )
+					wenable = true;
+
+				let wwi = div.offsetWidth;
+				let hhe = div.offsetHeight;
+
+				// Update information in the window storage object
+				let d = GetWindowStorage( this.uniqueId );
+				
+				if( !div.getAttribute( 'maximized' ) )
+				{
+					d.top = this.offsetTop;
+					d.left = this.offsetLeft;
+					d.width = wenable && wwi ? wwi : d.width;
+					d.height = wenable && hhe ? hhe : d.width;
+				}
+				
+				if( div.content.directoryview )
+				{
+					d.listMode = div.content.directoryview.listMode;
+				}
+
+				SetWindowStorage( this.uniqueId, d );
+			}
+
+			let minimize = document.createElement ( 'div' );
+			minimize.className = 'Minimize';
+			minimize.onmousedown = function ( e ) { return cancelBubble ( e ); }
+			minimize.ondragstart = function ( e ) { return cancelBubble ( e ); }
+			minimize.onselectstart = function ( e ) { return cancelBubble ( e ); }
+			
+			div.doMinimize = function ( e )
+			{
+				// Not single task
+				if( div.windowObject.getFlag( 'singletask' ) ) 
+				{
+			        return div.windowObject.activate();
+			    }
+				
+				if( div.minimized ) 
+				{
+					return;
+				}
+				div.minimized = true;
+				if( !e )
+				{
+					e = { button: 0, fake: true };
+				}
+				
+				// Normal desktop applications
+				if( !window.isMobile )
+				{
+					// Fake events just brute forces
+					if( e.fake )
+					{
+						div.classList.remove( 'Active' );
+						div.parentNode.classList.remove( 'Active' );
+						div.minimized = true;
+						div.windowObject.flags.minimized = true;
+						div.viewContainer.setAttribute( 'minimized', 'minimized' );
+						PollTray();
+						PollTaskbar();
+					}
+					else
+					{
+						// Only on real events
+						_ActivateWindow( div, false, e );
+						let escapeFlag = 0;
+						if( 
+							div.windowObject && 
+							( !globalConfig.viewList || globalConfig.viewList == 'separate' ) && 
+							ge( 'Taskbar' )
+						)
+						{
+							let t = ge( 'Taskbar' );
+							for( var tel = 0; tel < t.childNodes.length; tel++ )
+							{
+								if( t.childNodes[tel].window == div )
+								{
+									t.childNodes[tel].mousedown = true;
+									e.button = 0;
+									t.childNodes[tel].onmouseup( e, t.childNodes[tel] );
+									return true;
+								}
+							}
+						}
+						else if( ge( 'DockWindowList' ) )
+						{
+							let t = ge( 'DockWindowList' );
+							for( var tel = 0; tel < t.childNodes.length; tel++ )
+							{
+								if( t.childNodes[tel].window == div )
+								{
+									t.childNodes[tel].mousedown = true;
+									e.button = 0;
+									t.childNodes[tel].onmouseup( e, t.childNodes[tel] );
+									escapeFlag++;
+									break;
+								}
+							}
+						}
+				
+						// Try to use the dock		
+						if( escapeFlag == 0 )
+						{
+							if( globalConfig.viewList == 'docked' || globalConfig.viewList == 'dockedlist' )
+							{
+								for( var u = 0; u < Workspace.mainDock.dom.childNodes.length; u++ )
+								{
+									let ch = Workspace.mainDock.dom.childNodes[ u ];
+									// Check the view list
+									if( ch.classList.contains( 'ViewList' ) )
+									{
+										for( var z = 0; z < ch.childNodes.length; z++ )
+										{
+											let cj = ch.childNodes[ z ];
+											if( cj.viewId && movableWindows[ cj.viewId ] == div )
+											{
+												cj.mousedown = true;
+												cj.onclick( { button: 0 } );
+												escapeFlag++;
+												break;
+											}
+										}
+									}
+									if( escapeFlag == 0 )
+									{
+										// Check applications
+										if( ch.executable )
+										{
+											for( var r = 0; escapeFlag == 0 && r < Workspace.applications.length; r++ )
+											{
+												let app = Workspace.applications[ r ];
+												if( app.applicationName == ch.executable )
+												{
+													if( app.windows )
+													{
+														for( var t in app.windows )
+														{
+															if( app.windows[t] == div.windowObject )
+															{
+																Workspace.mainDock.toggleExecutable( ch.executable );
+																escapeFlag++;
+																break;
+															}
+														}
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+					
+					if( div.attached )
+					{
+						for( var a = 0; a < div.attached.length; a++ )
+						{
+							let app = _getAppByAppId( div.attached[ a ].applicationId );
+							if( app )
+							{
+								app.sendMessage( {
+									'command': 'notify',
+									'method': 'setviewflag',
+									'flag': 'minimized',
+									'viewId': div.attached[ a ].windowObject.viewId,
+									'value': true
+								} );
+							}
+						
+							div.attached[ a ].minimized = true;
+							div.attached[ a ].parentNode.setAttribute( 'minimized', 'minimized' );
+						}
+					}
+				}
+				// Reorganize minimized view windows
+				else
+				{
+					if( !isMobile )
+					{
+						let app = _getAppByAppId( div.applicationId );
+						if( app.mainView && div != app.mainView )
+							_ActivateWindow( app.mainView.content.parentNode );
+					}
+					Friend.GUI.reorganizeResponsiveMinimized();
+				}
+				
+				if( window._getAppByAppId )
+				{
+					let app = _getAppByAppId( div.applicationId );
+					if( app )
+					{
+						app.sendMessage( {
+							'command': 'notify',
+							'method': 'setviewflag',
+							'flag': 'minimized',
+							'viewId': div.windowObject.viewId,
+							'value': true
+						} );
+					}
+				}
+			}
+			minimize.onclick = div.doMinimize;
+
+			// Mobile has extra close button
+			let mclose = false;
+			if( isMobile )
+			{
+				mclose = document.createElement( 'div' );
+				mclose.className = 'MobileClose';
+				mclose.ontouchstart = function( e )
+				{
+					let wo = div.windowObject;
+					for( var a = 0; a < wo.childWindows.length; a++ )
+					{
+						if( wo.childWindows[a]._window )
+						{
+							if( wo.childWindows[a]._window.windowObject )
+							{
+								wo.childWindows[a]._window.windowObject.close();
+							}
+							else CloseView( wo.childWindows[a]._window );
+						}
+						else
+						{
+							CloseView( wo.childWindows[a] );
+						}
+					}
+					wo.close();
+					return cancelBubble( e );
+				}
+			}
+
+			let popout = false;
+			if( div.windowObject.applicationId )
+			{
+				popout = document.createElement( 'div' );
+				popout.className = 'Popout';
+				popout.onmousedown = function( e ) { return cancelBubble( e ); }
+				popout.ondragstart = function( e ) { return cancelBubble( e ); }
+				popout.onselectstart = function( e ) { return cancelBubble( e ); }
+				popout.onclick = function( e )
+				{
+					PopoutWindow( div, e );
+				}
+			}
+			
+			let close = document.createElement( 'div' );
+			close.className = 'Close';
+			close.onmousedown = function( e ) { return cancelBubble( e ); }
+			close.ondragstart = function( e ) { return cancelBubble( e ); }
+			close.onselectstart = function( e ) { return cancelBubble( e ); }
+			close.onclick = function( e )
+			{
+				if( !isMobile && !window.isTablet )
+					if( e.button != 0 ) return;
+				
+				// On mobile, you get a window menu instead
+				if( window.isMobile && !window.isTablet )
+				{
+					if( div.classList && div.classList.contains( 'Active' ) )
+					{
+						_DeactivateWindows();
+						Workspace.redrawIcons();
+						return cancelBubble( e );
+					}
+				}
+				
+				function executeClose()
+				{
+					// Clean movableWindows.. brute force
+					let out = {};
+					for( let a in movableWindows )
+					{
+						if( movableWindows[a] != div )
+							out[ a ] = movableWindows[ a ];
+					}
+					movableWindows = out;
+					
+					viewContainer.classList.add( 'Closing' );
+					if( div.windowObject )
+					{
+						let wo = div.windowObject;
+						for( var a = 0; a < wo.childWindows.length; a++ )
+						{
+							if( wo.childWindows[a]._window )
+							{
+								if( wo.childWindows[a]._window.windowObject )
+								{
+									wo.childWindows[a]._window.windowObject.close();
+								}
+								else CloseView( wo.childWindows[a]._window );
+							}
+							else
+							{
+								CloseView( wo.childWindows[a] );
+							}
+						}
+						wo.close();
+					}
+				}
+				// Only if we can!
+				if( div.windowObject.close() === true )
+				{
+					executeClose();
+				}
+			}
+
+			// Add all
+			inDiv.appendChild( depth );
+			if( popout ) inDiv.appendChild( popout );
+			inDiv.appendChild( minimize );
+			if( zoom )
+				inDiv.appendChild( zoom );
+			inDiv.appendChild( close );
+			if( mclose )
+				inDiv.appendChild( mclose );
+			inDiv.appendChild( titleSpan );
+
+			div.depth     = depth;
+			div.popout    = popout;
+			div.zoom      = zoom;
+			div.close     = close;
+			div.titleBar  = title;
+			div.resize    = resize;
+			div.bottombar = bottombar;
+			div.leftbar   = leftbar;
+			div.rightbar  = rightbar;
+			div.minimize  = minimize;
+			
+			// For mobile
+			if( iconSpan )
+				div.viewIcon = iconSpan;
+
+			div.appendChild( title );
+			div.titleDiv = title;
+			div.appendChild( resize );
+			div.appendChild( bottombar );
+			div.appendChild( leftbar );
+			div.appendChild( rightbar );
+			
+			div.appendChild( snap );
+
+			// Empty the window menu
+			contn.menu = false;
+
+			// Null out blocker window (if we have one)
+			contn.blocker = false;
+
+			div.appendChild( contn ); // Add content
+			div.appendChild( molay ); // Add move overlay
+
+			// View groups
+			let contentArea = false;
+			self.viewGroups = {};
+			if( self.flags.viewGroups )
+			{
+				let validGroups = false;
+				self.viewGroups = [];
+				let groups = self.flags.viewGroups;
+				for( var a = 0; a < groups.length; a++ )
+				{
+					let group = groups[ a ];
+					if( group.id )
+					{
+						let g = document.createElement( 'div' );
+						g.className = 'ViewGroup';
+						
+						if( group.mode == 'horizontalTabs' )
+						{
+							let t = document.createElement( 'div' );
+							t.className = 'ViewGroupTabsHorizontal';
+							g.className += ' TabsHorizontal';
+							g.appendChild( t );
+							g.tabs = t;
+						}
+						
+						if( group.xposition )
+						{
+							if( group.xposition == 'left' )
+								g.classList.add( 'Left' );
+							else if( group.xposition == 'right' )
+								g.classList.add( 'Right' );
+						}
+						if( group.yposition )
+						{
+							if( group.yposition == 'top' )
+								g.classList.add( 'Top' );
+							else if( group.yposition == 'bottom' )
+								g.classList.add( 'Bottom' );
+						}
+						if( group.width )
+						{
+							if( group.width.indexOf && group.width.indexOf( '%' ) > 0 )
+							{
+								let ex = parseInt( 
+									group.xposition == 'left' ? 
+									GetThemeInfo( 'ViewLeftBar' ).width : 
+									GetThemeInfo( 'ViewRightBar' ).width
+								);
+								group.width = 'calc(' + group.width + ' - ' + ex + 'px)';
+							}
+							g.style.width = group.width;
+						}
+						if( group.height )
+						{
+							if( group.height.indexOf && group.height.indexOf( '%' ) > 0 )
+							{
+								let ex = parseInt( GetThemeInfo( 'ViewBottom' ).height ) + parseInt( GetThemeInfo( 'ViewTitle' ).height );
+								group.height = 'calc(' + group.height + ' - ' + ex + 'px)';
+							}
+							g.style.height = group.height;
+						}
+						self.viewGroups[ group.id ] = g;
+						div.appendChild( g );
+						validGroups = true;
+					}
+				}
+				if( validGroups )
+					div.classList.add( 'HasViewGroups' );
+			}
+			// Max width and height
+			let ww = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
+			let hh = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
+
+			movableWindowCount++; // Iterate global count of view windows
+			
+			// Make sure we count the windows in body
+			if( movableWindowCount > 0 )
+			{
+				if( window.windowCountTimeout )
+				{
+					clearTimeout( window.windowCountTimeout );
+					delete window.windowCountTimeout;
+				}
+				document.body.setAttribute( 'windowcount', movableWindowCount );
+			}
+
+			// Create event funcs on content
+			self.createContentEventFuncs( div.content );
+
+			// Assign the move layer
+			div.moveoverlay = molay;
+
+			// Also content must have it
+			div.uniqueId = uniqueId;
+			div.viewId = div.id;
+			div.content.viewId = div.id;
+			div.content.uniqueId = uniqueId;
+
+			let windowResized = false;
+
+			let leftSet = false;
+			let topSet = false;
+			let wp = GetWindowStorage( div.uniqueId );
+			let leftTopSpecial = flags.top == 'center' || flags.left == 'center'; // Check for special flags
+			if( wp && ( wp.top >= 0 || wp.width >= 0 ) && !leftTopSpecial )
+			{
+				if( window.isMobile )
+				{
+					if ( self.flags && self.flags.memorize )
+					{
+						height = wp.height;
+						width = wp.width;
+						ResizeWindow( div, width, height );
+					}
+				}
+				else
+				{
+					let sw = self.flags.screen && self.flags.screen.div ? self.flags.screen.div.offsetWidth : document.body.offsetWidth;
+					
+					if( wp.maximized )
+					{
+						div.setAttribute( 'maximized', 'true' );
+						zoom.mode = 'maximized';
+						
+						// Tell application if any
+						if( window._getAppByAppId )
+						{
+							let app = _getAppByAppId( div.applicationId );
+							if( app )
+							{
+								app.sendMessage( {
+									'command': 'notify',
+									'method': 'setviewflag',
+									'flag': 'maximized',
+									'viewId': div.windowObject.viewId,
+									'value': true
+								} );
+							}
+						}
+					}
+					
+					if( wp.top >= 0 && wp.top < hh )
+					{
+						let wt = wp.top;
+						div.style.top = wt + 'px';
+						topSet = true;
+					}
+					if( wp.left >= 0 && wp.left < ww )
+					{
+						div.style.left = wp.left + 'px';
+						leftSet = true;
+					}
+
+					if ( self.flags && self.flags.memorize )
+					{
+						height = wp.height;
+						width = wp.width;
+						ResizeWindow( div, width, height );
+						windowResized = true;
+					}
+				}
+			}
+			
+			// Let's find the center!
+			let mvw = 0, mvh = 0;
+			if( Workspace && Workspace.screen )
+			{
+				mvw = Workspace.screen.getMaxViewWidth();
+				mvh = Workspace.screen.getMaxViewHeight();
+				
+				if( ge( 'desklet_0' ) )
+				{
+					let att = ge( 'desklet_0' ).getAttribute( 'position' );
+					if( att && ( att.indexOf( 'bottom' ) >= 0 || att.indexOf( 'top' ) >= 0 ) )
+						mvh -= ge( 'desklet_0' ).offsetHeight;
+				}
+			}
+		
+			// TODO: See if we can move this dock dimension stuff inside getMax..()
+			if( Workspace.mainDock )
+			{
+				if( Workspace.mainDock.dom.classList.contains( 'Vertical' ) )
+				{
+					mvw -= Workspace.mainDock.dom.offsetWidth;
+				}
+				else
+				{
+					mvh -= Workspace.mainDock.dom.offsetHeight;
+				}
+			}
+			
+			if( !isMobile )
+			{
+				if( !leftSet && self.flags.left )
+				{
+					leftSet = true;
+					if( self.flags.left == 'center' )
+					{
+						div.style.left = ( mvh >> 1 - ( height >> 1 ) ) + 'px';
+					}
+					else
+					{
+						div.style.left = self.flags.left + 'px';
+					}
+				}
+			
+				if( !topSet && self.flags.top )
+				{
+					topSet = true;
+					if( self.flags.top == 'center' )
+					{
+						div.style.left = ( mvw >> 1 - ( width >> 1 ) ) + 'px';
+					}
+					else
+					{
+						div.style.top = self.flags.top + 'px';
+					}
+				}
+			}
+
+			// Only first window on shared apps, do full width and height
+			if( ( window.isMobile && self.flags['mobileMaximised'] ) || ( window.movableWindows.length == 0 && IsSharedApp() ) )
+			{
+				if( zoom )
+				{
+					zoom.prevWidth = width;
+					zoom.prevHeight = height;
+					zoom.mode = 'maximized';
+				}
+				width = window.innerWidth; height = window.innerHeight;
+				div.style.height = height + title.offsetHeight + FUI_WINDOW_MARGIN + 'px';
+				div.setAttribute( 'maximized', 'true' );
+				
+				// Tell application if any
+				if( window._getAppByAppId )
+				{
+					let app = _getAppByAppId( div.applicationId );
+					if( app )
+					{
+						app.sendMessage( {
+							'command': 'notify',
+							'method': 'setviewflag',
+							'flag': 'maximized',
+							'viewId': div.windowObject.viewId,
+							'value': true
+						} );
+					}
+				}
+			}
+			
+			// Add div to view container
+			viewContainer.appendChild( div );
+			div.viewContainer = viewContainer;
+
+			// Triggers ????? Please review this and add explaining comment
+			if( parentWindow )
+			{	
+				parentWindow.addChildWindow( viewContainer );
+			}
+
+			// Make sure it's correctly sized again
+			div.windowObject = this;
+			
+			// Add the borders here
+			if( !windowResized )
+			{
+				if( !self.flags[ 'borderless' ] && GetThemeInfo( 'ViewTitle' ) )
+				{
+					width += FUI_WINDOW_MARGIN << 1;
+					height += parseInt( GetThemeInfo( 'ViewTitle' ).height ) + parseInt( GetThemeInfo( 'ViewBottom' ).height );
+				}					
+				ResizeWindow( div, width, height );
+			}
+			
+			// Add the window after all considerations
+			// TODO: See if the real height is not properly calculated..
+			div.style.opacity = 0;
+			div.setAttribute( 'created', 'created' );
+			
+			// Insert into existing viewgroup
+			let inGroup = false;
+			if( self.flags.viewGroup )
+			{
+				for( let a in movableWindows )
+				{
+					let w = movableWindows[ a ].windowObject;
+					if( w.viewId == self.flags.viewGroup.view )
+					{
+						if( w.viewGroups[ self.flags.viewGroup.viewGroup ] )
+						{
+							divParent = w.viewGroups[ self.flags.viewGroup.viewGroup ];
+							inGroup = true;
+							self.flags.borderless = true;
+							
+							// Add tab
+							if( divParent.tabs )
+							{
+								let tab = document.createElement( 'div' );
+								tab.className = divParent.tabs.childNodes.length > 0 ? 'Tab' : 'TabActive';
+								if( !divParent.activeTab ) divParent.activeTab = tab;
+								tab.innerHTML = self.flags.title;
+								divParent.tabs.appendChild( tab );
+								tab.onclick = function( e )
+								{
+									if( e.button != 0 ) return;
+									
+									_WindowToFront( div );
+									for( let b = 0; b < divParent.tabs.childNodes.length; b++ )
+									{
+										if( tab == divParent.tabs.childNodes[ b ] )
+										{
+											divParent.tabs.childNodes[ b ].className = 'TabActive';
+											divParent.activeTab = tab;
+										}
+										else
+										{
+											divParent.tabs.childNodes[ b ].className = 'Tab';
+										}
+									}
+								}
+							}
+							break;
+						}
+					}
+				}
+			}
+			
+			// Append view window to parent
+			if( flags.liveView && Workspace.dashboard && Workspace.dashboard.liveViews )
+			{
+				Workspace.dashboard.liveViews.appendChild( viewContainer );
+			}
+			else if( flags.dockable && ge( 'DockableWindowContainer' ) )
+				ge( 'DockableWindowContainer' ).appendChild( viewContainer );
+			else
+			{
+				divParent.appendChild( viewContainer );
+			}
+			
+			if( inGroup )
+			{
+				ResizeWindow( divParent.parentNode );
+				setTimeout( function()
+				{
+					divParent.activeTab.onclick();
+				}, 100 );
+			}
+			
+			// Don't show the view window if it's hidden
+			if(
+				( typeof( flags.hidden ) != 'undefined' && flags.hidden ) ||
+				( typeof( flags.invisible ) != 'undefined' && flags.invisible )
+			)
+			{
+				div.viewContainer.style.visibility = 'hidden';
+				div.viewContainer.style.pointerEvents = 'none';
+				div.viewContainer.classList.add( 'Hidden' );
+			}
+
+			setTimeout( function(){ div.style.opacity = 1; } );
+
+			// So, dont creating, behave normally now
+			setTimeout( function(){ div.setAttribute( 'created', '' ); }, 300 );
+
+			// Turn calculations on
+			viewContainer.style.display = '';
+			
+			// Once the view appears on screen, again, constrain it
+			ConstrainWindow( div );
+			
+			// First to generate, second to test
+			PollTaskbar();
+
+			// First resize
+			RefreshWindow( div, true );
+
+			if( window.isMobile || window.isTablet )
+			{
+				// window move
+				if( window.isTablet )
+				{
+					// For mobile and tablets
+					if( !window.isMobile )
+					{
+						title.addEventListener( 'touchstart', function( e )
+						{
+							e.clientX = e.touches[0].clientX
+							e.clientY = e.touches[0].clientY;
+							e.button = 0;
+							window.mouseDown = 1; // Window mode
+							if( title.onmousedown )
+							{
+								title.onmousedown( e );
+							}
+							_ActivateWindow( div );
+						} );
+					}
+					else
+					{
+						title.addEventListener( 'touchmove', function( evt )
+						{
+							touchMoveWindow( evt );
+						});
+					}
+				}
+
+				// Resize touch events.... -----------------------------------------
+				let winTouchStart = [ 0, 0 ];
+				let winTouchDowned = winTouchEnd = 0;
+				resize.addEventListener('touchstart', function( evt )
+				{
+					cancelBubble( evt );
+					winTouchStart = [ evt.touches[0].clientX, evt.touches[0].clientY ];
+					winTouchDowned = evt.timeStamp;
+				} );
+				resize.addEventListener('touchmove', function( evt )
+				{
+					cancelBubble( evt );
+					if( evt.target && evt.target.offsetParent ) evt.target.offH = evt.target.offsetParent.clientHeight;
+					touchResizeWindow(evt);
+				} );
+				resize.addEventListener( 'touchend', function( evt )
+				{
+					cancelBubble( evt );
+				} );
+
+				bottombar.addEventListener('touchstart', function( evt )
+				{
+					cancelBubble( evt );
+
+					winTouchStart = [ evt.touches[0].clientX, evt.touches[0].clientY ];
+					winTouchDowned = evt.timeStamp;
+				} );
+
+				bottombar.addEventListener('touchmove', function( evt )
+				{
+					cancelBubble( evt );
+
+					if( evt.target && evt.target.offsetParent ) evt.target.offH = evt.target.offsetParent.clientHeight;
+					touchResizeWindow(evt);
+				} );
+
+				bottombar.addEventListener( 'touchend', function( evt )
+				{
+					cancelBubble( evt );
+				} );
+
+				//close  --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ##
+				close.addEventListener( 'touchstart', function( evt )
+				{
+					cancelBubble( evt );
+					winTouchStart = [ evt.touches[0].clientX, evt.touches[0].clientY, (evt.target.hasAttribute('class') ? evt.target.getAttribute('class') : '') ];
+					winTouchEnd = winTouchStart;
+					winTouchDowned = evt.timeStamp;
+				} );
+			}
+			// Ok, if no window position is remembered.. place it somewhere
+			else if( !wp )
+			{
+				ConstrainWindow( div );
+			}
+
+			/* function shal be called by bottombar or resize... */
+			// TODO: constrain window please use ResizeWindow()
+			function touchResizeWindow(evt)
+			{
+				if( !evt.target.offH ) evt.target.offH = evt.target.offsetParent.clientHeight;
+				//not too small and not too high...
+				let newHeight = Math.min(
+					Workspace.screenDiv.clientHeight -
+						72 - evt.target.offsetParent.offsetTop,
+					Math.max(80,evt.touches[0].clientY - evt.target.offsetParent.offsetTop )
+				);
+								
+				evt.target.offsetParent.style.height = newHeight + 'px';
+				evt.target.offsetParent.lastHeight = newHeight;
+				
+				// Only tablets can move
+				if( window.isTablet )
+				{
+					let newWidth = Math.min(
+						Workspace.screenDiv.clientWidth -
+							evt.target.offsetParent.offsetLeft,
+						evt.touches[0].clientX - evt.target.offsetParent.offsetLeft
+					);
+				
+					evt.target.offsetParent.style.width = newWidth + 'px';
+					evt.target.offsetParent.lastWidth = newWidth;
+				}
+			}
+			
+			function touchMoveWindow( evt )
+			{
+				let nx = evt.touches[0].clientX;
+				let ny = evt.touches[0].clientY;
+				
+				window.mouseDown = 1;
+				movableListener( evt, { mouseX: nx, mouseY: ny } );
+			}
+
+			// Remove window borders
+			if( !isMobile )
+			{
+				if( typeof( flags.borderless ) != 'undefined' && flags.borderless == true )
+				{
+					title.style.position = 'absolute';
+					title.style.height = '0px';
+					title.style.overflow = 'hidden';
+					resize.style.display = 'none';
+					div.leftbar.style.display = 'none';
+					div.rightbar.style.display = 'none';
+					div.bottombar.style.display = 'none';
+					div.content.style.left = '0';
+					div.content.style.right = '0';
+					div.content.style.top = '0';
+					div.content.style.right = '0';
+					div.content.style.bottom = '0';
+				}
+			}
+			if( typeof( flags.resize ) != 'undefined' && flags.resize == false )
+			{
+				resize.style.display = 'none';
+				if( zoom )
+					zoom.style.display = 'none';
+			}
+			if( typeof( flags.login ) != 'undefined' && flags.login == true )
+			{
+				resize.style.display = 'none';
+				if( zoom )
+					zoom.style.display = 'none';
+				depth.style.display = 'none';
+			}
+
+			// Start maximized
+			if( window.isMobile )
+			{
+				if( !flags.minimized )
+				{
+					this.setFlag( 'maximized', true );
+					div.setAttribute( 'maximized', 'true' );
+				
+					// Tell application if any
+					if( window._getAppByAppId )
+					{
+						let app = _getAppByAppId( div.applicationId );
+						if( app )
+						{
+							app.sendMessage( {
+								'command': 'notify',
+								'method': 'setviewflag',
+								'flag': 'maximized',
+								'viewId': div.windowObject.viewId,
+								'value': true
+							} );
+						}
+					}
+				}
+				else
+				{
+				}
+			}
+
+			// Handle class
+			if ( !div.classList.contains( 'View' ) )
+				div.classList.add( 'View' );
+			
+			// (handle z-index)
+			div.viewContainer.style.zIndex = movableHighestZindex++;
+			div.style.zIndex = div.viewContainer.style.zIndex;
+			
+			// If the current window is an app, move it to front.. (unless new window is a child window)
+			if( window.friend && Friend.currentWindowHover )
+				Friend.currentWindowHover = false;
+			
+			// Reparse! We may have forgotten some things
+			self.parseFlags( flags );
+			
+			// Only activate if needed
+			if( !flags.minimized && !flags.openSilent && !flags.invisible )
+			{
+				_ActivateWindow( div );
+				_WindowToFront( div );
+			}
+			
+			// Move workspace to designated position	
+			if( !flags.screen || flags.screen == Workspace.screen )
+			{
+				if( self.workspace > 0 )
+				{
+					self.sendToWorkspace( self.workspace );
+				}
+			}
+			
+			// Remove menu on calendar
+			if( !flags.minimized && Workspace.calendarWidget )
+				Workspace.calendarWidget.hide();
+			
+			if( Workspace.dashboard && typeof( hideDashboard ) != 'undefined' )
+			{
+				if( !self.flags.dialog )
+				{
+					hideDashboard();
+				}
+			}
+		}
+
+		// Send window to different workspace
+		this.sendToWorkspace = function( wsnum )
+		{
+			if( isMobile ) return;
+			
+			// Windows on own screen ignores the virtual workspaces
+			if( this.flags && this.flags.screen && this.flags.screen != Workspace.screen ) return;
+			
+			if( wsnum != 0 && ( wsnum < 0 || wsnum > globalConfig.workspacecount - 1 ) )
+			{
+				return;
+			}
+			let wn = this._window.parentNode;
+			let pn = wn.parentNode;
+			
+			// Move the viewcontainer
+			wn.viewContainer.style.left = ( Workspace.screen.getMaxViewWidth() * wsnum ) + 'px';
+			wn.workspace = wsnum;
+			cleanVirtualWorkspaceInformation(); // Just clean the workspace info
+			
+			// Done moving
+			if( this.flags && this.flags.screen )
+			{
+				let maxViewWidth = this.flags.screen.getMaxViewWidth();
+				this.workspace = wsnum;
+				_DeactivateWindow( this._window.parentNode );
+				PollTaskbar();
+			}
+		}
+
+		// Set content on window
+		this.setContent = function( content, cbk )
+		{
+			// Safe content without any scripts or styles!
+			SetWindowContent( this._window, this.cleanHTMLData( content ) );
+			if( cbk ) cbk();
+		}
+		this.fullscreen = function( val )
+		{
+			if( val === true || val === false )
+			{
+				this.setFlag( 'fullscreenenabled', val );
+			}
+			let fullscreen = this.getFlag( 'fullscreenenabled' );
+			if( fullscreen )
+			{
+				if( this.iframe )
+				{
+					Workspace.fullscreen( this.iframe );
+				}
+				else
+				{
+					Workspace.fullscreen( this._window );
+				}
+			}
+			else
+			{
+				document.exitFullscreen();
+			}
+		}
+		// Set content (securely!) in a sandbox, callback when completed
+		this.setContentIframed = function( content, domain, packet, callback )
+		{
+			if( !domain )
+			{
+				domain = document.location.href + '';
+				domain = domain.split( 'index.html' ).join ( 'sandboxed.html' );
+				domain = domain.split( 'app.html' ).join( 'sandboxed.html' );
+			}
+
+			// Oh we have a conf?
+			if( this.conf )
+			{
+				if ( Workspace.sessionId )
+				{
+					domain += '/system.library/module/?module=system&command=sandbox' +
+						'&sessionid=' + Workspace.sessionId +
+						'&conf=' + JSON.stringify( this.conf );
+				}
+				else
+				{
+					domain += '/system.library/module/?module=system&command=sandbox' +
+						'&authid=' + this.authId +
+						'&conf=' + JSON.stringify( this.conf );
+				}
+				if( this.getFlag( 'noevents' ) ) domain += '&noevents=true';
+			}
+			else if( domain.indexOf( 'sandboxed.html' ) <= 0 )
+			{
+				domain += '/webclient/sandboxed.html';
+				if( this.getFlag( 'noevents' ) ) domain += '?noevents=true';
+			}
+
+			// Make sure scripts can be run after all resources has loaded
+			if( content && content.match )
+			{
+				let r;
+				while( r = content.match( /\<script([^>]*?)\>([\w\W]*?)\<\/script\>/i ) )
+					content = content.split( r[0] ).join( '<friendscript' + r[1] + '>' + r[2] + '</friendscript>' );
+			}
+			else
+			{
+				content = '';
+			}
+
+			let c = this._window;
+			if( c && c.content ) c = c.content;
+			if( c )
+			{
+				c.innerHTML = '';
+			}
+			let ifr = document.createElement( _viewType );
+			ifr.applicationId = self.applicationId;
+			ifr.authId = self.authId;
+			ifr.applicationName = self.applicationName;
+			ifr.applicationDisplayName = self.applicationDisplayName;
+			putSandboxFlags( ifr, getSandboxFlags( this, DEFAULT_SANDBOX_ATTRIBUTES ) );
+			ifr.view = this._window;
+			ifr.className = 'Content Loading';
+			
+			if( this.flags.transparent )
+			{
+				ifr.setAttribute( 'allowtransparency', 'true' );
+				ifr.style.backgroundColor = 'transparent';
+			}
+			
+			ifr.id = 'sandbox_' + this.viewId;
+			ifr.src = domain;
+
+			let view = this;
+			this.iframe = ifr;
+			
+			ifr.onfocus = function( e )
+			{
+				if( !ifr.view.parentNode.classList.contains( 'Active' ) )
+				{
+					// Don't steal focus!
+					ifr.blur();
+					window.blur();
+					window.focus();
+				}
+			}
+
+			if( packet.applicationId ) this._window.applicationId = packet.applicationId;
+
+			ifr.onload = function()
+			{
+				// Assign views to each other to allow cross window scripting
+				// TODO: This could be a security hazard! Remember to use security
+				//       domains!
+				let parentIframeId = false;
+				let instance = Math.random() % 100;
+				if( ifr.applicationId )
+				{
+					for( let a = 0; a < Workspace.applications.length; a++ )
+					{
+						let app = Workspace.applications[a];
+						if( app.applicationId == ifr.applicationId )
+						{
+							for( let b in app.windows )
+							{
+								// Ah we found our parent view
+								if( self.parentViewId == b )
+								{
+									let win = app.windows[b];
+									parentIframeId = 'sandbox_' + b;
+									break;
+								}
+							}
+							// Link to application sandbox
+							if( !parentIframeId )
+							{
+								parentIframeId = 'sandbox_' + app.applicationId;
+							}
+							break;
+						}
+					}
+				}
+
+				let msg = {}; if( packet ) for( let a in packet ) msg[a] = packet[a];
+				msg.command = 'setbodycontent';
+				msg.cachedAppData = _applicationBasics;
+				msg.dosDrivers = Friend.dosDrivers;
+				msg.parentSandboxId = parentIframeId;
+				msg.locale = Workspace.locale;
+
+				// Override the theme
+				if( view.getFlag( 'theme' ) )
+				{
+					msg.theme = view.getFlag( 'theme' );
+				}
+				if( Workspace.themeData )
+				{
+					msg.themeData = Workspace.themeData;
+				}
+
+				// Authid is important, should not be left out if it is available
+				if( !msg.authId )
+				{
+					if( ifr.authId ) msg.authId = ifr.authId;
+					else if( GetUrlVar( 'authid' ) ) msg.authId = GetUrlVar( 'authid' );
+				}
+				// Use this if the packet has it
+				if( !msg.sessionId )
+				{
+					if( packet.sessionId ) msg.sessionId = packet.sessionId;
+				}
+				msg.registerCallback = addWrapperCallback( function() { if( callback ) callback(); } );
+				if( packet.filePath )
+				{
+					msg.data = content.split( /progdir\:/i ).join( packet.filePath );
+				}
+				else msg.data = content;
+				if( self.flags.screen )
+					msg.screenId = self.flags.screen.externScreenId;
+				msg.data = msg.data.split( /system\:/i ).join( '/webclient/' );
+				if( !msg.origin ) msg.origin = '*'; //TODO: Should be fixed document.location.href;
+				
+				ifr.contentWindow.postMessage( JSON.stringify( msg ), '*' );
+			}
+			c.appendChild( ifr );
+		}
+
+		// Sets content on a safe window (using postmessage), callback when completed
+		this.setContentById = function( content, packet, callback )
+		{
+			if( this.iframe )
+			{
+				let msg = {}; if( packet ) for( var a in packet ) msg[a] = packet[a];
+				msg.command = 'setcontentbyid';
+				this.iframe.contentWindow.postMessage( JSON.stringify( msg ), Workspace.protocol + '://' + this.iframe.src.split( '//' )[1].split( '/' )[0] );
+			}
+			if( callback ) callback();
+		}
+		// old hello function
+		this.setSandboxedUrl = function( conf )
+		{
+			let self = this;
+			let appName = self.applicationName;
+			let origin = '*'; // TODO: Should be this Doors.runLevels[ 0 ].domain;
+			let domain = Doors.runLevels[ 1 ].domain;
+			domain = domain.split( '://' )[1];
+			let appBase = '/webclient/apps/' + appName + '/';
+			let protocol = Workspace.protocol + '://';
+			let filePath =  protocol + domain + appBase + conf.filePath;
+			let container = self._window.content || self._window;
+			let iframe = document.createElement( _viewType );
+			iframe.applicationId = self.applicationId;
+			iframe.authId = self.authId;
+			iframe.applicationName = self.applicationName;
+			iframe.applicationDisplayName = self.applicationDisplayName;
+			if( typeof friendApp == 'undefined' ) putSandboxFlags( iframe, getSandboxFlags( this, DEFAULT_SANDBOX_ATTRIBUTES ) ); // allow same origin is probably not a good idea, but a bunch other stuff breaks, so for now..
+			iframe.referrerPolicy = 'origin';
+
+			self._window.applicationId = conf.applicationId; // needed for View.close to work
+			self._window.authId = conf.authId;
+			self.iframe = iframe;
+			container.innerHTML = '';
+			container.appendChild( iframe );
+
+			let src = filePath
+				+ '?base=' + appBase
+				+ '&id=' + self.viewId
+				+ '&applicationId=' + self.applicationId
+				+ '&authId=' + conf.authId
+				+ '&origin=' + origin
+				+ '&domain=' + domain
+				+ '&locale=' + Workspace.locale
+				+ '&theme=' + Doors.theme;
+
+			if ( conf.viewTheme && conf.viewTheme.length )
+				src += '&viewTheme=' + conf.viewTheme;
+
+			iframe.src = src;
+		}
+		// Sets rich content in a safe iframe
+		this.setRichContent = function( content )
+		{
+			if( !this._window ) return;
+			
+			// Rich content still can't have any scripts!
+			content = this.removeScriptsFromData( content );
+			if( !this._window )
+				return;
+				
+			let eles = this._window.getElementsByTagName( _viewType );
+			let ifr = false;
+			if( eles[0] )
+				ifr = eles[0];
+			else
+			{
+				ifr = document.createElement( _viewType );
+				this._window.appendChild( ifr );
+			}
+			if( this.flags.transparent )
+			{
+				ifr.setAttribute( 'allowtransparency', 'true' );
+				ifr.style.backgroundColor = 'transparent';
+			}
+			ifr.applicationId = self.applicationId;
+			ifr.applicationName = self.applicationName;
+			ifr.applicationDisplayName = self.applicationDisplayName;
+			putSandboxFlags( ifr, getSandboxFlags( this, DEFAULT_SANDBOX_ATTRIBUTES ) );
+			ifr.authId = self.authId;
+			ifr.onload = function()
+			{
+				ifr.contentWindow.document.body.innerHTML = content;
+			}
+			if( this.flags.requireDoneLoading )
+			{
+				ifr.className = 'Loading';	
+			}
+			ifr.onload();
+
+			this.isRich = true;
+			this.iframe = ifr;
+		}
+		// Sets rich content in a safe iframe
+		this.setJSXContent = function( content, appName )
+		{
+			let w = this;
+
+			if( !this._window )
+				return;
+				
+			let eles = this._window.getElementsByTagName( _viewType );
+			let ifr = false;
+			let appended = false;
+
+			if( eles[0] )
+				ifr = eles[0];
+			else
+			{
+				ifr = document.createElement( _viewType );
+				appended = true;
+			}
+
+			// Load the sandbox
+			if( this.conf )
+			{
+				ifr.src = '/system.library/module/?module=system&command=sandbox' +
+					'&sessionid=' + Workspace.sessionId +
+					'&conf=' + JSON.stringify( this.conf ) +
+					( this.getFlag( 'noevents' ) ? '&noevents=true' : '' );
+			}
+			// Just give a dumb sandbox
+			else
+			{
+				ifr.src = '/webclient/sandboxed.html' +
+					( this.getFlag( 'noevents' ) ? '?noevents=true' : '' );
+			}
+
+			// Register name and ID
+			ifr.applicationName = appName;
+			ifr.applicationId = appName + '-' + (new Date()).getTime();
+			Doors.applications.push( ifr );
+
+			// Add a loaded script
+			ifr.onload = function()
+			{
+				// Get document
+				let doc = ifr.contentWindow.document;
+
+				let jsx = doc.createElement( 'script' );
+				jsx.innerHTML = content;
+				ifr.contentWindow.document.getElementsByTagName( 'head' )[0].appendChild( jsx );
+
+				let msg = {
+					command:       'initappframe',
+					base:          '/',
+					applicationId: ifr.applicationId,
+					filePath:      '/webclient/jsx/',
+					origin:        '*', // TODO: Should be this - document.location.href,
+					viewId:      w.externViewId ? w.externViewId : w.viewId,
+					clipboard:     Friend.clipboard
+				};
+
+				// Set theme
+				if( w.getFlag( 'theme' ) )
+					msg.theme = w.getFlag( 'theme' );
+				if( Workspace.themeData )
+					msg.themeData = Workspace.themeData;
+				
+
+				ifr.contentWindow.postMessage( JSON.stringify( msg ), Workspace.protocol + '://' + ifr.src.split( '//' )[1].split( '/' )[0] );
+			}
+
+			// Register some values
+			this.isRich = true;
+			this.iframe = ifr;
+
+			// If we need to append this one
+			if( appended ) this._window.appendChild( ifr );
+		}
+		// Sets rich content in a safe iframe
+		this.setRichContentUrl = function( url, base, appId, filePath, callback )
+		{
+			let view = this;
+
+			if( !base )
+				base = '/';
+
+			if( !this._window )
+				return;
+
+			let eles = this._window.getElementsByTagName( _viewType );
+			let ifr = false;
+			let w = this;
+			if( eles[0] ) ifr = eles[0];
+			else
+			{
+				ifr = document.createElement( _viewType );
+			}
+
+			// Register the app id so we can talk
+			this._window.applicationId = appId;
+
+			ifr.applicationId = self.applicationId;
+			ifr.applicationName = self.applicationName;
+			ifr.applicationDisplayName = self.applicationDisplayName;
+			ifr.authId = self.authId;
+			putSandboxFlags( ifr, getSandboxFlags( this, DEFAULT_SANDBOX_ATTRIBUTES ) );
+			
+			let conf = this.flags || {};
+			if( this.flags && this.flags.allowScrolling )
+			{
+				ifr.setAttribute( 'scrolling', 'yes' );
+			}
+			else
+			{
+				ifr.setAttribute( 'scrolling', 'no' );
+			}
+
+			if ( conf.fullscreenenabled )
+				ifr.setAttribute( 'allowfullscreen', 'true' );
+
+			if( this.flags.transparent )
+			{
+				ifr.setAttribute( 'allowtransparency', 'true' );
+				ifr.style.backgroundColor = 'transparent';
+			}
+
+			ifr.setAttribute( 'seamless', 'true' );
+			ifr.style.border = '0';
+			ifr.style.position = 'absolute';
+			ifr.style.top = '0'; ifr.style.left = '0';
+			ifr.style.width = '100%'; ifr.style.height = '100%';
+			
+			if( this.flags.requireDoneLoading )
+			{
+				ifr.className = 'Loading';	
+			}
+
+			// Find our friend
+			// TODO: Only send postmessage to friend targets (from our known origin list (security app))
+			
+			// Fix url
+			if( url.indexOf( 'http' ) != 0 )
+			{
+				let t = document.location.href.match( /(http[s]{0,1}\:\/\/)(.*?)\//i );
+				url = t[1] + t[2] + url;
+			}
+			
+			let targetP = url.match( /(http[s]{0,1}\:\/\/.*?)\//i );
+			let friendU = document.location.href.match( /http[s]{0,1}\:\/\/(.*?)\//i );
+			let targetU = url.match( /http[s]{0,1}\:\/\/(.*?)\//i );
+			if( friendU && friendU.length > 1 ) friendU = friendU[1];
+			if( targetU && targetU.length > 1 )
+			{
+				targetP = targetP[1];
+				targetU = targetU[1];
+			}
+			friendU = Trim( friendU );
+			
+			if( typeof friendApp == 'undefined'  && ( friendU.length || friendU != targetU || !targetU ) )
+				putSandboxFlags( ifr, getSandboxFlags( this, DEFAULT_SANDBOX_ATTRIBUTES ) );
+
+			// Allow sandbox flags
+			let sbx = ifr.getAttribute( 'sandbox' ) ? ifr.getAttribute( 'sandbox' ) : '';
+			sbx = ('' + sbx).split( ' ' );
+			if( this.flags && this.flags.allowPopups )
+			{
+				let found = false;
+				for( var a = 0; a < sbx.length; a++ )
+				{
+					if( sbx[a] == 'allow-popups' )
+					{
+						found = true;
+					}
+				}
+				if( !found ) sbx.push( 'allow-popups' );
+				if( typeof friendApp == 'undefined' )  ifr.setAttribute( 'sandbox', sbx.join( ' ' ) );
+			}
+			
+			// Special insecure mode (use with caution!)
+			if( this.limitless && this.limitless === true )
+			{
+				let sb = ifr.getAttribute( 'sandbox' );
+				if( !sb ) sb = DEFAULT_SANDBOX_ATTRIBUTES;
+				sb += ' allow-top-navigation';
+				ifr.setAttribute( 'sandbox', sb );
+			}
+
+			ifr.onload = function( e )
+			{
+				if( friendU && ( friendU == targetU || !targetU ) )
+				{
+					let msg = {
+						command           : 'initappframe',
+						base              : base,
+						applicationId     : appId,
+						filePath          : filePath,
+						origin            : '*', // TODO: Should be this - document.location.href,
+						viewId            : w.externViewId,
+						authId            : self.authId,
+						theme             : Workspace.theme,
+						fullscreenenabled : conf.fullscreenenabled,
+						clipboard         : Friend.clipboard,
+						viewConf          : self.args.viewConf
+					};
+
+					// Override the theme
+					if( view.getFlag( 'theme' ) )
+						msg.theme = view.getFlag( 'theme' );
+					if( Workspace.themeData )
+						msg.themeData = Workspace.themeData;
+
+					try
+					{
+						// TODO: Why we used protocol was for security domains - may be deprecated
+						//ifr.contentWindow.postMessage( JSON.stringify( msg ), Workspace.protocol + '://' + ifr.src.split( '//' )[1].split( '/' )[0] );
+						ifr.contentWindow.postMessage( JSON.stringify( msg ), '*' );
+					}
+					catch(e)
+					{
+						console.log('could not send postmessage to contentwindow!');
+					}
+					ifr.loaded = true;
+				}
+				if( callback ) { callback(); }
+			}
+			
+			// Commented out because it stops https sites from being viewed on f.eks localhost without ssl
+			
+			/*if( this.conf && url.indexOf( Workspace.protocol + '://' ) != 0 )
+			{
+				let cnf = this.conf;
+				if( typeof( this.conf ) == 'object' ) cnf = '';
+				ifr.src = '/system.library/module/?module=system&command=sandbox' +
+					'&sessionid=' + Workspace.sessionId +
+					'&url=' + encodeURIComponent( url ) + '&conf=' + cnf;
+			}
+			else
+			{*/
+				ifr.src = url;
+			/*}*/
+
+			this.isRich = true;
+			this.iframe = ifr;
+			
+			// Add after options set
+			if( !eles[0] ) this._window.appendChild( ifr );
+			
+			this.initOnMessageCallback();
+		}
+		
+		this.showBackButton = function( visible, cbk )
+		{
+			if( !isMobile ) return;
+			if( visible )
+			{
+				self.mobileBack.classList.add( 'Showing' );
+				self.viewIcon.classList.add( 'MobileBackHidesIt' );
+				
+				if( cbk )
+				{
+					self.mobileBack.ontouchstart = function( e )
+					{
+						cbk( e );
+					}
+				}
+			}
+			else 
+			{
+				self.mobileBack.classList.remove( 'Showing' );
+				self.viewIcon.classList.remove( 'MobileBackHidesIt' );
+			}
+		}
+
+		// Send a message
+		this.sendMessage = function( dataObject, event )
+		{
+			if( !event ) event = window.event;
+
+			// Check if the iframe is ready to receive a message
+			if( this.iframe && this.iframe.loaded && this.iframe.contentWindow )
+			{
+				let u = Workspace.protocolUrl + 
+					this.iframe.src.split( '//' )[1].split( '/' )[0];
+				
+				//let origin = event && 
+				//	event.origin && event.origin != 'null' && event.origin.indexOf( 'wss:' ) != 0 ? event.origin : '*'; // * used to be u;
+				// TODO: Fix this with security
+				let origin = '*';
+				
+				if( !dataObject.applicationId && this.iframe.applicationId )
+				{
+					dataObject.applicationId = this.iframe.applicationId;
+					dataObject.authId = this.iframe.authId;
+					dataObject.applicationName = this.iframe.applicationName;
+					dataObject.applicationDisplayName = this.iframe.applicationDisplayName;
+				}
+				if( !dataObject.type ) dataObject.type = 'system';
+				
+				this.iframe.contentWindow.postMessage( 
+					JSON.stringify( dataObject ), origin 
+				);
+			}
+			// No iframe?
+			else if( !this.iframe )
+			{
+				return false;
+			}
+			else
+			{
+				if( !this.sendQueue )
+					this.sendQueue = [];
+				this.sendQueue.push( dataObject );
+			}
+			return true;
+		}
+		// Receive a message specifically for this view.
+		this.initOnMessageCallback = function()
+		{
+			if( self.onMessage && self.iframe && !window.onmessage )
+			{
+				let b = self.iframe.getAttribute( 'sandbox' );
+				window.onmessage = function( msg ) 
+				{
+					if( msg && msg.isTrusted && msg.data && msg.data.type )
+					{
+						if( self.iframe.contentWindow == msg.source )
+						{
+							self.onMessage( msg.data );
+							
+							// Enforce prevailing sandbox attributes
+							self.iframe.setAttribute( 'sandbox', b );
+						}
+					}
+				};
+			}
+		}
+		// Send messages to window that hasn't been sent because iframe was not loaded
+		this.executeSendQueue = function()
+		{
+			if ( !this.sendQueue || !this.sendQueue.length )
+				return;
+
+			if( this.executingSendQueue || !this.iframe ) return;
+			this.executingSendQueue = true;
+			for( let a = 0; a < this.sendQueue.length; a++ )
+			{
+				let msg = this.sendQueue[ a ];
+				this.sendMessage( msg );
+			}
+			this.sendQueue = [];
+			this.executingSendQueue = false;
+		}
+		// Get content element
+		this.getContentElement = function()
+		{
+			if( this.isRich && this.iframe )
+			{
+				return this.iframe.contentWindow.document.body;
+			}
+			else return this._window;
+			return false;
+		}
+		// Focus on an able element
+		this.focusOnElement = function( identifier, flag )
+		{
+			let ele = this.getSubContent( identifier, flag );
+			if( ele && ele.focus ) ele.focus();
+		}
+		// Get some subcontent (.class or #id)
+		this.getContentById = function( identifier, flag )
+		{
+			let node = this.getContentElement();
+			if( !node ) return false;
+			let ele = node.getElementsByTagName( '*' );
+			let cnt = false;
+			let idn = identifier.substr( 0, 1 );
+			let key = identifier.substr( 1, identifier.length - 1 );
+			let results = [];
+			if( idn == '.' )
+			{
+				for( var a = 0; a < ele.length; a++ )
+				{
+					if( ele[a].className && ele[a].className == key )
+					{
+						results.push( ele[a] );
+					}
+				}
+			}
+			else
+			{
+				let fn = key;
+				if( idn != '#' ) fn = identifier;
+				for( var a = 0; a < ele.length; a++ )
+				{
+					if( ele[a].id == idn )
+					{
+						results.push( ele[a] );
+					}
+				}
+			}
+			if( !results.length)
+				return false;
+			if( flag == 'last-child' )
+				return results[results.length-1];
+			return results[0];
+		}
+		// Set content on sub element
+		// TODO: Deprecated! Remove completely!
+		this.setSubContent = function( identifier, flag, content )
+		{
+			let cnt = this.getSubContent( identifier, flag );
+			if( !cnt ) return;
+			// Safe content without any scripts or styles!
+			cnt.innerHTML = this.cleanHTMLData( content );
+		}
+		// Sets a property value
+		this.setAttributeById = function( packet )
+		{
+			if( this.iframe )
+			{
+				let msg = {}; if( packet ) for( var a in packet ) msg[a] = packet[a];
+				msg.command = 'setattributebyid';
+				this.iframe.contentWindow.postMessage( JSON.stringify( msg ), Workspace.protocol + '://' + this.iframe.src.split( '//' )[1].split( '/' )[0] );
+			}
+		}
+		// Activate window
+		this.activate = function( force )
+		{
+			if( isMobile && !force && this.flags.minimized ) 
+			{
+				return;
+			}
+			_ActivateWindow( this._window.parentNode );
+		}
+		// Move window to front
+		this.toFront = function( flags )
+		{
+			if( this.flags.minimized ) 
+			{
+				return;
+			}
+			if( !( flags && flags.activate === false ) )
+				_ActivateWindow( this._window.parentNode );
+			_WindowToFront( this._window.parentNode );
+		}
+		// Close a view window
+		this.close = function ( force )
+		{
+			if( isMobile )
+				Workspace.exitMobileMenu();
+			
+			let c = this._window;
+			if( c && c.content )
+				c = c.content;
+
+			// Remember window position
+			if( this.flags.memorize )
+			{
+				this._window.parentNode.memorize();
+			}
+
+			// Close blockers
+			if( this._window && this._window.blocker )
+			{
+				this._window.blocker.close();
+			}
+
+			if( !force && this._window && this._window.applicationId )
+			{
+				// Send directly to the view
+				let app = this._window.applicationId ? findApplication( this._window.applicationId ) : false;
+				if( c.getElementsByTagName( _viewType ).length )
+				{
+					let twindow = this;
+
+					// Notify application
+					let msg = {
+						type: 'system',
+						command: 'notify',
+						method: 'closeview',
+						applicationId: this._window.applicationId,
+						viewId: self.viewId
+					};
+					// Post directly to the app
+					if( app )
+					{
+						app.contentWindow.postMessage( JSON.stringify( msg ), '*' );
+					}
+					// Post directly to the window
+					else
+					{
+						this.sendMessage( msg );
+					}
+					// Execute any ambient onClose method
+					if( this.onClose ) this.onClose();
+					if( this.eventSystemClose ) // <- system call
+					{
+						for( let a = 0; a < this.eventSystemClose.length; a++ )
+						{
+							this.eventSystemClose[a]();
+						}
+					}
+					return;
+				}
+				else if( this.parentViewId )
+				{
+					let v = GetWindowById( this.parentViewId );
+					if( v && v.windowObject )
+					{
+						let msg = {
+							type: 'system',
+							command: 'notify',
+							method: 'closeview',
+							applicationId: this._window.applicationId,
+							viewId: this.viewId
+						};
+						v.windowObject.sendMessage( msg );
+					}
+					return false;
+				}
+				else if( app )
+				{
+					// Notify application
+					let msg = {
+						type: 'system',
+						command: 'notify',
+						method: 'closeview',
+						applicationId: this._window.applicationId,
+						viewId: self.viewId
+					};
+					app.sendMessage( msg );
+					return;
+				}
+			}
+			CloseView( this._window );
+			if( this.onClose ) this.onClose();
+			if( this.eventSystemClose ) // <- system call
+			{
+				for( let a = 0; a < this.eventSystemClose.length; a++ )
+				{
+					this.eventSystemClose[a]();
+				}
+			}
+			return true;
+		}
+		// Put a loading animation on window
+		this.loadingAnimation = function ()
+		{
+			WindowLoadingAnimation( this._window );
+		}
+		
+		// Set the main view of app
+		this.setMainView = function( set )
+		{
+			if( !this.applicationId ) return;
+			
+			if( !window._getAppByAppId )
+				return;
+				
+			let app = _getAppByAppId( this.applicationId );
+			if( !app ) return;
+			
+			this.flags.mainView = set;
+			
+			// Set main view
+			if( set )
+			{
+				app.mainView = this;
+			}
+			// Unset main view (pick the next view if possible
+			else
+			{
+				// Find new main view
+				app.mainView = null;
+				for( var a in app.windows )
+				{
+					if( app.windows[ a ] != this )
+					{
+						app.mainView = app.windows[ a ];
+						app.mainView.flags.mainView = true;
+					}
+				}
+			}
+			// Update other windows with the new main view!
+			if( app.mainView )
+			{
+				for( var a in app.windows )
+				{
+					if( app.windows[ a ] != app.mainView )
+					{
+						app.windows[ a ].mainView = false;
+						app.windows[ a ].flags.mainView = false;
+						app.windows[ a ].parentView = app.mainView;
+					}
+				}
+			}
+		}
+		
+		// Set a window flag
+		this.setFlag = function( flag, value )
+		{	
+			// References to the view window
+			let content = false;
+			let viewdiv = false;
+			if( this._window )
+			{
+				content = this._window;
+				viewdiv = content.parentNode;
+			}
+			
+			// Set the flag
+			switch( flag )
+			{
+				case 'context':
+					for( let a in movableWindows )
+					{
+						if( a == value )
+						{
+							this.currentContext = [ movableWindows[ a ] ];
+							this.flags.context = value;
+							break;
+						}
+					}
+					break;
+				case 'mainView':
+					this.setMainView( value );
+					this.flags.mainView = value;
+					break;
+				case 'noquickmenu':
+					if( value )
+						this._window.classList.add( 'NoQuickmenu' );
+					else this._window.classList.remove( 'NoQuickmenu' );
+					this.flags.noquickmenu = value;
+					break;
+				case 'menu':
+					if( value && value.length && value[0].name )
+					{
+						this.setMenuItems( value );
+						this.flags.menu = value;
+					}
+					this.flags.menu = null;
+					break;
+				case 'singletask':
+					this.flags.singletask = value;
+					break;
+				// Standard dialog has preset width and height
+				case 'standard-dialog':
+				// Dialog is treated only like a dialog
+					if( viewdiv.parentNode )
+					{
+						if( value )
+						{
+						    viewdiv.parentNode.classList.add( 'StandardDialog' );
+						}
+						else
+						{
+						    viewdiv.parentNode.classList.remove( 'StandardDialog' );
+						}
+					}
+				    this.flags[ 'standard-dialog' ] = value;
+				case 'dialog':
+					this.flags[ 'dialog' ] = value;
+					if( viewdiv )
+					{
+					    if( value )
+					    {
+					        viewdiv.parentNode.classList.add( 'Dialog' );
+					        if( flag == 'dialog' && document.body.classList.contains( 'ThemeEngine' ) )
+					        {
+							    viewdiv.style.left = 'calc(50% - ' + ( viewdiv.offsetWidth >> 1 ) + 'px)';
+							    viewdiv.style.top = 'calc(50% - ' + ( viewdiv.offsetHeight >> 1 ) + 'px)';
+							}
+					    }
+					    else
+					    {
+					        viewdiv.parentNode.classList.remove( 'Dialog' );
+					    }
+					}
+					break;
+				case 'clickableTitle':
+					this.flags.clickableTitle = value;
+					break;
+				case 'scrollable':
+					if( content )
+					{
+						if( value == true )
+							content.className = 'Content IconWindow';
+						else content.className = 'Content';
+						if( value == true )
+						{
+							viewdiv.classList.add( 'Scrolling' );
+						}
+						else
+						{
+							viewdiv.classList.remove( 'Scrolling' );
+						}
+					}
+					this.flags.scrollable = value;
+					break;
+				case 'left':
+					this.flags.left = value;
+					if( viewdiv )
+					{
+						value += '';
+						value = value.split( 'px' ).join( '' );
+						if( !isMobile )
+						{
+							viewdiv.style.left = ( value.indexOf( '%' ) > 0 || value.indexOf( 'vw' ) > 0 ) ? value : ( value + 'px' );
+						}
+					}
+					break;
+				case 'top':
+					this.flags.top = value;
+					if( viewdiv )
+					{
+						value += '';
+						value = value.split( 'px' ).join( '' );
+						if( !isMobile )
+						{
+							viewdiv.style.top = ( value.indexOf( '%' ) > 0 || value.indexOf( 'vh' ) > 0 ) ? value : ( value + 'px' );
+						}
+					}
+					break;
+				case 'max-width':
+					this.flags['max-width'] = value;
+					if( viewdiv )
+					{
+						viewdiv.style.maxWidth = value;
+						ResizeWindow( viewdiv, ( flag == 'width' ? value : null ), ( flag == 'height' ? value : null ) );
+						RefreshWindow( viewdiv );
+					}
+					break;
+				case 'max-height':
+					this.flags['max-height'] = value;
+					if( viewdiv )
+					{
+						viewdiv.style.maxHeight = value;
+						ResizeWindow( viewdiv, ( flag == 'width' ? value : null ), ( flag == 'height' ? value : null ) );
+						RefreshWindow( viewdiv );
+					}
+					break;
+				case 'min-width':
+					this.flags[ 'min-width' ] = value;
+					if( viewdiv )
+					{
+						viewdiv.style.minWidth = value;
+						ResizeWindow( viewdiv, ( flag == 'width' ? value : null ), ( flag == 'height' ? value : null ) );
+						RefreshWindow( viewdiv );
+					}
+					break;
+				case 'min-height':
+					this.flags[ 'min-height' ] = value;
+					if( viewdiv )
+					{
+						viewdiv.style.minHeight = value;
+						ResizeWindow( viewdiv, ( flag == 'width' ? value : null ), ( flag == 'height' ? value : null ) );
+						RefreshWindow( viewdiv );
+					}
+					break;
+				case 'width':
+				case 'height':
+					if( value == null ) value = 0;
+					this.flags[ flag ] = value;
+					if( viewdiv )
+					{	
+						if( value == 'max' )
+						{
+							if( flag == 'width' )
+							{
+								value = ( this.flags && this.flags.screen ) ? this.flags.screen.getMaxViewWidth() : window.innerWidth;
+							}
+							else
+							{
+								value = ( this.flags && this.flags.screen ) ? this.flags.screen.getMaxViewHeight() : window.innerHeight;
+							}
+						}
+						
+						ResizeWindow( viewdiv, ( flag == 'width' ? value : null ), ( flag == 'height' ? value : null ) );
+						RefreshWindow( viewdiv );
+					}
+					break;
+				// TODO: Expand to work with more properties
+				case 'animated':
+					this.flags[ flag ] = value;
+					if( value == true )
+					{
+						viewdiv.classList.add( 'Animated' );
+					}
+					else
+					{
+						viewdiv.classList.remove( 'Animated' );
+					}
+					break;
+				case 'resize':
+					this.flags[ flag ] = value;
+					ResizeWindow( viewdiv );
+					RefreshWindow( viewdiv );
+					break;
+				case 'loadinganimation':
+					if( value == true )
+					{
+						this.loadingAnimation();
+					}
+					break;
+				case 'hidden':
+				case 'invisible':
+					if( viewdiv )
+					{
+						if( value == 'true' || value == true )
+						{
+							// Fade out!!
+							if( value === false )
+							{
+								setTimeout( function(){
+									viewdiv.viewContainer.style.visibility = 'hidden';
+									viewdiv.viewContainer.style.pointerEvents = 'none';
+								}, 500 );
+							}
+							else
+							{
+								// Don't show the view window if it's hidden
+								viewdiv.viewContainer.style.visibility = 'hidden';
+								viewdiv.viewContainer.style.pointerEvents = 'none';
+							}
+							viewdiv.viewContainer.style.opacity = 0;
+						}
+						else
+						{
+							// Fade in!!
+							if( value === true )
+							{
+								setTimeout( function(){ viewdiv.viewContainer.style.opacity = 1; }, 1 );
+							}
+							// Don't show the view window if it's hidden
+							else viewdiv.viewContainer.style.opacity = 1;
+							viewdiv.viewContainer.style.visibility = '';
+							viewdiv.viewContainer.style.pointerEvents = '';
+						}
+						if( flag == 'invisible' )
+						{
+							if( value == true || value == 'true' )
+							{
+							    viewdiv.viewContainer.classList.add( 'Invisible' );
+							}
+							else
+							{
+							    viewdiv.viewContainer.classList.remove( 'Invisible' );
+							}
+						}
+						ResizeWindow( viewdiv );
+						RefreshWindow( viewdiv );
+					}
+					this.flags[ flag ] = value;
+					PollTaskbar();
+					break;
+				case 'liveView':
+					if( value == true || value == 'true' )
+					{
+					    viewdiv.viewContainer.classList.add( 'Liveview' );
+					}
+					else
+					{
+					    viewdiv.viewContainer.classList.remove( 'Liveview' );
+					}
+					break;
+				case 'screen':
+					this.flags.screen = value;
+					break;
+				case 'minimized':
+					if( viewdiv )
+					{
+						if( value == 'true' || value == true )
+						{
+							if( viewdiv.doMinimize )
+							{
+								viewdiv.doMinimize();
+							}
+						}
+						else if( value == 'false' || value == false )
+						{
+							_ActivateWindow( viewdiv );
+							_WindowToFront( viewdiv );
+						}
+					}
+					this.flags.minimized = value;
+					break;
+				case 'title':
+					if( !Trim( value ) )
+						value = i18n( 'i18n_untitled_window' );
+					SetWindowTitle( viewdiv, value );
+					this.flags.title = value;
+					break;
+				case 'theme':
+					this.flags.theme = value;
+					break;
+				case 'fullscreenenabled':
+					this.flags.fullscreenenabled = value;
+					break;
+				case 'background':
+					this.flags.background = value;
+					if( value == false )
+					{
+					    viewdiv.classList.remove( 'TransparentBg' );
+				    }
+				    else
+				    {
+				        viewdiv.classList.add( 'TransparentBg' );
+				    }
+					break;
+				case 'transparent':
+					this.flags.transparent = value;
+					if( viewdiv )
+					{
+						viewdiv.setAttribute( 'transparent', value ? 'transparent': '' );
+					}
+					break;
+				// TODO: Use it when ready
+				// Allow for dropping files in a secure manner
+				case 'securefiledrop':
+					this.flags.securefiledrop = value;
+					break;
+				case 'windowInactive':
+				case 'windowActive':
+					if( isMobile ) return false;
+					// Check window color
+					this.flags[ flag ] = value;
+					break;
+				case 'sidebarManaged':
+					if( viewdiv && viewdiv.parentNode )
+					{
+						if( value == 'true' || value == true )
+							viewdiv.parentNode.classList.add( 'SidebarManaged' );
+						else viewdiv.parentNode.classList.remove( 'SidebarManaged' );
+					}
+					this.flags[ flag ] = value;
+					break;
+				// Takes all flags
+				default:
+					this.flags[ flag ] = value;
+					return;
+			}
+
+			// Some values are not set on application
+			if( flag == 'screen' ) return;
+
+			// Support dashboard
+			if( window.Workspace && Workspace.dashboard && Workspace.dashboard !== true )
+				Workspace.dashboard.refresh();
+			
+			// Finally set the value on application
+
+			// Notify window if possible
+			// TODO: Real value after its evaluated
+			if( !Workspace.applications )
+				return;
+			for( let a = 0; a < Workspace.applications.length; a++ )
+			{
+				let app = Workspace.applications[a];
+				if( app.applicationId == viewdiv.applicationId )
+				{
+					app.contentWindow.postMessage( JSON.stringify( {
+						command: 'notify',
+						method:  'setviewflag',
+						viewId: viewdiv.windowObject.viewId,
+						applicationId: app.applicationId,
+						flag:    flag,
+						value:   value
+					} ), '*' );
+					break;
+				}
+			}
+		}
+		this.parseFlags = function( flags, filter )
+		{
+			if( !this.flags ) this.flags = {};
+			for( var a in flags )
+			{
+				// Just parse by filter
+				if( filter )
+				{
+					let fnd = false;
+					for( var b in filter )
+					{
+						if( a == filter[b] )
+						{
+							fnd = true;
+							break;
+						}
+					}
+					if( !fnd ) continue;
+				}
+				if( a == 'screen' && !flags[a] )
+				{
+					if( typeof( currentScreen ) != 'undefined' && currentScreen )
+						flags[a] = currentScreen.screenObject;
+				}
+				this.setFlag( a, flags[a] );
+			}
+			// We always need a screen
+			if( !this.flags.screen && typeof( currentScreen ) != 'undefined' )
+			{
+				this.flags.screen = currentScreen.screenObject;
+			}
+		}
+		this.getFlag = function( flag )
+		{
+			if( typeof( this.flags[flag] ) != 'undefined' )
+			{
+				switch( flag )
+				{
+					case 'top':
+					{
+						let fg = this.flags[ flag ];
+						fg += '';
+						if( fg.indexOf( '%' ) > 0 ) return fg;
+						else return parseInt( fg );
+						break;
+					}
+					case 'left':
+					{
+						let fg = this.flags[ flag ];
+						fg += '';
+						if( fg.indexOf( '%' ) > 0 ) return fg;
+						else return parseInt( fg );
+						break;
+					}
+					case 'width':
+					{
+						let fl = this.flags[flag];
+						if( fl.indexOf && fl.indexOf( '%' ) > 0 )
+							return fl;
+						if( fl == 'max' && this.flags && this.flags.screen )
+						{
+							fl = this.flags.screen.getMaxViewWidth();
+						}
+						return fl;
+					}
+					case 'height':
+					{
+						let fl = this.flags[flag];
+						if( fl.indexOf && fl.indexOf( '%' ) > 0 )
+							return fl;
+						if( fl == 'max' && this.flags && this.flags.screen )
+						{
+							fl = this.flags.screen.getMaxViewHeight();
+						}
+						return fl;
+					}
+				}
+				return this.flags[flag];
+			}
+			// No flags set.. just get the raw data if possible, and defaults
+			else if( this._window )
+			{
+				let w = this._window.parentNode;
+				switch( flag )
+				{
+					case 'left':
+						return parseInt( w.style.left );
+						break;
+					case 'top':
+						return parseInt( w.style.top );
+						break;
+				}
+				return false;
+			}
+			return false;
+		}
+		
+		this.openCamera = function( flags, callback )
+		{
+			
+			let self = this;
+			
+			// Just get the available devices
+			function getAvailableDevices( cbk )
+			{
+				if( !navigator.mediaDevices )
+				{
+					return cbk( { response: -1, message: 'Could not get any devices.' } );
+				}
+				navigator.mediaDevices.enumerateDevices().then( function( devs ) {
+					cbk( { response: 1, message: 'Success', data: devs } );
+				} ).catch( function( err ) {
+					return cbk( { response: -1, message: err } );
+				} );
+			}
+			
+			function setCameraEvents( ele )
+			{
+				ele.ontouchstart = function( e )
+				{
+					this.offX = e.touches[0].clientX;
+					this.timeStamp = ( new Date() ).getTime();
+				}
+			
+				ele.ontouchend = function( e )
+				{
+					let diff = e.changedTouches[0].clientX - this.offX;
+					let difftime = ( new Date() ).getTime() - this.timeStamp;
+					if( difftime > 200 )
+					{
+						return;
+					}
+					// Swipe right
+					if( diff < 127 )
+					{
+						setCameraMode();
+					}
+					// Swipe left
+					else if( diff > 127 )
+					{
+						setCameraMode();
+					}	
+				}
+			}
+			
+			function setCameraMode( e )
+			{
+				let v = null;
+				if( !self.cameraOptions )
+				{
+					self.cameraOptions = {
+						devices: e,
+						currentDevice: false
+					};
+					// Add container
+					v = document.createElement( 'div' );
+					v.className = 'FriendCameraContainer';
+					self.content.appendChild( v );
+					self.content.container = v;
+					self.content.classList.add( 'HasCamera' );
+					
+					
+				
+				}
+				
+				// Find video devices
+				let initial = false;
+				let devs = [];
+				for( var a in self.cameraOptions.devices )
+				{
+					let dev = self.cameraOptions.devices[ a ];
+					if( dev.kind == 'videoinput' )
+					{
+						//we want back facing camera as default...
+						if( dev.label && dev.label.indexOf('back') > -1 && !self.cameraOptions.currentDevice ) 
+						{
+							self.cameraOptions.currentDevice = dev;
+							initial = true;
+						}
+						else 
+						{
+							//we overwrite on purpose here! most handsets have backwards facing cameras last...
+							self.cameraOptions.potentialDevice = dev
+						}
+						devs.push( dev );
+					}
+				}
+				if( !self.cameraOptions.currentDevice && self.cameraOptions.potentialDevice )
+				{
+					self.cameraOptions.currentDevice = self.cameraOptions.potentialDevice
+					initial = true;
+				}
+				
+				// Initial pass over, now just choose next device
+				if( !initial )
+				{
+					let found = nextfound = false;
+					for( var a = 0; a < devs.length; a++ )
+					{
+						if( devs[a].deviceId == self.cameraOptions.currentDevice.deviceId )
+						{
+							found = true;
+						}
+						// We found stuff
+						else if( found )
+						{
+							nextfound = true;
+							self.cameraOptions.currentDevice = devs[a];
+							break;
+						}
+					}
+					// Wrap around
+					if( !nextfound )
+					{
+						self.cameraOptions.currentDevice = devs[0];
+					}
+				}
+				let constraints = {
+					video: {
+						deviceId: { exact: self.cameraOptions.currentDevice.deviceId }
+					}
+				};
+				
+				let ue = navigator.userAgent.toLowerCase();
+				
+				if( navigator.gm ) { 
+					
+					//check if we should stop stuff before we try again...
+					let dd = self.content.container.camera;
+					if(dd && dd.srcObject)
+					{
+						dd.srcObject.getTracks().forEach(track => track.stop())
+						dd.srcObject = null;
+					}
+					if( self.content.container.camera ) self.content.container.removeChild( self.content.container.camera );
+					delete self.content.container.camera;
+					delete navigator.gm;
+				}
+				
+				// Shortcut
+				navigator.gm = (navigator.getUserMedia ||
+					navigator.webkitGetUserMedia ||
+					navigator.mozGetUserMedia || 
+					navigator.msGetUserMedia
+				);
+
+				if( navigator.gm )
+				{
+					navigator.gm( 
+						constraints, 
+						function( localMediaStream )
+						{
+							// Remove old video object
+							//might be too late here? at least on mobile? moved this check up a couple of lines..
+							let oldCam = self.content.container.camera;
+							if( oldCam && oldCam.srcObject )
+							{
+								oldCam.srcObject.getTracks().forEach( track => track.stop() );
+								oldCam.srcObject = localMediaStream;
+							}
+							else
+							{
+								// New element!
+								let vi = document.createElement( 'video' );
+								vi.setAttribute( 'autoplay', 'autoplay' );
+								vi.setAttribute( 'playinline', 'playinline' );
+								vi.className = 'FriendCameraElement';
+								vi.srcObject = localMediaStream;
+								self.content.container.appendChild( vi );
+								self.content.container.camera = vi;
+						
+								setCameraEvents( vi );
+							}
+						
+							// Create an object URL for the video stream and use this 
+							// to set the video source.
+							self.content.container.camera.srcObject = localMediaStream;
+						
+							// Add the record + switch button
+							if( !self.content.container.button )
+							{
+								let btn = document.createElement( 'button' );
+								btn.className = 'IconButton IconSmall fa-camera';
+								btn.onclick = function( e )
+								{
+									let dd = self.content.container.camera;
+									let canv = document.createElement( 'canvas' );
+									canv.setAttribute( 'width', dd.videoWidth );
+									canv.setAttribute( 'height', dd.videoHeight );
+									v.appendChild( canv );
+									let ctx = canv.getContext( '2d' );
+									ctx.drawImage( dd, 0, 0, dd.videoWidth, dd.videoHeight );
+									let dt = canv.toDataURL( 'image/jpeg', 0.95 );
+							
+									// Stop taking video
+									dd.srcObject.getTracks().forEach(track => track.stop())
+									dd.srcObject = null;
+							
+									// FLASH!
+									v.classList.add( 'Flash' );
+									setTimeout( function()
+									{
+										v.classList.add( 'Flashing' );
+										setTimeout( function()
+										{
+											v.classList.remove( 'Flashing' );
+											setTimeout( function()
+											{
+												v.classList.add( 'Closing' );
+												setTimeout( function()
+												{
+													callback( { response: 1, message: 'Image captured', data: dt } );
+													v.parentNode.removeChild( v );
+												}, 250 );
+											}, 250 );
+										}, 250 );
+									}, 5 );
+								}
+								self.content.container.appendChild( btn );
+								
+								
+								let switchbtn = document.createElement( 'button' );
+								switchbtn.className = 'IconButton IconSmall fa-refresh';
+								switchbtn.onclick = function() { setCameraMode() };
+								self.content.container.appendChild( switchbtn );
+
+								//stop the video if the view is closed!
+								self.addEvent('systemclose', function() {
+									let dd = self.content.container.camera;
+									if(dd && dd.srcObject )
+									{
+										dd.srcObject.getTracks().forEach(track => track.stop())
+										dd.srcObject = null;									
+									}
+								});
+								
+								//register our button in the container... to not do this twice							
+								self.content.container.button = btn;
+							}
+						},
+						function( err )
+						{
+							v = self.content;
+							// Log the error to the console.
+							callback( { response: -2, message: 'Could not access camera. getUserMedia() failed.' + err } );
+							if( v )
+							{
+								v.classList.add( 'Closing' );
+								/*setTimeout( function()
+								{
+									v.parentNode.removeChild( v );
+								},  250 );*/
+							}
+						}
+					);
+				}
+				else
+				{
+					// TODO: Hogne
+					// Remove video
+					v.removeChild( d );
+				
+					// Add fallback
+					let fb = document.createElement( 'div' );
+					fb.className = 'FriendCameraFallback';
+					v.appendChild( fb );
+					let mediaElement = document.createElement( 'input' );
+					mediaElement.type = 'file';
+					mediaElement.accept = 'image/*';
+					mediaElement.className = 'FriendCameraInput';
+					fb.innerHTML = '<p>' + i18n( 'i18n_camera_action_description' ) + 
+						'</p><button class="IconButton IconSmall IconBig fa-camera">' + i18n( 'i18n_take_photo' ) + '</button>';
+					fb.appendChild( mediaElement );
+				
+					setTimeout( function()
+					{
+						fb.classList.add( 'Showing' );
+					}, 5 );
+				
+					mediaElement.onchange = function( e )
+					{
+						let reader = new FileReader();
+						reader.onload = function( e )
+						{
+							
+							let dataURL = e.target.result;
+							v.classList.remove( 'Showing' );
+							setTimeout( function()
+							{
+								callback( { response: 1, message: 'Image captured', data: dataURL } );
+								v.parentNode.removeChild( v );
+							}, 250 );
+						}
+						reader.readAsDataURL( mediaElement.files[0] );
+					}
+				}
+			}
+
+			// prepare for us to use to external libs. // good quality resize + EXIF data reader
+			// https://github.com/blueimp/JavaScript-Load-Image/blob/master/js/load-image.all.min.js
+			if( !self.cameraIncludesLoaded )
+			{
+				Include( '/webclient/3rdparty/load-image.all.min.js', function()
+				{
+					// Execute async operation
+					self.cameraIncludesLoaded = true;
+					getAvailableDevices( function( e ){ setCameraMode( e.data ) } );				
+				});
+			}
+			else
+			{
+				getAvailableDevices( function( e ){ setCameraMode( e.data ) } );				
+			}
+		}
+		
+		// Add a child window to this window
+		this.addChildWindow = function( ele )
+		{
+			if ( ele.tagName && ele.windowObject )
+				return this.childWindows.push ( ele.windowObject );
+			else if ( ele._window ) return this.childWindows.push ( ele );
+			else if ( ele.content ) return this.childWindows.push ( ele );
+			return false;
+		}
+		// Get elements by tabname
+		this.getElementsByTagName = function ( tn )
+		{
+			return this._window.getElementsByTagName ( tn );
+		}
+		// Get elements by class
+		this.getByClass = function ( classn )
+		{
+			let el = this._window.getElementsByTagName ( '*' );
+			let out = [];
+			for( var a = 0; a < el.length; a++ )
+			{
+				if( el[a].className )
+				{
+					let cls = el[a].className.split ( ' ' );
+					for( var b = 0; b < cls.length; b++ )
+					{
+						if ( cls[b] == classn )
+						{
+							out.push(el[a]);
+							break;
+						}
+					}
+				}
+			}
+			return out;
+		}
+		// Init gui tabs
+		this.initTabs = function( pel )
+		{
+			InitTabs ( pel );
+		}
+		// Get a window by id
+		this.getViewId = function()
+		{
+			return this._window.viewId;
+		}
+		// Add events for stuff
+		this.addEvent = function( event, func )
+		{
+			if( event == 'systemclose' )
+			{
+				if( !this.eventSystemClose ) this.eventSystemClose = [];
+				this.eventSystemClose.push( func );
+			}
+			return this._window.AddEvent( event, func );
+		}
+		// Remove event
+		this.removeEvent = function( event, func )
+		{
+			return this._window.RemoveEvent( event, func );
+		}
+		// Add an event on a sub element
+		this.addEventByClass = function( className, event, func )
+		{
+			let ele = this.getSubContent( '.' + className );
+			if( ele )
+			{
+				if( ele.addEventListener )
+					ele.addEventListener( event, func, false );
+				else ele.attachEvent( 'on' + event, func, false );
+			}
+		}
+		// Set menu items on window
+		this.setMenuItems = function( obj, appid, viewId )
+		{
+			// Set destination
+			if( viewId ) this._window.menuViewId = viewId;
+			// Set items
+			this._window.menu = obj;
+			WorkspaceMenu.generated = false;
+			if( appid && ( window.isMobile || IsSharedApp() ) )
+			{
+				this._window.applicationId = appid;
+			}
+			CheckScreenTitle( null, true );
+		}
+		this.setBlocker = function( blockwin )
+		{
+			this._window.blocker = blockwin;
+		}
+		this.removeBlocker = function()
+		{
+			this._window.blocker = false;
+		}
+		// Get the window element (dom element)
+		this.getWindowElement = function()
+		{
+			return this._window;
+		}
+
+		this.focus = function()
+		{
+			this._window.focus();
+		}
+
+		// Handle the keys -- dummy function to be overwritten
+		this.handleKeys = function( k, event )
+		{
+		}
+
+		this.setSticky = function()
+		{
+			this._window.parentNode.parentNode.setAttribute( 'sticky', 'sticky' );
+		}
+
+		// Now set it up! --------------------------------------------------------->
+		self.viewId = args.viewId;
+		self.applicationId = args.applicationId;
+		self.authId = args.authId;
+		self.applicationName = args.applicationName;
+		self.applicationDisplayName = args.applicationDisplayName;
+
+		if( !args.id ) args.id = false;
+		
+		// Fullscreen single task
+		if( Workspace.isSingleTask )
+		{
+			args.width = 'max';
+			args.height = 'max';
+			args.left = 0;
+			args.top = 0;
+			args.resize = false;
+		}
+		
+		// TODO: Native window mode should work!
+		/*let webapp = document.location.href.indexOf( '/webapp.html' ) > 0;
+		if( webapp && !window.windowCount ) window.windowCount = 0;
+		if( webapp && window.windowCount++ > 1 )
+		{
+			let uid = args.id ? args.id : UniqueId();
+			let nw = window.open( '', uid, 'width=' + args.width + ',height=' + args.height + ',status=no,toolbar=no,topbar=no,windowFeatures=popup' );
+			self._nativeWindow = nw;
+			self._type = 'native';
+			
+			let bod = nw.document.body;
+			let elements = [ 'Content', 'Title', 'Leftbar', 'Rightbar', 'Bottombar', 'ViewTitle' ];
+			let content = null;
+			for( let a in elements )
+			{
+				let d = nw.document.createElement( 'div' );
+				d.className = elements[ a ];
+				bod.appendChild( d );
+				if( elements[ a ] == 'Content' )
+				{
+					content = d;
+				}
+				else if( content )
+				{
+					let key = elements[ a ].toLowerCase();
+					if( key == 'title' ) key = 'titleBar';
+					else if( key == 'viewtitle' ) key = 'viewTitle';
+					content[ key ] = d;
+				}
+			}
+			
+			movableWindows[ uid ] = content;
+			
+			bod.querySelector( '.Title' ).innerHTML = '<span></span>';
+			bod.classList.remove( 'Loading' );
+			self.createContentEventFuncs( content );
+			content.windowObject = self;
+			self._window = content;
+			self.content = content;
+			self.content.windowObject = self;
+			self.flags = args;
+		}
+		else 
+		{*/
+			this.createDomElements( 'CREATE', args.title, args.width, args.height, args.id, args, args.applicationId );
+		//}
+
+		if( !self._window || !self._window.parentNode ) return false;
+
+		if( !this._window )
+		{
+			this.ready = false;
+			return;
+		}
+		else this.ready = true;
+
+		this.isRich = false;
+		this.childWindows = [];
+
+		CheckScreenTitle();
+
+		// Done setting up view -----------------------------------------------<
+	}
+}
+
 // The View class begins -------------------------------------------------------
 
 // Attach view class to friend
@@ -2511,3947 +6455,6 @@ Friend.GUI.view.cleanHTMLData = function( data )
 // TODO: Fix opening windows with no preset id (right now, window does not appear)
 // TODO: Fix opening windows with id, to close and kill its application if already running app with unique id
 
-
-
-/**
- * View class
- *
- * The View class is used to created views/windows in Friend - it is the most used class to build the user interface
- *
- * The View class has a sibling, the Screen class that creates a new Friend screen.
- *
- *
- *
- * @param args - an object containing the initial parameters for the view. As an absolute minium title, width and height should be provided
- * @return View - a pointer to the new instance that justhas been created
- *
- */
-var View = function( args )
-{
-	let self = this;
-	
-	// Windows on own screen ignores the virtual workspaces
-	if( args.screen && args.screen != Workspace.screen )
-	{
-		if( globalConfig && typeof( globalConfig.workspaceCurrent ) != 'undefined' )
-			this.workspace = globalConfig.workspaceCurrent;
-		else this.workspace = 0;
-	
-		if( args.workspace === 0 || args.workspace )
-		{
-			if( args.workspace < globalConfig.workspacecount - 1 )
-			{
-				this.workspace = args.workspace;
-			}
-		}
-	}
-	
-	// Special hook for dashboard related workspace
-	if( window.hideDashboard && ( !args || !args.invisible ) )
-	{
-		let newApp = true;
-		if( args.applicationId )
-		{
-			for( let a in Workspace.applications )
-			{
-				let app = Workspace.applications[ a ];
-				if( app.applicationId == args.applicationId )
-				{
-					let count = 0;
-					for( let b in app.windows )
-					{
-						count++;
-						if( count > 1 )
-						{
-							newApp = false;
-							break;
-						}
-					}
-				}
-			}
-		}
-		if( newApp )
-			window.hideDashboard();
-	}
-	
-	// Start off
-	if( !args )
-		args = {};
-	this.args = args;
-
-	this.widgets = []; // Widgets stuck to this view window
-
-	// Reaffirm workspace
-	this.setWorkspace = function()
-	{
-		// Ignore windows on own screen
-		if( this.flags && this.flags.screen && this.flags.screen != Workspace.screen ) return;
-		if( globalConfig.workspacecount > 1 )
-		{
-			let ws = this.getFlag( 'left' );
-			ws = parseInt( ws ) / window.innerWidth;
-			this.workspace = Math.floor( ws );
-		}
-	}
-	
-	// Create event functions on content
-	this.createContentEventFuncs = function( cont )
-	{
-		// Create event handler for view window
-		if( !cont.events )
-			cont.events = new Array ();
-		cont.AddEvent = function( event, func )
-		{
-			if( typeof(this.events[event]) == 'undefined' )
-				this.events[event] = [];
-			this.events[event].push( func );
-			return func;
-		}
-		cont.RemoveEvent = function( event, func )
-		{
-			if( typeof( this.events[event] ) == 'undefined' ) return false;
-			let o = [];
-			let found = false;
-			for( var a in this.events[event] )
-			{
-				if( this.events[event][a] != func )
-				{
-					o.push( this.events[event][a] );
-				}
-				else found = true;
-			}
-			this.events[event] = o;
-			return found;
-		}
-	}
-
-	// Clean data
-	this.cleanHTMLData = Friend.GUI.view.cleanHTMLData;
-	this.removeScriptsFromData = Friend.GUI.view.removeScriptsFromData;
-
-	// Setup the dom elements
-	// div = existing DIV dom element or 'CREATE'
-	// titleStr = title string
-	// width = width
-	// height = height (in pixels)
-	// id = window id
-	// flags = list of constructor flags
-	// applicationId = app id..
-	this.createDomElements = function( div, titleStr, width, height, id, flags, applicationId, parentOverride = false )
-	{
-		if( this.created ) 
-		{
-			return;
-		}
-		this.created = true;
-		if ( !div ) return false;
-		
-		// Native mode? Creates a new place for the view
-		this.nativeWindow = false;
-
-		// If we're making a movable window with a unique id, the make sure
-		// it doesn't exist, in case, just return the existing window
-		let contentscreen = false;
-		let parentWindow = false;
-		if( !titleStr )
-			titleStr = '';
-		let transparent = false;
-
-		let filter = [
-			'min-width', 'min-height', 'width', 'height', 'id', 'title', 
-			'screen', 'parentView', 'transparent', 'minimized', 'dialog', 
-			'standard-dialog', 'sidebarManaged'
-		];
-
-		if( !flags.screen )
-		{
-			flags.screen = Workspace.screen;
-		}
-
-		// This needs to be set immediately!
-		self.parseFlags( flags, filter );
-		
-		let app = false;
-		if( window._getAppByAppId )
-		{
-			let app = _getAppByAppId( div.applicationId );
-		}
-		
-		// Set a parent relation to main view
-		if( app && app.mainView	)
-		{
-			self.parentView = app.mainView;
-		}
-		
-		// Set initial workspace
-		if( !flags.screen || flags.screen == Workspace.screen )
-		{
-			if( flags.workspace && flags.workspace > 0 )
-			{
-				self.workspace = flags.workspace;
-			}
-			else
-			{
-				self.workspace = globalConfig.workspaceCurrent;
-			}
-		}
-		
-		if( !self.getFlag( 'min-width' ) )
-			this.setFlag( 'min-width', 100 );
-		if( !self.getFlag( 'min-height' ) )
-			this.setFlag( 'min-height', 100 );
-		
-		// Get newly parsed flags
-		width = self.getFlag( 'width' );
-		height = self.getFlag( 'height' );
-		
-		id = self.getFlag( 'id' );
-		titleStr = self.getFlag( 'title' );
-		if( !titleStr ) titleStr = 'Unnamed window';
-		contentscreen = self.getFlag( 'screen' );
-		parentWindow = self.getFlag( 'parentView' );
-		transparent = self.getFlag( 'transparent' );
-		
-		// Clean ID
-		if( !id )
-		{
-			id = titleStr.split( /[^a-z0-9]+/i ).join( '_' );
-			if( id.substr( 0, 1 ) == '_' )
-				id = 'win' + id;
-			let tmp = id;
-			let num = 2;
-			while( typeof ( movableWindows[ tmp ] ) != 'undefined' )
-			{
-				tmp = id + '_' + (num++);
-			}
-			id = tmp;
-		}
-		// Clean ID
-		else
-		{
-			id = id.split( /[^a-z0-9]+/i ).join( '_' );
-			if( id.substr( 0, 1 ) == '_' )
-				id = 'win' + id;
-		}
-
-		// Make a unique id
-		let uniqueId = id;
-		uniqueId = uniqueId.split( /[ |:]/i ).join ( '_' );
-
-		// Where to add div..
-		let divParent = false;
-		let iconSpan;
-		let viewContainer = null;
-
-		// Window is already taken
-		if( id && typeof( movableWindows[ id ] ) != 'undefined' )
-			return false;
-
-		if( id )
-		{
-			// Make a container to put the view div inside of
-			viewContainer = document.createElement( 'div' );
-			viewContainer.className = 'ViewContainer';
-			viewContainer.style.display = 'none';
-			
-			// Set up view title
-			let viewTitle = document.createElement( 'div' );
-			viewTitle.className = 'ViewTitle';
-			viewContainer.appendChild( viewTitle );
-			
-			// Get icon for visualizations
-			if( applicationId )
-			{
-				for( var a = 0; a < Workspace.applications.length; a++ )
-				{
-					if( Workspace.applications[a].applicationId == applicationId )
-					{
-						if( Workspace.applications[a].icon )
-						{
-							let ic = Workspace.applications[a].icon;
-							iconSpan = document.createElement( 'span' );
-							iconSpan.classList.add( 'ViewIcon' );
-							iconSpan.style.backgroundImage = 'url(\'' + ic + '\')';
-							self.viewIcon = iconSpan;
-							viewContainer.appendChild( iconSpan );
-						}
-					}
-				}
-				
-				// Add mobile back button
-				if( isMobile )
-				{
-					let md = document.createElement( 'div' );
-					md.className = 'MobileBack';
-					self.mobileBack = md;
-					md.ontouchstart =function( e )
-					{
-						if( window._getAppByAppId )
-						{
-							let app = _getAppByAppId( div.applicationId );
-							if( app.mainView )
-							{
-								FocusOnNothing();
-								_ActivateWindow( app.mainView.content.parentNode );
-								self.close();
-								return cancelBubble( e );
-							}
-						}
-						return cancelBubble( e );
-					};
-					viewContainer.appendChild( md );
-				}
-			}
-			else
-			{
-				iconSpan = document.createElement( 'span' );
-				iconSpan.classList.add( 'ViewIcon' );
-				self.viewIcon = iconSpan;
-				iconSpan.style.backgroundImage = 'url(/iconthemes/friendup15/Folder.svg)';
-				viewContainer.appendChild( iconSpan );
-				
-				// Add mobile back button
-				if( isMobile )
-				{
-					let md = document.createElement( 'div' );
-					md.className = 'MobileBack';
-					self.mobileBack = md;
-					md.ontouchstart =function( e )
-					{
-						if( window._getAppByAppId )
-						{
-							let app = _getAppByAppId( div.applicationId );
-							if( app.mainView )
-							{
-								FocusOnNothing();
-								_ActivateWindow( app.mainView.content.parentNode );
-								self.close();
-								return cancelBubble( e );
-							}
-						}
-						return cancelBubble( e );
-					};
-					viewContainer.appendChild( md );
-				}
-				
-			}
-			
-			if( div == 'CREATE' )
-			{	
-				div = document.createElement( 'div' );
-				
-				if( applicationId ) div.applicationId = applicationId;
-				div.parentWindow = false;
-				
-				// Native mode probably
-				if( parentOverride )
-				{
-					divParent = parentOverride;
-				}
-				else if( parentWindow )
-				{
-					divParent = parentWindow._window;
-					div.parentWindow = parentWindow;
-				}
-				// Defined screen (and we're not in multiple workspaces)
-				else if( contentscreen )
-				{
-					divParent = contentscreen.contentDiv ? contentscreen.contentDiv : contentscreen.div;
-				}
-				else if( typeof ( window.currentScreen ) != 'undefined' )
-				{
-					divParent = window.currentScreen;
-				}
-				else 
-				{
-					divParent = document.body;
-				}
-			}
-			
-			div.viewTitle = viewTitle;
-			
-			// Designate
-			movableWindows[ id ] = div;
-			div.titleString = titleStr;
-			div.viewId = id;
-			
-			if( !flags.screen || flags.screen == Workspace.screen )
-			{
-				div.workspace = self.workspace;
-			}
-			else div.workspace = 0;
-		}
-		else if ( div == 'CREATE' )
-		{
-			div = document.createElement ( 'div' );
-			if( applicationId ) div.applicationId = applicationId;
-			div.parentWindow = false;
-			// Native mode probably
-			if( parentOverride )
-			{
-				divParent = parentOverride;
-			}
-			else if( parentWindow )
-			{
-				divParent = parentWindow._window;
-				div.parentWindow = parentWindow;
-			}
-			// Defined screen (and we're not in multiple workspaces)
-			else if( contentscreen )
-			{
-				divParent = contentscreen.contentDiv ? contentscreen.contentDiv : contentscreen.div;
-			}
-			else if( typeof( window.currentScreen ) != 'undefined' )
-			{
-				divParent = window.currentScreen;
-			}
-			else
-			{
-				divParent = document.body;
-			}
-			if( divParent.object && divParent.object._screen )
-			{
-				divParent = divParent.object._screen;
-			}
-
-			// ID must be unique
-			let num = 0;
-			let oid = id;
-			while( ge( id ) )
-				id = oid + '_' + ++num;
-
-			div.id = id ? id : ( 'window_' + Friend.GUI.view.movableViewIdSeed++ );
-			div.viewId = div.id;
-			movableWindows[ div.id ] = div;
-		}
-		// Just register the view
-		else
-		{
-			movableWindows[ div.id ] = div;
-		}
-
-		if( isMobile )
-			Workspace.exitMobileMenu();
-
-        // Set placeholder quickmenu
-        div.quickMenu = {
-            uniqueName: 'placeholder_' + ( div.id ? div.id : MD5( Math.random() * 1000 + ( Math.random() * 1000 ) + '' ) ),
-            0: {
-                name: i18n( 'i18n_close' ),
-                icon: 'remove',
-                command: function()
-                {
-                	div.windowObject.close();
-                }
-            }
-        };
-
-		// Check to set mainview
-		if( window._getAppByAppId )
-		{
-			let app = _getAppByAppId( this.applicationId );
-			if( app )
-			{
-				let l = 0; for( var k in app.windows ) l++;
-				// If we only have one window - it's probably the main window
-				if( l == 0 )
-				{
-					this.setFlag( 'mainView', true );
-				}
-			}
-		}
-
-		// Tell it's opening (not minimized or invisible ones)
-		if( !flags.minimized && !flags.invisible )
-		{
-			// Allow initialized
-			if( window.currentMovable )
-			{
-				viewContainer.classList.add( 'Initialized' );
-				setTimeout( function()
-				{
-					viewContainer.classList.remove( 'Initialized' );
-				}, 25 );
-			}
-			// Allow opening animation
-			viewContainer.classList.add( 'Opening' );
-			div.classList.add( 'Opening' );
-			setTimeout( function()
-			{
-				div.classList.add( 'Opened' );
-				div.classList.remove( 'Opening' );
-				setTimeout( function()
-				{
-					div.classList.remove( 'Opened' );
-					// Give last call to port
-					div.classList.add( 'Redrawing' );
-					setTimeout( function()
-					{
-						viewContainer.classList.remove( 'Opening' );
-						div.classList.remove( 'Redrawing' );
-					}, 250 );
-				}, 250 );
-			}, 250 );
-		}
-
-		if( transparent )
-		{
-			div.setAttribute( 'transparent', 'transparent' );
-		}
-		
-		if( !flags.minimized )
-		{
-			div.style.transform = 'translate3d(0, 0, 0)';
-		}
-
-		let zoom; // for use later - zoom gadget
-
-		let html = div.innerHTML;
-		let contn = document.createElement( 'div' );
-		contn.windowObject = this;
-		div.windowObject = this;
-		this._window = contn;
-		
-		// Set up view states
-		// TODO: More to come!
-		this.states = {
-			'input-focus': false
-		};
-		
-		contn.className = 'Content';
-		contn.innerHTML = html;
-
-
-		// Assign content element to both div and view object
-		div.content = contn;
-		self.content = contn;
-		
-		// Title
-		let titleSpan = document.createElement ( 'span' );
-		titleSpan.innerHTML = titleStr ? titleStr : '- unnamed -';
-
-		contn.applicationId = applicationId;
-		
-		// Virtual window, not for display
-		if( flags.virtual )
-		{
-			div.classList.add( 'Virtual' );
-		}
-
-		div.innerHTML = '';
-
-		// Register mouse over and out
-		if( !window.isMobile )
-		{
-			div.addEventListener( 'mouseover', function( e )
-			{
-				// Keep track of the previous
-				if( typeof( Friend.currentWindowHover ) != 'undefined' && Friend.currentWindowHover )
-					Friend.previousWindowHover = Friend.currentWindowHover;
-				Friend.currentWindowHover = div;
-			
-				if( !div.classList.contains( 'Active' ) )
-				{
-					// Reactivate all iframes
-					let fr = div.windowObject.content.getElementsByTagName( 'iframe' );
-					for( let a = 0; a < fr.length; a++ )
-					{
-						if( fr[ a ].oldSandbox && typeof( fr[ a ].oldSandbox ) == 'string' )
-							fr[ a ].setAttribute( 'sandbox', fr[ a ].oldSandbox );
-					}
-				}
-			
-				// Focus on desktop if we're not over a window.
-				if( Friend.previousWindowHover && Friend.previousWindowHover != div )
-				{
-					// Check first if are focused on an input field
-					// If we are, don't focus on nothing!
-					if( !Friend.GUI.checkWindowState( 'input-focus' ) )
-					{
-						// TODO: If this is an input element, do not lose focus
-						// unless needed. E.g. changing window.
-						//var currentFocus = document.activeElement;
-						window.focus();
-					}
-				}
-			} );
-			div.addEventListener( 'mouseout', function()
-			{
-				if( !div.classList.contains( 'Active' ) )
-				{
-					// Reactivate all iframes
-					let fr = div.windowObject.content.getElementsByTagName( 'iframe' );
-					for( let a = 0; a < fr.length; a++ )
-					{
-						fr[ a ].setAttribute( 'sandbox', 'allow-scripts' );
-					}
-				}
-				
-				// Keep track of the previous
-				if( Friend.currentWindowHover )
-					Friend.previousWindowHover = Friend.currentWindowHover;
-				Friend.currentWindowHover = null;
-			} );
-		}
-
-		if ( !div.id )
-		{
-			// ID must be unique
-			let num = 0;
-			let oid = id;
-			while( ge( id ) )
-				id = oid + '_' + ++num;
-			div.id = id;
-			movableWindows[ div.id ] = div;
-		}
-
-		// Volume gauge
-		if( flags.volume && flags.volume != false )
-		{
-			let gauge = document.createElement( 'div' );
-			gauge.className = 'VolumeGauge';
-			gauge.innerHTML = '<div class="Inner"><div class="Pct"></div></div>';
-			div.appendChild( gauge );
-			div.volumeGauge = gauge.getElementsByTagName( 'div' )[0];
-		}
-
-		// Snap elements
-		let snap = document.createElement( 'div' );
-		snap.className = 'Snap';
-		snap.innerHTML = '<div class="SnapLeft"></div><div class="SnapRight"></div>' +
-			'<div class="SnapUp"></div><div class="SnapDown"></div>';
-
-		// Moveoverlay
-		let molay = document.createElement ( 'div' );
-		molay.className = 'MoveOverlay';
-		molay.onmouseup = function()
-		{
-			WorkspaceMenu.close();
-		}
-
-		// Clean up!
-		Friend.GUI.view.cleanWindowArray( div );
-
-		// Title
-		let title = document.createElement ( 'div' );
-		title.className = 'Title';
-		if( flags.resize == false )
-			title.className += ' NoResize';
-
-		// Resize
-		let resize = document.createElement ( 'div' );
-		resize.className = 'Resize';
-		resize.style.position = 'absolute';
-		resize.style.width = '14px';
-		resize.style.height = '14px';
-		resize.style.zIndex = '100';
-
-		let inDiv = document.createElement( 'div' );
-
-		title.appendChild( inDiv );
-
-		title.onclick = function( e ){ return cancelBubble ( e ); }
-		title.ondragstart = function( e ) { return cancelBubble ( e ); }
-		title.onselectstart = function( e ) { return cancelBubble ( e ); }
-
-		if( !isMobile )
-		{
-			title.onmousedown = function( e, mode )
-			{
-				if ( !e ) e = window.event;
-				
-				div.setAttribute( 'moving', 'moving' );
-
-				// Use correct button
-				if( e.button != 0 && !mode ) return cancelBubble( e );
-
-				let x, y;
-				if( e.touches && ( isTablet || isTouchDevice() ) )
-				{
-					x = e.touches[0].pageX;
-					y = e.touches[0].pageY;
-				}
-				else
-				{
-					x = e.clientX ? e.clientX : e.pageXOffset;
-					y = e.clientY ? e.clientY : e.pageYOffset;
-				}
-				window.mouseDown = FUI_MOUSEDOWN_WINDOW;
-				this.parentNode.offx = x - this.parentNode.offsetLeft;
-				this.parentNode.offy = y - this.parentNode.offsetTop;
-				_ActivateWindow( div, false, e );
-			
-				if( e.shiftKey && div.snapObject )
-				{
-					div.unsnap();
-				}
-				
-				// Make sure the tray is updated
-				PollTray();
-			
-				return cancelBubble( e );
-			}
-
-			// Pawel must win!
-			let method = 'ondblclick';
-			if( document.body.classList.contains( 'ThemeEngine' ) )
-			{
-			    method = 'onclick';
-			    title.style.cursor = 'pointer';
-			}
-			title[ method ] = function( e )
-			{
-				if( self.flags.clickableTitle )
-				{
-					if( !self.titleClickElement )
-					{
-						let d = document.createElement( 'input' );
-						d.type = 'text';
-						d.className = 'BackgroundHeavier NoMargins Absolute';
-						d.style.position = 'absolute';
-						d.style.outline = 'none';
-						d.style.border = '0';
-						d.style.top = '0px';
-						d.style.left = '0px';
-						d.style.width = '100%';
-						d.style.height = '100%';
-						d.style.textAlign = 'center';
-						d.style.pointerEvents = 'all';
-						d.value = contn.fileInfo.Path;
-						d.onkeydown = function( e )
-						{
-							self.flags.editing = true;
-							setTimeout( function()
-							{
-								self.flags.editing = false;
-							}, 150 );
-						}
-						d.onblur = function()
-						{
-							d.parentNode.removeChild( d );
-							self.titleClickElement = null;
-						}
-						d.onchange = function( e )
-						{
-							let t = this;
-							let f = ( new Door() ).get( this.value );
-							if( f )
-							{
-								f.getIcons( this.value, function( items )
-								{
-									if( items )
-									{
-										self.content.fileInfo.Path = t.value;
-										self.content.refresh();
-									}
-									else
-									{
-										t.value = contn.fileInfo.Path;
-									}
-								} );
-							}
-							else
-							{
-								t.value = contn.fileInfo.Path;
-							}
-						}
-						this.getElementsByTagName( 'SPAN' )[0].appendChild( d );
-						self.titleClickElement = d;
-					}
-					self.titleClickElement.focus();
-					self.titleClickElement.select();
-				}
-				_WindowToFront( div );
-			}
-		}
-
-		// Clicking on window
-		div.onmousedown = function( e )
-		{
-			if( e.button == 0 )
-			{
-				if( !this.viewIcon.classList.contains( 'Remove' ) )
-				{
-					if( isMobile )
-					{
-						let target = this;
-						if( window._getAppByAppId )
-						{
-							let app = _getAppByAppId( this.applicationId );
-							if( app && app.displayedView )
-							{
-								target = app.displayedView;
-							}
-						}
-						_ActivateWindow( target, false, e );
-						return;
-					}
-					_ActivateWindow( this, false, e );
-				}
-			}
-		}
-
-		// Tablets and mobile
-		div.ontouchstart = function( e )
-		{
-			let self = this;
-			
-			if( isMobile && !self.parentNode.classList.contains( 'OnWorkspace' ) )
-				return;
-			
-			else if( e && !div.classList.contains( 'Active' ) )
-			{
-				this.clickOffset = {
-					x: e.touches[0].clientX,
-					y: e.touches[0].clientY,
-					time: ( new Date() ).getTime()
-				};
-			}
-			
-			// Start jiggling on longpress
-			// Only removable after 300 ms
-			this.touchInterval = setInterval( function()
-			{
-				let t = ( new Date() ).getTime();
-				if( self.clickOffset )
-				{
-					if( t - self.clickOffset.time > 100 )
-					{
-						// Update time
-						self.clickOffset.removable = true;
-						self.viewIcon.parentNode.classList.add( 'Flipped' );
-						self.viewIcon.classList.add( 'Dragging' );
-						clearInterval( self.touchInterval );
-						self.touchInterval = null;
-					
-						if( !isTablet || isMobile )
-						{
-							self.viewIcon.classList.add( 'Remove' );
-							self.classList.add( 'Remove' );
-						}
-					}
-				}
-			}, 150 );
-		}
-		
-		// Remove window on drag
-		if( isMobile )
-		{
-			div.ontouchend = function( e )
-			{
-				if( this.touchInterval )
-				{
-					clearInterval( this.touchInterval );
-					this.touchInterval = null;
-				}
-				// Only cancel bubble if view icon is jiggling on mobile
-				if( this.viewIcon.classList.contains( 'Remove' ) )
-				{
-					return cancelBubble( e );
-				}
-			}
-		}
-		
-		// Transparency
-		if( flags.transparent )
-		{
-			contn.style.background = 'transparent';
-			contn.style.backgroundColor = 'transparent';
-		}
-
-		// Depth gadget
-		let depth = document.createElement( 'div' );
-		depth.className = 'Depth';
-		depth.onmousedown = function( e ) { return e.stopPropagation(); }
-		depth.ondragstart = function( e ) { return e.stopPropagation(); }
-		depth.onselectstart = function( e ) { return e.stopPropagation(); }
-		depth.window = div;
-		depth.onclick = function( e )
-		{
-			if( !window.isTablet && e.button != 0 ) return;
-			
-			// Calculate lowest and highest z-index
-			let low = 99999999;	let high = 0;
-			for( var a in movableWindows )
-			{
-				let maxm = movableWindows[a].getAttribute( 'maximized' );
-				if( maxm && maxm.length )
-					continue;
-				let ind = parseInt( movableWindows[a].viewContainer.style.zIndex );
-				if( ind < low ) low = ind;
-				if( ind > high ) high = ind;
-			}
-			movableHighestZindex = high;
-
-			// If we are below, get us on top
-			if ( movableHighestZindex > parseInt( this.window.style.zIndex ) )
-			{
-				this.window.viewContainer.style.zIndex = ++movableHighestZindex;
-				this.window.style.zIndex = this.window.viewContainer.style.zIndex;
-			}
-			// If not, don't
-			else
-			{
-				this.window.viewContainer.style.zIndex = 100;
-				let highest = 0;
-				for( var a in movableWindows )
-				{
-					if( movableWindows[a] != this.window )
-					{
-						movableWindows[a].viewContainer.style.zIndex = parseInt( movableWindows[a].viewContainer.style.zIndex ) + 1;
-						movableWindows[a].style.zIndex = movableWindows[a].viewContainer.style.zIndex;
-						if ( parseInt( movableWindows[a].viewContainer.style.zIndex ) > highest )
-							highest = parseInt( movableWindows[a].viewContainer.style.zIndex );
-					}
-				}
-				movableHighestZindex = highest;
-			}
-			_ActivateWindow( this.window, false, e );
-
-			// Fix it!
-			UpdateWindowContentSize( div );
-
-			return cancelBubble ( e );
-		}
-
-		// Bottom of the window
-		let bottombar = document.createElement ( 'div' );
-		bottombar.className = 'BottomBar';
-
-		// Left border of window
-		let leftbar = document.createElement ( 'div' );
-		leftbar.className = 'LeftBar';
-
-		// Left border of window
-		let rightbar = document.createElement ( 'div' );
-		rightbar.className = 'RightBar';
-
-		// Zoom gadget
-		if( !isMobile )
-		{
-			zoom = document.createElement ( 'div' );
-			zoom.className = 'Zoom';
-			zoom.onmousedown = function ( e ) { return cancelBubble ( e ); }
-			zoom.ondragstart = function ( e ) { return cancelBubble ( e ); }
-			zoom.onselectstart = function ( e ) { return cancelBubble ( e ); }
-			zoom.mode = 'normal';
-			zoom.window = div;
-			zoom.onclick = function ( e )
-			{
-				if( !window.isTablet && e.button != 0 ) return;
-				
-				// Don't animate
-				div.setAttribute( 'moving', 'moving' );
-				setTimeout( function()
-				{
-					div.removeAttribute( 'moving' );
-				}, 50 );
-			
-				if( this.mode == 'normal' )
-				{
-					if( movableHighestZindex > parseInt( this.window.viewContainer.style.zIndex ) )
-					{
-						this.window.viewContainer.style.zIndex = ++movableHighestZindex;
-						this.window.style.zIndex = this.window.viewContainer.style.zIndex;
-					}
-
-					_ActivateWindow( this.window, false, e );
-
-					this.window.setAttribute( 'maximized', 'true' );
-					
-					// Check tiling
-					_setWindowTiles( div );
-					
-					// Tell app
-					if( window._getAppByAppId )
-					{
-						let app = _getAppByAppId( div.applicationId );
-						if( app )
-						{
-							app.sendMessage( {
-								'command': 'notify',
-								'method': 'setviewflag',
-								'flag': 'maximized',
-								'viewId': div.windowObject.viewId,
-								'value': true
-							} );
-						}
-					}
-					
-					// Store it just in case
-					let d = GetWindowStorage( div.id );
-					if( !d ) d = {};
-					d.maximized = true;
-					SetWindowStorage( div.id, d );
-					
-					if( !window.isMobile )
-					{
-						this.prevLeft = parseInt ( this.window.style.left );
-						this.prevTop = parseInt ( this.window.style.top );
-						this.prevWidth = this.window.offsetWidth;
-						this.prevHeight = this.window.offsetHeight;
-						this.window.style.top = '0px';
-						this.window.style.left = '0px';
-						let wid = 0; var hei = 0;
-						if( self.flags.screen )
-						{
-							let cnt2 = this.window.content;
-							let sbar = 0;
-							if( self.flags.screen.div == Ge( 'DoorsScreen' ) )
-								sbar = GetStatusbarHeight( self.flags.screen );
-							wid = self.flags.screen.div.offsetWidth;
-							hei = self.flags.screen.div.offsetHeight - sbar;
-						}
-						ResizeWindow( this.window, wid, hei );
-					}
-					this.mode = 'maximized';					
-				}
-				else
-				{	
-					this.mode = 'normal';
-					this.window.removeAttribute( 'maximized' );
-					
-					_removeWindowTiles( div );
-					
-					// Store it just in case
-					let d = GetWindowStorage( div.id );
-					if( !d ) d = {};
-					d.maximized = false;
-					SetWindowStorage( div.id, d );
-					
-					if( !window.isMobile )
-					{
-						this.window.style.top = this.prevTop + 'px';
-						this.window.style.left = this.prevLeft + 'px';
-						ResizeWindow( this.window, this.prevWidth, this.prevHeight );
-					}
-					
-					// Tell application if any
-					if( window._getAppByAppId )
-					{
-						let app = _getAppByAppId( div.applicationId );
-						if( app )
-						{
-							app.sendMessage( {
-								'command': 'notify',
-								'method': 'setviewflag',
-								'flag': 'maximized',
-								'viewId': div.windowObject.viewId,
-								'value': false
-							} );
-						}
-					}
-				}
-				// Do resize events
-				if( this.window.content && this.window.content.events )
-				{
-					if( typeof(this.window.content.events['resize']) != 'undefined' )
-					{
-						for( var a = 0; a < this.window.content.events['resize'].length; a++ )
-						{
-							this.window.content.events['resize'][a]();
-						}
-					}
-				}
-				
-				// Check maximized
-				CheckMaximizedView();
-				
-				return cancelBubble( e );
-			}
-		}
-
-		resize.onclick = function( e ) { return cancelBubble ( e ); }
-		resize.ondragstart = function( e ) { return cancelBubble ( e ); }
-		resize.onselectstart = function( e ) { return cancelBubble ( e ); }
-		resize.window = div;
-		resize.onmousedown = function( e )
-		{
-			if( !window.isTablet && e.button != 0 ) return;
-			
-			// Offset based on the containing window
-			this.offx = windowMouseX;
-			this.offy = windowMouseY;
-			this.wwid = div.offsetWidth;
-			this.whei = div.offsetHeight;
-
-			// Don't animate
-			div.setAttribute( 'moving', 'moving' );
-
-			window.mouseDown = FUI_MOUSEDOWN_RESIZE;
-			
-			if( !div.parentNode.classList.contains( 'Active' ) )
-				_ActivateWindow( div, false, e );
-			this.window.zoom.mode = 'normal';
-			return cancelBubble ( e );
-		}
-
-		// remember position
-		div.memorize = function ()
-		{
-			if( isMobile ) return;
-			let wenable = this.content && self.flags && self.flags.resize ? true : false;
-
-			// True if we're to enable memory
-			if ( self.flags && self.flags.memorize )
-				wenable = true;
-
-			let wwi = div.offsetWidth;
-			let hhe = div.offsetHeight;
-
-			// Update information in the window storage object
-			let d = GetWindowStorage( this.uniqueId );
-			
-			if( !div.getAttribute( 'maximized' ) )
-			{
-				d.top = this.offsetTop;
-				d.left = this.offsetLeft;
-				d.width = wenable && wwi ? wwi : d.width;
-				d.height = wenable && hhe ? hhe : d.width;
-			}
-			
-			if( div.content.directoryview )
-			{
-				d.listMode = div.content.directoryview.listMode;
-			}
-
-			SetWindowStorage( this.uniqueId, d );
-		}
-
-		let minimize = document.createElement ( 'div' );
-		minimize.className = 'Minimize';
-		minimize.onmousedown = function ( e ) { return cancelBubble ( e ); }
-		minimize.ondragstart = function ( e ) { return cancelBubble ( e ); }
-		minimize.onselectstart = function ( e ) { return cancelBubble ( e ); }
-		
-		div.doMinimize = function ( e )
-		{
-		    // Not single task
-		    if( div.windowObject.getFlag( 'singletask' ) ) 
-		    {
-	            return div.windowObject.activate();
-	        }
-		    
-			if( div.minimized ) 
-			{
-				return;
-			}
-			div.minimized = true;
-			if( !e )
-			{
-				e = { button: 0, fake: true };
-			}
-			
-			// Normal desktop applications
-			if( !window.isMobile )
-			{
-				// Fake events just brute forces
-				if( e.fake )
-				{
-					div.classList.remove( 'Active' );
-					div.parentNode.classList.remove( 'Active' );
-					div.minimized = true;
-					div.windowObject.flags.minimized = true;
-					div.viewContainer.setAttribute( 'minimized', 'minimized' );
-					PollTray();
-					PollTaskbar();
-				}
-				else
-				{
-					// Only on real events
-					_ActivateWindow( div, false, e );
-					let escapeFlag = 0;
-					if( 
-						div.windowObject && 
-						( !globalConfig.viewList || globalConfig.viewList == 'separate' ) && 
-						ge( 'Taskbar' )
-					)
-					{
-						let t = ge( 'Taskbar' );
-						for( var tel = 0; tel < t.childNodes.length; tel++ )
-						{
-							if( t.childNodes[tel].window == div )
-							{
-								t.childNodes[tel].mousedown = true;
-								e.button = 0;
-								t.childNodes[tel].onmouseup( e, t.childNodes[tel] );
-								return true;
-							}
-						}
-					}
-					else if( ge( 'DockWindowList' ) )
-					{
-						let t = ge( 'DockWindowList' );
-						for( var tel = 0; tel < t.childNodes.length; tel++ )
-						{
-							if( t.childNodes[tel].window == div )
-							{
-								t.childNodes[tel].mousedown = true;
-								e.button = 0;
-								t.childNodes[tel].onmouseup( e, t.childNodes[tel] );
-								escapeFlag++;
-								break;
-							}
-						}
-					}
-			
-					// Try to use the dock		
-					if( escapeFlag == 0 )
-					{
-						if( globalConfig.viewList == 'docked' || globalConfig.viewList == 'dockedlist' )
-						{
-							for( var u = 0; u < Workspace.mainDock.dom.childNodes.length; u++ )
-							{
-								let ch = Workspace.mainDock.dom.childNodes[ u ];
-								// Check the view list
-								if( ch.classList.contains( 'ViewList' ) )
-								{
-									for( var z = 0; z < ch.childNodes.length; z++ )
-									{
-										let cj = ch.childNodes[ z ];
-										if( cj.viewId && movableWindows[ cj.viewId ] == div )
-										{
-											cj.mousedown = true;
-											cj.onclick( { button: 0 } );
-											escapeFlag++;
-											break;
-										}
-									}
-								}
-								if( escapeFlag == 0 )
-								{
-									// Check applications
-									if( ch.executable )
-									{
-										for( var r = 0; escapeFlag == 0 && r < Workspace.applications.length; r++ )
-										{
-											let app = Workspace.applications[ r ];
-											if( app.applicationName == ch.executable )
-											{
-												if( app.windows )
-												{
-													for( var t in app.windows )
-													{
-														if( app.windows[t] == div.windowObject )
-														{
-															Workspace.mainDock.toggleExecutable( ch.executable );
-															escapeFlag++;
-															break;
-														}
-													}
-												}
-											}
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-				
-				if( div.attached )
-				{
-					for( var a = 0; a < div.attached.length; a++ )
-					{
-						let app = _getAppByAppId( div.attached[ a ].applicationId );
-						if( app )
-						{
-							app.sendMessage( {
-								'command': 'notify',
-								'method': 'setviewflag',
-								'flag': 'minimized',
-								'viewId': div.attached[ a ].windowObject.viewId,
-								'value': true
-							} );
-						}
-					
-						div.attached[ a ].minimized = true;
-						div.attached[ a ].parentNode.setAttribute( 'minimized', 'minimized' );
-					}
-				}
-			}
-			// Reorganize minimized view windows
-			else
-			{
-				if( !isMobile )
-				{
-					let app = _getAppByAppId( div.applicationId );
-					if( app.mainView && div != app.mainView )
-						_ActivateWindow( app.mainView.content.parentNode );
-				}
-				Friend.GUI.reorganizeResponsiveMinimized();
-			}
-			
-			if( window._getAppByAppId )
-			{
-				let app = _getAppByAppId( div.applicationId );
-				if( app )
-				{
-					app.sendMessage( {
-						'command': 'notify',
-						'method': 'setviewflag',
-						'flag': 'minimized',
-						'viewId': div.windowObject.viewId,
-						'value': true
-					} );
-				}
-			}
-		}
-		minimize.onclick = div.doMinimize;
-
-		// Mobile has extra close button
-		let mclose = false;
-		if( isMobile )
-		{
-			mclose = document.createElement( 'div' );
-			mclose.className = 'MobileClose';
-			mclose.ontouchstart = function( e )
-			{
-				let wo = div.windowObject;
-				for( var a = 0; a < wo.childWindows.length; a++ )
-				{
-					if( wo.childWindows[a]._window )
-					{
-						if( wo.childWindows[a]._window.windowObject )
-						{
-							wo.childWindows[a]._window.windowObject.close();
-						}
-						else CloseView( wo.childWindows[a]._window );
-					}
-					else
-					{
-						CloseView( wo.childWindows[a] );
-					}
-				}
-				wo.close();
-				return cancelBubble( e );
-			}
-		}
-
-		let popout = false;
-		if( div.windowObject.applicationId )
-		{
-			popout = document.createElement( 'div' );
-			popout.className = 'Popout';
-			popout.onmousedown = function( e ) { return cancelBubble( e ); }
-			popout.ondragstart = function( e ) { return cancelBubble( e ); }
-			popout.onselectstart = function( e ) { return cancelBubble( e ); }
-			popout.onclick = function( e )
-			{
-				PopoutWindow( div, e );
-			}
-		}
-		
-		let close = document.createElement( 'div' );
-		close.className = 'Close';
-		close.onmousedown = function( e ) { return cancelBubble( e ); }
-		close.ondragstart = function( e ) { return cancelBubble( e ); }
-		close.onselectstart = function( e ) { return cancelBubble( e ); }
-		close.onclick = function( e )
-		{
-			if( !isMobile && !window.isTablet )
-				if( e.button != 0 ) return;
-			
-			// On mobile, you get a window menu instead
-			if( window.isMobile && !window.isTablet )
-			{
-				if( div.classList && div.classList.contains( 'Active' ) )
-				{
-					_DeactivateWindows();
-					Workspace.redrawIcons();
-					return cancelBubble( e );
-				}
-			}
-			
-			function executeClose()
-			{
-				// Clean movableWindows.. brute force
-				let out = {};
-				for( let a in movableWindows )
-				{
-					if( movableWindows[a] != div )
-						out[ a ] = movableWindows[ a ];
-				}
-				movableWindows = out;
-				
-				viewContainer.classList.add( 'Closing' );
-				if( div.windowObject )
-				{
-					let wo = div.windowObject;
-					for( var a = 0; a < wo.childWindows.length; a++ )
-					{
-						if( wo.childWindows[a]._window )
-						{
-							if( wo.childWindows[a]._window.windowObject )
-							{
-								wo.childWindows[a]._window.windowObject.close();
-							}
-							else CloseView( wo.childWindows[a]._window );
-						}
-						else
-						{
-							CloseView( wo.childWindows[a] );
-						}
-					}
-					wo.close();
-				}
-			}
-			// Only if we can!
-			if( div.windowObject.close() === true )
-			{
-				executeClose();
-			}
-		}
-
-		// Add all
-		inDiv.appendChild( depth );
-		if( popout ) inDiv.appendChild( popout );
-		inDiv.appendChild( minimize );
-		if( zoom )
-			inDiv.appendChild( zoom );
-		inDiv.appendChild( close );
-		if( mclose )
-			inDiv.appendChild( mclose );
-		inDiv.appendChild( titleSpan );
-
-		div.depth     = depth;
-		div.popout    = popout;
-		div.zoom      = zoom;
-		div.close     = close;
-		div.titleBar  = title;
-		div.resize    = resize;
-		div.bottombar = bottombar;
-		div.leftbar   = leftbar;
-		div.rightbar  = rightbar;
-		div.minimize  = minimize;
-		
-		// For mobile
-		if( iconSpan )
-			div.viewIcon = iconSpan;
-
-		div.appendChild( title );
-		div.titleDiv = title;
-		div.appendChild( resize );
-		div.appendChild( bottombar );
-		div.appendChild( leftbar );
-		div.appendChild( rightbar );
-		
-		div.appendChild( snap );
-
-		// Empty the window menu
-		contn.menu = false;
-
-		// Null out blocker window (if we have one)
-		contn.blocker = false;
-
-		div.appendChild( contn ); // Add content
-		div.appendChild( molay ); // Add move overlay
-
-		// View groups
-		let contentArea = false;
-		self.viewGroups = {};
-		if( self.flags.viewGroups )
-		{
-			let validGroups = false;
-			self.viewGroups = [];
-			let groups = self.flags.viewGroups;
-			for( var a = 0; a < groups.length; a++ )
-			{
-				let group = groups[ a ];
-				if( group.id )
-				{
-					let g = document.createElement( 'div' );
-					g.className = 'ViewGroup';
-					
-					if( group.mode == 'horizontalTabs' )
-					{
-						let t = document.createElement( 'div' );
-						t.className = 'ViewGroupTabsHorizontal';
-						g.className += ' TabsHorizontal';
-						g.appendChild( t );
-						g.tabs = t;
-					}
-					
-					if( group.xposition )
-					{
-						if( group.xposition == 'left' )
-							g.classList.add( 'Left' );
-						else if( group.xposition == 'right' )
-							g.classList.add( 'Right' );
-					}
-					if( group.yposition )
-					{
-						if( group.yposition == 'top' )
-							g.classList.add( 'Top' );
-						else if( group.yposition == 'bottom' )
-							g.classList.add( 'Bottom' );
-					}
-					if( group.width )
-					{
-						if( group.width.indexOf && group.width.indexOf( '%' ) > 0 )
-						{
-							let ex = parseInt( 
-								group.xposition == 'left' ? 
-								GetThemeInfo( 'ViewLeftBar' ).width : 
-								GetThemeInfo( 'ViewRightBar' ).width
-							);
-							group.width = 'calc(' + group.width + ' - ' + ex + 'px)';
-						}
-						g.style.width = group.width;
-					}
-					if( group.height )
-					{
-						if( group.height.indexOf && group.height.indexOf( '%' ) > 0 )
-						{
-							let ex = parseInt( GetThemeInfo( 'ViewBottom' ).height ) + parseInt( GetThemeInfo( 'ViewTitle' ).height );
-							group.height = 'calc(' + group.height + ' - ' + ex + 'px)';
-						}
-						g.style.height = group.height;
-					}
-					self.viewGroups[ group.id ] = g;
-					div.appendChild( g );
-					validGroups = true;
-				}
-			}
-			if( validGroups )
-				div.classList.add( 'HasViewGroups' );
-		}
-		// Max width and height
-		let ww = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
-		let hh = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
-
-		movableWindowCount++; // Iterate global count of view windows
-		
-		// Make sure we count the windows in body
-		if( movableWindowCount > 0 )
-		{
-			if( window.windowCountTimeout )
-			{
-				clearTimeout( window.windowCountTimeout );
-				delete window.windowCountTimeout;
-			}
-			document.body.setAttribute( 'windowcount', movableWindowCount );
-		}
-
-		// Create event funcs on content
-		self.createContentEventFuncs( div.content );
-
-		// Assign the move layer
-		div.moveoverlay = molay;
-
-		// Also content must have it
-		div.uniqueId = uniqueId;
-		div.viewId = div.id;
-		div.content.viewId = div.id;
-		div.content.uniqueId = uniqueId;
-
-		let windowResized = false;
-
-		let leftSet = false;
-		let topSet = false;
-		let wp = GetWindowStorage( div.uniqueId );
-		let leftTopSpecial = flags.top == 'center' || flags.left == 'center'; // Check for special flags
-		if( wp && ( wp.top >= 0 || wp.width >= 0 ) && !leftTopSpecial )
-		{
-			if( window.isMobile )
-			{
-				if ( self.flags && self.flags.memorize )
-				{
-					height = wp.height;
-					width = wp.width;
-					ResizeWindow( div, width, height );
-				}
-			}
-			else
-			{
-				let sw = self.flags.screen && self.flags.screen.div ? self.flags.screen.div.offsetWidth : document.body.offsetWidth;
-				
-				if( wp.maximized )
-				{
-					div.setAttribute( 'maximized', 'true' );
-					zoom.mode = 'maximized';
-					
-					// Tell application if any
-					if( window._getAppByAppId )
-					{
-						let app = _getAppByAppId( div.applicationId );
-						if( app )
-						{
-							app.sendMessage( {
-								'command': 'notify',
-								'method': 'setviewflag',
-								'flag': 'maximized',
-								'viewId': div.windowObject.viewId,
-								'value': true
-							} );
-						}
-					}
-				}
-				
-				if( wp.top >= 0 && wp.top < hh )
-				{
-					let wt = wp.top;
-					div.style.top = wt + 'px';
-					topSet = true;
-				}
-				if( wp.left >= 0 && wp.left < ww )
-				{
-					div.style.left = wp.left + 'px';
-					leftSet = true;
-				}
-
-				if ( self.flags && self.flags.memorize )
-				{
-					height = wp.height;
-					width = wp.width;
-					ResizeWindow( div, width, height );
-					windowResized = true;
-				}
-			}
-		}
-		
-		// Let's find the center!
-		let mvw = 0, mvh = 0;
-		if( Workspace && Workspace.screen )
-		{
-			mvw = Workspace.screen.getMaxViewWidth();
-			mvh = Workspace.screen.getMaxViewHeight();
-			
-			if( ge( 'desklet_0' ) )
-			{
-				let att = ge( 'desklet_0' ).getAttribute( 'position' );
-				if( att && ( att.indexOf( 'bottom' ) >= 0 || att.indexOf( 'top' ) >= 0 ) )
-					mvh -= ge( 'desklet_0' ).offsetHeight;
-			}
-		}
-	
-		// TODO: See if we can move this dock dimension stuff inside getMax..()
-		if( Workspace.mainDock )
-		{
-			if( Workspace.mainDock.dom.classList.contains( 'Vertical' ) )
-			{
-				mvw -= Workspace.mainDock.dom.offsetWidth;
-			}
-			else
-			{
-				mvh -= Workspace.mainDock.dom.offsetHeight;
-			}
-		}
-		
-		if( !isMobile )
-		{
-			if( !leftSet && self.flags.left )
-			{
-				leftSet = true;
-				if( self.flags.left == 'center' )
-				{
-					div.style.left = ( mvh >> 1 - ( height >> 1 ) ) + 'px';
-				}
-				else
-				{
-					div.style.left = self.flags.left + 'px';
-				}
-			}
-		
-			if( !topSet && self.flags.top )
-			{
-				topSet = true;
-				if( self.flags.top == 'center' )
-				{
-					div.style.left = ( mvw >> 1 - ( width >> 1 ) ) + 'px';
-				}
-				else
-				{
-					div.style.top = self.flags.top + 'px';
-				}
-			}
-		}
-
-		// Only first window on shared apps, do full width and height
-		if( ( window.isMobile && self.flags['mobileMaximised'] ) || ( window.movableWindows.length == 0 && IsSharedApp() ) )
-		{
-			if( zoom )
-			{
-				zoom.prevWidth = width;
-				zoom.prevHeight = height;
-				zoom.mode = 'maximized';
-			}
-			width = window.innerWidth; height = window.innerHeight;
-			div.style.height = height + title.offsetHeight + FUI_WINDOW_MARGIN + 'px';
-			div.setAttribute( 'maximized', 'true' );
-			
-			// Tell application if any
-			if( window._getAppByAppId )
-			{
-				let app = _getAppByAppId( div.applicationId );
-				if( app )
-				{
-					app.sendMessage( {
-						'command': 'notify',
-						'method': 'setviewflag',
-						'flag': 'maximized',
-						'viewId': div.windowObject.viewId,
-						'value': true
-					} );
-				}
-			}
-		}
-		
-		// Add div to view container
-		viewContainer.appendChild( div );
-		div.viewContainer = viewContainer;
-
-		// Triggers ????? Please review this and add explaining comment
-		if( parentWindow )
-		{	
-			parentWindow.addChildWindow( viewContainer );
-		}
-
-		// Make sure it's correctly sized again
-		div.windowObject = this;
-		
-		// Add the borders here
-		if( !windowResized )
-		{
-			if( !self.flags[ 'borderless' ] && GetThemeInfo( 'ViewTitle' ) )
-			{
-				width += FUI_WINDOW_MARGIN << 1;
-				height += parseInt( GetThemeInfo( 'ViewTitle' ).height ) + parseInt( GetThemeInfo( 'ViewBottom' ).height );
-			}					
-			ResizeWindow( div, width, height );
-		}
-		
-		// Add the window after all considerations
-		// TODO: See if the real height is not properly calculated..
-		div.style.opacity = 0;
-		div.setAttribute( 'created', 'created' );
-		
-		// Insert into existing viewgroup
-		let inGroup = false;
-		if( self.flags.viewGroup )
-		{
-			for( let a in movableWindows )
-			{
-				let w = movableWindows[ a ].windowObject;
-				if( w.viewId == self.flags.viewGroup.view )
-				{
-					if( w.viewGroups[ self.flags.viewGroup.viewGroup ] )
-					{
-						divParent = w.viewGroups[ self.flags.viewGroup.viewGroup ];
-						inGroup = true;
-						self.flags.borderless = true;
-						
-						// Add tab
-						if( divParent.tabs )
-						{
-							let tab = document.createElement( 'div' );
-							tab.className = divParent.tabs.childNodes.length > 0 ? 'Tab' : 'TabActive';
-							if( !divParent.activeTab ) divParent.activeTab = tab;
-							tab.innerHTML = self.flags.title;
-							divParent.tabs.appendChild( tab );
-							tab.onclick = function( e )
-							{
-								if( e.button != 0 ) return;
-								
-								_WindowToFront( div );
-								for( let b = 0; b < divParent.tabs.childNodes.length; b++ )
-								{
-									if( tab == divParent.tabs.childNodes[ b ] )
-									{
-										divParent.tabs.childNodes[ b ].className = 'TabActive';
-										divParent.activeTab = tab;
-									}
-									else
-									{
-										divParent.tabs.childNodes[ b ].className = 'Tab';
-									}
-								}
-							}
-						}
-						break;
-					}
-				}
-			}
-		}
-		
-		// Append view window to parent
-		if( flags.liveView && Workspace.dashboard && Workspace.dashboard.liveViews )
-		{
-		    Workspace.dashboard.liveViews.appendChild( viewContainer );
-		}
-		else if( flags.dockable && ge( 'DockableWindowContainer' ) )
-			ge( 'DockableWindowContainer' ).appendChild( viewContainer );
-		else
-		{
-		    divParent.appendChild( viewContainer );
-		}
-		
-		if( inGroup )
-		{
-			ResizeWindow( divParent.parentNode );
-			setTimeout( function()
-			{
-				divParent.activeTab.onclick();
-			}, 100 );
-		}
-		
-		// Don't show the view window if it's hidden
-		if(
-			( typeof( flags.hidden ) != 'undefined' && flags.hidden ) ||
-			( typeof( flags.invisible ) != 'undefined' && flags.invisible )
-		)
-		{
-			div.viewContainer.style.visibility = 'hidden';
-			div.viewContainer.style.pointerEvents = 'none';
-			div.viewContainer.classList.add( 'Hidden' );
-		}
-
-		setTimeout( function(){ div.style.opacity = 1; } );
-
-		// So, dont creating, behave normally now
-		setTimeout( function(){ div.setAttribute( 'created', '' ); }, 300 );
-
-		// Turn calculations on
-		viewContainer.style.display = '';
-		
-		// Once the view appears on screen, again, constrain it
-		ConstrainWindow( div );
-		
-		// First to generate, second to test
-		PollTaskbar();
-
-		// First resize
-		RefreshWindow( div, true );
-
-		if( window.isMobile || window.isTablet )
-		{
-			// window move
-			if( window.isTablet )
-			{
-				// For mobile and tablets
-				if( !window.isMobile )
-				{
-					title.addEventListener( 'touchstart', function( e )
-					{
-						e.clientX = e.touches[0].clientX
-						e.clientY = e.touches[0].clientY;
-						e.button = 0;
-						window.mouseDown = 1; // Window mode
-						if( title.onmousedown )
-						{
-							title.onmousedown( e );
-						}
-						_ActivateWindow( div );
-					} );
-				}
-				else
-				{
-					title.addEventListener( 'touchmove', function( evt )
-					{
-						touchMoveWindow( evt );
-					});
-				}
-			}
-
-			// Resize touch events.... -----------------------------------------
-			let winTouchStart = [ 0, 0 ];
-			let winTouchDowned = winTouchEnd = 0;
-			resize.addEventListener('touchstart', function( evt )
-			{
-				cancelBubble( evt );
-				winTouchStart = [ evt.touches[0].clientX, evt.touches[0].clientY ];
-				winTouchDowned = evt.timeStamp;
-			} );
-			resize.addEventListener('touchmove', function( evt )
-			{
-				cancelBubble( evt );
-				if( evt.target && evt.target.offsetParent ) evt.target.offH = evt.target.offsetParent.clientHeight;
-				touchResizeWindow(evt);
-			} );
-			resize.addEventListener( 'touchend', function( evt )
-			{
-				cancelBubble( evt );
-			} );
-
-			bottombar.addEventListener('touchstart', function( evt )
-			{
-				cancelBubble( evt );
-
-				winTouchStart = [ evt.touches[0].clientX, evt.touches[0].clientY ];
-				winTouchDowned = evt.timeStamp;
-			} );
-
-			bottombar.addEventListener('touchmove', function( evt )
-			{
-				cancelBubble( evt );
-
-				if( evt.target && evt.target.offsetParent ) evt.target.offH = evt.target.offsetParent.clientHeight;
-				touchResizeWindow(evt);
-			} );
-
-			bottombar.addEventListener( 'touchend', function( evt )
-			{
-				cancelBubble( evt );
-			} );
-
-			//close  --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ##
-			close.addEventListener( 'touchstart', function( evt )
-			{
-				cancelBubble( evt );
-				winTouchStart = [ evt.touches[0].clientX, evt.touches[0].clientY, (evt.target.hasAttribute('class') ? evt.target.getAttribute('class') : '') ];
-				winTouchEnd = winTouchStart;
-				winTouchDowned = evt.timeStamp;
-			} );
-		}
-		// Ok, if no window position is remembered.. place it somewhere
-		else if( !wp )
-		{
-			ConstrainWindow( div );
-		}
-
-		/* function shal be called by bottombar or resize... */
-		// TODO: constrain window please use ResizeWindow()
-		function touchResizeWindow(evt)
-		{
-			if( !evt.target.offH ) evt.target.offH = evt.target.offsetParent.clientHeight;
-			//not too small and not too high...
-			let newHeight = Math.min(
-				Workspace.screenDiv.clientHeight -
-					72 - evt.target.offsetParent.offsetTop,
-				Math.max(80,evt.touches[0].clientY - evt.target.offsetParent.offsetTop )
-			);
-							
-			evt.target.offsetParent.style.height = newHeight + 'px';
-			evt.target.offsetParent.lastHeight = newHeight;
-			
-			// Only tablets can move
-			if( window.isTablet )
-			{
-				let newWidth = Math.min(
-					Workspace.screenDiv.clientWidth -
-						evt.target.offsetParent.offsetLeft,
-					evt.touches[0].clientX - evt.target.offsetParent.offsetLeft
-				);
-			
-				evt.target.offsetParent.style.width = newWidth + 'px';
-				evt.target.offsetParent.lastWidth = newWidth;
-			}
-		}
-		
-		function touchMoveWindow( evt )
-		{
-			let nx = evt.touches[0].clientX;
-			let ny = evt.touches[0].clientY;
-			
-			window.mouseDown = 1;
-			movableListener( evt, { mouseX: nx, mouseY: ny } );
-		}
-
-		// Remove window borders
-		if( !isMobile )
-		{
-			if( typeof( flags.borderless ) != 'undefined' && flags.borderless == true )
-			{
-				title.style.position = 'absolute';
-				title.style.height = '0px';
-				title.style.overflow = 'hidden';
-				resize.style.display = 'none';
-				div.leftbar.style.display = 'none';
-				div.rightbar.style.display = 'none';
-				div.bottombar.style.display = 'none';
-				div.content.style.left = '0';
-				div.content.style.right = '0';
-				div.content.style.top = '0';
-				div.content.style.right = '0';
-				div.content.style.bottom = '0';
-			}
-		}
-		if( typeof( flags.resize ) != 'undefined' && flags.resize == false )
-		{
-			resize.style.display = 'none';
-			if( zoom )
-				zoom.style.display = 'none';
-		}
-		if( typeof( flags.login ) != 'undefined' && flags.login == true )
-		{
-			resize.style.display = 'none';
-			if( zoom )
-				zoom.style.display = 'none';
-			depth.style.display = 'none';
-		}
-
-		// Start maximized
-		if( window.isMobile )
-		{
-			if( !flags.minimized )
-			{
-				this.setFlag( 'maximized', true );
-				div.setAttribute( 'maximized', 'true' );
-			
-				// Tell application if any
-				if( window._getAppByAppId )
-				{
-					let app = _getAppByAppId( div.applicationId );
-					if( app )
-					{
-						app.sendMessage( {
-							'command': 'notify',
-							'method': 'setviewflag',
-							'flag': 'maximized',
-							'viewId': div.windowObject.viewId,
-							'value': true
-						} );
-					}
-				}
-			}
-			else
-			{
-			}
-		}
-
-		// Handle class
-		if ( !div.classList.contains( 'View' ) )
-			div.classList.add( 'View' );
-		
-		// (handle z-index)
-		div.viewContainer.style.zIndex = movableHighestZindex++;
-		div.style.zIndex = div.viewContainer.style.zIndex;
-		
-		// If the current window is an app, move it to front.. (unless new window is a child window)
-		if( window.friend && Friend.currentWindowHover )
-			Friend.currentWindowHover = false;
-		
-		// Reparse! We may have forgotten some things
-		self.parseFlags( flags );
-		
-		// Only activate if needed
-		if( !flags.minimized && !flags.openSilent && !flags.invisible )
-		{
-			_ActivateWindow( div );
-			_WindowToFront( div );
-		}
-		
-		// Move workspace to designated position	
-		if( !flags.screen || flags.screen == Workspace.screen )
-		{
-			if( self.workspace > 0 )
-			{
-				self.sendToWorkspace( self.workspace );
-			}
-		}
-		
-		// Remove menu on calendar
-		if( !flags.minimized && Workspace.calendarWidget )
-			Workspace.calendarWidget.hide();
-		
-		if( Workspace.dashboard && typeof( hideDashboard ) != 'undefined' )
-		{
-			if( !self.flags.dialog )
-			{
-			    hideDashboard();
-			}
-		}
-	}
-
-	// Send window to different workspace
-	this.sendToWorkspace = function( wsnum )
-	{
-		if( isMobile ) return;
-		
-		// Windows on own screen ignores the virtual workspaces
-		if( this.flags && this.flags.screen && this.flags.screen != Workspace.screen ) return;
-		
-		if( wsnum != 0 && ( wsnum < 0 || wsnum > globalConfig.workspacecount - 1 ) )
-		{
-			return;
-		}
-		let wn = this._window.parentNode;
-		let pn = wn.parentNode;
-		
-		// Move the viewcontainer
-		wn.viewContainer.style.left = ( Workspace.screen.getMaxViewWidth() * wsnum ) + 'px';
-		wn.workspace = wsnum;
-		cleanVirtualWorkspaceInformation(); // Just clean the workspace info
-		
-		// Done moving
-		if( this.flags && this.flags.screen )
-		{
-			let maxViewWidth = this.flags.screen.getMaxViewWidth();
-			this.workspace = wsnum;
-			_DeactivateWindow( this._window.parentNode );
-			PollTaskbar();
-		}
-	}
-
-	// Set content on window
-	this.setContent = function( content, cbk )
-	{
-	    // Safe content without any scripts or styles!
-		SetWindowContent( this._window, this.cleanHTMLData( content ) );
-		if( cbk ) cbk();
-	}
-	this.fullscreen = function( val )
-	{
-		if( val === true || val === false )
-		{
-			this.setFlag( 'fullscreenenabled', val );
-		}
-		let fullscreen = this.getFlag( 'fullscreenenabled' );
-		if( fullscreen )
-		{
-			if( this.iframe )
-			{
-				Workspace.fullscreen( this.iframe );
-			}
-			else
-			{
-				Workspace.fullscreen( this._window );
-			}
-		}
-		else
-		{
-			document.exitFullscreen();
-		}
-	}
-	// Set content (securely!) in a sandbox, callback when completed
-	this.setContentIframed = function( content, domain, packet, callback )
-	{
-		if( !domain )
-		{
-			domain = document.location.href + '';
-			domain = domain.split( 'index.html' ).join ( 'sandboxed.html' );
-			domain = domain.split( 'app.html' ).join( 'sandboxed.html' );
-		}
-
-		// Oh we have a conf?
-		if( this.conf )
-		{
-			if ( Workspace.sessionId )
-			{
-				domain += '/system.library/module/?module=system&command=sandbox' +
-					'&sessionid=' + Workspace.sessionId +
-					'&conf=' + JSON.stringify( this.conf );
-			}
-			else
-			{
-				domain += '/system.library/module/?module=system&command=sandbox' +
-					'&authid=' + this.authId +
-					'&conf=' + JSON.stringify( this.conf );
-			}
-			if( this.getFlag( 'noevents' ) ) domain += '&noevents=true';
-		}
-		else if( domain.indexOf( 'sandboxed.html' ) <= 0 )
-		{
-			domain += '/webclient/sandboxed.html';
-			if( this.getFlag( 'noevents' ) ) domain += '?noevents=true';
-		}
-
-		// Make sure scripts can be run after all resources has loaded
-		if( content && content.match )
-		{
-			let r;
-			while( r = content.match( /\<script([^>]*?)\>([\w\W]*?)\<\/script\>/i ) )
-				content = content.split( r[0] ).join( '<friendscript' + r[1] + '>' + r[2] + '</friendscript>' );
-		}
-		else
-		{
-			content = '';
-		}
-
-		let c = this._window;
-		if( c && c.content ) c = c.content;
-		if( c )
-		{
-			c.innerHTML = '';
-		}
-		let ifr = document.createElement( _viewType );
-		ifr.applicationId = self.applicationId;
-		ifr.authId = self.authId;
-		ifr.applicationName = self.applicationName;
-		ifr.applicationDisplayName = self.applicationDisplayName;
-		putSandboxFlags( ifr, getSandboxFlags( this, DEFAULT_SANDBOX_ATTRIBUTES ) );
-		ifr.view = this._window;
-		ifr.className = 'Content Loading';
-		
-		if( this.flags.transparent )
-		{
-			ifr.setAttribute( 'allowtransparency', 'true' );
-			ifr.style.backgroundColor = 'transparent';
-		}
-		
-		ifr.id = 'sandbox_' + this.viewId;
-		ifr.src = domain;
-
-		let view = this;
-		this.iframe = ifr;
-		
-		ifr.onfocus = function( e )
-		{
-			if( !ifr.view.parentNode.classList.contains( 'Active' ) )
-			{
-				// Don't steal focus!
-				ifr.blur();
-				window.blur();
-				window.focus();
-			}
-		}
-
-		if( packet.applicationId ) this._window.applicationId = packet.applicationId;
-
-		ifr.onload = function()
-		{
-			// Assign views to each other to allow cross window scripting
-			// TODO: This could be a security hazard! Remember to use security
-			//       domains!
-			let parentIframeId = false;
-			let instance = Math.random() % 100;
-			if( ifr.applicationId )
-			{
-				for( let a = 0; a < Workspace.applications.length; a++ )
-				{
-					let app = Workspace.applications[a];
-					if( app.applicationId == ifr.applicationId )
-					{
-						for( let b in app.windows )
-						{
-							// Ah we found our parent view
-							if( self.parentViewId == b )
-							{
-								let win = app.windows[b];
-								parentIframeId = 'sandbox_' + b;
-								break;
-							}
-						}
-						// Link to application sandbox
-						if( !parentIframeId )
-						{
-							parentIframeId = 'sandbox_' + app.applicationId;
-						}
-						break;
-					}
-				}
-			}
-
-			let msg = {}; if( packet ) for( let a in packet ) msg[a] = packet[a];
-			msg.command = 'setbodycontent';
-			msg.cachedAppData = _applicationBasics;
-			msg.dosDrivers = Friend.dosDrivers;
-			msg.parentSandboxId = parentIframeId;
-			msg.locale = Workspace.locale;
-
-			// Override the theme
-			if( view.getFlag( 'theme' ) )
-			{
-				msg.theme = view.getFlag( 'theme' );
-			}
-			if( Workspace.themeData )
-			{
-				msg.themeData = Workspace.themeData;
-			}
-
-			// Authid is important, should not be left out if it is available
-			if( !msg.authId )
-			{
-				if( ifr.authId ) msg.authId = ifr.authId;
-				else if( GetUrlVar( 'authid' ) ) msg.authId = GetUrlVar( 'authid' );
-			}
-			// Use this if the packet has it
-			if( !msg.sessionId )
-			{
-				if( packet.sessionId ) msg.sessionId = packet.sessionId;
-			}
-			msg.registerCallback = addWrapperCallback( function() { if( callback ) callback(); } );
-			if( packet.filePath )
-			{
-				msg.data = content.split( /progdir\:/i ).join( packet.filePath );
-			}
-			else msg.data = content;
-			if( self.flags.screen )
-				msg.screenId = self.flags.screen.externScreenId;
-			msg.data = msg.data.split( /system\:/i ).join( '/webclient/' );
-			if( !msg.origin ) msg.origin = '*'; //TODO: Should be fixed document.location.href;
-			
-			ifr.contentWindow.postMessage( JSON.stringify( msg ), '*' );
-		}
-		c.appendChild( ifr );
-	}
-
-	// Sets content on a safe window (using postmessage), callback when completed
-	this.setContentById = function( content, packet, callback )
-	{
-		if( this.iframe )
-		{
-			let msg = {}; if( packet ) for( var a in packet ) msg[a] = packet[a];
-			msg.command = 'setcontentbyid';
-			this.iframe.contentWindow.postMessage( JSON.stringify( msg ), Workspace.protocol + '://' + this.iframe.src.split( '//' )[1].split( '/' )[0] );
-		}
-		if( callback ) callback();
-	}
-	// old hello function
-	this.setSandboxedUrl = function( conf )
-	{
-		let self = this;
-		let appName = self.applicationName;
-		let origin = '*'; // TODO: Should be this Doors.runLevels[ 0 ].domain;
-		let domain = Doors.runLevels[ 1 ].domain;
-		domain = domain.split( '://' )[1];
-		let appBase = '/webclient/apps/' + appName + '/';
-		let protocol = Workspace.protocol + '://';
-		let filePath =  protocol + domain + appBase + conf.filePath;
-		let container = self._window.content || self._window;
-		let iframe = document.createElement( _viewType );
-		iframe.applicationId = self.applicationId;
-		iframe.authId = self.authId;
-		iframe.applicationName = self.applicationName;
-		iframe.applicationDisplayName = self.applicationDisplayName;
-		if( typeof friendApp == 'undefined' ) putSandboxFlags( iframe, getSandboxFlags( this, DEFAULT_SANDBOX_ATTRIBUTES ) ); // allow same origin is probably not a good idea, but a bunch other stuff breaks, so for now..
-		iframe.referrerPolicy = 'origin';
-
-		self._window.applicationId = conf.applicationId; // needed for View.close to work
-		self._window.authId = conf.authId;
-		self.iframe = iframe;
-		container.innerHTML = '';
-		container.appendChild( iframe );
-
-		let src = filePath
-			+ '?base=' + appBase
-			+ '&id=' + self.viewId
-			+ '&applicationId=' + self.applicationId
-			+ '&authId=' + conf.authId
-			+ '&origin=' + origin
-			+ '&domain=' + domain
-			+ '&locale=' + Workspace.locale
-			+ '&theme=' + Doors.theme;
-
-		if ( conf.viewTheme && conf.viewTheme.length )
-			src += '&viewTheme=' + conf.viewTheme;
-
-		iframe.src = src;
-	}
-	// Sets rich content in a safe iframe
-	this.setRichContent = function( content )
-	{
-		if( !this._window ) return;
-		
-		// Rich content still can't have any scripts!
-		content = this.removeScriptsFromData( content );
-		if( !this._window )
-			return;
-			
-		let eles = this._window.getElementsByTagName( _viewType );
-		let ifr = false;
-		if( eles[0] )
-			ifr = eles[0];
-		else
-		{
-			ifr = document.createElement( _viewType );
-			this._window.appendChild( ifr );
-		}
-		if( this.flags.transparent )
-		{
-			ifr.setAttribute( 'allowtransparency', 'true' );
-			ifr.style.backgroundColor = 'transparent';
-		}
-		ifr.applicationId = self.applicationId;
-		ifr.applicationName = self.applicationName;
-		ifr.applicationDisplayName = self.applicationDisplayName;
-		putSandboxFlags( ifr, getSandboxFlags( this, DEFAULT_SANDBOX_ATTRIBUTES ) );
-		ifr.authId = self.authId;
-		ifr.onload = function()
-		{
-			ifr.contentWindow.document.body.innerHTML = content;
-		}
-		if( this.flags.requireDoneLoading )
-		{
-			ifr.className = 'Loading';	
-		}
-		ifr.onload();
-
-		this.isRich = true;
-		this.iframe = ifr;
-	}
-	// Sets rich content in a safe iframe
-	this.setJSXContent = function( content, appName )
-	{
-		let w = this;
-
-		if( !this._window )
-			return;
-			
-		let eles = this._window.getElementsByTagName( _viewType );
-		let ifr = false;
-		let appended = false;
-
-		if( eles[0] )
-			ifr = eles[0];
-		else
-		{
-			ifr = document.createElement( _viewType );
-			appended = true;
-		}
-
-		// Load the sandbox
-		if( this.conf )
-		{
-			ifr.src = '/system.library/module/?module=system&command=sandbox' +
-				'&sessionid=' + Workspace.sessionId +
-				'&conf=' + JSON.stringify( this.conf ) +
-				( this.getFlag( 'noevents' ) ? '&noevents=true' : '' );
-		}
-		// Just give a dumb sandbox
-		else
-		{
-			ifr.src = '/webclient/sandboxed.html' +
-				( this.getFlag( 'noevents' ) ? '?noevents=true' : '' );
-		}
-
-		// Register name and ID
-		ifr.applicationName = appName;
-		ifr.applicationId = appName + '-' + (new Date()).getTime();
-		Doors.applications.push( ifr );
-
-		// Add a loaded script
-		ifr.onload = function()
-		{
-			// Get document
-			let doc = ifr.contentWindow.document;
-
-			let jsx = doc.createElement( 'script' );
-			jsx.innerHTML = content;
-			ifr.contentWindow.document.getElementsByTagName( 'head' )[0].appendChild( jsx );
-
-			let msg = {
-				command:       'initappframe',
-				base:          '/',
-				applicationId: ifr.applicationId,
-				filePath:      '/webclient/jsx/',
-				origin:        '*', // TODO: Should be this - document.location.href,
-				viewId:      w.externViewId ? w.externViewId : w.viewId,
-				clipboard:     Friend.clipboard
-			};
-
-			// Set theme
-			if( w.getFlag( 'theme' ) )
-				msg.theme = w.getFlag( 'theme' );
-			if( Workspace.themeData )
-				msg.themeData = Workspace.themeData;
-			
-
-			ifr.contentWindow.postMessage( JSON.stringify( msg ), Workspace.protocol + '://' + ifr.src.split( '//' )[1].split( '/' )[0] );
-		}
-
-		// Register some values
-		this.isRich = true;
-		this.iframe = ifr;
-
-		// If we need to append this one
-		if( appended ) this._window.appendChild( ifr );
-	}
-	// Sets rich content in a safe iframe
-	this.setRichContentUrl = function( url, base, appId, filePath, callback )
-	{
-		let view = this;
-
-		if( !base )
-			base = '/';
-
-		if( !this._window )
-			return;
-
-		let eles = this._window.getElementsByTagName( _viewType );
-		let ifr = false;
-		let w = this;
-		if( eles[0] ) ifr = eles[0];
-		else
-		{
-			ifr = document.createElement( _viewType );
-		}
-
-		// Register the app id so we can talk
-		this._window.applicationId = appId;
-
-		ifr.applicationId = self.applicationId;
-		ifr.applicationName = self.applicationName;
-		ifr.applicationDisplayName = self.applicationDisplayName;
-		ifr.authId = self.authId;
-		putSandboxFlags( ifr, getSandboxFlags( this, DEFAULT_SANDBOX_ATTRIBUTES ) );
-		
-		let conf = this.flags || {};
-		if( this.flags && this.flags.allowScrolling )
-		{
-			ifr.setAttribute( 'scrolling', 'yes' );
-		}
-		else
-		{
-			ifr.setAttribute( 'scrolling', 'no' );
-		}
-
-		if ( conf.fullscreenenabled )
-			ifr.setAttribute( 'allowfullscreen', 'true' );
-
-		if( this.flags.transparent )
-		{
-			ifr.setAttribute( 'allowtransparency', 'true' );
-			ifr.style.backgroundColor = 'transparent';
-		}
-
-		ifr.setAttribute( 'seamless', 'true' );
-		ifr.style.border = '0';
-		ifr.style.position = 'absolute';
-		ifr.style.top = '0'; ifr.style.left = '0';
-		ifr.style.width = '100%'; ifr.style.height = '100%';
-		
-		if( this.flags.requireDoneLoading )
-		{
-			ifr.className = 'Loading';	
-		}
-
-		// Find our friend
-		// TODO: Only send postmessage to friend targets (from our known origin list (security app))
-		
-		// Fix url
-		if( url.indexOf( 'http' ) != 0 )
-		{
-			let t = document.location.href.match( /(http[s]{0,1}\:\/\/)(.*?)\//i );
-			url = t[1] + t[2] + url;
-		}
-		
-		let targetP = url.match( /(http[s]{0,1}\:\/\/.*?)\//i );
-		let friendU = document.location.href.match( /http[s]{0,1}\:\/\/(.*?)\//i );
-		let targetU = url.match( /http[s]{0,1}\:\/\/(.*?)\//i );
-		if( friendU && friendU.length > 1 ) friendU = friendU[1];
-		if( targetU && targetU.length > 1 )
-		{
-			targetP = targetP[1];
-			targetU = targetU[1];
-		}
-		friendU = Trim( friendU );
-		
-		if( typeof friendApp == 'undefined'  && ( friendU.length || friendU != targetU || !targetU ) )
-			putSandboxFlags( ifr, getSandboxFlags( this, DEFAULT_SANDBOX_ATTRIBUTES ) );
-
-		// Allow sandbox flags
-		let sbx = ifr.getAttribute( 'sandbox' ) ? ifr.getAttribute( 'sandbox' ) : '';
-		sbx = ('' + sbx).split( ' ' );
-		if( this.flags && this.flags.allowPopups )
-		{
-			let found = false;
-			for( var a = 0; a < sbx.length; a++ )
-			{
-				if( sbx[a] == 'allow-popups' )
-				{
-					found = true;
-				}
-			}
-			if( !found ) sbx.push( 'allow-popups' );
-			if( typeof friendApp == 'undefined' )  ifr.setAttribute( 'sandbox', sbx.join( ' ' ) );
-		}
-		
-		// Special insecure mode (use with caution!)
-		if( this.limitless && this.limitless === true )
-		{
-			let sb = ifr.getAttribute( 'sandbox' );
-			if( !sb ) sb = DEFAULT_SANDBOX_ATTRIBUTES;
-			sb += ' allow-top-navigation';
-			ifr.setAttribute( 'sandbox', sb );
-		}
-
-		ifr.onload = function( e )
-		{
-			if( friendU && ( friendU == targetU || !targetU ) )
-			{
-				let msg = {
-					command           : 'initappframe',
-					base              : base,
-					applicationId     : appId,
-					filePath          : filePath,
-					origin            : '*', // TODO: Should be this - document.location.href,
-					viewId            : w.externViewId,
-					authId            : self.authId,
-					theme             : Workspace.theme,
-					fullscreenenabled : conf.fullscreenenabled,
-					clipboard         : Friend.clipboard,
-					viewConf          : self.args.viewConf
-				};
-
-				// Override the theme
-				if( view.getFlag( 'theme' ) )
-					msg.theme = view.getFlag( 'theme' );
-				if( Workspace.themeData )
-					msg.themeData = Workspace.themeData;
-
-				try
-				{
-					// TODO: Why we used protocol was for security domains - may be deprecated
-					//ifr.contentWindow.postMessage( JSON.stringify( msg ), Workspace.protocol + '://' + ifr.src.split( '//' )[1].split( '/' )[0] );
-					ifr.contentWindow.postMessage( JSON.stringify( msg ), '*' );
-				}
-				catch(e)
-				{
-					console.log('could not send postmessage to contentwindow!');
-				}
-				ifr.loaded = true;
-			}
-			if( callback ) { callback(); }
-		}
-		
-		// Commented out because it stops https sites from being viewed on f.eks localhost without ssl
-		
-		/*if( this.conf && url.indexOf( Workspace.protocol + '://' ) != 0 )
-		{
-			let cnf = this.conf;
-			if( typeof( this.conf ) == 'object' ) cnf = '';
-			ifr.src = '/system.library/module/?module=system&command=sandbox' +
-				'&sessionid=' + Workspace.sessionId +
-				'&url=' + encodeURIComponent( url ) + '&conf=' + cnf;
-		}
-		else
-		{*/
-			ifr.src = url;
-		/*}*/
-
-		this.isRich = true;
-		this.iframe = ifr;
-		
-		// Add after options set
-		if( !eles[0] ) this._window.appendChild( ifr );
-		
-		this.initOnMessageCallback();
-	}
-	
-	this.showBackButton = function( visible, cbk )
-	{
-		if( !isMobile ) return;
-		if( visible )
-		{
-			self.mobileBack.classList.add( 'Showing' );
-			self.viewIcon.classList.add( 'MobileBackHidesIt' );
-			
-			if( cbk )
-			{
-				self.mobileBack.ontouchstart = function( e )
-				{
-					cbk( e );
-				}
-			}
-		}
-		else 
-		{
-			self.mobileBack.classList.remove( 'Showing' );
-			self.viewIcon.classList.remove( 'MobileBackHidesIt' );
-		}
-	}
-
-	// Send a message
-	this.sendMessage = function( dataObject, event )
-	{
-		if( !event ) event = window.event;
-
-		// Check if the iframe is ready to receive a message
-		if( this.iframe && this.iframe.loaded && this.iframe.contentWindow )
-		{
-			let u = Workspace.protocolUrl + 
-				this.iframe.src.split( '//' )[1].split( '/' )[0];
-			
-			//let origin = event && 
-			//	event.origin && event.origin != 'null' && event.origin.indexOf( 'wss:' ) != 0 ? event.origin : '*'; // * used to be u;
-			// TODO: Fix this with security
-			let origin = '*';
-			
-			if( !dataObject.applicationId && this.iframe.applicationId )
-			{
-				dataObject.applicationId = this.iframe.applicationId;
-				dataObject.authId = this.iframe.authId;
-				dataObject.applicationName = this.iframe.applicationName;
-				dataObject.applicationDisplayName = this.iframe.applicationDisplayName;
-			}
-			if( !dataObject.type ) dataObject.type = 'system';
-			
-			this.iframe.contentWindow.postMessage( 
-				JSON.stringify( dataObject ), origin 
-			);
-		}
-		// No iframe?
-		else if( !this.iframe )
-		{
-			return false;
-		}
-		else
-		{
-			if( !this.sendQueue )
-				this.sendQueue = [];
-			this.sendQueue.push( dataObject );
-		}
-		return true;
-	}
-	// Receive a message specifically for this view.
-	this.initOnMessageCallback = function()
-	{
-		if( self.onMessage && self.iframe && !window.onmessage )
-		{
-			let b = self.iframe.getAttribute( 'sandbox' );
-			window.onmessage = function( msg ) 
-			{
-				if( msg && msg.isTrusted && msg.data && msg.data.type )
-				{
-					if( self.iframe.contentWindow == msg.source )
-					{
-						self.onMessage( msg.data );
-						
-						// Enforce prevailing sandbox attributes
-						self.iframe.setAttribute( 'sandbox', b );
-					}
-				}
-			};
-		}
-	}
-	// Send messages to window that hasn't been sent because iframe was not loaded
-	this.executeSendQueue = function()
-	{
-		if ( !this.sendQueue || !this.sendQueue.length )
-			return;
-
-		if( this.executingSendQueue || !this.iframe ) return;
-		this.executingSendQueue = true;
-		for( let a = 0; a < this.sendQueue.length; a++ )
-		{
-			let msg = this.sendQueue[ a ];
-			this.sendMessage( msg );
-		}
-		this.sendQueue = [];
-		this.executingSendQueue = false;
-	}
-	// Get content element
-	this.getContentElement = function()
-	{
-		if( this.isRich && this.iframe )
-		{
-			return this.iframe.contentWindow.document.body;
-		}
-		else return this._window;
-		return false;
-	}
-	// Focus on an able element
-	this.focusOnElement = function( identifier, flag )
-	{
-		let ele = this.getSubContent( identifier, flag );
-		if( ele && ele.focus ) ele.focus();
-	}
-	// Get some subcontent (.class or #id)
-	this.getContentById = function( identifier, flag )
-	{
-		let node = this.getContentElement();
-		if( !node ) return false;
-		let ele = node.getElementsByTagName( '*' );
-		let cnt = false;
-		let idn = identifier.substr( 0, 1 );
-		let key = identifier.substr( 1, identifier.length - 1 );
-		let results = [];
-		if( idn == '.' )
-		{
-			for( var a = 0; a < ele.length; a++ )
-			{
-				if( ele[a].className && ele[a].className == key )
-				{
-					results.push( ele[a] );
-				}
-			}
-		}
-		else
-		{
-			let fn = key;
-			if( idn != '#' ) fn = identifier;
-			for( var a = 0; a < ele.length; a++ )
-			{
-				if( ele[a].id == idn )
-				{
-					results.push( ele[a] );
-				}
-			}
-		}
-		if( !results.length)
-			return false;
-		if( flag == 'last-child' )
-			return results[results.length-1];
-		return results[0];
-	}
-	// Set content on sub element
-	// TODO: Deprecated! Remove completely!
-	this.setSubContent = function( identifier, flag, content )
-	{
-		let cnt = this.getSubContent( identifier, flag );
-		if( !cnt ) return;
-		// Safe content without any scripts or styles!
-		cnt.innerHTML = this.cleanHTMLData( content );
-	}
-	// Sets a property value
-	this.setAttributeById = function( packet )
-	{
-		if( this.iframe )
-		{
-			let msg = {}; if( packet ) for( var a in packet ) msg[a] = packet[a];
-			msg.command = 'setattributebyid';
-			this.iframe.contentWindow.postMessage( JSON.stringify( msg ), Workspace.protocol + '://' + this.iframe.src.split( '//' )[1].split( '/' )[0] );
-		}
-	}
-	// Activate window
-	this.activate = function( force )
-	{
-		if( isMobile && !force && this.flags.minimized ) 
-		{
-			return;
-		}
-		_ActivateWindow( this._window.parentNode );
-	}
-	// Move window to front
-	this.toFront = function( flags )
-	{
-		if( this.flags.minimized ) 
-		{
-			return;
-		}
-		if( !( flags && flags.activate === false ) )
-			_ActivateWindow( this._window.parentNode );
-		_WindowToFront( this._window.parentNode );
-	}
-	// Close a view window
-	this.close = function ( force )
-	{
-		if( isMobile )
-			Workspace.exitMobileMenu();
-		
-		let c = this._window;
-		if( c && c.content )
-			c = c.content;
-
-		// Remember window position
-		if( this.flags.memorize )
-		{
-			this._window.parentNode.memorize();
-		}
-
-		// Close blockers
-		if( this._window && this._window.blocker )
-		{
-			this._window.blocker.close();
-		}
-
-		if( !force && this._window && this._window.applicationId )
-		{
-			// Send directly to the view
-			let app = this._window.applicationId ? findApplication( this._window.applicationId ) : false;
-			if( c.getElementsByTagName( _viewType ).length )
-			{
-				let twindow = this;
-
-				// Notify application
-				let msg = {
-					type: 'system',
-					command: 'notify',
-					method: 'closeview',
-					applicationId: this._window.applicationId,
-					viewId: self.viewId
-				};
-				// Post directly to the app
-				if( app )
-				{
-					app.contentWindow.postMessage( JSON.stringify( msg ), '*' );
-				}
-				// Post directly to the window
-				else
-				{
-					this.sendMessage( msg );
-				}
-				// Execute any ambient onClose method
-				if( this.onClose ) this.onClose();
-				if( this.eventSystemClose ) // <- system call
-				{
-					for( let a = 0; a < this.eventSystemClose.length; a++ )
-					{
-						this.eventSystemClose[a]();
-					}
-				}
-				return;
-			}
-			else if( this.parentViewId )
-			{
-				let v = GetWindowById( this.parentViewId );
-				if( v && v.windowObject )
-				{
-					let msg = {
-						type: 'system',
-						command: 'notify',
-						method: 'closeview',
-						applicationId: this._window.applicationId,
-						viewId: this.viewId
-					};
-					v.windowObject.sendMessage( msg );
-				}
-				return false;
-			}
-			else if( app )
-			{
-				// Notify application
-				let msg = {
-					type: 'system',
-					command: 'notify',
-					method: 'closeview',
-					applicationId: this._window.applicationId,
-					viewId: self.viewId
-				};
-				app.sendMessage( msg );
-				return;
-			}
-		}
-		CloseView( this._window );
-		if( this.onClose ) this.onClose();
-		if( this.eventSystemClose ) // <- system call
-		{
-			for( let a = 0; a < this.eventSystemClose.length; a++ )
-			{
-				this.eventSystemClose[a]();
-			}
-		}
-		return true;
-	}
-	// Put a loading animation on window
-	this.loadingAnimation = function ()
-	{
-		WindowLoadingAnimation( this._window );
-	}
-	
-	// Set the main view of app
-	this.setMainView = function( set )
-	{
-		if( !this.applicationId ) return;
-		
-		if( !window._getAppByAppId )
-			return;
-			
-		let app = _getAppByAppId( this.applicationId );
-		if( !app ) return;
-		
-		this.flags.mainView = set;
-		
-		// Set main view
-		if( set )
-		{
-			app.mainView = this;
-		}
-		// Unset main view (pick the next view if possible
-		else
-		{
-			// Find new main view
-			app.mainView = null;
-			for( var a in app.windows )
-			{
-				if( app.windows[ a ] != this )
-				{
-					app.mainView = app.windows[ a ];
-					app.mainView.flags.mainView = true;
-				}
-			}
-		}
-		// Update other windows with the new main view!
-		if( app.mainView )
-		{
-			for( var a in app.windows )
-			{
-				if( app.windows[ a ] != app.mainView )
-				{
-					app.windows[ a ].mainView = false;
-					app.windows[ a ].flags.mainView = false;
-					app.windows[ a ].parentView = app.mainView;
-				}
-			}
-		}
-	}
-	
-	// Set a window flag
-	this.setFlag = function( flag, value )
-	{	
-		// References to the view window
-		let content = viewdiv = false;
-		if( this._window )
-		{
-			content = this._window;
-			viewdiv = content.parentNode;
-		}
-		
-		// Set the flag
-		switch( flag )
-		{
-			case 'context':
-				for( let a in movableWindows )
-				{
-					if( a == value )
-					{
-						this.currentContext = [ movableWindows[ a ] ];
-						this.flags.context = value;
-						break;
-					}
-				}
-				break;
-			case 'mainView':
-				this.setMainView( value );
-				this.flags.mainView = value;
-				break;
-			case 'noquickmenu':
-				if( value )
-					this._window.classList.add( 'NoQuickmenu' );
-				else this._window.classList.remove( 'NoQuickmenu' );
-				this.flags.noquickmenu = value;
-				break;
-			case 'menu':
-				if( value && value.length && value[0].name )
-				{
-					this.setMenuItems( value );
-					this.flags.menu = value;
-				}
-				this.flags.menu = null;
-				break;
-			case 'singletask':
-				this.flags.singletask = value;
-				break;
-			// Standard dialog has preset width and height
-			case 'standard-dialog':
-			// Dialog is treated only like a dialog
-				if( viewdiv.parentNode )
-				{
-					if( value )
-				    {
-				        viewdiv.parentNode.classList.add( 'StandardDialog' );
-				    }
-				    else
-				    {
-				        viewdiv.parentNode.classList.remove( 'StandardDialog' );
-				    }
-				}
-		        this.flags[ 'standard-dialog' ] = value;
-			case 'dialog':
-				this.flags[ 'dialog' ] = value;
-			    if( viewdiv )
-			    {
-			        if( value )
-			        {
-			            viewdiv.parentNode.classList.add( 'Dialog' );
-			            if( flag == 'dialog' && document.body.classList.contains( 'ThemeEngine' ) )
-			            {
-					        viewdiv.style.left = 'calc(50% - ' + ( viewdiv.offsetWidth >> 1 ) + 'px)';
-					        viewdiv.style.top = 'calc(50% - ' + ( viewdiv.offsetHeight >> 1 ) + 'px)';
-					    }
-			        }
-			        else
-			        {
-			            viewdiv.parentNode.classList.remove( 'Dialog' );
-			        }
-			    }
-			    break;
-			case 'clickableTitle':
-				this.flags.clickableTitle = value;
-				break;
-			case 'scrollable':
-				if( content )
-				{
-					if( value == true )
-						content.className = 'Content IconWindow';
-					else content.className = 'Content';
-					if( value == true )
-					{
-						viewdiv.classList.add( 'Scrolling' );
-					}
-					else
-					{
-						viewdiv.classList.remove( 'Scrolling' );
-					}
-				}
-				this.flags.scrollable = value;
-				break;
-			case 'left':
-				this.flags.left = value;
-				if( viewdiv )
-				{
-					value += '';
-					value = value.split( 'px' ).join( '' );
-					if( !isMobile )
-					{
-						viewdiv.style.left = ( value.indexOf( '%' ) > 0 || value.indexOf( 'vw' ) > 0 ) ? value : ( value + 'px' );
-					}
-				}
-				break;
-			case 'top':
-				this.flags.top = value;
-				if( viewdiv )
-				{
-					value += '';
-					value = value.split( 'px' ).join( '' );
-					if( !isMobile )
-					{
-						viewdiv.style.top = ( value.indexOf( '%' ) > 0 || value.indexOf( 'vh' ) > 0 ) ? value : ( value + 'px' );
-					}
-				}
-				break;
-			case 'max-width':
-				this.flags['max-width'] = value;
-				if( viewdiv )
-				{
-					viewdiv.style.maxWidth = value;
-					ResizeWindow( viewdiv, ( flag == 'width' ? value : null ), ( flag == 'height' ? value : null ) );
-					RefreshWindow( viewdiv );
-				}
-				break;
-			case 'max-height':
-				this.flags['max-height'] = value;
-				if( viewdiv )
-				{
-					viewdiv.style.maxHeight = value;
-					ResizeWindow( viewdiv, ( flag == 'width' ? value : null ), ( flag == 'height' ? value : null ) );
-					RefreshWindow( viewdiv );
-				}
-				break;
-			case 'min-width':
-				this.flags[ 'min-width' ] = value;
-				if( viewdiv )
-				{
-					viewdiv.style.minWidth = value;
-					ResizeWindow( viewdiv, ( flag == 'width' ? value : null ), ( flag == 'height' ? value : null ) );
-					RefreshWindow( viewdiv );
-				}
-				break;
-			case 'min-height':
-				this.flags[ 'min-height' ] = value;
-				if( viewdiv )
-				{
-					viewdiv.style.minHeight = value;
-					ResizeWindow( viewdiv, ( flag == 'width' ? value : null ), ( flag == 'height' ? value : null ) );
-					RefreshWindow( viewdiv );
-				}
-				break;
-			case 'width':
-			case 'height':
-				if( value == null ) value = 0;
-				this.flags[ flag ] = value;
-				if( viewdiv )
-				{	
-					if( value == 'max' )
-					{
-						if( flag == 'width' )
-						{
-							value = ( this.flags && this.flags.screen ) ? this.flags.screen.getMaxViewWidth() : window.innerWidth;
-						}
-						else
-						{
-							value = ( this.flags && this.flags.screen ) ? this.flags.screen.getMaxViewHeight() : window.innerHeight;
-						}
-					}
-					
-					ResizeWindow( viewdiv, ( flag == 'width' ? value : null ), ( flag == 'height' ? value : null ) );
-					RefreshWindow( viewdiv );
-				}
-				break;
-			// TODO: Expand to work with more properties
-			case 'animated':
-				this.flags[ flag ] = value;
-				if( value == true )
-				{
-					viewdiv.classList.add( 'Animated' );
-				}
-				else
-				{
-					viewdiv.classList.remove( 'Animated' );
-				}
-				break;
-			case 'resize':
-				this.flags[ flag ] = value;
-				ResizeWindow( viewdiv );
-				RefreshWindow( viewdiv );
-				break;
-			case 'loadinganimation':
-				if( value == true )
-				{
-					this.loadingAnimation();
-				}
-				break;
-			case 'hidden':
-			case 'invisible':
-				if( viewdiv )
-				{
-					if( value == 'true' || value == true )
-					{
-						// Fade out!!
-						if( value === false )
-						{
-							setTimeout( function(){
-								viewdiv.viewContainer.style.visibility = 'hidden';
-								viewdiv.viewContainer.style.pointerEvents = 'none';
-							}, 500 );
-						}
-						else
-						{
-							// Don't show the view window if it's hidden
-							viewdiv.viewContainer.style.visibility = 'hidden';
-							viewdiv.viewContainer.style.pointerEvents = 'none';
-						}
-						viewdiv.viewContainer.style.opacity = 0;
-					}
-					else
-					{
-						// Fade in!!
-						if( value === true )
-						{
-							setTimeout( function(){ viewdiv.viewContainer.style.opacity = 1; }, 1 );
-						}
-						// Don't show the view window if it's hidden
-						else viewdiv.viewContainer.style.opacity = 1;
-						viewdiv.viewContainer.style.visibility = '';
-						viewdiv.viewContainer.style.pointerEvents = '';
-					}
-					if( flag == 'invisible' )
-					{
-					    if( value == true || value == 'true' )
-					    {
-					        viewdiv.viewContainer.classList.add( 'Invisible' );
-					    }
-					    else
-					    {
-					        viewdiv.viewContainer.classList.remove( 'Invisible' );
-					    }
-					}
-					ResizeWindow( viewdiv );
-					RefreshWindow( viewdiv );
-				}
-				this.flags[ flag ] = value;
-				PollTaskbar();
-				break;
-			case 'liveView':
-			    if( value == true || value == 'true' )
-			    {
-			        viewdiv.viewContainer.classList.add( 'Liveview' );
-			    }
-			    else
-			    {
-			        viewdiv.viewContainer.classList.remove( 'Liveview' );
-			    }
-			    break;
-			case 'screen':
-				this.flags.screen = value;
-				break;
-			case 'minimized':
-				if( viewdiv )
-				{
-					if( value == 'true' || value == true )
-					{
-						if( viewdiv.doMinimize )
-						{
-							viewdiv.doMinimize();
-						}
-					}
-					else if( value == 'false' || value == false )
-					{
-						_ActivateWindow( viewdiv );
-						_WindowToFront( viewdiv );
-					}
-				}
-				this.flags.minimized = value;
-				break;
-			case 'title':
-				if( !Trim( value ) )
-					value = i18n( 'i18n_untitled_window' );
-				SetWindowTitle( viewdiv, value );
-				this.flags.title = value;
-				break;
-			case 'theme':
-				this.flags.theme = value;
-				break;
-			case 'fullscreenenabled':
-				this.flags.fullscreenenabled = value;
-				break;
-			case 'background':
-			    this.flags.background = value;
-			    if( value == false )
-			    {
-			        viewdiv.classList.remove( 'TransparentBg' );
-		        }
-		        else
-		        {
-		            viewdiv.classList.add( 'TransparentBg' );
-		        }
-			    break;
-			case 'transparent':
-				this.flags.transparent = value;
-				if( viewdiv )
-				{
-					viewdiv.setAttribute( 'transparent', value ? 'transparent': '' );
-				}
-				break;
-			// TODO: Use it when ready
-			// Allow for dropping files in a secure manner
-			case 'securefiledrop':
-				this.flags.securefiledrop = value;
-				break;
-			case 'windowInactive':
-			case 'windowActive':
-			    if( isMobile ) return false;
-				// Check window color
-				this.flags[ flag ] = value;
-				break;
-			case 'sidebarManaged':
-				if( viewdiv && viewdiv.parentNode )
-				{
-					if( value == 'true' || value == true )
-					    viewdiv.parentNode.classList.add( 'SidebarManaged' );
-					else viewdiv.parentNode.classList.remove( 'SidebarManaged' );
-				}
-    			this.flags[ flag ] = value;
-			    break;
-			// Takes all flags
-			default:
-				this.flags[ flag ] = value;
-				return;
-		}
-
-		// Some values are not set on application
-		if( flag == 'screen' ) return;
-
-		// Support dashboard
-		if( window.Workspace && Workspace.dashboard && Workspace.dashboard !== true )
-			Workspace.dashboard.refresh();
-		
-		// Finally set the value on application
-
-		// Notify window if possible
-		// TODO: Real value after its evaluated
-		if( !Workspace.applications )
-			return;
-		for( let a = 0; a < Workspace.applications.length; a++ )
-		{
-			let app = Workspace.applications[a];
-			if( app.applicationId == viewdiv.applicationId )
-			{
-				app.contentWindow.postMessage( JSON.stringify( {
-					command: 'notify',
-					method:  'setviewflag',
-					viewId: viewdiv.windowObject.viewId,
-					applicationId: app.applicationId,
-					flag:    flag,
-					value:   value
-				} ), '*' );
-				break;
-			}
-		}
-	}
-	this.parseFlags = function( flags, filter )
-	{
-		if( !this.flags ) this.flags = {};
-		for( var a in flags )
-		{
-			// Just parse by filter
-			if( filter )
-			{
-				let fnd = false;
-				for( var b in filter )
-				{
-					if( a == filter[b] )
-					{
-						fnd = true;
-						break;
-					}
-				}
-				if( !fnd ) continue;
-			}
-			if( a == 'screen' && !flags[a] )
-			{
-				if( typeof( currentScreen ) != 'undefined' && currentScreen )
-					flags[a] = currentScreen.screenObject;
-			}
-			this.setFlag( a, flags[a] );
-		}
-		// We always need a screen
-		if( !this.flags.screen && typeof( currentScreen ) != 'undefined' )
-		{
-			this.flags.screen = currentScreen.screenObject;
-		}
-	}
-	this.getFlag = function( flag )
-	{
-		if( typeof( this.flags[flag] ) != 'undefined' )
-		{
-			switch( flag )
-			{
-				case 'top':
-				{
-					let fg = this.flags[ flag ];
-					fg += '';
-					if( fg.indexOf( '%' ) > 0 ) return fg;
-					else return parseInt( fg );
-					break;
-				}
-				case 'left':
-				{
-					let fg = this.flags[ flag ];
-					fg += '';
-					if( fg.indexOf( '%' ) > 0 ) return fg;
-					else return parseInt( fg );
-					break;
-				}
-				case 'width':
-				{
-					let fl = this.flags[flag];
-					if( fl.indexOf && fl.indexOf( '%' ) > 0 )
-						return fl;
-					if( fl == 'max' && this.flags && this.flags.screen )
-					{
-						fl = this.flags.screen.getMaxViewWidth();
-					}
-					return fl;
-				}
-				case 'height':
-				{
-					let fl = this.flags[flag];
-					if( fl.indexOf && fl.indexOf( '%' ) > 0 )
-						return fl;
-					if( fl == 'max' && this.flags && this.flags.screen )
-					{
-						fl = this.flags.screen.getMaxViewHeight();
-					}
-					return fl;
-				}
-			}
-			return this.flags[flag];
-		}
-		// No flags set.. just get the raw data if possible, and defaults
-		else if( this._window )
-		{
-			let w = this._window.parentNode;
-			switch( flag )
-			{
-				case 'left':
-					return parseInt( w.style.left );
-					break;
-				case 'top':
-					return parseInt( w.style.top );
-					break;
-			}
-			return false;
-		}
-		return false;
-	}
-	
-	this.openCamera = function( flags, callback )
-	{
-		
-		let self = this;
-		
-		// Just get the available devices
-		function getAvailableDevices( cbk )
-		{
-			if( !navigator.mediaDevices )
-			{
-				return cbk( { response: -1, message: 'Could not get any devices.' } );
-			}
-			navigator.mediaDevices.enumerateDevices().then( function( devs ) {
-				cbk( { response: 1, message: 'Success', data: devs } );
-			} ).catch( function( err ) {
-				return cbk( { response: -1, message: err } );
-			} );
-		}
-		
-		function setCameraEvents( ele )
-		{
-			ele.ontouchstart = function( e )
-			{
-				this.offX = e.touches[0].clientX;
-				this.timeStamp = ( new Date() ).getTime();
-			}
-		
-			ele.ontouchend = function( e )
-			{
-				let diff = e.changedTouches[0].clientX - this.offX;
-				let difftime = ( new Date() ).getTime() - this.timeStamp;
-				if( difftime > 200 )
-				{
-					return;
-				}
-				// Swipe right
-				if( diff < 127 )
-				{
-					setCameraMode();
-				}
-				// Swipe left
-				else if( diff > 127 )
-				{
-					setCameraMode();
-				}	
-			}
-		}
-		
-		function setCameraMode( e )
-		{
-			let v = null;
-			if( !self.cameraOptions )
-			{
-				self.cameraOptions = {
-					devices: e,
-					currentDevice: false
-				};
-				// Add container
-				v = document.createElement( 'div' );
-				v.className = 'FriendCameraContainer';
-				self.content.appendChild( v );
-				self.content.container = v;
-				self.content.classList.add( 'HasCamera' );
-				
-				
-			
-			}
-			
-			// Find video devices
-			let initial = false;
-			let devs = [];
-			for( var a in self.cameraOptions.devices )
-			{
-				let dev = self.cameraOptions.devices[ a ];
-				if( dev.kind == 'videoinput' )
-				{
-					//we want back facing camera as default...
-					if( dev.label && dev.label.indexOf('back') > -1 && !self.cameraOptions.currentDevice ) 
-					{
-						self.cameraOptions.currentDevice = dev;
-						initial = true;
-					}
-					else 
-					{
-						//we overwrite on purpose here! most handsets have backwards facing cameras last...
-						self.cameraOptions.potentialDevice = dev
-					}
-					devs.push( dev );
-				}
-			}
-			if( !self.cameraOptions.currentDevice && self.cameraOptions.potentialDevice )
-			{
-				self.cameraOptions.currentDevice = self.cameraOptions.potentialDevice
-				initial = true;
-			}
-			
-			// Initial pass over, now just choose next device
-			if( !initial )
-			{
-				let found = nextfound = false;
-				for( var a = 0; a < devs.length; a++ )
-				{
-					if( devs[a].deviceId == self.cameraOptions.currentDevice.deviceId )
-					{
-						found = true;
-					}
-					// We found stuff
-					else if( found )
-					{
-						nextfound = true;
-						self.cameraOptions.currentDevice = devs[a];
-						break;
-					}
-				}
-				// Wrap around
-				if( !nextfound )
-				{
-					self.cameraOptions.currentDevice = devs[0];
-				}
-			}
-			let constraints = {
-				video: {
-					deviceId: { exact: self.cameraOptions.currentDevice.deviceId }
-				}
-			};
-			
-			let ue = navigator.userAgent.toLowerCase();
-			
-			if( navigator.gm ) { 
-				
-				//check if we should stop stuff before we try again...
-				let dd = self.content.container.camera;
-				if(dd && dd.srcObject)
-				{
-					dd.srcObject.getTracks().forEach(track => track.stop())
-					dd.srcObject = null;
-				}
-				if( self.content.container.camera ) self.content.container.removeChild( self.content.container.camera );
-				delete self.content.container.camera;
-				delete navigator.gm;
-			}
-			
-			// Shortcut
-			navigator.gm = (navigator.getUserMedia ||
-				navigator.webkitGetUserMedia ||
-				navigator.mozGetUserMedia || 
-				navigator.msGetUserMedia
-			);
-
-			if( navigator.gm )
-			{
-				navigator.gm( 
-					constraints, 
-					function( localMediaStream )
-					{
-						// Remove old video object
-						//might be too late here? at least on mobile? moved this check up a couple of lines..
-						let oldCam = self.content.container.camera;
-						if( oldCam && oldCam.srcObject )
-						{
-							oldCam.srcObject.getTracks().forEach( track => track.stop() );
-							oldCam.srcObject = localMediaStream;
-						}
-						else
-						{
-							// New element!
-							let vi = document.createElement( 'video' );
-							vi.setAttribute( 'autoplay', 'autoplay' );
-							vi.setAttribute( 'playinline', 'playinline' );
-							vi.className = 'FriendCameraElement';
-							vi.srcObject = localMediaStream;
-							self.content.container.appendChild( vi );
-							self.content.container.camera = vi;
-					
-							setCameraEvents( vi );
-						}
-					
-						// Create an object URL for the video stream and use this 
-						// to set the video source.
-						self.content.container.camera.srcObject = localMediaStream;
-					
-						// Add the record + switch button
-						if( !self.content.container.button )
-						{
-							let btn = document.createElement( 'button' );
-							btn.className = 'IconButton IconSmall fa-camera';
-							btn.onclick = function( e )
-							{
-								let dd = self.content.container.camera;
-								let canv = document.createElement( 'canvas' );
-								canv.setAttribute( 'width', dd.videoWidth );
-								canv.setAttribute( 'height', dd.videoHeight );
-								v.appendChild( canv );
-								let ctx = canv.getContext( '2d' );
-								ctx.drawImage( dd, 0, 0, dd.videoWidth, dd.videoHeight );
-								let dt = canv.toDataURL( 'image/jpeg', 0.95 );
-						
-								// Stop taking video
-								dd.srcObject.getTracks().forEach(track => track.stop())
-								dd.srcObject = null;
-						
-								// FLASH!
-								v.classList.add( 'Flash' );
-								setTimeout( function()
-								{
-									v.classList.add( 'Flashing' );
-									setTimeout( function()
-									{
-										v.classList.remove( 'Flashing' );
-										setTimeout( function()
-										{
-											v.classList.add( 'Closing' );
-											setTimeout( function()
-											{
-												callback( { response: 1, message: 'Image captured', data: dt } );
-												v.parentNode.removeChild( v );
-											}, 250 );
-										}, 250 );
-									}, 250 );
-								}, 5 );
-							}
-							self.content.container.appendChild( btn );
-							
-							
-							let switchbtn = document.createElement( 'button' );
-							switchbtn.className = 'IconButton IconSmall fa-refresh';
-							switchbtn.onclick = function() { setCameraMode() };
-							self.content.container.appendChild( switchbtn );
-
-							//stop the video if the view is closed!
-							self.addEvent('systemclose', function() {
-								let dd = self.content.container.camera;
-								if(dd && dd.srcObject )
-								{
-									dd.srcObject.getTracks().forEach(track => track.stop())
-									dd.srcObject = null;									
-								}
-							});
-							
-							//register our button in the container... to not do this twice							
-							self.content.container.button = btn;
-						}
-					},
-					function( err )
-					{
-						v = self.content;
-						// Log the error to the console.
-						callback( { response: -2, message: 'Could not access camera. getUserMedia() failed.' + err } );
-						if( v )
-						{
-							v.classList.add( 'Closing' );
-							/*setTimeout( function()
-							{
-								v.parentNode.removeChild( v );
-							},  250 );*/
-						}
-					}
-				);
-			}
-			else
-			{
-				// TODO: Hogne
-				// Remove video
-				v.removeChild( d );
-			
-				// Add fallback
-				let fb = document.createElement( 'div' );
-				fb.className = 'FriendCameraFallback';
-				v.appendChild( fb );
-				let mediaElement = document.createElement( 'input' );
-				mediaElement.type = 'file';
-				mediaElement.accept = 'image/*';
-				mediaElement.className = 'FriendCameraInput';
-				fb.innerHTML = '<p>' + i18n( 'i18n_camera_action_description' ) + 
-					'</p><button class="IconButton IconSmall IconBig fa-camera">' + i18n( 'i18n_take_photo' ) + '</button>';
-				fb.appendChild( mediaElement );
-			
-				setTimeout( function()
-				{
-					fb.classList.add( 'Showing' );
-				}, 5 );
-			
-				mediaElement.onchange = function( e )
-				{
-					let reader = new FileReader();
-					reader.onload = function( e )
-					{
-						
-						let dataURL = e.target.result;
-						v.classList.remove( 'Showing' );
-						setTimeout( function()
-						{
-							callback( { response: 1, message: 'Image captured', data: dataURL } );
-							v.parentNode.removeChild( v );
-						}, 250 );
-					}
-					reader.readAsDataURL( mediaElement.files[0] );
-				}
-			}
-		}
-
-		// prepare for us to use to external libs. // good quality resize + EXIF data reader
-		// https://github.com/blueimp/JavaScript-Load-Image/blob/master/js/load-image.all.min.js
-		if( !self.cameraIncludesLoaded )
-		{
-			Include( '/webclient/3rdparty/load-image.all.min.js', function()
-			{
-				// Execute async operation
-				self.cameraIncludesLoaded = true;
-				getAvailableDevices( function( e ){ setCameraMode( e.data ) } );				
-			});
-		}
-		else
-		{
-			getAvailableDevices( function( e ){ setCameraMode( e.data ) } );				
-		}
-	}
-	
-	// Add a child window to this window
-	this.addChildWindow = function( ele )
-	{
-		if ( ele.tagName && ele.windowObject )
-			return this.childWindows.push ( ele.windowObject );
-		else if ( ele._window ) return this.childWindows.push ( ele );
-		else if ( ele.content ) return this.childWindows.push ( ele );
-		return false;
-	}
-	// Get elements by tabname
-	this.getElementsByTagName = function ( tn )
-	{
-		return this._window.getElementsByTagName ( tn );
-	}
-	// Get elements by class
-	this.getByClass = function ( classn )
-	{
-		let el = this._window.getElementsByTagName ( '*' );
-		let out = [];
-		for( var a = 0; a < el.length; a++ )
-		{
-			if( el[a].className )
-			{
-				let cls = el[a].className.split ( ' ' );
-				for( var b = 0; b < cls.length; b++ )
-				{
-					if ( cls[b] == classn )
-					{
-						out.push(el[a]);
-						break;
-					}
-				}
-			}
-		}
-		return out;
-	}
-	// Init gui tabs
-	this.initTabs = function( pel )
-	{
-		InitTabs ( pel );
-	}
-	// Get a window by id
-	this.getViewId = function()
-	{
-		return this._window.viewId;
-	}
-	// Add events for stuff
-	this.addEvent = function( event, func )
-	{
-		if( event == 'systemclose' )
-		{
-			if( !this.eventSystemClose ) this.eventSystemClose = [];
-			this.eventSystemClose.push( func );
-		}
-		return this._window.AddEvent( event, func );
-	}
-	// Remove event
-	this.removeEvent = function( event, func )
-	{
-		return this._window.RemoveEvent( event, func );
-	}
-	// Add an event on a sub element
-	this.addEventByClass = function( className, event, func )
-	{
-		let ele = this.getSubContent( '.' + className );
-		if( ele )
-		{
-			if( ele.addEventListener )
-				ele.addEventListener( event, func, false );
-			else ele.attachEvent( 'on' + event, func, false );
-		}
-	}
-	// Set menu items on window
-	this.setMenuItems = function( obj, appid, viewId )
-	{
-		// Set destination
-		if( viewId ) this._window.menuViewId = viewId;
-		// Set items
-		this._window.menu = obj;
-		WorkspaceMenu.generated = false;
-		if( appid && ( window.isMobile || IsSharedApp() ) )
-		{
-			this._window.applicationId = appid;
-		}
-		CheckScreenTitle( null, true );
-	}
-	this.setBlocker = function( blockwin )
-	{
-		this._window.blocker = blockwin;
-	}
-	this.removeBlocker = function()
-	{
-		this._window.blocker = false;
-	}
-	// Get the window element (dom element)
-	this.getWindowElement = function()
-	{
-		return this._window;
-	}
-
-	this.focus = function()
-	{
-		this._window.focus();
-	}
-
-	// Handle the keys -- dummy function to be overwritten
-	this.handleKeys = function( k, event )
-	{
-	}
-
-	this.setSticky = function()
-	{
-		this._window.parentNode.parentNode.setAttribute( 'sticky', 'sticky' );
-	}
-
-	// Now set it up! --------------------------------------------------------->
-	self.viewId = args.viewId;
-	self.applicationId = args.applicationId;
-	self.authId = args.authId;
-	self.applicationName = args.applicationName;
-	self.applicationDisplayName = args.applicationDisplayName;
-
-	if( !args.id ) args.id = false;
-	
-	// Fullscreen single task
-	if( Workspace.isSingleTask )
-	{
-		args.width = 'max';
-		args.height = 'max';
-		args.left = 0;
-		args.top = 0;
-		args.resize = false;
-	}
-	
-	// TODO: Native window mode should work!
-	/*let webapp = document.location.href.indexOf( '/webapp.html' ) > 0;
-	if( webapp && !window.windowCount ) window.windowCount = 0;
-	if( webapp && window.windowCount++ > 1 )
-	{
-		let uid = args.id ? args.id : UniqueId();
-		let nw = window.open( '', uid, 'width=' + args.width + ',height=' + args.height + ',status=no,toolbar=no,topbar=no,windowFeatures=popup' );
-		self._nativeWindow = nw;
-		self._type = 'native';
-		
-		let bod = nw.document.body;
-		let elements = [ 'Content', 'Title', 'Leftbar', 'Rightbar', 'Bottombar', 'ViewTitle' ];
-		let content = null;
-		for( let a in elements )
-		{
-			let d = nw.document.createElement( 'div' );
-			d.className = elements[ a ];
-			bod.appendChild( d );
-			if( elements[ a ] == 'Content' )
-			{
-				content = d;
-			}
-			else if( content )
-			{
-				let key = elements[ a ].toLowerCase();
-				if( key == 'title' ) key = 'titleBar';
-				else if( key == 'viewtitle' ) key = 'viewTitle';
-				content[ key ] = d;
-			}
-		}
-		
-		movableWindows[ uid ] = content;
-		
-		bod.querySelector( '.Title' ).innerHTML = '<span></span>';
-		bod.classList.remove( 'Loading' );
-		self.createContentEventFuncs( content );
-		content.windowObject = self;
-		self._window = content;
-		self.content = content;
-		self.content.windowObject = self;
-		self.flags = args;
-	}
-	else 
-	{*/
-		this.createDomElements( 'CREATE', args.title, args.width, args.height, args.id, args, args.applicationId );
-	//}
-
-	if( !self._window || !self._window.parentNode ) return false;
-
-	if( !this._window )
-	{
-		this.ready = false;
-		return;
-	}
-	else this.ready = true;
-
-	this.isRich = false;
-	this.childWindows = [];
-
-	CheckScreenTitle();
-
-	// Done setting up view ---------------------------------------------------<
-}
 
 Friend.GUI.view.cleanWindowArray = function( ele )
 {
