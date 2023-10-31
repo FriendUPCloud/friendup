@@ -4411,28 +4411,28 @@ class View
 	// Add a child window to this window
 	addChildWindow( ele )
 	{
-		if ( ele.tagName && ele.windowObject )
-			return this.childWindows.push ( ele.windowObject );
-		else if ( ele._window ) return this.childWindows.push ( ele );
-		else if ( ele.content ) return this.childWindows.push ( ele );
+		if( ele.tagName && ele.windowObject )
+			return this.childWindows.push( ele.windowObject );
+		else if ( ele._window ) return this.childWindows.push( ele );
+		else if ( ele.content ) return this.childWindows.push( ele );
 		return false;
 	}
 	// Get elements by tabname
 	getElementsByTagName( tn )
 	{
-		return this._window.getElementsByTagName ( tn );
+		return this._window.getElementsByTagName( tn );
 	}
 	// Get elements by class
 	getByClass( classn )
 	{
-		let el = this._window.getElementsByTagName ( '*' );
+		let el = this._window.getElementsByTagName( '*' );
 		let out = [];
-		for( var a = 0; a < el.length; a++ )
+		for( let a = 0; a < el.length; a++ )
 		{
 			if( el[a].className )
 			{
 				let cls = el[a].className.split ( ' ' );
-				for( var b = 0; b < cls.length; b++ )
+				for( let b = 0; b < cls.length; b++ )
 				{
 					if ( cls[b] == classn )
 					{
