@@ -4496,6 +4496,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		// Oh yeah, update windows
 		for( let a in movableWindows )
 		{
+			if( !movableWindows[a].content ) continue;
 			if( movableWindows[a].content.redrawBackdrop )
 			{
 				movableWindows[a].content.redrawBackdrop();
