@@ -213,6 +213,11 @@ function RefreshWindow( div, noresize )
 // Set window title on a movable window
 function SetWindowTitle( div, titleStr )
 {
+	if( div && div.windowObject._nativeWindow )
+	{
+		div.windowObject._nativeWindow.document.title = titleStr;
+		return;
+	}
 	if( div.className == 'Content' ) div = div.parentNode;
 	if( !div || !div.getElementsByTagName ) return;
 	let divz = div.getElementsByTagName ( 'div' );
@@ -336,7 +341,8 @@ function ResizeWindow( div, wi, he, mode, depth )
 				wi += frameWidth;
 			}
 		}
-		frameHeight = ele.titleBar.offsetHeight;
+		if( ele.titleBar )
+			frameHeight = ele.titleBar.offsetHeight;
 		
 		// TODO: Bottom bar does not exist, remove it
 		/*if( isWorkspaceScreen )
@@ -2574,39 +2580,29 @@ class View
 		this.removeScriptsFromData = Friend.GUI.view.removeScriptsFromData;
 
 		// TODO: Native window mode should work!
-		/*let webapp = document.location.href.indexOf( '/webapp.html' ) > 0;
+		let webapp = document.location.href.indexOf( '/webapp.html' ) > 0 || document.location.href.indexOf( 'native=' ) > 0;
 		if( webapp && !window.windowCount ) window.windowCount = 0;
-		if( webapp && window.windowCount++ > 1 )
+		if( webapp && document.body.classList.contains( 'Inside' ) )
 		{
 			let uid = args.id ? args.id : UniqueId();
 			let nw = window.open( '', uid, 'width=' + args.width + ',height=' + args.height + ',status=no,toolbar=no,topbar=no,windowFeatures=popup' );
 			self._nativeWindow = nw;
+			self.iframe = nw;
 			self._type = 'native';
 			
 			let bod = nw.document.body;
-			let elements = [ 'Content', 'Title', 'Leftbar', 'Rightbar', 'Bottombar', 'ViewTitle' ];
-			let content = null;
-			for( let a in elements )
-			{
-				let d = nw.document.createElement( 'div' );
-				d.className = elements[ a ];
-				bod.appendChild( d );
-				if( elements[ a ] == 'Content' )
-				{
-					content = d;
-				}
-				else if( content )
-				{
-					let key = elements[ a ].toLowerCase();
-					if( key == 'title' ) key = 'titleBar';
-					else if( key == 'viewtitle' ) key = 'viewTitle';
-					content[ key ] = d;
-				}
-			}
+			bod.innerHTML = '<div class="ViewContainer"><div class="View"><div class="Title"></div><div class="Content"></div></div></div>';
+			
+			let content = bod.querySelector( '.Content' );
+			content.viewContainer = bod.querySelector( '.ViewContainer' );
+			content.viewNode = bod.querySelector( '.View' );
+			content.viewNode.windowObject = self;
+			content.viewNode.content = content;
+			content.viewNode.title = bod.querySelector( '.Title' );
+			content.viewNode.viewContainer = content.viewContainer;
 			
 			movableWindows[ uid ] = content;
 			
-			bod.querySelector( '.Title' ).innerHTML = '<span></span>';
 			bod.classList.remove( 'Loading' );
 			self.createContentEventFuncs( content );
 			content.windowObject = self;
@@ -2616,9 +2612,9 @@ class View
 			self.flags = args;
 		}
 		else 
-		{*/
+		{
 			this.createDomElements( 'CREATE', args.title, args.width, args.height, args.id, args, args.applicationId );
-		//}
+		}
 
 		if( !self._window || !self._window.parentNode ) return false;
 
@@ -3584,7 +3580,7 @@ class View
 		if( this._window )
 		{
 			content = this._window;
-			viewdiv = content.parentNode;
+			viewdiv = content.parentNode || content.viewNode;
 		}
 		
 		// Set the flag
