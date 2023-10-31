@@ -2589,9 +2589,10 @@ class View
 			self._nativeWindow = nw;
 			self.iframe = nw;
 			self._type = 'native';
+			self.nativeWindow = true;
 			
 			let bod = nw.document.body;
-			bod.innerHTML = '<div class="ViewContainer"><div class="View"><div class="Title"></div><div class="Content"></div></div></div>';
+			bod.innerHTML = '<html><head><link rel="stylesheet" href="/themes/friendup13/theme.css;/themes/friendup13/native.css"/></head><body><div class="ViewContainer"><div class="View"><div class="Title"></div><div class="Content"></div></div></div></body></html>';
 			
 			let content = bod.querySelector( '.Content' );
 			content.viewContainer = bod.querySelector( '.ViewContainer' );

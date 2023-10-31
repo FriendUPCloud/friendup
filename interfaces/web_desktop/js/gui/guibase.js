@@ -1105,8 +1105,9 @@ function CoverWindows()
 // Expose windows / remove overlay
 function ExposeWindows()
 {
-	for ( var a in movableWindows )
+	for( let a in movableWindows )
 	{
+		if( !movableWindows[a].content ) continue;
 		if( movableWindows[a].content.groupMember ) continue;
 		if( movableWindows[a].moveoverlay )
 		{
