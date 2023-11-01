@@ -1339,8 +1339,12 @@ if( isset( $args->args ) )
         	$o->SharedType = 'video-conference';
         	$o->OwnerUserID = $User->ID;
         	$o->SharedID = 0;
-        	$o->Data = $args->args->conferenceId;
-        	$o->Mode = isset( $args->args->mode ) ? $args->args->mode : 'open';
+        	$payload = new stdClass();
+        	$payload->mode = isset( $args->args->mode ) ? $args->args->mode : 'open';
+        	$payload->name = isset( $args->args->name ) ? $args->args->name : 'Video conference';
+        	$payload->peerId = isset( $args->args->peerId ) ? $args->args->peerId : '';
+        	$o->Data = json_encode( $payload );
+        	$o->Mode = $args->args->conferenceId;
         	$o->DateCreated = date( 'Y-m-d H:i:s' );
         	$o->DateTouched = $o->DateCreated;
         	$o->Save();

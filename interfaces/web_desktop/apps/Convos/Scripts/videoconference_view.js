@@ -117,7 +117,7 @@ Application.run = function()
 			// Store conference such that it can be looked up
 			let m = new Module( 'system' );
 			m.onExecuted = function(){};
-			m.execute( 'convos', { method: 'storeconference', conferenceId: ge( 'conferenceId' ).value, mode: 'open' } );
+			m.execute( 'convos', { method: 'storeconference', peerId: ge( 'currentPeerId' ).value, name: ge( 'conferenceName' ).value, conferenceId: ge( 'conferenceId' ).value, mode: 'open' } );
 		}
 		// We have a currentPeerId from remote, so tell we got it
 		else
