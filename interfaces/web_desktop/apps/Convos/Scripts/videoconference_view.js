@@ -16,6 +16,7 @@ let retryTimeo = null;          //
 let retrying = false;           //
 let remotePeers = {};           // Remote peers
 let remotePeerCount = 0;        // Count remote peers
+let viewMode = 'onlyremote';    // onlyremote | onlyspeaker | gallery (TODO)
 
 // Window initializing
 Application.run = function()
@@ -66,6 +67,7 @@ Application.run = function()
 									rvd.setAttribute( 'autoplay', 'autoplay' );
 									rvd.srcObject = remoteStream;
 									ge( 'RemoteStreams' ).appendChild( rvd );
+									reorderRemoteVideoElements();
 									initStreamEvents( rvd );
 									remotePeers[ c.peer ] = {
 										peerId: c.peer,
@@ -269,6 +271,7 @@ Application.receiveMessage = function( msg )
 						rvd.setAttribute( 'autoplay', 'autoplay' );
 						rvd.srcObject = remoteStream;
 						ge( 'RemoteStreams' ).appendChild( rvd );
+						reorderRemoteVideoElements();
 						initStreamEvents( rvd );
 						remotePeers[ c.peer ] = {
 							peerId: c.peer,
@@ -444,6 +447,26 @@ function stopScreenShare( el, retries = 5 )
 				}, 100 );
 			}
 		});
+}
+
+// Reorder the remote video elements on demand
+function reorderRemoteVideoElements()
+{
+	let vids = ge( 'RemoteStreams' ).getElementsByTagName( 'video' );
+	// We got less than 4
+	if( vids.length <= 3 )
+	{
+		for( let a = 0; a < vids.length; a++ )
+		{
+			vids[ a ].style.width = '33%';
+			vids[ a ].style.left = ( a * 33 ) + '%';
+		}
+	}
+	// Gallery mode
+	else
+	{
+		// Gallery one
+	}
 }
 
 //--- Notes --------------------------------------------------------------------
