@@ -1333,6 +1333,23 @@ if( isset( $args->args ) )
             }
             die( 'fail<!--separate-->{"response":0,"message":"Failed to retrieve contacts."}' );
         }
+        else if( $args->args->method == 'storeconference' )
+        {
+        	$o = new dbIO( 'FShared' );
+        	$o->SharedType = 'video-conference';
+        	$o->OwnerUserID = $User->ID;
+        	$o->SharedID = 0;
+        	$o->Data = $args->args->conferenceId;
+        	$o->Mode = isset( $args->args->mode ) ? $args->args->mode : 'open';
+        	$o->DateCreated = date( 'Y-m-d H:i:s' );
+        	$o->DateTouched = $o->DateCreated;
+        	$o->Save();
+        	if( $o->ID > 0 )
+        	{
+        		die( 'ok<!--separate-->{"message":"Conference was saved.","response":"1"}' );
+        	}
+        	die( 'fail<!--separate-->{"response":0,"message":"Failed to save conference."}' );
+        }
         die( 'fail<!--separate-->{"response":0,"message":"Unknown method."}' );
     }
 }
