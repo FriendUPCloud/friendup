@@ -132,6 +132,9 @@ Application.run = function()
 			} );
 		}
 	} );
+	
+	// Initialize some elements
+	document.querySelector( '.MiniButton.Share' ).onclick = toggleShareWidget;
 }
 
 function muteAudioVideo( type = false )
@@ -466,6 +469,32 @@ function reorderRemoteVideoElements()
 	else
 	{
 		// Gallery one
+	}
+}
+
+// Show or hide the share widget
+let shareWidgetShowing = false;
+function toggleShareWidget( e )
+{
+	if( shareWidgetShowing )
+	{
+		ge( 'ShareWidget' ).classList.remove( 'Showing' );
+		shareWidgetShowing = false;
+	}
+	else
+	{
+		if( !ge( 'ShareWidget' ) )
+		{
+			let d = document.createElement( 'div' );
+			d.id = 'ShareWidget';
+			d.innerHTML = '<div class="Cnt"><input type="text" disabled value="" class="Link"/></div>';
+			document.body.appendChild( d );
+		}
+		let prt = document.location.port && document.location.port != 443 && document.location.port != 80 ? ( ':' + document.location.port ) : '';
+		let host = document.location.protocol + '//' + document.location.host + prt + '/conference/';
+		ge( 'ShareWidget' ).querySelector( '.Link' ).value = host + ge( 'conferenceId' ).value;
+		ge( 'ShareWidget' ).classList.add( 'Showing' );
+		shareWidgetShowing = true;
 	}
 }
 
