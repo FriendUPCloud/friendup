@@ -5,6 +5,7 @@ Normal scenario, initiating a call:
 
 Host: Clicks video button
 Host: Creates conference id
+Host: Stores conference settings in FShared
 Host: Open video and send from video window: "broadcast-call"
 Host: Runs xconference.broadcastStart()
 Host: Sends 'broadcast-start' to Invitee
@@ -19,9 +20,23 @@ Invi: Sends 'broadcast-received' to Host
 Invi: Runs xconference.addConnection() to add user to conference by id
 Invi: Sends 'broadcast-connect' to Invitee
 
-
 Host: Receives 'broadcast-connect'
 Host: Runs xconference.connectToInvitee()
 Host: Sends 'initcall' to view
+
+
+How external invitees connect from outside of Friend OS
+-------------------------------------------------------
+
+ * Invitee gets a http link and follows it
+ * Friend OS Catch All system picks up the event
+ * Checks the conference link, is it still active?
+ * Is the conference determined at a specific time?
+   + Show count down
+   + or Show expired
+   + or give access with a button, write your name
+ * If not just give access with a button, write your name
+ * You enter the conference, with only the video conference part of 
+    convos being extracted to run (invited.html)
 
 
