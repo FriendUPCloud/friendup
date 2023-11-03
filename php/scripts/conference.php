@@ -25,7 +25,11 @@ $c->SharedType = 'video-conference';
 if( $c->Load() )
 {
 	$data = json_decode( $c->Data );
-	die( '<h2>Welcome to ' . $data->name . '</h2>' );
+	// Only handle open conferences
+	if( $data->Mode == 'open' )
+	{
+		die( '<h2>Welcome to ' . $data->name . '</h2>' );
+	}
 }
 
 ?>
