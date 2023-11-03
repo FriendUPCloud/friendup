@@ -31,5 +31,6 @@ if( $c->Load() )
 		die( '<h2>Welcome to ' . $data->name . '</h2>' );
 	}
 }
+die( '<h2>The conference does not exist</h2><p>You are trying to access a conference that does not exist.</p>' );
 
 ?>
