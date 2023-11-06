@@ -228,6 +228,7 @@ function SetWindowTitle( div, titleStr )
 			title = divz[a];
 	}
 	if ( !title ) return false;
+	
 	title.getElementsByTagName ( 'span' )[0].innerHTML = titleStr;
 	div.titleString = titleStr;
 	
@@ -2618,6 +2619,10 @@ class View
 			self.content = content;
 			self.content.windowObject = self;
 			self.flags = args;
+			
+			// Set the title
+			nw.document.title = args.title;
+			
 		}
 		else 
 		{
