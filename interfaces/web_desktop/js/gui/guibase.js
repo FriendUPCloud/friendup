@@ -182,7 +182,7 @@ var mousePointer =
 					}
 				}
 				// Add mouse actions on window ->
-				if( moveWin.windowObject && moveWin.windowObject.sendMessage )
+				if( moveWin.windowObject && moveWin.windowObject.sendMessage && moveWin.content )
 				{
 					moveWin.windowObject.sendMessage( {
 						command: 'inputcoordinates',

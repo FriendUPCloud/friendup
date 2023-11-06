@@ -2509,7 +2509,7 @@ class View
 	constructor( args )
 	{
 		let self = this;
-		
+		let rootScope = window.opener ? window.opener.window : window;
 		
 		// Now set it up! --------------------------------------------------------->
 		self.viewId = args.viewId;
@@ -2521,7 +2521,7 @@ class View
 		if( !args.id ) args.id = false;
 		
 		// Fullscreen single task
-		if( window.Workspace && Workspace.isSingleTask )
+		if( rootScope.Workspace && rootScope.Workspace.isSingleTask )
 		{
 			args.width = 'max';
 			args.height = 'max';
@@ -2531,10 +2531,10 @@ class View
 		}
 		
 		// Windows on own screen ignores the virtual workspaces
-		if( args.screen && args.screen != Workspace.screen )
+		if( args.screen && args.screen != rootScope.Workspace.screen )
 		{
-			if( globalConfig && typeof( globalConfig.workspaceCurrent ) != 'undefined' )
-				this.workspace = globalConfig.workspaceCurrent;
+			if( rootScope.globalConfig && typeof( rootScope.globalConfig.workspaceCurrent ) != 'undefined' )
+				this.workspace = rootScope.globalConfig.workspaceCurrent;
 			else this.workspace = 0;
 		
 			if( args.workspace === 0 || args.workspace )
@@ -2547,14 +2547,14 @@ class View
 		}
 		
 		// Special hook for dashboard related workspace
-		if( window.hideDashboard && ( !args || !args.invisible ) )
+		if( rootScope.hideDashboard && ( !args || !args.invisible ) )
 		{
 			let newApp = true;
 			if( args.applicationId )
 			{
-				for( let a in Workspace.applications )
+				for( let a in rootScope.Workspace.applications )
 				{
-					let app = Workspace.applications[ a ];
+					let app = rootScope.Workspace.applications[ a ];
 					if( app.applicationId == args.applicationId )
 					{
 						let count = 0;
@@ -2571,7 +2571,7 @@ class View
 				}
 			}
 			if( newApp )
-				window.hideDashboard();
+				rootScope.window.hideDashboard();
 		}
 		
 		// Start off
@@ -2586,16 +2586,19 @@ class View
 		this.removeScriptsFromData = Friend.GUI.view.removeScriptsFromData;
 
 		// TODO: Native window mode should work!
-		let webapp = document.location.href.indexOf( '/webapp.html' ) > 0 || document.location.href.indexOf( 'native=' ) > 0;
-		if( webapp && !window.windowCount ) window.windowCount = 0;
-		if( webapp && document.body.classList.contains( 'Inside' ) )
+		let webapp = rootScope.document.location.href.indexOf( '/webapp.html' ) > 0 || rootScope.document.location.href.indexOf( 'native=' ) > 0;
+		if( webapp && !rootScope.windowCount ) rootScope.windowCount = 0;
+		if( webapp && rootScope.document.body.classList.contains( 'Inside' ) )
 		{
 			let uid = args.id ? args.id : UniqueId();
-			let nw = window.open( '', uid, 'width=' + args.width + ',height=' + args.height + ',status=no,toolbar=no,topbar=no,windowFeatures=popup' );
+			let nw = rootScope.open( '', uid, 'width=' + args.width + ',height=' + args.height + ',status=no,toolbar=no,topbar=no,windowFeatures=popup' );
+			if( !nw ) return false;
 			self._nativeWindow = nw;
 			self.iframe = nw;
 			self._type = 'native';
 			self.nativeWindow = true;
+			
+			console.log( rootScope.document.title, nw, nw.document );
 			
 			let bod = nw.document.body;
 			bod.innerHTML = '<html><head><link rel="stylesheet" href="/themes/friendup13/theme.css;/themes/friendup13/native.css"/></head><body><div class="ViewContainer"><div class="View"><div class="Title"></div><div class="Content"></div></div></div></body></html>';

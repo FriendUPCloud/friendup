@@ -5796,6 +5796,8 @@ Friend.startImageViewer = function( iconObject, extra )
 		background       : 'transparent'
 	} );
 	
+	if( !win.content ) return;
+	
 	if( iconObject.applicationId )
 	{
 	    win.applicationId = iconObject.applicationId;
