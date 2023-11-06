@@ -2598,8 +2598,6 @@ class View
 			self._type = 'native';
 			self.nativeWindow = true;
 			
-			console.log( rootScope.document.title, nw, nw.document );
-			
 			let bod = nw.document.body;
 			bod.innerHTML = '<html><head><link rel="stylesheet" href="/themes/friendup13/theme.css;/themes/friendup13/native.css"/></head><body><div class="ViewContainer"><div class="View"><div class="Title"></div><div class="Content"></div></div></div></body></html>';
 			
