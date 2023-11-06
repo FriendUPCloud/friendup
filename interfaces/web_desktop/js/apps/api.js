@@ -14,7 +14,10 @@ Friend.iconsSelectedCount = 0;
 Friend.currentMenuItems = 0;
 Friend.scope = 'API';
 
-FriendScope = window.opener ? window.parent.window.opener : parent;
+FriendScope = parent.opener ? parent.window.opener : parent;
+
+console.log( document.title + ' - Where is it?', FriendScope.document.title, 'w', window.opener, 'p', parent );
+console.log( 'dims: ' + window.innerWidth + 'x' + window.innerHeight );
 
 Friend.lib = Friend.lib || {};
 Friend.GUI = Friend.GUI || {};

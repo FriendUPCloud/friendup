@@ -2599,7 +2599,7 @@ class View
 			self.nativeWindow = true;
 			
 			let bod = nw.document.body;
-			bod.innerHTML = '<html><head><link rel="stylesheet" href="/themes/friendup13/theme.css;/themes/friendup13/native.css"/></head><body><div class="ViewContainer"><div class="View"><div class="Title"></div><div class="Content"></div></div></div></body></html>';
+			bod.innerHTML = '<html><head><link rel="stylesheet" href="/themes/friendup13/theme.css;/themes/friendup13/native.css"/></head><body class="Native"><div class="ViewContainer"><div class="View"><div class="Title"></div><div class="Content"></div></div></div></body></html>';
 			
 			let content = bod.querySelector( '.Content' );
 			content.windowObject = self;
@@ -2776,7 +2776,7 @@ class View
 		ifr.src = domain;
 
 		let view = this;
-		this.iframe = ifr;
+		this.iframe = ifr; // New message port too
 		
 		ifr.onfocus = function( e )
 		{
@@ -2793,6 +2793,7 @@ class View
 
 		ifr.onload = function()
 		{
+			console.log( 'Loading it...' );
 			// Assign views to each other to allow cross window scripting
 			// TODO: This could be a security hazard! Remember to use security
 			//       domains!
@@ -2865,6 +2866,7 @@ class View
 			if( !msg.origin ) msg.origin = '*'; //TODO: Should be fixed document.location.href;
 			
 			ifr.contentWindow.postMessage( JSON.stringify( msg ), '*' );
+			console.log( 'Posting the message..', msg );
 		}
 		c.appendChild( ifr );
 	}

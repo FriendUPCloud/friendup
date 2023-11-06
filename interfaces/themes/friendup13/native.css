@@ -17,7 +17,8 @@
 	height: 100% !important;
 }
 
-.ViewContainer > .View > .Content
+.ViewContainer > .View > .Content,
+html body:not([mobile]) .View > .Content
 {
 	position: absolute;
 	top: 0;
