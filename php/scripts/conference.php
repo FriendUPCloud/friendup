@@ -19,6 +19,19 @@ register_shutdown_function( function(){
 
 $conference = explode( '/', $argv[1] );
 $conference = array_pop( $conference );
+if( substr( $conference, -4, 4 ) == '.css' )
+{
+	die( file_get_contents( __DIR__ . '/../templates/convos/' . $conference ) );
+}
+if( file_exists( __DIR__ . '/../templates/convos/basetemplate.html' ) )
+{
+	$tpl = file_get_contents( __DIR__ . '/../templates/convos/basetemplate.html' );
+}
+else
+{
+	die( 'Error.' );
+}
+
 $c = new dbIO( 'FShared' );
 $c->Mode = $conference;
 $c->SharedType = 'video-conference';
@@ -28,9 +41,13 @@ if( $c->Load() )
 	// Only handle open conferences
 	if( $data->Mode == 'open' )
 	{
-		die( '<h2>Welcome to ' . $data->name . '</h2>' );
+		$tpl = str_replace( '{title}', 'Welcome to ' . $data->name, $tpl );
+		$tpl = str_replace( '{content}', '<h2>Welcome to ' . $data->name . '</h2>', $tpl );
+		die( $tpl );
 	}
 }
-die( '<h2>The conference does not exist</h2><p>You are trying to access a conference that does not exist.</p>' );
+$tpl = str_replace( '{title}', 'No such conference', $tpl );
+$tpl = str_replace( '{content}', '<h2>The conference does not exist</h2><p>You are trying to access a conference that does not exist.</p>', $tpl );
+die( $tpl );
 
 ?>
