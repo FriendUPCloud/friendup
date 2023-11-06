@@ -2793,7 +2793,6 @@ class View
 
 		ifr.onload = function()
 		{
-			console.log( 'Loading it...' );
 			// Assign views to each other to allow cross window scripting
 			// TODO: This could be a security hazard! Remember to use security
 			//       domains!
@@ -2866,7 +2865,6 @@ class View
 			if( !msg.origin ) msg.origin = '*'; //TODO: Should be fixed document.location.href;
 			
 			ifr.contentWindow.postMessage( JSON.stringify( msg ), '*' );
-			console.log( 'Posting the message..', msg );
 		}
 		c.appendChild( ifr );
 	}

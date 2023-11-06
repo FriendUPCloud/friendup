@@ -1680,7 +1680,7 @@ function apiWrapper( event, force )
 							
 						// Set a window state!
 						case 'windowstate':
-							if( win && typeof( win.states[ msg.state ] ) != 'undefined' )
+							if( win && win.states && && typeof( win.states[ msg.state ] ) != 'undefined' )
 							{
 								win.states[ msg.state ] = msg.value;
 							}
