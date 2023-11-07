@@ -13,6 +13,10 @@
 
 class Nexus
 {
+	function __construct()
+	{
+	}
+	
     // Check the host for information
     public function checkhost( $vars, $args )
     {
@@ -21,10 +25,10 @@ class Nexus
     
     public function nativeapps( $vars, $args )
     {
-    	require_once( 'modules/friendbook/system.class.php' );
+    	require_once( 'modules/friendbook/drivers/system.class.php' );
     	
     	$s = new LinuxSystem();
-    	if( $response = $s->nativeApps() )
+    	if( $response = $s->nativeapps( $vars, $args ) )
     	{
     		return 'ok<!--separate-->' . json_encode( $response );
     	}

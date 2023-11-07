@@ -12,12 +12,16 @@
 
 class LinuxSystem
 {
-	function nativeApps( $vars, $args )
+	function __construct()
+	{
+	}
+	
+	public function nativeapps( $vars, $args )
 	{
 		$path = '/usr/share/applications';
 		if( file_exists( $path ) && is_dir( $path ) )
 		{
-			if( $d = diropen( $path ) )
+			if( $d = opendir( $path ) )
 			{
 				$out = [];
 				while( $f = readdir( $d ) )

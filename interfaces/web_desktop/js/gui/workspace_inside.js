@@ -2912,7 +2912,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						{
 							if( me == 'ok' )
 							{
-								return buildMenu( path, dparent, depth, json_decode( $md ) );
+								return buildMenu( path, dparent, depth, JSON.parse( md ) );
 							}
 							buildMenu( path, dparent, depth, true );
 						}
@@ -2921,6 +2921,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					}
 					depth = 1;
 				}
+				
+				if( addition ) console.log( 'Ok: ', addition );
 				
 				let dr = new Door().get( path );
 				dr.getIcons( false, function( data )
