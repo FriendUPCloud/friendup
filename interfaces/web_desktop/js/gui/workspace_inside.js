@@ -3249,6 +3249,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							if( executable.length ) executable = executable[ executable.length - 1 ];
 							else executable = executable[0];
 							s.executable = executable;
+							s.native = data[a].Native;
 
 							if( !executable )
 							{
@@ -3299,7 +3300,19 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 										}
 									}
 									
-									ExecuteApplication( executable, args );
+									if( this.native )
+									{
+										let m = new Module( 'friendbook' );
+										m.onExecuted = function( ee, dd )
+										{
+											console.log( 'ok: ', ee, dd );
+										}
+										m.execute( 'run', { executable: executable } );
+									}
+									else
+									{
+										ExecuteApplication( executable, args );
+									}
 								}
 							}
 							// Drag fileinfo
