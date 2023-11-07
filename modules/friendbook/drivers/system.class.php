@@ -33,6 +33,8 @@ class LinuxSystem
 						$o = new stdClass();
 						$o->Exec = $try[ 'Exec' ];
 						$o->Name = $try[ 'Name' ];
+						$o->Categories = $try[ 'Categories' ];
+						$o->Icon = $try[ 'Icon' ];
 						$out[] = $o;
 					}
 				}
