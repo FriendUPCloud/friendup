@@ -3011,6 +3011,44 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								a = 0;
 							}
 						}
+						
+						// Add addition categories
+						let addcats = {};
+						for( let a = 0; a < addition.length; a++ )
+						{
+							if( !addition[a].Categories ) continue;
+							if( !addcats[ addition[a].Categories ] )
+							{
+								let itm = {
+									Type: 'Directory',
+									Path: 'System:' + addition[a].Categories,
+									Filename: addition[a].Categories,
+									Title: addition[a].Categories,
+									Items: []
+								};
+								addcats[ addition[a].Categories ] = itm;
+								out.push( itm );
+								itm.Items.push( {
+									Type: 'Executable',
+									Native: true,
+									Path: 'System:' + addition[a].Categories + '/' + addition[a].Name,
+									Filename: addition[a].Name,
+									Title: addition[a].Name
+								} );
+							}
+							else
+							{
+								let itm = addcats[ addition[a].Categories ];
+								itm.Items.push( {
+									Type: 'Executable',
+									Native: true,
+									Path: 'System:' + addition[a].Categories + '/' + addition[a].Name,
+									Filename: addition[a].Name,
+									Title: addition[a].Name
+								} );
+							}
+						}
+						
 						for( let a = 0; a < data.length; a++ )
 						{
 							let found = false;
@@ -3034,6 +3072,16 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					
 					// Contains sub menus
 					let ss = [];
+					
+					if( depth > 1 && addition )
+					{
+						if( !data || !data.length ) 
+							data = [];
+						for( let a = 0; a < addition.length; a++ )
+						{
+							data.push( addition[ a ] );
+						}
+					}
 					
 					// Menu items
 					for( let a = 0; a < data.length; a++ )
@@ -3162,7 +3210,14 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							}
 							if( found ) continue;
 							dupTest.push( data[a].Path );
-							buildMenu( data[a].Path, s, depth + 1 );
+							
+							let expansion = false;
+							if( data[a].Items )
+							{
+								expansion = data[a].Items;
+							}
+							
+							buildMenu( data[a].Path, s, depth + 1, expansion );
 							s.onclick = function( e )
 							{
 								if( e.button != 0 ) return;
