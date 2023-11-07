@@ -2912,6 +2912,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						{
 							if( me == 'ok' )
 							{
+								return buildMenu( path, dparent, depth, json_decode( $md ) );
 							}
 							buildMenu( path, dparent, depth, true );
 						}

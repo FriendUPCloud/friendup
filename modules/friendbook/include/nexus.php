@@ -26,11 +26,11 @@ class Nexus
     	$s = new LinuxSystem();
     	if( $response = $s->nativeApps() )
     	{
-    		die( 'ok<!--separate-->' . json_encode( $response ) );
+    		return 'ok<!--separate-->' . json_encode( $response );
     	}
     	else
     	{
-    		die( 'fail<!--separate-->{"response":"-1","message":"Failed to list native apps."}' );
+    		return 'fail<!--separate-->{"response":"-1","message":"Failed to list native apps."}';
     	}
     }
     
@@ -42,11 +42,11 @@ class Nexus
         $w = new FOSWifi();
         if( $response = $w->listNetworks() )
         {
-            die( 'ok<!--separate-->' . json_encode( $response ) );
+            return 'ok<!--separate-->' . json_encode( $response );
         }
         else
         {
-            die( 'fail<!--separate-->{"response":"-1","message":"Failed to list wifi networks."}' );
+            return 'fail<!--separate-->{"response":"-1","message":"Failed to list wifi networks."}';
         }
     }
 }
