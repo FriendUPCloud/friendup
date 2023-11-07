@@ -19,6 +19,21 @@ class Nexus
         
     }
     
+    public function nativeapps( $vars, $args )
+    {
+    	require_once( 'modules/friendbook/system.class.php' );
+    	
+    	$s = new LinuxSystem();
+    	if( $response = $s->nativeApps() )
+    	{
+    		die( 'ok<!--separate-->' . json_encode( $response ) );
+    	}
+    	else
+    	{
+    		die( 'fail<!--separate-->{"response":"-1","message":"Failed to list native apps."}' );
+    	}
+    }
+    
     // Get a list of all WIFI networks available
     public function listwifi( $vars, $args )
     {

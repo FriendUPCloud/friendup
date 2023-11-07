@@ -2901,9 +2901,25 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			let delayedBuildFunc = false;
 
 			// Add menu items
-			function buildMenu( path, dparent, depth )
+			function buildMenu( path, dparent, depth, addition = false )
 			{
-				if( !depth ) depth = 1;
+				if( !depth )
+				{
+					if( !addition && document.location.href.indexOf( 'native=' ) > 0 )
+					{
+						let m = new Module( 'friendbook' );
+						m.onExecuted = function( me, md )
+						{
+							if( me == 'ok' )
+							{
+							}
+							buildMenu( path, dparent, depth, true );
+						}
+						m.execute( 'nativeapps' );
+						return;
+					}
+					depth = 1;
+				}
 				
 				let dr = new Door().get( path );
 				dr.getIcons( false, function( data )
