@@ -47,6 +47,11 @@ class LinuxSystem
 		}
 		return false;
 	}
+	
+	public function run( $vars, $args )
+	{
+		exec( $vars->executable . ' > /dev/null &' );
+	}
 }
 
 ?>

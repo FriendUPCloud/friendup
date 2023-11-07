@@ -3303,7 +3303,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									if( this.native )
 									{
 										let m = new Module( 'friendbook' );
-										console.log( 'Execute: ', executable );
 										m.onExecuted = function( ee, dd )
 										{
 											console.log( 'ok: ', ee, dd );

@@ -38,6 +38,21 @@ class Nexus
     	}
     }
     
+    public function run( $vars, $args )
+    {
+    	require_once( 'modules/friendbook/drivers/system.class.php' );
+    	
+    	$s = new LinuxSystem();
+    	if( $response = $s->run( $vars, $args ) )
+    	{
+    		return 'ok<!--separate-->' . json_encode( $response );
+    	}
+    	else
+    	{
+    		return 'fail<!--separate-->{"response":"-1","message":"Failed to execute app.","vars":"' . $vars . '"}';
+    	}
+    }
+    
     // Get a list of all WIFI networks available
     public function listwifi( $vars, $args )
     {
