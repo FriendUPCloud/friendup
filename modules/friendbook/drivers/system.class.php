@@ -12,7 +12,35 @@
 
 class LinuxSystem
 {
-	
+	function nativeApps( $vars, $args )
+	{
+		$path = '/usr/share/applications';
+		if( file_exists( $path ) && is_dir( $path ) )
+		{
+			if( $d = diropen( $path ) )
+			{
+				$out = [];
+				while( $f = readdir( $d ) )
+				{
+					if( $f[0] == '.' ) continue;
+					$try = parse_ini_file( $path . '/' . $f );
+					if( $try && $try[ 'Exec' ] && $try[ 'Name' ] )
+					{
+						$o = new stdClass();
+						$o->Exec = $try[ 'Exec' ];
+						$o->Name = $try[ 'Name' ];
+						$out[] = $o;
+					}
+				}
+				if( count( $out ) )
+				{
+					return $out;
+				}
+				closedir( $d );
+			}
+		}
+		return false;
+	}
 }
 
 ?>
