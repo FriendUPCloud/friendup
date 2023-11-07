@@ -12,5 +12,10 @@
 
 // This class manages the host Linux screen subsystem
 
+class LinuxScreen
+{
+	
+}
+
 
 ?>

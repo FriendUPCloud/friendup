@@ -12,4 +12,8 @@
 
 // This class manages the Friend system package manager
 
+class FriendPackage
+{
+}
+
 ?>
