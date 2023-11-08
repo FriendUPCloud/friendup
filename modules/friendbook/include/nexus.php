@@ -43,7 +43,7 @@ class Nexus
     	require_once( 'modules/friendbook/drivers/system.class.php' );
     	
     	$s = new LinuxSystem();
-    	if( $response = $s->run( $vars, $args ) )
+    	if( isset( $args->executable ) && $response = $s->run( $args->executable ) )
     	{
     		return 'ok<!--separate-->' . json_encode( $response );
     	}

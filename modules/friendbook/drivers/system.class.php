@@ -16,9 +16,13 @@ class LinuxSystem
 	{
 	}
 	
+	// List native apps on host Linux system in a list
 	public function nativeapps( $vars, $args )
 	{
+		// Common application path:
 		$path = '/usr/share/applications';
+		
+		// Check path and list apps' information
 		if( file_exists( $path ) && is_dir( $path ) )
 		{
 			if( $d = opendir( $path ) )
@@ -48,9 +52,14 @@ class LinuxSystem
 		return false;
 	}
 	
-	public function run( $vars, $args )
+	// Execute an application to void
+	public function run( $executable = false )
 	{
-		exec( $vars->executable . ' > /dev/null &' );
+		if( $executable )
+		{
+			return exec( $executable . ' > /dev/null &' );
+		}
+		return 'fail';
 	}
 }
 

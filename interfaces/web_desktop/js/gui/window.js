@@ -795,8 +795,11 @@ function ConstrainWindow( div, l, t, depth, caller )
 	
 	let ww = div.offsetWidth;
 	let wh = div.offsetHeight;
-	if( ww <= 0 ) ww = div.content.windowObject.getFlag( 'width' );
-	if( wh <= 0 ) wh = div.content.windowObject.getFlag( 'height' );
+	if( div.content )
+	{
+		if( ww <= 0 ) ww = div.content.windowObject.getFlag( 'width' );
+		if( wh <= 0 ) wh = div.content.windowObject.getFlag( 'height' );
+	}
 	let mvw = screenMaxWidth;
 	let mvh = screenMaxHeight;
 	
