@@ -2922,8 +2922,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					depth = 1;
 				}
 				
-				if( addition ) console.log( 'Ok: ', addition );
-				
 				let dr = new Door().get( path );
 				dr.getIcons( false, function( data )
 				{
@@ -3030,6 +3028,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								out.push( itm );
 								itm.Items.push( {
 									Type: 'Executable',
+									Executable: addition[a].Exec,
 									Native: true,
 									Path: 'System:' + addition[a].Categories + '/' + addition[a].Name,
 									Filename: addition[a].Name,
@@ -3041,6 +3040,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								let itm = addcats[ addition[a].Categories ];
 								itm.Items.push( {
 									Type: 'Executable',
+									Executable: addition[a].Exec,
 									Native: true,
 									Path: 'System:' + addition[a].Categories + '/' + addition[a].Name,
 									Filename: addition[a].Name,
@@ -3249,6 +3249,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							if( executable.length ) executable = executable[ executable.length - 1 ];
 							else executable = executable[0];
 							s.executable = executable;
+							s.nativeExecutable = data[a].Executable;
 							s.native = data[a].Native;
 
 							if( !executable )
@@ -3303,11 +3304,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									if( this.native )
 									{
 										let m = new Module( 'friendbook' );
-										m.onExecuted = function( ee, dd )
-										{
-											console.log( 'ok: ', ee, dd );
-										}
-										m.execute( 'run', { executable: executable } );
+										m.execute( 'run', { executable: this.nativeExecutable } );
 									}
 									else
 									{
