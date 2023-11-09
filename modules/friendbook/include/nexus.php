@@ -42,8 +42,6 @@ class Nexus
     {
     	global $Logger;
     	
-    	$Logger->log( 'We are sunning app: ' . $args->executable );
-    	
     	require_once( 'modules/friendbook/drivers/linux.system.class.php' );
     	
     	$s = new LinuxSystem();
@@ -54,6 +52,7 @@ class Nexus
     	}
     	else
     	{
+    		$Logger->log( 'Failed to run: ' . $args->executable . ' (' . $response . ')' );
     		return 'fail<!--separate-->{"response":"-1","message":"Failed to execute app.","vars":"' . $vars . '"}';
     	}
     }
