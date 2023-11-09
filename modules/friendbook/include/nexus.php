@@ -41,7 +41,7 @@ class Nexus
     public function run( $vars, $args )
     {
     	global $Logger;
-    	require_once( 'modules/friendbook/drivers/system.class.php' );
+    	require_once( 'modules/friendbook/drivers/linux.system.class.php' );
     	
     	$s = new LinuxSystem();
     	if( isset( $args->executable ) && ( $response = $s->run( $args->executable ) ) )
