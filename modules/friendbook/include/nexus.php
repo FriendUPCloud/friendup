@@ -48,7 +48,7 @@ class Nexus
     	$Logger->log( 'Trying LinuxSystem: ' . $args->executable );
     	if( isset( $args->executable ) && ( $response = $s->run( $args->executable ) ) )
     	{
-    		$Logger->log( 'Running now: ' . $args->executable );
+    		$Logger->log( 'Running now: ' . $args->executable . ' (' . $response . ')' );
     		return 'ok<!--separate-->' . json_encode( $response );
     	}
     	else
