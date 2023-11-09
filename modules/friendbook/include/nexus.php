@@ -45,6 +45,7 @@ class Nexus
     	require_once( 'modules/friendbook/drivers/linux.system.class.php' );
     	
     	$s = new LinuxSystem();
+    	$Logger->log( 'Trying LinuxSystem: ' . $args->executable );
     	if( isset( $args->executable ) && ( $response = $s->run( $args->executable ) ) )
     	{
     		$Logger->log( 'Running now: ' . $args->executable );
