@@ -41,11 +41,15 @@ class Nexus
     public function run( $vars, $args )
     {
     	global $Logger;
+    	
+    	$Logger->log( 'We are sunning app: ' . $args->executable );
+    	
     	require_once( 'modules/friendbook/drivers/linux.system.class.php' );
     	
     	$s = new LinuxSystem();
     	if( isset( $args->executable ) && ( $response = $s->run( $args->executable ) ) )
     	{
+    		$Logger->log( 'Running now: ' . $args->executable );
     		return 'ok<!--separate-->' . json_encode( $response );
     	}
     	else
