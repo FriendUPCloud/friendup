@@ -28,78 +28,19 @@
 #include <string.h>
 
 // Set up a shared memory space
-int CreateSharedMemory()
-{
-    int shm_fd = shm_open( SHM_NAME, O_CREAT | O_RDWR, 0666 );
-    
-    if( shm_fd == -1 )
-    {
-        perror( "shm_open" );
-        exit(EXIT_FAILURE);
-    }
+int CreateSharedMemory();
 
-    if( ftruncate( shm_fd, SHM_SIZE ) == -1 )
-    {
-        perror( "ftruncate" );
-        exit( EXIT_FAILURE );
-    }
+// Attach shared memory
+int AttachSharedMemory();
 
-    return shm_fd;
-}
+// Disconnect from shared memory and free up
+void DetachSharedMemory( void *shm_ptr );
 
-int AttachSharedMemory()
-{
-    int shm_fd = shm_open( SHM_NAME, O_RDWR, 0666 );
-    
-    if( shm_fd == -1 )
-    {
-        perror( "shm_open" );
-        exit( EXIT_FAILURE );
-    }
+// Write to shared memory
+void WriteSharedMemory( const SharedData *data );
 
-    return shm_fd;
-}
-
-void DetachSharedMemory( void *shm_ptr )
-{
-    if( shmdt( shm_ptr ) == -1 )
-    {
-        perror( "shmdt" );
-        exit( EXIT_FAILURE );
-    }
-}
-
-void WriteSharedMemory( const SharedData *data )
-{
-    int shm_fd = CreateSharedMemory();
-    void *shm_ptr = mmap( 0, SHM_SIZE, PROT_WRITE, MAP_SHARED, shm_fd, 0 );
-    if( shm_ptr == MAP_FAILED )
-    {
-        perror( "mmap" );
-        exit( EXIT_FAILURE );
-    }
-
-    memcpy( shm_ptr, data, sizeof( SharedData ) );
-
-    DetachSharedMemory( shm_ptr );
-    close( shm_fd );
-}
-
-void ReadSharedMemory( SharedData *data )
-{
-    int shm_fd = AttachSharedMemory();
-    void *shm_ptr = mmap( 0, SHM_SIZE, PROT_READ, MAP_SHARED, shm_fd, 0 );
-    if( shm_ptr == MAP_FAILED )
-    {
-        perror( "mmap" );
-        exit( EXIT_FAILURE );
-    }
-
-    memcpy( data, shm_ptr, sizeof( SharedData ) );
-
-    DetachSharedMemory( shm_ptr );
-    close(shm_fd);
-}
+// Read from shared memory
+void ReadSharedMemory( SharedData *data );
 
 #endif
 
