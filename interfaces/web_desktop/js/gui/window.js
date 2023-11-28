@@ -838,7 +838,7 @@ function ConstrainWindow( div, l, t, depth, caller )
 	}
 
 	// Add workspace when opening this way
-	if( !div.content.windowObject.flags.screen || div.content.windowObject.flags.screen == Workspace.screen )
+	if( !div.content || !div.content.windowObject.flags.screen || div.content.windowObject.flags.screen == Workspace.screen )
 	{
 		if( typeof( currentScreen ) != 'undefined' && globalConfig.workspaceCurrent >= 0 )
 		{
@@ -2601,6 +2601,13 @@ class View
 			self.iframe = nw;
 			self._type = 'native';
 			self.nativeWindow = true;
+			nw.addEventListener( 'resize', function()
+			{
+				nw.document.querySelector( '.View' ).style.maxHeight = '100%';
+				nw.document.querySelector( '.ViewContainer' ).style.maxHeight = '100%';
+				console.log( nw.document.querySelector( '.View' ) );
+				console.log( 'Pow' + nw.innerWidth + 'x' +nw.innerHeight );
+			} );
 			
 			let bod = nw.document.body;
 			bod.innerHTML = '<html><head><link rel="stylesheet" href="/themes/friendup13/theme.css;/themes/friendup13/native.css"/></head><body class="Native"><div class="ViewContainer"><div class="View"><div class="Title"></div><div class="Content"></div></div></div></body></html>';
