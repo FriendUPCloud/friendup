@@ -18,7 +18,7 @@
  *  @date created 2023
  */
 
-#include <system/support/support_manager.h>
+#include <shm/shm.h>
 
 int CreateSharedMemory()
 {

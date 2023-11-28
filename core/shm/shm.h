@@ -21,11 +21,28 @@
 #ifndef __SHM_SHARED_MEMORY_H__
 #define __SHM_SHARED_MEMORY_H__
 
-#include <sys/mman.h>
-#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/mman.h>
+#include <sys/ipc.h>
+#include <fcntl.h>
+#include <semaphore.h>
+
+#define SHM_NAME "/friendos_shared_memory"
+#define SHM_SIZE 4096
+
+typedef struct {
+    // Define your shared data structure here
+    // For example:
+    // int someData;
+    // char someString[256];
+} SharedData;
+
+typedef struct {
+    sem_t semaphore;  // Semaphore for signaling
+    SharedData data;  // Shared data structure
+} SharedMemory;
 
 // Set up a shared memory space
 int CreateSharedMemory();
