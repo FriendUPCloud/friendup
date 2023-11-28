@@ -57,7 +57,7 @@ class LinuxSystem
 	{
 		if( $executable )
 		{
-			$response = exec( $executable . ' > /dev/null &' );
+			$response = exec( $executable . ' > /dev/null 2>&1 &' );
 			return $response ? $response : 'nothing';
 		}
 		return 'fail';
