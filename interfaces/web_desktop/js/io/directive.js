@@ -623,8 +623,8 @@ function ExecuteApplication( app, args, callback, retries, flags )
 				// On level, destroy app immediately
 				if( level )
 				{
-					var out = [];
-					for( var a = 0; a < Workspace.applications.length; a++ )
+					let out = [];
+					for( let a = 0; a < Workspace.applications.length; a++ )
 					{
 						if( Doors.applications[a] != this )
 							out.push( Doors.applications[a] );
@@ -633,7 +633,7 @@ function ExecuteApplication( app, args, callback, retries, flags )
 					// Remove dormant doors!
 					DormantMaster.delAppDoorByAppId( this.applicationId );
 
-					var d = this.div;
+					let d = this.div;
 					if( d ) d.parentNode.removeChild( d );
 					this.parentNode.removeChild( this );
 					Workspace.applications = out;

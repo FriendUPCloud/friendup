@@ -2605,9 +2605,17 @@ class View
 			{
 				nw.document.querySelector( '.View' ).style.maxHeight = '100%';
 				nw.document.querySelector( '.ViewContainer' ).style.maxHeight = '100%';
-				console.log( nw.document.querySelector( '.View' ) );
-				console.log( 'Pow' + nw.innerWidth + 'x' +nw.innerHeight );
 			} );
+			// Closed?
+			let cinterva = setInterval( function()
+			{
+				if( !nw.opener )
+				{
+					self.close( true );
+					clearInterval( cinterva );
+				}
+			}, 250 );
+			
 			
 			let bod = nw.document.body;
 			bod.innerHTML = '<html><head><link rel="stylesheet" href="/themes/friendup13/theme.css;/themes/friendup13/native.css"/></head><body class="Native"><div class="ViewContainer"><div class="View"><div class="Title"></div><div class="Content"></div></div></div></body></html>';
@@ -3454,7 +3462,7 @@ class View
 			c = c.content;
 
 		// Remember window position
-		if( this.flags.memorize )
+		if( this.flags.memorize && this._window && this._window.parentNode && this._window.parentNode.memorize )
 		{
 			this._window.parentNode.memorize();
 		}
