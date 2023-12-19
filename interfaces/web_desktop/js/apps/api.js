@@ -2319,14 +2319,15 @@ function Widget( flags )
 		// Remove widget from list
 		let w = [];
 		let a;
-		for (a in Application.widgets)
-			if (Application.widgets[a] != this)
-				w.push(Application.widgets[a]);
+		for( a in Application.widgets )
+			if( Application.widgets[ a ] != this )
+				w.push( Application.widgets[ a ] );
 		Application.widgets = w;
 	}
 
 	// Setup view object with master
 	Application.sendMessage( msg );
+	
 	if( !Application.widgets )
 		Application.widgets = {};
 	Application.widgets[ widgetId ] = this;

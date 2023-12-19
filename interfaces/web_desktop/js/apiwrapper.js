@@ -2130,9 +2130,6 @@ function apiWrapper( event, force )
 										w.push( app.widgets[a] );
 								app.widgets = w;
 							}
-							else
-							{
-							}
 							break;
 					}
 				}

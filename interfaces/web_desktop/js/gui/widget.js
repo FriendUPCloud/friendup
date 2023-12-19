@@ -607,7 +607,7 @@ Widget.prototype.close = function()
 		// Clean out relation to view window
 		if( this.originObject && this.originObject.widgets.length )
 		{
-			var out = [];
+			let out = [];
 			for( var a = 0; a < this.originObject.widgets.length; a++ )
 			{
 				if( this.originObject.widgets[a] == this )

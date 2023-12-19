@@ -310,6 +310,10 @@ class FUIElement
         
         let d = document.createElement( 'div' );
         this.domElement = d;
+        
+        if( this.initialize )
+        	this.initialize();
+        
         this.attachDomElement();
     }
     // Sets options on gui element
