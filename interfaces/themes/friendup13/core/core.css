@@ -2910,21 +2910,6 @@ html body[viewlist=dockedlist] #Statusbar #Tray > div.Hidden
 {
 	position: absolute;
 	top: -100000px;
-    /*visibility: visible;
-    position: absolute;
-    top: 25%;
-    height: 50%;
-    left: 25%;
-    width: 50%;
-    border: 0;
-    background-color: transparent;
-    padding: 0;
-    background-image: url(/webclient/gfx/system/VoiceIcon.png);
-    background-size: contain;
-    background-position: center;
-    background-repeat: no-repeat;
-    box-shadow: none;
-    outline: none;*/
 }
 #Handsfree div > button:active, 
 #Handsfree div > button:focus
