@@ -3939,6 +3939,15 @@ function Module( module )
 		Application.sendMessage( ms );
 	}
 	
+	this.cancel = function()
+	{
+		Application.sendMessage( {
+			type: 'module',
+			method: 'cancel',
+			fileId: fid
+		} );
+	}
+	
 	this.addVar = function( key, value )
 	{
 		this.vars[key] = value;
