@@ -188,6 +188,10 @@ cAjax = function()
 	this.proxy = new XMLHttpRequest();
 	
 	this.proxy.timeout = _cajax_timeout;
+	this.proxy.addEventListener( 'error', function( e )
+	{
+		console.log( 'An error occured!', e );
+	} );
 	
 	// State call
 	let jax = this;
@@ -778,6 +782,8 @@ cAjax.prototype.send = function( data, callback )
 		if( self.life ) clearTimeout( self.life );
 		self.life = setTimeout( function()
 		{
+			if( self.onerror )
+				self.onerror( { error: "Destroyed because of timeout." } );
 			if( self.mode == 'websocket' )
 			{
 				console.log( 'Destroy on life.' );
@@ -787,7 +793,7 @@ cAjax.prototype.send = function( data, callback )
 			{
 				self.destroy();
 			}
-		}, 15000 );
+		}, self.callTimeout ? self.callTimeout : 15000 );
 		return;
 	}
 	else
@@ -825,6 +831,9 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 		clearTimeout( self.life );
 	self.life = setTimeout( function()
 	{
+		if( self.onerror )
+			self.onerror( { error: "Destroyed because of timeout." } );
+		
 		//console.log( '[cajax] Defunct ajax object destroying self after five seconds. 2' );
 		if( self.mode == 'websocket' )
 		{
@@ -835,7 +844,7 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 			self.destroy();
 		}
 		self.life = false;
-	}, 15000 );
+	}, self.callTimeout ? self.callTimeout : 15000 );
 	
 	if( !self.onload ) 
 	{

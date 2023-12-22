@@ -41,11 +41,17 @@ var Module = function( mod )
 		if( cmd  ) this.command = cmd;
 		if( args ) this.args = args;
 		
-		var j = new cAjax ();
+		let j = new cAjax ();
 		if( this.cancelId )
 			j.cancelId = this.cancelId;
 		if( this.onQueue )
 			j.onQueue = this.onQueue;
+		
+		if( this.timeout )
+		{
+			j.proxy.timeout = this.timeout;
+			j.callTimeout = this.timeout;
+		}
 		
 		// Force http!
 		if( this.forceHTTP )
@@ -63,7 +69,7 @@ var Module = function( mod )
 		j.open( 'post', '/system.library/module/', true, true );
 		
 		// Make sure we can read args (from the myriad of places )
-		var authId = false;
+		let authId = false;
 		if( args )
 		{
 			if( args.authid ) authId = args.authid;
@@ -80,11 +86,11 @@ var Module = function( mod )
 		j.addVar( 'args',      JSON.stringify( this.args )  );
 		j.addVar( 'command',   this.command                 );
 		
-		for( var a in this.vars ) j.addVar( a, this.vars[a] );
+		for( let a in this.vars ) j.addVar( a, this.vars[a] );
 		
 		if( this.onExecuted )
 		{
-			var t = this;
+			let t = this;
 			
 			j.onload = function( rc, rd )
 			{

@@ -3916,6 +3916,7 @@ function File( path )
 
 function Module( module )
 {
+	let self = this;
 	let fid = addCallback( this );
 	this.vars = [];
 	this.execute = function( method, args )
@@ -3927,13 +3928,14 @@ function Module( module )
 			module:  module,
 			method:  method,
 			args:    args,
-			vars:    this.vars,
+			timeout: self.timeout,
+			vars:    self.vars,
 			fileId:  fid
 		};
 		
-		if( this.forceHTTP )
+		if( self.forceHTTP )
 		{
-			ms.forceHTTP = this.forceHTTP;
+			ms.forceHTTP = self.forceHTTP;
 		}
 		
 		Application.sendMessage( ms );

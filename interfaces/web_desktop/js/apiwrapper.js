@@ -2569,6 +2569,12 @@ function apiWrapper( event, force )
 				{
 					f.forceHTTP = msg.forceHTTP;
 				}
+				// Set timeout override
+				if( msg.timeout )
+				{
+					console.log( 'Adding call timeout' );
+					f.timeout = msg.timeout;
+				}
 
 				// Add variables
 				if( msg.vars )
