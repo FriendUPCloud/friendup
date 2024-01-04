@@ -1742,9 +1742,17 @@ function RefreshProjects()
 				layStructure( path, structure, filename );
 		}
 		
-		function listStructure( level, path = '' )
+		function listStructure( unsorted, path = '' )
 		{
 			let str = '';
+			
+			const level = Object.keys( unsorted ).sort().reduce(
+				( obj, key ) => { 
+					obj[key] = unsorted[key]; 
+					return obj;
+				  }, 
+				  {}
+			);
 			
 			// Folders first
 			for( let a in level )
@@ -1763,6 +1771,7 @@ function RefreshProjects()
 			}
 			if( level.__files && level.__files.length )
 			{
+				level.__files = level.__files.sort();
 				for( let a = 0; a < level.__files.length; a++ )
 				{
 					let ppath = path ? ( path ) : ''
