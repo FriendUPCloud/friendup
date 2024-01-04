@@ -1677,15 +1677,6 @@ function RefreshProjects()
 					fullpath: pr.Files[ c ].Path
 				}
 			}
-			// Make sure all folder levels exist
-			let unique = {};
-			for( let c in sortable )
-			{
-				if( !unique[ sortable[c].path ] )
-				{
-					unique[ sortable[c].path ] = true;
-				}
-			}
 			sortable = sortable.sort();
 			fstr = listFiles( sortable, 1, false, pr.ID, pr.ProjectPath );
 		}
