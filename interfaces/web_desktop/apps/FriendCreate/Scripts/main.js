@@ -1686,29 +1686,6 @@ function RefreshProjects()
 					unique[ sortable[c].path ] = true;
 				}
 			}
-			// Check the missing folders
-			for( let c in unique )
-			{
-				let folders = c;
-				folders = folders.split( '/' );
-				let gstr = '';
-				for( let g = 0; g < folders.length; g++ )
-				{
-					if( folders[g].length > 0 )
-					{
-						gstr += folders[g] + '/';
-						if( !unique[ gstr ] )
-						{
-							sortable[ gstr ] = {
-								levels: folders[g].split( '/' ),
-								path: gstr,
-								fullpath: gstr,
-								type: 'folder'
-							};
-						}
-					}
-				}
-			}
 			sortable = sortable.sort();
 			fstr = listFiles( sortable, 1, false, pr.ID, pr.ProjectPath );
 		}
