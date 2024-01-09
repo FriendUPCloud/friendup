@@ -37,8 +37,6 @@ if( !Friend.cajax )
 
 function AddToCajaxQueue( ele )
 {
-	console.log( 'Add to queue: ' );
-	console.trace();
 	if( typeof( Friend.cajax[ ele.type ] ) == 'undefined' )
 	{
 		Friend.cajax[ ele.type ] = { count: 0, max: 0, queue: [] };
@@ -107,8 +105,7 @@ function RemoveFromCajaxQueue( ele )
 {
 	if( typeof( Friend.cajax[ ele.type ] ) == 'undefined' )
 		return;
-	console.log( 'Remove from ajax queue:' );		
-	console.trace();
+		
 	let queue = Friend.cajax[ ele.type ].queue;
 	let o = [];
 	for( let a = 0; a < queue.length; a++ )
@@ -119,7 +116,6 @@ function RemoveFromCajaxQueue( ele )
 		}
 	}
 	Friend.cajax[ ele.type ].queue = o;
-	console.log( '  New queue: ' + o.length, o );
 }
 
 // Cancel all queued cajax calls on id

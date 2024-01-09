@@ -5101,7 +5101,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 									Workspace.initWebSocket();
 							}
 							getTheIconsAndRedraw();
-						}, 1000 );
+						}, 3500 );
 						dr.getIcons( fi, function( icons, something, response )
 						{
 							clearTimeout( tt );
