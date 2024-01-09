@@ -37,6 +37,8 @@ if( !Friend.cajax )
 
 function AddToCajaxQueue( ele )
 {
+	console.log( 'Add to queue: ' );
+	console.trace();
 	if( typeof( Friend.cajax[ ele.type ] ) == 'undefined' )
 	{
 		Friend.cajax[ ele.type ] = { count: 0, max: 0, queue: [] };
@@ -103,13 +105,10 @@ function AddToCajaxQueue( ele )
 
 function RemoveFromCajaxQueue( ele )
 {
-	console.log( 'Remove from ajax queue:' );
 	if( typeof( Friend.cajax[ ele.type ] ) == 'undefined' )
-	{
-		console.log( '  No such type: ' + ele.type );
 		return;
-	}
-		
+	console.log( 'Remove from ajax queue:' );		
+	console.trace();
 	let queue = Friend.cajax[ ele.type ].queue;
 	let o = [];
 	for( let a = 0; a < queue.length; a++ )
