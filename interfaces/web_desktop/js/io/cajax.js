@@ -1039,7 +1039,15 @@ function CleanAjaxCalls( depth = false )
 		}
 		else
 		{
-			Friend.cajax[ type ].queue[ 0 ].send();
+			let f = Friend.cajax[ type ].queue[ 0 ];
+			let out = [];
+			for( let a in Friend.cajax[ type ].queue )
+			{
+				if( Friend.cajax[ type ].queue[ a ] != f )
+					out.push( Friend.cajax[ type ].queue[ a ] );
+			}
+			Friend.cajax[ type ].queue = out;
+			f.send();
 			return true;
 		}
 	}
