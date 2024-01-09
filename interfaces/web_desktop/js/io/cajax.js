@@ -103,8 +103,12 @@ function AddToCajaxQueue( ele )
 
 function RemoveFromCajaxQueue( ele )
 {
+	console.log( 'Remove from ajax queue:' );
 	if( typeof( Friend.cajax[ ele.type ] ) == 'undefined' )
+	{
+		console.log( '  No such type: ' + ele.type );
 		return;
+	}
 		
 	let queue = Friend.cajax[ ele.type ].queue;
 	let o = [];
@@ -116,6 +120,7 @@ function RemoveFromCajaxQueue( ele )
 		}
 	}
 	Friend.cajax[ ele.type ].queue = o;
+	console.log( '  New queue: ' + o.length, o );
 }
 
 // Cancel all queued cajax calls on id
@@ -1039,7 +1044,6 @@ function CleanAjaxCalls( depth = false )
 		}
 		else
 		{
-			console.log( 'Running queue: ' + type, Friend.cajax[ type ].queue[ 0 ] );
 			Friend.cajax[ type ].queue[ 0 ].send();
 			return true;
 		}
