@@ -1855,12 +1855,15 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 													}
 												}
 												
+												if( request->http_Content )
+													clen += strlen( request->http_Content ) + 3;
+												
 												if( phpResp == NULL )
 												{
 													DEBUG("CatchALL 1621\n");
 													if( ( command = FCalloc( clen, sizeof(char) ) ) != NULL )
 													{
-														snprintf( command, clen, "php \"php/catch_all.php\" \"%s\" \"%s\";", uri->uri_Path->p_Raw, request->http_Uri ? request->http_Uri->uri_QueryRaw : NULL );
+														snprintf( command, clen, "php \"php/catch_all.php\" \"%s\" \"%s\" \"%s\";", uri->uri_Path->p_Raw, request->http_Uri ? request->http_Uri->uri_QueryRaw : NULL, request->http_Content ? request->http_Content : NULL );
 													
 														Log( FLOG_DEBUG, "[ProtocolHttp] Executing php/catch_all.php\n");
 														phpResp = RunPHPScript( command );
