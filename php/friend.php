@@ -105,7 +105,7 @@ function FriendHeader( $header )
 {
 	global $friendHeaders;
 	
-	echo $header;
+	header( $header );
 	flush();
 	
 	// Get content type and content
@@ -133,6 +133,22 @@ function FriendHeader( $header )
 	// Add it
 	$friendHeaders[$type] = $content;
 	return true;
+}
+
+function FriendHeaderFlush()
+{
+	global $friendHeaders;
+	if( count( $friendHeaders ) > 0 )
+	{
+		// Get current data
+		// Write data with headers
+		echo "---http-headers-begin---\n";
+		foreach( $friendHeaders as $k=>$v )
+			echo "$k: $v\n";
+		echo "---http-headers-end---\n";
+		
+		$friendHeaders = [];
+	}
 }
 
 // Authenticate applications on users

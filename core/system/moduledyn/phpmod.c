@@ -386,6 +386,51 @@ char *Run( struct EModule *mod, const char *path, const char *args, FULONG *leng
 	return final;
 }
 
+#define MODE_ANY 0
+#define MODE_NORMAL 1
+#define MODE_PROCESS 2
+
+Http *ProcessStreamedHeaders( char *data, int dataLength )
+{
+	DEBUG( " -> CHECKING DATA\n" );
+	if( strstr( data, "---http-headers-end---" ) != NULL )
+	{
+		DEBUG( " -> CHECKING DATA WORKED!\n" );
+		char *ltype = dataLength ? CheckEmbeddedHeaders( data, dataLength, "Content-Type"   ) : NULL;
+		if( !ltype ) ltype = dataLength ? CheckEmbeddedHeaders( data, dataLength, "Content-type"   ) : NULL;
+
+		if( ltype != NULL )
+		{
+			DEBUG( " -> CHECKING DATA MAKIING RESPNSE! {%s}\n", ltype );
+			struct TagItem tags[] = {
+				{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( ltype != NULL ? ltype : "text/plain" ) },
+				{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+				{TAG_DONE, TAG_DONE}
+			};
+			DEBUG( " -> COOL NOW WHAT!\n" );
+			Http *response = HttpNewSimple( HTTP_200_OK, tags );
+			DEBUG( " -> RET!\n" );
+			return response;
+		}
+	}
+	return NULL;
+}
+Http *GetRequestResponse( Http *request )
+{
+	struct TagItem tags[] = {
+		{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( "text/plain" ) },
+		{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+		{TAG_DONE, TAG_DONE}
+	};
+	Http *response = HttpNewSimple( HTTP_200_OK, tags );
+	response->http_RequestSource = request->http_RequestSource;
+	response->http_Stream = TRUE;
+	response->http_Socket = request->http_Socket;
+	response->http_ResponseID = request->http_ResponseID;
+	HttpWrite( response, request->http_Socket );
+	return response;
+}
+
 int Stream( struct EModule *mod, const char *path, const char *args, Http *request, Http **httpResponse )
 {
 	DEBUG("[PHPstream] call stream\n");
@@ -439,20 +484,10 @@ int Stream( struct EModule *mod, const char *path, const char *args, Http *reque
 	DEBUG( "[PHPstream] run app: %s\n", command );
 	
 	char *buf = FMalloc( PHP_READ_SIZE+16 );
+	BufString *procStr = BufStringNew();
+	int mode = MODE_ANY;
 	
-	Http *response = HttpNewSimpleA( HTTP_200_OK, request,  
-		HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicateN( "text/plain; charset=utf-8", 25 ),
-		//HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicateN( "text/event-stream", 17 ),
-		HTTP_HEADER_CONNECTION, (FULONG)StringDuplicateN( "close", 5 ),
-		TAG_DONE, TAG_DONE );
-	response->http_RequestSource = request->http_RequestSource;
-	response->http_Stream = TRUE;
-	response->http_Socket = request->http_Socket;
-	response->http_ResponseID = request->http_ResponseID;
-	
-	*httpResponse = response;
-	
-	HttpWrite( response, request->http_Socket );
+	Http *response = NULL;
 	
 #ifdef USE_NPOPEN
 #ifdef USE_NPOPEN_POLL
@@ -462,6 +497,7 @@ int Stream( struct EModule *mod, const char *path, const char *args, Http *reque
 	{
 		FERROR("[PHPstream] cannot open pipe: %s\n", strerror( errno ) );
 		FFree( buf );
+		BufStringDelete( procStr );
 		return 0;
 	}
 	
@@ -485,6 +521,10 @@ int Stream( struct EModule *mod, const char *path, const char *args, Http *reque
 
 	int time = GetUnixTime();
 	
+	const char *headerStart = "---http-headers-begin---";
+	char headerCompare[25]; memset( headerCompare, '\0', 25 );
+	const int headerStartLength = 24;
+	
 	while( TRUE )
 	{
 		ret = poll( fds, 2, 250 ); // HT - set it to 250 ms..
@@ -501,14 +541,97 @@ int Stream( struct EModule *mod, const char *path, const char *args, Http *reque
 
 		if( size > 0 )
 		{
-			response->http_Socket->s_Interface->SocketWrite( response->http_Socket, buf, size );
-			
 			res += size;
+			// We are looking for headers
+			if( mode == MODE_ANY )
+			{
+				BufStringAddSize( procStr, buf, size );
+				
+				// If we have enough for compare
+				int limit = res;
+				if( res > headerStartLength )
+				{
+					strncpy( headerCompare, procStr->bs_Buffer, headerStartLength );
+					// Found header start
+					if( strcmp( headerCompare, headerStart ) == 0 )
+					{
+						DEBUG( "Starting process!\n" );
+						mode = MODE_PROCESS;
+					}
+					// No headers will be found
+					else
+					{
+						mode = MODE_NORMAL;
+						response = GetRequestResponse( request );
+						*httpResponse = response;
+						
+						if( procStr->bs_Buffer )
+						{
+							response->http_Socket->s_Interface->SocketWrite( response->http_Socket, procStr->bs_Buffer, strlen( procStr->bs_Buffer ) );
+							FFree( procStr->bs_Buffer );
+							procStr->bs_Bufsize = 0;
+							procStr->bs_Buffer = NULL;
+						}
+					}
+				}
+			}
+			// We are mapping headers
+			else if( mode == MODE_PROCESS )
+			{
+				DEBUG( "Processing!\n" );
+				BufStringAddSize( procStr, buf, size );
+				DEBUG( "Checking!\n" );
+				response = ProcessStreamedHeaders( procStr->bs_Buffer, res );
+				DEBUG( "Checked\n" );
+				if( response != NULL )
+				{
+					DEBUG( "Got response in process!\n" );
+					*httpResponse = response;
+					response->http_RequestSource = request->http_RequestSource;
+					response->http_Stream = TRUE;
+					response->http_Socket = request->http_Socket;
+					response->http_ResponseID = request->http_ResponseID;
+					HttpWrite( response, response->http_Socket );
+					
+					char *str = strstr( procStr->bs_Buffer, "---http-headers-end---" );
+					unsigned long int offset = str - procStr->bs_Buffer + 23;
+					response->http_Socket->s_Interface->SocketWrite( response->http_Socket, procStr->bs_Buffer + offset, res - offset );
+					
+					mode = MODE_NORMAL;
+					FFree( procStr->bs_Buffer );
+					procStr->bs_Bufsize = 0;
+					procStr->bs_Buffer = NULL;
+				}
+				else
+				{
+					DEBUG( "No response in process, just pile!\n" );
+				}
+			}
+			// Normal output
+			else
+			{
+				DEBUG( "Normal output!\n" );
+				response->http_Socket->s_Interface->SocketWrite( response->http_Socket, buf, size );
+			}
 		}
 		else
 		{
+			DEBUG( "Exiting process!\n" );
+			if( procStr->bs_Buffer )
+			{
+				if( !response )
+				{
+					response = GetRequestResponse( request );
+					*httpResponse = response;
+				}
+				
+				response->http_Socket->s_Interface->SocketWrite( response->http_Socket, procStr->bs_Buffer, res );
+				FFree( procStr->bs_Buffer );
+				procStr->bs_Bufsize = 0;
+				procStr->bs_Buffer = NULL;
+			}
 			errCounter++;
-			DEBUG("ErrCounter: %d\n", errCounter );
+			//DEBUG("ErrCounter: %d\n", errCounter );
 
 			break;
 		}
@@ -526,6 +649,7 @@ int Stream( struct EModule *mod, const char *path, const char *args, Http *reque
 	{
 		FERROR("[PHPstream] cannot open pipe: %s\n", strerror( errno ) );
 		FFree( buf );
+		BufStringDelete( procStr );
 		return 0;
 	}
 	
@@ -596,6 +720,7 @@ int Stream( struct EModule *mod, const char *path, const char *args, Http *reque
 	{
 		FERROR("[PHPstream] cannot open pipe\n");
 		free( command ); free( epath ); free( earg );
+		BufStringDelete( procStr );
 		return 0;
 	}
 	
@@ -627,6 +752,8 @@ int Stream( struct EModule *mod, const char *path, const char *args, Http *reque
 	{
 		FFree( earg );
 	}
+	
+	BufStringDelete( procStr );
 	
 	return res;
 }
