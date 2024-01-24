@@ -105,6 +105,8 @@ function FriendHeader( $header )
 {
 	global $friendHeaders;
 	
+	header( $header );
+	
 	// Get content type and content
 	$headerA = explode( ':', $header );
 	if( count( $headerA ) <= 1 )
@@ -606,7 +608,7 @@ if( file_exists( 'cfg/cfg.ini' ) )
 		{
 			// Get current data
 			$string = ob_get_contents();
-			ob_clean();
+			@ob_clean();
 		
 			// Write data with headers
 			$out = "---http-headers-begin---\n";

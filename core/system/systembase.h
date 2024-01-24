@@ -399,6 +399,8 @@ typedef struct SystemBase
 	int								(*SendProcessMessage)( Http *request, char *data, int len );
 
 	char							*(*RunMod)( struct SystemBase *l, const char *mime, const char *path, const char *args, unsigned long *length );
+	
+	int 							(*StreamMod)( struct SystemBase *l, const char *type, const char *path, const char *args, Http *request );
 
 	int								(*GetError)( struct SystemBase *l );
 	
@@ -528,6 +530,12 @@ int SystemInitExternal( SystemBase *l );
 //
 
 char *RunMod( struct SystemBase *l, const char *mime, const char *path, const char *args, unsigned long *length );
+
+//
+//
+//
+
+int StreamMod( SystemBase *l, const char *type, const char *path, const char *args, Http *request );
 
 //
 //

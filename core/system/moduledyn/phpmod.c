@@ -386,6 +386,236 @@ char *Run( struct EModule *mod, const char *path, const char *args, FULONG *leng
 	return final;
 }
 
+int Stream( struct EModule *mod, const char *path, const char *args, Http *request )
+{
+	DEBUG("[PHPstream] call stream\n");
+	if( path == NULL || args == NULL )
+	{
+		DEBUG("[PHPstream] path or args = NULL\n");
+		return NULL;
+	}
+
+	if( !request->http_Socket )
+	{
+		DEBUG( "[PHPstream] No such socket!\n" );
+		return 0;
+	}
+
+	int res = 0;
+
+	// Escape the input, so that remove code injection is not possible.
+	char *earg = StringShellEscape( args );
+	unsigned int eargLen = strlen( earg );
+	char *epath = StringShellEscape( path );
+	unsigned int epathLen = strlen( epath );
+	int escapedSize = eargLen + epathLen + 1024;
+
+	char *command = NULL;
+	if( ( command = FCalloc( 1024 + strlen( path ) + ( args != NULL ? strlen( args ) : 0 ), sizeof( char ) ) ) == NULL )
+	{
+		FERROR("Cannot allocate memory for data\n");
+		FFree( epath ); FFree( earg );
+		return NULL;
+	}
+
+	DEBUG("[PHPstream] Stream\n");
+	
+	// Remove dangerous crap!
+	FilterPHPVar( earg );
+	FilterPHPVar( epath );
+
+	sprintf( command, "php '%s' '%s'", path, args != NULL ? args : "" );
+	
+	// Make the commandline string with the safe, escaped arguments, and check for buffer overflows.
+	int cx = snprintf( command, escapedSize, "php '%s' '%s'", epath, earg );
+	
+	if( !( cx >= 0 && cx < escapedSize ) )
+	{
+		FERROR( "[PHPstream] snprintf fail\n" );
+		FFree( command ); FFree( epath ); FFree( earg );
+		return NULL;
+	}
+	
+	DEBUG( "[PHPstream] run app: %s\n", command );
+	
+	char *buf = FMalloc( PHP_READ_SIZE+16 );
+	
+#ifdef USE_NPOPEN
+#ifdef USE_NPOPEN_POLL
+	NPOpenFD pofd;
+	int err = newpopen( command, &pofd );
+	if( err != 0 )
+	{
+		FERROR("[PHPstream] cannot open pipe: %s\n", strerror( errno ) );
+		FFree( buf );
+		return NULL;
+	}
+	
+	int size = 0;
+	int errCounter = 0;
+
+	struct pollfd fds[2];
+
+	// watch stdin for input 
+	fds[0].fd = pofd.np_FD[ NPOPEN_CONSOLE ];// STDIN_FILENO;
+	fds[0].events = POLLIN;
+
+	// watch stdout for ability to write
+	fds[1].fd = STDOUT_FILENO;
+	fds[1].events = POLLOUT;
+	
+	// Set to non block
+	fcntl( fds[1].fd, F_SETFL, O_NONBLOCK );
+
+	int ret = 0;
+
+	int time = GetUnixTime();
+	
+	while( TRUE )
+	{
+		ret = poll( fds, 2, 250 ); // HT - set it to 250 ms..
+
+		if( ret == 0 )
+		{
+			break;
+		}
+		else if( ret < 0 )
+		{
+			break;
+		}
+		size = read( pofd.np_FD[ NPOPEN_CONSOLE ], buf, PHP_READ_SIZE );
+
+		if( size > 0 )
+		{
+			request->http_Socket->s_Interface->SocketWrite( request->http_Socket, buf, size );
+			
+			res += size;
+		}
+		else
+		{
+			errCounter++;
+			DEBUG("ErrCounter: %d\n", errCounter );
+
+			break;
+		}
+	}
+	
+	DEBUG("[PHPstream] File read - took %d ms\n", GetUnixTime() - time );
+	
+	// Free pipe if it's there
+	newpclose( &pofd );
+#else
+	NPOpenFD pofd;
+	int err = newpopen( command, &pofd );
+	if( err != 0 )
+	{
+		FERROR("[PHPstream] cannot open pipe: %s\n", strerror( errno ) );
+		FFree( buf );
+		return NULL;
+	}
+	
+	DEBUG("[PHPstream] command launched\n");
+
+	fd_set set;
+	struct timeval timeout;
+	int size = 0;
+	int errCounter = 0;
+
+	// Initialize the timeout data structure. 
+	timeout.tv_sec = MOD_TIMEOUT;
+	timeout.tv_usec = 0;
+	
+	while( TRUE )
+	{
+		// Initialize the file descriptor set.
+		FD_ZERO( &set );
+		if( pofd.np_FD[ NPOPEN_CONSOLE ] < 1 )
+		{
+			FERROR("Console output is < 0!\n");
+			break;
+		}
+		FD_SET( pofd.np_FD[ NPOPEN_CONSOLE ], &set);
+		
+		int ret = select( pofd.np_FD[ NPOPEN_CONSOLE ]+1, &set, NULL, NULL, &timeout );
+		
+		// Make a new buffer and read
+		if( ret == 0 )
+		{
+			DEBUG("Timeout!\n");
+			break;
+		}
+		else if(  ret < 0 )
+		{
+			DEBUG("Error\n");
+			break;
+		}
+		size = read( pofd.np_FD[ NPOPEN_CONSOLE ], buf, PHP_READ_SIZE);
+
+		DEBUG( "[PHPstream] Adding %d of data\n", size );
+		if( size > 0 )
+		{
+			request->http_Socket->s_Interface->SocketWrite( request->http_Socket, buf, size );
+			DEBUG( "[PHPstream] after output to response\n");
+			res += size;
+		}
+		else
+		{
+			errCounter++;
+			DEBUG("ErrCounter: %d\n", errCounter );
+			if( errCounter > 1 )
+			{
+				break;
+			}
+		}
+	}
+	
+	DEBUG("[PHPstream] File read\n");
+	
+	// Free pipe if it's there
+	newpclose( &pofd );
+
+#endif
+#else // USE_NPOPEN
+
+	FILE *pipe = popen( command, "r" );
+	if( !pipe )
+	{
+		FERROR("[PHPstream] cannot open pipe\n");
+		free( command ); free( epath ); free( earg );
+		return NULL;
+	}
+	
+	int reads = 0;
+	while( !feof( pipe ) )
+	{
+		reads = fread( buf, sizeof( char ), PHP_READ_SIZE, pipe );
+		if( reads > 0 )
+		{
+			request->http_Socket->s_Interface->SocketWrite( request->http_Socket buf, size );
+			res += reads;
+		}
+	}
+	
+	pclose( pipe );
+#endif
+
+	if( command != NULL )
+	{
+		FFree( command );
+	}
+	
+	if( epath != NULL )
+	{
+		FFree( epath );
+	}
+	
+	if( earg != NULL )
+	{
+		FFree( earg );
+	}
+	return res;
+}
+
 //
 // Suffix information
 //
