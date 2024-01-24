@@ -386,13 +386,13 @@ char *Run( struct EModule *mod, const char *path, const char *args, FULONG *leng
 	return final;
 }
 
-int Stream( struct EModule *mod, const char *path, const char *args, Http *request )
+int Stream( struct EModule *mod, const char *path, const char *args, Http *request, Http **httpResponse )
 {
 	DEBUG("[PHPstream] call stream\n");
 	if( path == NULL || args == NULL )
 	{
 		DEBUG("[PHPstream] path or args = NULL\n");
-		return NULL;
+		return 0;
 	}
 
 	if( !request->http_Socket )
@@ -415,7 +415,7 @@ int Stream( struct EModule *mod, const char *path, const char *args, Http *reque
 	{
 		FERROR("Cannot allocate memory for data\n");
 		FFree( epath ); FFree( earg );
-		return NULL;
+		return 0;
 	}
 
 	DEBUG("[PHPstream] Stream\n");
@@ -433,12 +433,26 @@ int Stream( struct EModule *mod, const char *path, const char *args, Http *reque
 	{
 		FERROR( "[PHPstream] snprintf fail\n" );
 		FFree( command ); FFree( epath ); FFree( earg );
-		return NULL;
+		return 0;
 	}
 	
 	DEBUG( "[PHPstream] run app: %s\n", command );
 	
 	char *buf = FMalloc( PHP_READ_SIZE+16 );
+	
+	Http *response = HttpNewSimpleA( HTTP_200_OK, request,  
+		HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicateN( "text/plain; charset=utf-8", 25 ),
+		//HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicateN( "text/event-stream", 17 ),
+		HTTP_HEADER_CONNECTION, (FULONG)StringDuplicateN( "close", 5 ),
+		TAG_DONE, TAG_DONE );
+	response->http_RequestSource = request->http_RequestSource;
+	response->http_Stream = TRUE;
+	response->http_Socket = request->http_Socket;
+	response->http_ResponseID = request->http_ResponseID;
+	
+	*httpResponse = response;
+	
+	HttpWrite( response, request->http_Socket );
 	
 #ifdef USE_NPOPEN
 #ifdef USE_NPOPEN_POLL
@@ -448,7 +462,7 @@ int Stream( struct EModule *mod, const char *path, const char *args, Http *reque
 	{
 		FERROR("[PHPstream] cannot open pipe: %s\n", strerror( errno ) );
 		FFree( buf );
-		return NULL;
+		return 0;
 	}
 	
 	int size = 0;
@@ -487,7 +501,7 @@ int Stream( struct EModule *mod, const char *path, const char *args, Http *reque
 
 		if( size > 0 )
 		{
-			request->http_Socket->s_Interface->SocketWrite( request->http_Socket, buf, size );
+			response->http_Socket->s_Interface->SocketWrite( response->http_Socket, buf, size );
 			
 			res += size;
 		}
@@ -504,6 +518,7 @@ int Stream( struct EModule *mod, const char *path, const char *args, Http *reque
 	
 	// Free pipe if it's there
 	newpclose( &pofd );
+	
 #else
 	NPOpenFD pofd;
 	int err = newpopen( command, &pofd );
@@ -511,7 +526,7 @@ int Stream( struct EModule *mod, const char *path, const char *args, Http *reque
 	{
 		FERROR("[PHPstream] cannot open pipe: %s\n", strerror( errno ) );
 		FFree( buf );
-		return NULL;
+		return 0;
 	}
 	
 	DEBUG("[PHPstream] command launched\n");
@@ -554,8 +569,7 @@ int Stream( struct EModule *mod, const char *path, const char *args, Http *reque
 		DEBUG( "[PHPstream] Adding %d of data\n", size );
 		if( size > 0 )
 		{
-			request->http_Socket->s_Interface->SocketWrite( request->http_Socket, buf, size );
-			DEBUG( "[PHPstream] after output to response\n");
+			response->http_Socket->s_Interface->SocketWrite( response->http_Socket, buf, size );
 			res += size;
 		}
 		else
@@ -582,7 +596,7 @@ int Stream( struct EModule *mod, const char *path, const char *args, Http *reque
 	{
 		FERROR("[PHPstream] cannot open pipe\n");
 		free( command ); free( epath ); free( earg );
-		return NULL;
+		return 0;
 	}
 	
 	int reads = 0;
@@ -591,11 +605,11 @@ int Stream( struct EModule *mod, const char *path, const char *args, Http *reque
 		reads = fread( buf, sizeof( char ), PHP_READ_SIZE, pipe );
 		if( reads > 0 )
 		{
-			request->http_Socket->s_Interface->SocketWrite( request->http_Socket buf, size );
+			response->http_Socket->s_Interface->SocketWrite( response->http_Socket buf, size );
 			res += reads;
 		}
 	}
-	
+	DEBUG( "[Streaming] Read: %s\n", buf );
 	pclose( pipe );
 #endif
 
@@ -613,6 +627,7 @@ int Stream( struct EModule *mod, const char *path, const char *args, Http *reque
 	{
 		FFree( earg );
 	}
+	
 	return res;
 }
 

@@ -1544,20 +1544,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 							{
 								data = NULL;
 								DEBUG("[SysWebRequest] StreamMod mode\n" );
-								
-								response = HttpNewSimpleA( HTTP_200_OK, *request,  
-									HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicateN( "text/plain; charset=utf-8", 25 ),
-									//HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicateN( "text/event-stream", 17 ),
-									HTTP_HEADER_CONNECTION, (FULONG)StringDuplicateN( "close", 5 ),
-									TAG_DONE, TAG_DONE );
-								response->http_RequestSource = ( *request )->http_RequestSource;
-								response->http_Stream = TRUE;
-								response->http_Socket = ( *request )->http_Socket;
-								response->http_ResponseID = ( *request )->http_ResponseID;
-								
-								HttpWrite( response, ( *request )->http_Socket );
-								
-								dataLength = l->StreamMod( l, modType, modulePath, allArgsNew, response );
+								dataLength = l->StreamMod( l, modType, modulePath, allArgsNew, *request, &response );
 							}
 							else
 							{

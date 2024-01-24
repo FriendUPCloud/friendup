@@ -105,7 +105,8 @@ function FriendHeader( $header )
 {
 	global $friendHeaders;
 	
-	header( $header );
+	echo $header;
+	flush();
 	
 	// Get content type and content
 	$headerA = explode( ':', $header );

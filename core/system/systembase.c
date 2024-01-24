@@ -2151,7 +2151,7 @@ char *RunMod( SystemBase *l, const char *type, const char *path, const char *arg
  * @param response pointer to Http structure for writing server output
  * @return string with answer from module
  */
-int StreamMod( SystemBase *l, const char *type, const char *path, const char *args, Http *request )
+int StreamMod( SystemBase *l, const char *type, const char *path, const char *args, Http *request, Http **httpResponse )
 {
 	int dataLength = 0;
 
@@ -2175,7 +2175,7 @@ int StreamMod( SystemBase *l, const char *type, const char *path, const char *ar
 	{
 		DEBUG("[SystemBase] Found module '%s', using it\n", lmod->GetSuffix() );
 		
-		dataLength = lmod->Stream( lmod, path, args, request );
+		dataLength = lmod->Stream( lmod, path, args, request, httpResponse );
 	}
 	else
 	{

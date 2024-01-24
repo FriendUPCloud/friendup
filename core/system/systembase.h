@@ -400,7 +400,7 @@ typedef struct SystemBase
 
 	char							*(*RunMod)( struct SystemBase *l, const char *mime, const char *path, const char *args, unsigned long *length );
 	
-	int 							(*StreamMod)( struct SystemBase *l, const char *type, const char *path, const char *args, Http *request );
+	int 							(*StreamMod)( struct SystemBase *l, const char *type, const char *path, const char *args, Http *request, Http *httpResponse );
 
 	int								(*GetError)( struct SystemBase *l );
 	
@@ -535,7 +535,7 @@ char *RunMod( struct SystemBase *l, const char *mime, const char *path, const ch
 //
 //
 
-int StreamMod( SystemBase *l, const char *type, const char *path, const char *args, Http *request );
+int StreamMod( SystemBase *l, const char *type, const char *path, const char *args, Http *request, Http **httpResponse );
 
 //
 //
