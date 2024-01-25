@@ -1540,7 +1540,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 							DEBUG("[SysWebRequest] Calling module '%s' allargs '%s'\n", modulePath, allArgsNew );
 
 							// Execute by streaming
-							if( l->StreamMod != NULL )
+							if( (*request)->http_RequestSource != HTTP_SOURCE_WS && l->StreamMod != NULL )
 							{
 								data = NULL;
 								DEBUG("[SysWebRequest] StreamMod mode\n" );

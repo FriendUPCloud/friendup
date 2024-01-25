@@ -392,24 +392,31 @@ char *Run( struct EModule *mod, const char *path, const char *args, FULONG *leng
 
 Http *ProcessStreamedHeaders( char *data, int dataLength )
 {
-	DEBUG( " -> CHECKING DATA\n" );
 	if( strstr( data, "---http-headers-end---" ) != NULL )
 	{
-		DEBUG( " -> CHECKING DATA WORKED!\n" );
-		char *ltype = dataLength ? CheckEmbeddedHeaders( data, dataLength, "Content-Type"   ) : NULL;
-		if( !ltype ) ltype = dataLength ? CheckEmbeddedHeaders( data, dataLength, "Content-type"   ) : NULL;
-
+		char *ltype = NULL;
+		char *test = NULL;
+		test = strstr( data, "Content-Type: " );
+		if( test == NULL ) test = strstr( data, "Content-type: " );
+		if( test )
+		{
+			test += 14;
+			char *end = strstr( test, "\n" );
+			if( end != NULL )
+			{
+				int offset = end - test + 1;
+				ltype = FCalloc( offset + 1, sizeof( char ) );
+				snprintf( ltype, offset, "%s", test );
+			}
+		}
 		if( ltype != NULL )
 		{
-			DEBUG( " -> CHECKING DATA MAKIING RESPNSE! {%s}\n", ltype );
 			struct TagItem tags[] = {
 				{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( ltype != NULL ? ltype : "text/plain" ) },
 				{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
 				{TAG_DONE, TAG_DONE}
 			};
-			DEBUG( " -> COOL NOW WHAT!\n" );
 			Http *response = HttpNewSimple( HTTP_200_OK, tags );
-			DEBUG( " -> RET!\n" );
 			return response;
 		}
 	}

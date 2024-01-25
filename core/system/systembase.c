@@ -2173,13 +2173,13 @@ int StreamMod( SystemBase *l, const char *type, const char *path, const char *ar
 
 	if( workmod != NULL && lmod->Stream != NULL )
 	{
-		DEBUG("[SystemBase] Found module '%s', using it\n", lmod->GetSuffix() );
+		//DEBUG("[SystemBase] Found module '%s', using it\n", lmod->GetSuffix() );
 		
 		dataLength = lmod->Stream( lmod, path, args, request, httpResponse );
 	}
 	else
 	{
-		Log( FLOG_ERROR,"Cannot run '%s' script!\n", type );
+		Log( FLOG_ERROR,"Cannot stream '%s' script!\n", type );
 	}
 
 	return dataLength;
