@@ -396,6 +396,7 @@ Http *ProcessStreamedHeaders( char *data, int dataLength )
 	{
 		char *ltype = NULL;
 		char *cache = NULL;
+		char *lengt = NULL;
 		char *test = NULL;
 		test = strstr( data, "Content-Type: " );
 		if( test == NULL ) test = strstr( data, "Content-type: " );
@@ -423,11 +424,25 @@ Http *ProcessStreamedHeaders( char *data, int dataLength )
 				snprintf( cache, offset, "%s", test );
 			}
 		}
+		test = strstr( data, "Content-Length: " );
+		if( test == NULL ) test = strstr( data, "Content-length: " );
+		if( test )
+		{
+			test += 16;
+			char *end = strstr( test, "\n" );
+			if( end != NULL )
+			{
+				int offset = end - test + 1;
+				lengt = FCalloc( offset + 1, sizeof( char ) );
+				snprintf( lengt, offset, "%s", test );
+			}
+		}
 		if( ltype != NULL )
 		{
 			struct TagItem tags[] = {
 				{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( ltype != NULL ? ltype : "text/plain" ) },
 				{ HTTP_HEADER_CACHE_CONTROL, (FULONG)StringDuplicate( cache != NULL ? cache : "" ) },
+				{ HTTP_HEADER_CONTENT_LENGTH, (FULONG)StringDuplicate( lengt != NULL ? lengt : "" ) },
 				{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
 				{TAG_DONE, TAG_DONE}
 			};
@@ -579,6 +594,7 @@ int Stream( struct EModule *mod, const char *path, const char *args, Http *reque
 					{
 						DEBUG( "Starting process!\n" );
 						mode = MODE_PROCESS;
+						goto process;
 					}
 					// No headers will be found
 					else
@@ -603,6 +619,7 @@ int Stream( struct EModule *mod, const char *path, const char *args, Http *reque
 				DEBUG( "Processing!\n" );
 				BufStringAddSize( procStr, buf, size );
 				DEBUG( "Checking!\n" );
+				process:
 				response = ProcessStreamedHeaders( procStr->bs_Buffer, res );
 				DEBUG( "Checked\n" );
 				if( response != NULL )
