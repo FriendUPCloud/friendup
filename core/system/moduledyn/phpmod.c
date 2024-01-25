@@ -395,6 +395,7 @@ Http *ProcessStreamedHeaders( char *data, int dataLength )
 	if( strstr( data, "---http-headers-end---" ) != NULL )
 	{
 		char *ltype = NULL;
+		char *cache = NULL;
 		char *test = NULL;
 		test = strstr( data, "Content-Type: " );
 		if( test == NULL ) test = strstr( data, "Content-type: " );
@@ -409,10 +410,24 @@ Http *ProcessStreamedHeaders( char *data, int dataLength )
 				snprintf( ltype, offset, "%s", test );
 			}
 		}
+		test = strstr( data, "Cache-Control: " );
+		if( test == NULL ) test = strstr( data, "Cache-control: " );
+		if( test )
+		{
+			test += 15;
+			char *end = strstr( test, "\n" );
+			if( end != NULL )
+			{
+				int offset = end - test + 1;
+				cache = FCalloc( offset + 1, sizeof( char ) );
+				snprintf( cache, offset, "%s", test );
+			}
+		}
 		if( ltype != NULL )
 		{
 			struct TagItem tags[] = {
 				{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( ltype != NULL ? ltype : "text/plain" ) },
+				{ HTTP_HEADER_CACHE_CONTROL, (FULONG)StringDuplicate( cache != NULL ? cache : "" ) },
 				{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
 				{TAG_DONE, TAG_DONE}
 			};
