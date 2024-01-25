@@ -1864,15 +1864,19 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 												{
 													Http *response = NULL;
 													
-													int len = ( uri->uri_Path->p_Raw ? 
-														strlen( uri->uri_Path->p_Raw ) + strlen( request->http_Uri->uri_QueryRaw ) : NULL ) + 
-														1 + 2;
-													char *req = FCalloc( len, sizeof( char ) );
-													if( req != NULL )
-													{
-														snprintf( req, len, "%s/?%s", uri->uri_Path->p_Raw, request->http_Uri->uri_QueryRaw );
-														dataLength = SLIB->StreamMod( SLIB, "php", "php/catch_all.php", req, request, &response );
-														FFree( req );
+													if( uri->uri_Path->p_Raw != NULL )
+													{	
+														int len = ( uri->uri_Path->p_Raw ? 
+															( strlen( uri->uri_Path->p_Raw ) + 
+															( request->http_Uri->uri_QueryRaw ? strlen( request->http_Uri->uri_QueryRaw ) : 0 ) ) : 0 ) + 
+															1 + 2;
+														char *req = FCalloc( len, sizeof( char ) );
+														if( req != NULL )
+														{
+															snprintf( req, len, "%s/?%s", uri->uri_Path->p_Raw, request->http_Uri->uri_QueryRaw ? request->http_Uri->uri_QueryRaw : "" );
+															dataLength = SLIB->StreamMod( SLIB, "php", "php/catch_all.php", req, request, &response );
+															FFree( req );
+														}
 													}
 												} // content-type json
 

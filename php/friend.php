@@ -105,9 +105,6 @@ function FriendHeader( $header )
 {
 	global $friendHeaders;
 	
-	header( $header );
-	flush();
-	
 	// Get content type and content
 	$headerA = explode( ':', $header );
 	if( count( $headerA ) <= 1 )
@@ -146,6 +143,7 @@ function FriendHeaderFlush()
 		foreach( $friendHeaders as $k=>$v )
 			echo "$k: $v\n";
 		echo "---http-headers-end---\n";
+		flush();
 		
 		$friendHeaders = [];
 	}

@@ -16,6 +16,15 @@ $path = '';
 // Get arguments from argv
 if( isset( $argv ) && isset( $argv[1] ) )
 {
+	// Strip questions
+	$test = explode( '?', $argv[1] );
+	if( isset( $test[1] ) )
+	{ 
+		$argv[1] = $test[0];
+		$argv[2] = $test[1];
+	}
+	unset( $test );
+	
 	if( $args = explode( "&", $argv[1] ) )
 	{
 		$kvdata = new stdClass();
