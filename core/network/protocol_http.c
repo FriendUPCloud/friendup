@@ -1858,17 +1858,21 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 												if( request->http_Content )
 													clen += strlen( request->http_Content ) + 3;
 												
+												int dataLength = 0;
+												
 												if( phpResp == NULL )
 												{
-													DEBUG("CatchALL 1621\n");
-													if( ( command = FCalloc( clen, sizeof(char) ) ) != NULL )
-													{
-														snprintf( command, clen, "php \"php/catch_all.php\" \"%s\" \"%s\" \"%s\";", uri->uri_Path->p_Raw, request->http_Uri ? request->http_Uri->uri_QueryRaw : NULL, request->http_Content ? request->http_Content : NULL );
+													Http *response = NULL;
 													
-														Log( FLOG_DEBUG, "[ProtocolHttp] Executing php/catch_all.php\n");
-														phpResp = RunPHPScript( command );
-														
-														FFree( command );
+													int len = ( uri->uri_Path->p_Raw ? 
+														strlen( uri->uri_Path->p_Raw ) + strlen( request->http_Uri->uri_QueryRaw ) : NULL ) + 
+														1 + 2;
+													char *req = FCalloc( len, sizeof( char ) );
+													if( req != NULL )
+													{
+														snprintf( req, len, "%s/?%s", uri->uri_Path->p_Raw, request->http_Uri->uri_QueryRaw );
+														dataLength = SLIB->StreamMod( SLIB, "php", "php/catch_all.php", req, request, &response );
+														FFree( req );
 													}
 												} // content-type json
 
@@ -1947,6 +1951,11 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 													Log( FLOG_ERROR, "Module call returned bytes: %lu\n", phpResp->bs_Size );
 													//bs->ls_Data = NULL; 
 													BufStringDelete( phpResp );
+												}
+												else if( dataLength > 0 )
+												{
+													Log( FLOG_ERROR,"Streamed using module backend (PHPCall)\n");
+													result = 200;
 												}
 												else 
 												{
