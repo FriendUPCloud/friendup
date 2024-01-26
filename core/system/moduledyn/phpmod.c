@@ -586,7 +586,7 @@ int Stream( struct EModule *mod, const char *path, const char *args, Http *reque
 				
 				// If we have enough for compare
 				int limit = res;
-				if( res > headerStartLength )
+				if( res >= headerStartLength )
 				{
 					strncpy( headerCompare, procStr->bs_Buffer, headerStartLength );
 					// Found header start
