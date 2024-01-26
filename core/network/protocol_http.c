@@ -1870,12 +1870,24 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 															( strlen( uri->uri_Path->p_Raw ) + 
 															( request->http_Uri->uri_QueryRaw ? strlen( request->http_Uri->uri_QueryRaw ) : 0 ) ) : 0 ) + 
 															1 + 2;
-														char *req = FCalloc( len, sizeof( char ) );
+														BufString *req = BufStringNew();
 														if( req != NULL )
 														{
-															snprintf( req, len, "%s/?%s", uri->uri_Path->p_Raw, request->http_Uri->uri_QueryRaw ? request->http_Uri->uri_QueryRaw : "" );
-															dataLength = SLIB->StreamMod( SLIB, "php", "php/catch_all.php", req, request, &response );
-															FFree( req );
+															BufStringAddSize( req, uri->uri_Path->p_Raw, strlen( uri->uri_Path->p_Raw ) );
+															BufStringAddSize( req, "/?", 2 );
+															int hasQuery = 0;
+															if( request->http_Uri->uri_QueryRaw )
+															{
+																BufStringAddSize( req, request->http_Uri->uri_QueryRaw, strlen( request->http_Uri->uri_QueryRaw ) );
+																hasQuery = 1;
+															}
+															if( request->http_Content )
+															{
+																BufStringAddSize( req, "&", 1 );
+																BufStringAddSize( req, request->http_Content, strlen( request->http_Content ) );
+															}
+															dataLength = SLIB->StreamMod( SLIB, "php", "php/catch_all.php", req->bs_Buffer, request, &response );
+															BufStringDelete( req );
 														}
 													}
 												} // content-type json
