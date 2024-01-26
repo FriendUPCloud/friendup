@@ -69,7 +69,9 @@ if( isset( $argv ) && isset( $argv[1] ) )
 			{
 				$host .= ':' . $conf[ 'FriendCore' ][ 'port' ];
 			}
-			
+			print( "---http-headers-begin---\n" );
+			print( "Content-type: text/html\n" );
+			print( "---http-headers-end---\n" );
 			die( '<script>document.location.href=\'' . $host . '/webclient/index.html\';</script>' );
 		}
 		// User is requesting an operation on calendarevent

@@ -397,6 +397,7 @@ Http *ProcessStreamedHeaders( char *data, int dataLength )
 		char *ltype = NULL;
 		char *cache = NULL;
 		char *lengt = NULL;
+		char *dispo = NULL;
 		char *test = NULL;
 		test = strstr( data, "Content-Type: " );
 		if( test == NULL ) test = strstr( data, "Content-type: " );
@@ -437,17 +438,46 @@ Http *ProcessStreamedHeaders( char *data, int dataLength )
 				snprintf( lengt, offset, "%s", test );
 			}
 		}
+		test = strstr( data, "Content-Disposition: " );
+		if( test == NULL ) test = strstr( data, "Content-disposition: " );
+		if( test )
+		{
+			test += 16;
+			char *end = strstr( test, "\n" );
+			if( end != NULL )
+			{
+				int offset = end - test + 1;
+				dispo = FCalloc( offset + 1, sizeof( char ) );
+				snprintf( dispo, offset, "%s", test );
+			}
+		}
 		if( ltype != NULL )
 		{
-			struct TagItem tags[] = {
-				{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( ltype != NULL ? ltype : "text/plain" ) },
-				{ HTTP_HEADER_CACHE_CONTROL, (FULONG)StringDuplicate( cache != NULL ? cache : "" ) },
-				{ HTTP_HEADER_CONTENT_LENGTH, (FULONG)StringDuplicate( lengt != NULL ? lengt : "" ) },
-				{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-				{TAG_DONE, TAG_DONE}
-			};
-			Http *response = HttpNewSimple( HTTP_200_OK, tags );
-			return response;
+			if( lengt )
+			{
+				struct TagItem tags[] = {
+					{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( ltype != NULL ? ltype : "text/plain" ) },
+					{ HTTP_HEADER_CONTENT_DISPOSITION, (FULONG)StringDuplicateN( dispo ? dispo : "inline", dispo ? strlen( dispo ) : strlen( "inline" ) ) },
+					{ HTTP_HEADER_CACHE_CONTROL, (FULONG)StringDuplicate( cache != NULL ? cache : "max-age=3600" ) },
+					{ HTTP_HEADER_CONTENT_LENGTH, (FULONG)StringDuplicate( lengt != NULL ? lengt : "" ) },
+					{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+					{TAG_DONE, TAG_DONE}
+				};
+				Http *response = HttpNewSimple( HTTP_200_OK, tags );
+				return response;
+			}
+			else
+			{
+				struct TagItem tags[] = {
+					{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( ltype != NULL ? ltype : "text/plain" ) },
+					{ HTTP_HEADER_CONTENT_DISPOSITION, (FULONG)StringDuplicateN( dispo ? dispo : "inline", dispo ? strlen( dispo ) : strlen( "inline" ) ) },
+					{ HTTP_HEADER_CACHE_CONTROL, (FULONG)StringDuplicate( cache != NULL ? cache : "max-age=3600" ) },
+					{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+					{TAG_DONE, TAG_DONE}
+				};
+				Http *response = HttpNewSimple( HTTP_200_OK, tags );
+				return response;
+			}
 		}
 	}
 	return NULL;
