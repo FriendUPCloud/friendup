@@ -61,6 +61,7 @@ EModule *EModuleCreate( void *sb, const char *path, const char *name )
 		if( ( mod->em_Handle = dlopen( path, RTLD_NOW ) ) != NULL )
 		{
 			mod->Run = dlsym( mod->em_Handle, "Run");
+			mod->Stream = dlsym( mod->em_Handle, "Stream");
 			mod->GetSuffix = dlsym( mod->em_Handle, "GetSuffix");
 		}
 		

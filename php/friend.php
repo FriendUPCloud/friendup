@@ -132,6 +132,23 @@ function FriendHeader( $header )
 	return true;
 }
 
+function FriendHeaderFlush()
+{
+	global $friendHeaders;
+	if( count( $friendHeaders ) > 0 )
+	{
+		// Get current data
+		// Write data with headers
+		echo "---http-headers-begin---\n";
+		foreach( $friendHeaders as $k=>$v )
+			echo "$k: $v\n";
+		echo "---http-headers-end---\n";
+		flush();
+		
+		$friendHeaders = [];
+	}
+}
+
 // Authenticate applications on users
 function AuthenticateApplication( $appName, $UserID, $searchGroups = false )
 {
@@ -253,85 +270,93 @@ if( isset( $argv ) && isset( $argv[1] ) )
 	{
 		$argv[1] = str_replace( '?post_json=', '&post_json=', $argv[1] );
 	}
-	if( $args = explode( '&', $argv[1] ) )
+	$argAr = [ $argv[1] ];
+	if( isset( $argv[2] ) )
 	{
-		/*
-			special case for large amount of data in request; Friend Core creates a file for us to read and parse here
-		*/
-		if( count( $args ) == 1 )
+		$argAr[] = $argv[2];
+	}
+	foreach( $argAr as $arg )
+	{
+		if( $args = explode( '&', $arg ) )
 		{
-			$argso = explode( '=', $args[ 0 ] );
-			$args1 = $argso;
-			if( array_shift( $argso ) == 'friendrequestparameters' )
+			/*
+				special case for large amount of data in request; Friend Core creates a file for us to read and parse here
+			*/
+			if( count( $args ) == 1 )
 			{
-				$dataset = file_get_contents( end( $args1 ) );
-				$args = explode( '&', $dataset );
-			}
-		}
-
-		$num = 0;
-		$kvdata = new stdClass();
-		foreach ( $args as $arg )
-		{
-			// Keyed value
-			if( trim( $arg ) && strstr( $arg, '=' ) )
-			{
-				list( $key, $value ) = explode( '=', $arg );
-				if( isset( $key ) && isset( $value ) )
+				$argso = explode( '=', $args[ 0 ] );
+				$args1 = $argso;
+				if( array_shift( $argso ) == 'friendrequestparameters' )
 				{
-					if( substr( $value, 0, 13 ) == '<!--base64-->' )
+					$dataset = file_get_contents( end( $args1 ) );
+					$args = explode( '&', $dataset );
+				}
+			}
+
+			$num = 0;
+			$kvdata = new stdClass();
+			foreach ( $args as $arg )
+			{
+				// Keyed value
+				if( trim( $arg ) && strstr( $arg, '=' ) )
+				{
+					list( $key, $value ) = explode( '=', $arg );
+					if( isset( $key ) && isset( $value ) )
 					{
-						$value = trim( base64_decode( substr( $value, 13, strlen( $value ) - 13 ) ) );
-					}
-					if( strstr( $value, '%' ) || strstr( $value, '&' ) ) 
-					{
-						if( strstr( $value, '%2B' ) )
+						if( substr( $value, 0, 13 ) == '<!--base64-->' )
 						{
-							$value = explode( '%2B', $value );
-							foreach( $value as $k=>$v )
+							$value = trim( base64_decode( substr( $value, 13, strlen( $value ) - 13 ) ) );
+						}
+						if( strstr( $value, '%' ) || strstr( $value, '&' ) ) 
+						{
+							if( strstr( $value, '%2B' ) )
 							{
-								$value[ $k ] = rawurldecode( $v );
+								$value = explode( '%2B', $value );
+								foreach( $value as $k=>$v )
+								{
+									$value[ $k ] = rawurldecode( $v );
+								}
+								// %2B also have to be rawurldecoded at the end ...
+								$value = rawurldecode( implode( '%2B', $value ) );
 							}
-							// %2B also have to be rawurldecoded at the end ...
-							$value = rawurldecode( implode( '%2B', $value ) );
-						}
-						else
-						{
-							$value = rawurldecode( $value );
-						}
-					}
-					if( $value && ( $value[0] == '{' || $value[0] == '[' ) )
-					{
-						if( $data = json_decode( $value ) )
-						{
-							// We got a "post_json" element, which used POST
-							if( $key == 'post_json' )
+							else
 							{
-								$key = 'args';
-								$data = $data->args;
+								$value = rawurldecode( $value );
 							}
-							$kvdata->$key = $data;
-							continue;
 						}
-						// Try to strip
-						else if( $data = json_decode( stripslashes( $value ) ) )
+						if( $value && ( $value[0] == '{' || $value[0] == '[' ) )
 						{
-							// We got a "post_json" element, which used POST
-							if( $key == 'post_json' )
+							if( $data = json_decode( $value ) )
 							{
-								$key = 'args';
-								$data = $data->args;
+								// We got a "post_json" element, which used POST
+								if( $key == 'post_json' )
+								{
+									$key = 'args';
+									$data = $data->args;
+								}
+								$kvdata->$key = $data;
+								continue;
 							}
-							$kvdata->$key = $data;
-							continue;
+							// Try to strip
+							else if( $data = json_decode( stripslashes( $value ) ) )
+							{
+								// We got a "post_json" element, which used POST
+								if( $key == 'post_json' )
+								{
+									$key = 'args';
+									$data = $data->args;
+								}
+								$kvdata->$key = $data;
+								continue;
+							}
 						}
+						$kvdata->$key = $value;
 					}
-					$kvdata->$key = $value;
 				}
 			}
 		}
-		$GLOBALS['args'] = $kvdata;
 	}
+	$GLOBALS['args'] = $kvdata;
 }
 
 $UserAccount = false;
@@ -606,7 +631,7 @@ if( file_exists( 'cfg/cfg.ini' ) )
 		{
 			// Get current data
 			$string = ob_get_contents();
-			ob_clean();
+			@ob_clean();
 		
 			// Write data with headers
 			$out = "---http-headers-begin---\n";

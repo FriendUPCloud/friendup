@@ -2321,14 +2321,15 @@ function Widget( flags )
 		// Remove widget from list
 		let w = [];
 		let a;
-		for (a in Application.widgets)
-			if (Application.widgets[a] != this)
-				w.push(Application.widgets[a]);
+		for( a in Application.widgets )
+			if( Application.widgets[ a ] != this )
+				w.push( Application.widgets[ a ] );
 		Application.widgets = w;
 	}
 
 	// Setup view object with master
 	Application.sendMessage( msg );
+	
 	if( !Application.widgets )
 		Application.widgets = {};
 	Application.widgets[ widgetId ] = this;
@@ -3917,6 +3918,7 @@ function File( path )
 
 function Module( module )
 {
+	let self = this;
 	let fid = addCallback( this );
 	this.vars = [];
 	this.execute = function( method, args )
@@ -3928,16 +3930,26 @@ function Module( module )
 			module:  module,
 			method:  method,
 			args:    args,
-			vars:    this.vars,
+			timeout: self.timeout,
+			vars:    self.vars,
 			fileId:  fid
 		};
 		
-		if( this.forceHTTP )
+		if( self.forceHTTP )
 		{
-			ms.forceHTTP = this.forceHTTP;
+			ms.forceHTTP = self.forceHTTP;
 		}
 		
 		Application.sendMessage( ms );
+	}
+	
+	this.cancel = function()
+	{
+		Application.sendMessage( {
+			type: 'module',
+			method: 'cancel',
+			fileId: fid
+		} );
 	}
 	
 	this.addVar = function( key, value )

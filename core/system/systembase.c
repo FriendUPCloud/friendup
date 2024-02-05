@@ -268,6 +268,7 @@ SystemBase *SystemInit( FBOOL skipDBupdParam )
 
 	// execute.library structure
 	l->RunMod = RunMod;
+	l->StreamMod = StreamMod;
 	l->MountFS = MountFS;
 	l->UnMountFS = UnMountFS;
 
@@ -287,7 +288,6 @@ SystemBase *SystemInit( FBOOL skipDBupdParam )
 	l->SendProcessMessage = SendProcessMessage;
 	l->GetRootDeviceByName = GetRootDeviceByName;
 	l->SystemInitExternal = SystemInitExternal;
-	l->RunMod = RunMod;
 	l->GetSentinelUser = GetSentinelUser;
 	l->UserDeviceMount = UserDeviceMount;
 	l->UserDeviceUnMount = UserDeviceUnMount;
@@ -2139,6 +2139,50 @@ char *RunMod( SystemBase *l, const char *type, const char *path, const char *arg
 	}
 
 	return results;
+}
+
+/**
+ * Run module in streaming mode
+ *
+ * @param l pointer to SystemBase
+ * @param type type of module which will be used to make call
+ * @param path path to module exe file
+ * @param args additional parameters to module
+ * @param response pointer to Http structure for writing server output
+ * @return string with answer from module
+ */
+int StreamMod( SystemBase *l, const char *type, const char *path, const char *args, Http *request, Http **httpResponse )
+{
+	int dataLength = 0;
+
+	EModule *lmod = l->sl_Modules;
+	EModule *workmod = NULL;
+	
+	while( lmod != NULL )
+	{
+		if( lmod->GetSuffix != NULL )
+		{
+			if( strcmp( lmod->GetSuffix(), type ) == 0 )
+			{
+				workmod = lmod;
+				break;
+			}
+		}
+		lmod = (EModule *)lmod->node.mln_Succ;
+	}
+
+	if( workmod != NULL && lmod->Stream != NULL )
+	{
+		//DEBUG("[SystemBase] Found module '%s', using it\n", lmod->GetSuffix() );
+		
+		dataLength = lmod->Stream( lmod, path, args, request, httpResponse );
+	}
+	else
+	{
+		Log( FLOG_ERROR,"Cannot stream '%s' script!\n", type );
+	}
+
+	return dataLength;
 }
 
 /**

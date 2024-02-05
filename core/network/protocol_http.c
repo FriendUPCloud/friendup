@@ -1855,17 +1855,40 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 													}
 												}
 												
+												if( request->http_Content )
+													clen += strlen( request->http_Content ) + 3;
+												
+												int dataLength = 0;
+												
 												if( phpResp == NULL )
 												{
-													DEBUG("CatchALL 1621\n");
-													if( ( command = FCalloc( clen, sizeof(char) ) ) != NULL )
-													{
-														snprintf( command, clen, "php \"php/catch_all.php\" \"%s\" \"%s\";", uri->uri_Path->p_Raw, request->http_Uri ? request->http_Uri->uri_QueryRaw : NULL );
+													Http *response = NULL;
 													
-														Log( FLOG_DEBUG, "[ProtocolHttp] Executing php/catch_all.php\n");
-														phpResp = RunPHPScript( command );
-														
-														FFree( command );
+													if( uri->uri_Path->p_Raw != NULL )
+													{	
+														int len = ( uri->uri_Path->p_Raw ? 
+															( strlen( uri->uri_Path->p_Raw ) + 
+															( request->http_Uri->uri_QueryRaw ? strlen( request->http_Uri->uri_QueryRaw ) : 0 ) ) : 0 ) + 
+															1 + 2;
+														BufString *req = BufStringNew();
+														if( req != NULL )
+														{
+															BufStringAddSize( req, uri->uri_Path->p_Raw, strlen( uri->uri_Path->p_Raw ) );
+															BufStringAddSize( req, "/?", 2 );
+															int hasQuery = 0;
+															if( request->http_Uri->uri_QueryRaw )
+															{
+																BufStringAddSize( req, request->http_Uri->uri_QueryRaw, strlen( request->http_Uri->uri_QueryRaw ) );
+																hasQuery = 1;
+															}
+															if( request->http_Content )
+															{
+																BufStringAddSize( req, "&", 1 );
+																BufStringAddSize( req, request->http_Content, strlen( request->http_Content ) );
+															}
+															dataLength = SLIB->StreamMod( SLIB, "php", "php/catch_all.php", req->bs_Buffer, request, &response );
+															BufStringDelete( req );
+														}
 													}
 												} // content-type json
 
@@ -1944,6 +1967,11 @@ Http *ProtocolHttp( Socket* sock, char* data, FQUAD length )
 													Log( FLOG_ERROR, "Module call returned bytes: %lu\n", phpResp->bs_Size );
 													//bs->ls_Data = NULL; 
 													BufStringDelete( phpResp );
+												}
+												else if( dataLength > 0 )
+												{
+													Log( FLOG_ERROR,"Streamed using module backend (PHPCall)\n");
+													result = 200;
 												}
 												else 
 												{

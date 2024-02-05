@@ -582,6 +582,7 @@ function ExecuteApplication( app, args, callback, retries, flags )
 				{
 					for( var a in this.widgets )
 					{
+						console.log( 'Trying to close this widget: ', a, this.widgets[ a ]  );
 						this.widgets[a].close( level );
 					}
 				}

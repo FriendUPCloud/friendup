@@ -16,6 +16,15 @@ $path = '';
 // Get arguments from argv
 if( isset( $argv ) && isset( $argv[1] ) )
 {
+	// Strip questions
+	$test = explode( '?', $argv[1] );
+	if( isset( $test[1] ) )
+	{ 
+		$argv[1] = $test[0];
+		$argv[2] = $test[1];
+	}
+	unset( $test );
+	
 	if( $args = explode( "&", $argv[1] ) )
 	{
 		$kvdata = new stdClass();
@@ -60,7 +69,9 @@ if( isset( $argv ) && isset( $argv[1] ) )
 			{
 				$host .= ':' . $conf[ 'FriendCore' ][ 'port' ];
 			}
-			
+			print( "---http-headers-begin---\n" );
+			print( "Content-type: text/html\n" );
+			print( "---http-headers-end---\n" );
 			die( '<script>document.location.href=\'' . $host . '/webclient/index.html\';</script>' );
 		}
 		// User is requesting an operation on calendarevent

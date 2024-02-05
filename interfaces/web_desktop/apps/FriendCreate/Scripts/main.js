@@ -1230,7 +1230,7 @@ function OpenProjectEditor()
 var Project = function()
 {
 	// Some variables
-	var o = {
+	let o = {
 		ProjectName: '',
 		Path:        '',
 		Author:      '',
@@ -1242,7 +1242,7 @@ var Project = function()
 		Permissions: [],
 		Libraries:   []
 	};
-	for( var a in o ) this[ a ] = o[ a ];
+	for( let a in o ) this[ a ] = o[ a ];
 }
 
 function NewProject()
@@ -1631,15 +1631,15 @@ function RefreshProjects()
 		return;
 	}
 	
-	var listedFolders = {};
+	let listedFolders = {};
 	
-	var str = '';
-	for( var a = 0; a < projects.length; a++ )
+	let str = '';
+	for( let a = 0; a < projects.length; a++ )
 	{
 		if( !Application.currentProject )
 			Application.currentProject = projects[ a ];
-		var pr = projects[ a ];
-		var fstr = '';
+		let pr = projects[ a ];
+		let fstr = '';
 		
 		// Track folder state
 		if( !projectFolders[ pr.ID ] )
@@ -1649,15 +1649,14 @@ function RefreshProjects()
 		{
 			SetProjectPath( pr );
 		}
-		var projectpath = pr.ProjectPath;
 		
 		if( pr.Files && pr.Files.length )
 		{
-			var sortable = [];
-			for( var c = 0; c < pr.Files.length; c++ )
+			let sortable = [];
+			for( let c = 0; c < pr.Files.length; c++ )
 			{
 				pr.Files[ c ].ProjectID = pr.ID;
-				var path = pr.Files[ c ].Path;
+				let path = pr.Files[ c ].Path;
 				
 				if( path.indexOf( pr.ProjectPath ) == 0 )
 				{
@@ -1671,6 +1670,7 @@ function RefreshProjects()
 					path.pop();
 					path = path.join( '/' ) + '/';
 				}
+				
 				sortable[ pr.Files[ c ].Path ] = {
 					levels: pr.Files[ c ].Path.split( '/' ),
 					path: path,
@@ -1678,9 +1678,9 @@ function RefreshProjects()
 				}
 			}
 			sortable = sortable.sort();
-			fstr = listFiles( sortable, 1, false, pr.ID );
+			fstr = listFiles( sortable, 1, false, pr.ID, pr.ProjectPath );
 		}
-		var current = ' BackgroundHeavy Rounded';
+		let current = ' BackgroundHeavy Rounded';
 		if( Application.currentProject == pr )
 		{
 			current = ' Current BackgroundHeavier Rounded';
@@ -1690,9 +1690,9 @@ function RefreshProjects()
 	ge( 'SB_Project' ).innerHTML = str;
 	
 	// Update project files index
-	var eles = ge( 'SB_Project' ).getElementsByTagName( 'li' );
+	let eles = ge( 'SB_Project' ).getElementsByTagName( 'li' );
 	projectFiles = {};
-	for( var a = 0; a < eles.length; a++ )
+	for( let a = 0; a < eles.length; a++ )
 	{
 		if( eles[ a ].getAttribute( 'path' ) )
 		{
@@ -1701,78 +1701,92 @@ function RefreshProjects()
 	}
 	
 	// Update files status
-	for( var a = 0; a < files.length; a++ )
+	for( let a = 0; a < files.length; a++ )
 	{
 		files[ a ].updateState();
 	}
 	
-	// List files recursively
-	function listFiles( list, depth, path, projectId )
+	function listFiles( listOfFiles, depth = 0, path = false, projectId, projectPath, currentPath = '' )
 	{
-		// Erronous path
-		if( path && path.indexOf( ':' ) > 0 )
-			return '';
-		
-		var str = '';
-		
-		if( !listedFolders[ projectId ] )
-			listedFolders[ projectId ] = {};
-		
-		for( var a in list )
+		let structure = { __files: [] };
+	
+		function layStructure( path, structure, filename = false ) // path = array
 		{
-			var paths = '';
-			if( list[ a ].path.indexOf( '/' ) > 0 )
+			let curr = structure;
+			for( let a = 0; a < path.length; a++ )
 			{
-				list[ a ].path = list[ a ].path.split( '//' ).join( '/' );
-				var p = list[a].path.split( '/' );
-				for( var z = 0; z < depth; z++ )
+				if( Trim( path[ a ] ) )
 				{
-					if( p[ z ] && typeof( p[ z ] ) != 'undefined' )
-						paths += p[ z ] + '/';
+					if( !curr[ path[ a ] ] )
+					{
+						curr[ path[ a ] ] = { __files: [] };
+					}
+					curr = curr[ path[ a ] ];
 				}
 			}
-			
-			// This is a file item
-			if( list[ a ].levels.length == depth )
+			if( filename && curr.__files )
 			{
-				var fpath = projectpath + list[a].fullpath;
-				if( !path || ( path && list[ a ].path == path ) )
-				{
-					str += '<li class="FileItem" path="' + fpath + '" onclick="OpenFile(\'' + fpath + '\'); cancelBubble( event )">' + list[ a ].levels[ depth - 1 ] + '</li>';
-				}
-			}
-			// This is a folder under current depth
-			else if( list[a].levels.length == depth + 1 && !listedFolders[ projectId ][ list[ a ].path ] && list[ a ].path.indexOf( ':' ) < 0 )
-			{
-				listedFolders[ projectId ][ list[ a ].path ] = true;
-				
-				if( !projectFolders[ projectId ][ list[ a ].path ] )
-					projectFolders[ projectId ][ list[ a ].path ] = {};
-				
-				var cl = projectFolders[ projectId ][ list[ a ].path ] && projectFolders[ projectId ][ list[ a ].path ].state == 'open' ? ' Open' : '';
-				str += '<li class="Folder ' + cl + '" path="' + list[a].path + '" projectId="' + projectId + '" onclick="SetCurrentProject( \'' + projectId + '\' ); ToggleOpenFolder(this); cancelBubble( event )">' + list[ a ].levels[ depth - 1 ] + '/</li>';
-				
-				listedFolders[ projectId ][ paths ] = true;
-				str += listFiles( list, depth + 1, list[ a ].path, projectId );
-			}
-			// This is a folder that may contain a folder
-			else if( list[a].path.indexOf( '/' ) > 0 )
-			{
-				if( !listedFolders[ projectId ][ paths ] )
-				{
-					listedFolders[ projectId ][ paths ] = true;
-				
-					if( !projectFolders[ projectId ][ paths ] )
-						projectFolders[ projectId ][ paths ] = {};
-				
-					var cl = projectFolders[ projectId ][ paths ] && projectFolders[ projectId ][ paths ].state == 'open' ? ' Open' : '';
-					str += '<li class="Folder ' + cl + '" path="' + paths + '" projectId="' + projectId + '" onclick="SetCurrentProject( \'' + projectId + '\' ); ToggleOpenFolder(this); cancelBubble( event )">' + list[ a ].levels[ depth - 1 ] + '/</li>';
-					str += listFiles( list, depth + 1, list[ a ].path, projectId );
-				}
+				curr.__files.push( filename );
 			}
 		}
-		if( str.length ) str = '<ul>' + str + '</ul>';
-		return str;
+	
+		// Extract folders and place files in each folder
+		for( let a in listOfFiles )
+		{
+			let f = listOfFiles[ a ];
+			
+			let path = f.path.split( '/' );
+			let filename = f.fullpath.split( '/' );
+			filename = filename[ filename.length - 1 ];
+			if( Trim( filename ) )
+				layStructure( path, structure, filename );
+		}
+		
+		function listStructure( unsorted, path = '' )
+		{
+			let str = '';
+			
+			const level = Object.keys( unsorted ).sort().reduce(
+				( obj, key ) => { 
+					obj[key] = unsorted[key]; 
+					return obj;
+				  }, 
+				  {}
+			);
+			
+			// Folders first
+			for( let a in level )
+			{
+				// We skip level files now
+				if( a == '__files' && level[ a ].length >= 0 )
+				{
+					continue;
+				}
+				let ppath = path + a + '/';
+				if( !projectFolders[ projectId ][ ppath ] ) projectFolders[ projectId ][ ppath ] = {};
+				let pfile = projectFolders[ projectId ][ ppath ];
+				let cl = pfile && pfile.state == 'open' ? ' Open' : '';
+				str += '<li class="Folder ' + cl + '" path="' + ppath + '" projectId="' + projectId + '" onclick="SetCurrentProject( \'' + projectId + '\' ); ToggleOpenFolder(this); cancelBubble( event )">' + a + '/</li>';
+				str += listStructure( level[ a ], ppath );
+			}
+			if( level.__files && level.__files.length )
+			{
+				level.__files = level.__files.sort();
+				for( let a = 0; a < level.__files.length; a++ )
+				{
+					let ppath = path ? ( path ) : ''
+					let file = level.__files[ a ];
+					str += '<li class="FileItem" path="' + ppath + '/" onclick="OpenFile(\'' + projectPath + ppath + file + '\'); cancelBubble( event )">' + file + '</li>';
+				}
+			}
+			if( str.length )
+			{
+				str = '<ul>' + str + '</ul>';
+			}
+			return str;
+		}
+		
+		return listStructure( structure )
 	}
 }
 
@@ -1780,7 +1794,7 @@ function SetCurrentProject( p )
 {
 	var cl = ge( 'SB_Project' ).getElementsByClassName( 'Project' );
 	
-	for( var a = 0; a < projects.length; a++ )
+	for( let a = 0; a < projects.length; a++ )
 	{
 		if( projects[ a ].ID == p )
 		{
@@ -1788,15 +1802,15 @@ function SetCurrentProject( p )
 			{
 				Application.currentProject = projects[ a ];
 				
-				for( var a = 0; a < cl.length; a++ )
+				for( let b = 0; b < cl.length; b++ )
 				{
-					if( cl[ a ].id == 'p' + p )
+					if( cl[ b ].id == 'p' + p )
 					{
-						cl[ a ].classList.add( 'Current', 'BackgroundHeavier', 'Rounded' );
+						cl[ b ].classList.add( 'Current', 'BackgroundHeavier', 'Rounded' );
 					}
 					else
 					{
-						cl[ a ].classList.remove( 'Current', 'BackgroundHeavier', 'Rounded' );
+						cl[ b ].classList.remove( 'Current', 'BackgroundHeavier', 'Rounded' );
 					}
 				}
 				CheckPlayStopButtons();

@@ -2130,9 +2130,6 @@ function apiWrapper( event, force )
 										w.push( app.widgets[a] );
 								app.widgets = w;
 							}
-							else
-							{
-							}
 							break;
 					}
 				}
@@ -2539,6 +2536,17 @@ function apiWrapper( event, force )
 				break;
 			// Module ----------------------------------------------------------
 			case 'module':
+				
+				// Cancel feature
+				if( msg.method == 'cancel' )
+				{
+					if( msg.fileId )
+					{
+						CancelCajaxOnId( msg.fileId );
+					}
+					return;
+				}
+				
 				var fileId = msg.fileId;
 
 				// Perhaps do error?
@@ -2554,11 +2562,18 @@ function apiWrapper( event, force )
 
 				// Make real module object
 				var f = new Module( msg.module );
+				f.cancelId = fileId;
 				f.application = app;
 
 				if( msg.forceHTTP )
 				{
 					f.forceHTTP = msg.forceHTTP;
+				}
+				// Set timeout override
+				if( msg.timeout )
+				{
+					console.log( 'Adding call timeout' );
+					f.timeout = msg.timeout;
 				}
 
 				// Add variables

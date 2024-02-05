@@ -1539,8 +1539,18 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 							
 							DEBUG("[SysWebRequest] Calling module '%s' allargs '%s'\n", modulePath, allArgsNew );
 
-							// Execute
-							data = l->RunMod( l, modType, modulePath, allArgsNew, &dataLength );
+							// Execute by streaming (will not work on websockets)
+							if( (*request)->http_RequestSource != HTTP_SOURCE_WS && l->StreamMod != NULL )
+							{
+								data = NULL;
+								DEBUG("[SysWebRequest] StreamMod mode\n" );
+								dataLength = l->StreamMod( l, modType, modulePath, allArgsNew, *request, &response );
+							}
+							else
+							{
+								DEBUG("[SysWebRequest] RunMod mode\n" );
+								data = l->RunMod( l, modType, modulePath, allArgsNew, &dataLength );
+							}
 							
 							// We don't use them now
 							if( allArgsNew != NULL )
@@ -1718,12 +1728,18 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 
 			*result = 200;
 		}
-		else
+		// We have stream data length of 0
+		else if( dataLength == 0 )
 		{
 			Log( FLOG_ERROR, "[SystemWeb]: php returned NULL for request '%s'\n", (*request)->http_Content );
 			
 			FERROR("[SysWebRequest] ERROR returned data is NULL\n");
 			*result = 404;
+		}
+		// Assume it was correct
+		else
+		{
+			*result = 200;
 		}
 		
 		Log( FLOG_INFO, "Module call end: %p\n", pthread_self() );

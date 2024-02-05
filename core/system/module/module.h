@@ -38,6 +38,7 @@
 struct EModule;
 
 typedef char *(*module_run_func_t)(struct EModule *em, const char *path, const char *args, FULONG *length);
+typedef int (*module_stream_func_t)(struct EModule *em, const char *path, const char *args, Http *request, Http **httpResponse);
 
 //
 // Execute Module structure
@@ -50,6 +51,7 @@ typedef struct EModule
 	char							*em_Path;					// full path to module
 	void							*em_Handle;				// handle to dynamic object
 	module_run_func_t				Run;
+	module_stream_func_t			Stream;
 	char							*(*GetSuffix)( );
 	void							*em_SB;
 
