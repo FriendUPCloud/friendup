@@ -4227,6 +4227,8 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 			if ( !e ) e = window.event;
 			if( this.directoryView.filedialog ) return;
 			
+			if( window.Workspace.interfaceMode == 'native' ) return;
+			
 			if ( window.mouseDown == this )
 			{
 				this.classList.add( 'Selected' );
