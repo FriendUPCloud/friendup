@@ -2590,7 +2590,7 @@ class View
 		this.removeScriptsFromData = Friend.GUI.view.removeScriptsFromData;
 
 		// TODO: Native window mode should work!
-		let webapp = rootScope.document.location.href.indexOf( '/webapp.html' ) > 0 || rootScope.document.location.href.indexOf( 'native=' ) > 0;
+		let webapp = rootScope.document.location.href.indexOf( '/webapp.html' ) > 0 || rootScope.document.location.href.indexOf( 'interface=native' ) > 0;
 		if( webapp && !rootScope.windowCount ) rootScope.windowCount = 0;
 		if( webapp && rootScope.document.body.classList.contains( 'Inside' ) )
 		{

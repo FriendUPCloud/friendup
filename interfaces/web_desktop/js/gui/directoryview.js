@@ -3439,7 +3439,7 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 	file.className = 'File';
 	file.style.position = 'absolute';
 
-	if( flags && flags.nativeDraggable )
+	if( flags && flags.nativeDraggable || Workspace.interfaceMode == 'native' )
 	{
 		file.setAttribute( 'draggable', true );
 	}

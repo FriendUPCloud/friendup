@@ -2905,7 +2905,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			{
 				if( !depth )
 				{
-					if( !addition && document.location.href.indexOf( 'native=' ) > 0 )
+					if( !addition && Workspace.interfaceMode == 'native' )
 					{
 						let m = new Module( 'friendbook' );
 						m.onExecuted = function( me, md )

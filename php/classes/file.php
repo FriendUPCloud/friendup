@@ -215,7 +215,11 @@ class File
 	{
 		global $Config, $User, $Logger;
 		
+		if( !$path && $this->path ) $path = $this->path;
+		
 		$url = $this->GetUrl( $path, $userInfo );
+		
+		$Logger->log( 'Fetching: ' . $url );
 
 		$c = curl_init();
 		
