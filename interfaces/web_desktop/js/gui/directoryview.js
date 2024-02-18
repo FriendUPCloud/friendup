@@ -4225,9 +4225,9 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 		file.onmouseout = function( e )
 		{
 			if ( !e ) e = window.event;
-			if( this.directoryView.filedialog ) return;
 			
-			if( window.Workspace.interfaceMode == 'native' ) return;
+			if( this.directoryView.filedialog ) return; // No dragging in file dialogs
+			if( window.Workspace.interfaceMode == 'native' ) return; // Native handles on its own
 			
 			if ( window.mouseDown == this )
 			{
