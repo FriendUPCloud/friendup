@@ -10683,12 +10683,13 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	// Checks for a native system
 	nativeChecks: function()
 	{
+		let self = this;
 		let m = new Module( 'friendbook' );
 		m.onExecuted = function( me, md )
 		{
 			if( me == 'ok' )
 			{
-				console.log( 'Result: ' . md );
+				self.nativeTasks = JSON.parse( md );
 			}
 		}
 		m.execute( 'tasklist' );

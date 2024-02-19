@@ -89,6 +89,62 @@ class LinuxSystem
 		return false;
 	}
 	
+	public function tasklist( $vars = false, $args = false )
+	{
+		// Execute the 'ps -lax' command and capture the output
+		exec( 'ps -lax', $output, $status );
+
+		// Check if the command was successful
+		if( $status === 0 )
+		{
+			// Skip the first line of output, which contains the headers
+			$cnt = count( $output );
+			$unique = new stdClass();
+			
+			// Initialize an array to hold the parsed processes
+			$processes = [];
+
+			for( $i = 1; $i < $cnt; $i++ )
+			{
+				// Split the line into parts
+				$parts = preg_split( '/\s+/', $output[ $i ], -1, PREG_SPLIT_NO_EMPTY );
+
+				// Create an associative array for the current process
+				// Note: You might need to adjust the indices based on the 'ps' output format
+				$process = [
+					'F' => $parts[ 0 ],
+					'UID' => $parts[ 1 ],
+					'PID' => $parts[ 2 ],
+					'PPID' => $parts[ 3 ],
+					'PRI' => $parts[ 4 ],
+					'NI' => $parts[ 5 ],
+					'ADDR' => $parts[ 6 ],
+					'SZ' => $parts[ 7 ],
+					'WCHAN' => $parts[ 8 ],
+					'STIME' => $parts[ 9 ],
+					'TTY' => $parts[ 10 ],
+					'TIME' => $parts[ 11 ],
+					'CMD' => implode( ' ', array_slice( $parts, 12 ) ) // Concatenate the remaining parts for the command
+				];
+				// Skip non-commands
+				if( $process[ 'CMD' ][0] != '/' ) continue;
+				$un = explode( '/', $process[ 'CMD' ] );
+				$un = end( $un );
+				$un = explode( ' ', $un );
+				$un = reset( $un );
+				if( isset( $unique->{$un} ) ) continue;
+				$unique->{$un} = true;
+
+				// Add the process to the processes array
+				$processes[] = $process;
+			}
+
+			// Output the processes array
+			die( 'ok<!--separate-->' . json_encode( $processes ) );
+		}
+		return 'fail';
+	}
+	
 	// Execute an application to void
 	public function run( $executable = false )
 	{

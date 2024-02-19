@@ -38,6 +38,21 @@ class Nexus
     	}
     }
     
+    public function tasklist( $vars, $args )
+    {
+    	require_once( 'modules/friendbook/drivers/linux.system.class.php' );
+    	
+    	$s = new LinuxSystem();
+    	if( $response = $s->tasklist( $vars, $args ) )
+    	{
+    		return 'ok<!--separate-->' . json_encode( $response );
+    	}
+    	else
+    	{
+    		return 'fail<!--separate-->{"response":"-1","message":"Failed to list native tasks."}';
+    	}
+    }
+    
     public function run( $vars, $args )
     {
     	global $Logger;

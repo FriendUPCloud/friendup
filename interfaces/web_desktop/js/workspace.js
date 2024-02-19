@@ -200,7 +200,7 @@ Workspace = {
 			this.nativeIntr = setInterval( function()
 			{
 				Workspace.nativeChecks();
-			}, 1000 );
+			}, 5000 );
 		}
 		
 		let self = this;
