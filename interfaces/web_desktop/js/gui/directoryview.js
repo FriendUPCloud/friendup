@@ -1501,6 +1501,12 @@ DirectoryView.prototype.InitWindow = function( winobj )
 			// no more events please
 			cancelBubble( e );
 			
+			if( e.target && e.target.getAttribute( 'draggable' ) == 'true' )
+			{
+				console.log( 'Hmm' );
+				return;
+			}
+			
 			if( winobj && winobj.fileInfo && winobj.fileInfo.Path.indexOf( 'Shared:' ) == 0 )
 			{
 				Notify( { title: i18n( 'i18n_not_upload_target' ), text: i18n( 'i18n_not_upload_target_desc' ) } );
@@ -4227,10 +4233,12 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 			if ( !e ) e = window.event;
 			
 			if( this.directoryView.filedialog ) return; // No dragging in file dialogs
-			if( window.Workspace.interfaceMode == 'native' ) return; // Native handles on its own
-			
 			if ( window.mouseDown == this )
 			{
+				if( window.Workspace.interfaceMode == 'native' ) 
+				{
+					return; // Native handles on its own
+				}
 				this.classList.add( 'Selected' );
 				this.fileInfo.selected = true;
 				this.selected = true;
@@ -4248,8 +4256,6 @@ FileIcon.prototype.Init = function( fileInfo, flags )
 	// Notice: Door and Dormant with isMobile overwrites onclick
 	if( !self.flags || ( self.flags && !self.flags.nativeDraggable ) )
 	{
-    
-        
 	    let eventName = ( window.isMobile && ( fileInfo.Type == 'Door' || fileInfo.Type == 'Dormant' ) ) ? 'onclick' : 'ondblclick';
 
 	    ( function( eventn, fil, func )
