@@ -10683,7 +10683,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	// Checks for a native system
 	nativeChecks: function()
 	{
-		let m = new Module( 'FriendBook' );
+		let m = new Module( 'friendbook' );
 		m.onExecuted = function( me, md )
 		{
 			if( me == 'ok' )
