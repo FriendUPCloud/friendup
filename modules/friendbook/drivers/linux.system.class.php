@@ -19,8 +19,11 @@ class LinuxSystem
 	// List native apps on host Linux system in a list
 	public function nativeapps( $vars, $args )
 	{
+		global $Logger;
+		
 		// Common application path:
 		$path = '/usr/share/applications';
+		$exist = new stdClass();
 		
 		// Check path and list apps' information
 		if( file_exists( $path ) && is_dir( $path ) )
@@ -31,15 +34,49 @@ class LinuxSystem
 				while( $f = readdir( $d ) )
 				{
 					if( $f[0] == '.' ) continue;
-					$try = parse_ini_file( $path . '/' . $f );
+					$try = @parse_ini_file( $path . '/' . $f );
 					if( $try && $try[ 'Exec' ] && $try[ 'Name' ] )
 					{
 						$o = new stdClass();
 						$o->Exec = $try[ 'Exec' ];
 						$o->Name = $try[ 'Name' ];
-						$o->Categories = $try[ 'Categories' ];
+						
+						$o->Category = false;
+						$categories = explode( ';', $try[ 'Categories' ] );
+						$category = false;
+						if( count( $categories ) > 0 )
+						{	
+							foreach( $categories as $c )
+							{
+								if( !$category || strlen( trim( $c ) ) > 3 )
+								{
+									$category = trim( $c );
+								}
+							}
+							if( $category )
+								$o->Categories = $category;
+						}
+						if( !$o->Categories )
+						{
+							$o->Categories = $try[ 'Categories' ];
+						}
+						if( is_array( $o->Name ) )
+						{
+							$ex = explode( ' ', $o->Exec );
+							$ex = reset( $ex );
+							if( strstr( $ex, '/' ) )
+							{
+								$ex = explode( '/', $ex );
+								$ex = end( $ex );
+							}
+							$o->Name = ucfirst( $ex );
+						}
 						$o->Icon = $try[ 'Icon' ];
-						$out[] = $o;
+						if( isset( $o->Name ) && !isset( $exist->{$o->Name} ) )
+						{
+							$exist->{$o->Name} = true;
+							$out[] = $o;
+						}
 					}
 				}
 				if( count( $out ) )

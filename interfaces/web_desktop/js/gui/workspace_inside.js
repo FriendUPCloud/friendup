@@ -10679,6 +10679,19 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		{
 			self.Tasklist();
 		}, 250 );
+	},
+	// Checks for a native system
+	nativeChecks: function()
+	{
+		let m = new Module( 'FriendBook' );
+		m.onExecuted = function( me, md )
+		{
+			if( me == 'ok' )
+			{
+				console.log( 'Result: ' . md );
+			}
+		}
+		m.execute( 'tasklist' );
 	}
 };
 

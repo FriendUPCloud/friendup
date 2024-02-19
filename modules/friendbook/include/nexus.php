@@ -25,7 +25,7 @@ class Nexus
     
     public function nativeapps( $vars, $args )
     {
-    	require_once( 'modules/friendbook/drivers/system.class.php' );
+    	require_once( 'modules/friendbook/drivers/linux.system.class.php' );
     	
     	$s = new LinuxSystem();
     	if( $response = $s->nativeapps( $vars, $args ) )

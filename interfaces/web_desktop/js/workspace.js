@@ -195,6 +195,14 @@ Workspace = {
 			} );
 		}
 		
+		if( Workspace.interfaceMode == 'native' )
+		{
+			this.nativeIntr = setInterval( function()
+			{
+				Workspace.nativeChecks();
+			}, 1000 );
+		}
+		
 		let self = this;
 		
 		// Everything must be ready
