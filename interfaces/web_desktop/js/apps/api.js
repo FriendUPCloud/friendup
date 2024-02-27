@@ -83,6 +83,7 @@ if( !window.LoadScript )
 		{
 			let s = document.createElement( 'script' );
 			s.type = 'text/javascript';
+			s.async = false;
 			s.src = scriptSrc;
 			s.onload = callback;
 			document.head.appendChild( s );
@@ -2443,7 +2444,7 @@ function View( flags )
 	                // Add scripts to template string
 	                if( val.substr( -3, 3 ).toLowerCase() == '.js' )
 	                {
-	                    templateStr += "\n" + '<script src="' + getWebUrl( val ) + '"></script>';
+	                    templateStr += "\n" + '<friendscript src="' + getWebUrl( val ) + '"></friendscript>';
 	                }
 	                // Add css to template string
 	                if( val.substr( -4, 4 ).toLowerCase() == '.css' )
