@@ -295,9 +295,11 @@ window.FUI = window.FUI ? window.FUI : {
 class FUIElement
 {
     // Sets default values etc
-    constructor( options )
+    constructor( options, vars = false )
     {
         this.options = options ? options : false;
+        
+        if( vars ) for( let a in vars ){ this[ a ] = vars[ a ]; }
         
         if( this.options && typeof( options.uniqueid ) != 'undefined' && options.uniqueid )
         {
