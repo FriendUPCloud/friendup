@@ -347,20 +347,24 @@ DirectoryView.prototype.initToolbar = function( winobj )
 		t.style.top = Workspace.interfaceMode == 'native' ? '0px' : ( winobj.parentNode.querySelector( '.Title' ).offsetHeight + 'px' );
 		t.style.left = '0px';
 		t.style.width = '100%';
-		let h = getComputedStyle( t ).height;
-		winobj.style.top = getComputedStyle( t ).height;
-		winobj.style.height = 'calc(100% - ' + winobj.style.top + ')';
-		// TODO: This is a hack because computed style and offsetHeight isn't yet there..
-		setTimeout( function()
+		
+		if( Workspace.interfaceMode == 'native' )
 		{
+			let h = getComputedStyle( t ).height;
 			winobj.style.top = getComputedStyle( t ).height;
 			winobj.style.height = 'calc(100% - ' + winobj.style.top + ')';
-		}, 125 );
-		setTimeout( function()
-		{
-			winobj.style.top = getComputedStyle( t ).height;
-			winobj.style.height = 'calc(100% - ' + winobj.style.top + ')';
-		}, 250 );
+			// TODO: This is a hack because computed style and offsetHeight isn't yet there..
+			setTimeout( function()
+			{
+				winobj.style.top = getComputedStyle( t ).height;
+				winobj.style.height = 'calc(100% - ' + winobj.style.top + ')';
+			}, 125 );
+			setTimeout( function()
+			{
+				winobj.style.top = getComputedStyle( t ).height;
+				winobj.style.height = 'calc(100% - ' + winobj.style.top + ')';
+			}, 250 );
+		}
 	}
 
 	let rpath = winobj.fileInfo.Path ? winobj.fileInfo.Path : ( winobj.fileInfo.Volume );
