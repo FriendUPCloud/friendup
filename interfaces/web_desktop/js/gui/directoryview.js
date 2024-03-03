@@ -343,6 +343,17 @@ DirectoryView.prototype.initToolbar = function( winobj )
 	}
 	else
 	{
+		// Special mode for native mode ------------------------------------------------
+		// HOGNE:
+		if( document.location.href.indexOf( 'interface=native' ) > 0 )
+		{
+			if( !t.events )
+			{	
+				t.events = true;
+				console.log( 'Poof' );
+				InitGuibaseEvents( window );
+			}
+		}
 		winobj.parentNode.insertBefore( t, winobj.parentNode.firstChild );
 		t.style.top = Workspace.interfaceMode == 'native' ? '0px' : ( winobj.parentNode.querySelector( '.Title' ).offsetHeight + 'px' );
 		t.style.left = '0px';
@@ -1090,7 +1101,7 @@ DirectoryView.prototype.InitWindow = function( winobj )
 	}
 	// When resizing the window
 	winobj.redrawIcons = function( icons, direction, callback )
-	{
+	{	
 		if( window.touchstartCounter )
 		{
 			clearTimeout( window.touchstartCounter );
@@ -6682,21 +6693,4 @@ if( !window.isMobile )
 	else window.attachEvent ( 'onkeydown', CheckDoorsKeys );
 }
 
-// Special mode for native mode ------------------------------------------------
-// HOGNE:
-if( document.location.href.indexOf( 'interface=native' ) > 0 )
-{
-	console.log( 'fop' );
-	( function()
-	{
-		if( Friend.nativeMouseIconEvents ) return;
-		Friend.nativeMouseIconEvents = true;
-		let sc = document.querySelector( '.Scroller' );
-		if( !sc ) return;
-		sc.addEventListener( 'mousemove', function( e )
-		{
-			console.log( 'move ' + e.clientX + ', ' + e.clientY );
-		} );
-	} )();
-}
 
