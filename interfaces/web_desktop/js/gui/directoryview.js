@@ -324,10 +324,9 @@ DirectoryView.prototype.pathHistoryForward = function()
 // Generate toolbar
 DirectoryView.prototype.initToolbar = function( winobj )
 {
-	// Create toolbar
-	if( !winobj.parentNode.leftbar ) return;
-
 	let dw = this;
+
+	if( !winobj.fileInfo ) return;
 
 	let t = document.createElement( 'div' );
 	t.className = 'DirectoryToolbar';
@@ -345,9 +344,9 @@ DirectoryView.prototype.initToolbar = function( winobj )
 	else
 	{
 		winobj.parentNode.insertBefore( t, winobj.parentNode.firstChild );
-		t.style.top = winobj.parentNode.titleBar.offsetHeight + 'px';
-		t.style.left = GetElementWidth( winobj.parentNode.leftbar ) + 'px';
-		t.style.right = GetElementWidth( winobj.parentNode.rightbar ) + 'px';
+		t.style.top = '0px';
+		t.style.left = '0px';
+		t.style.right = GetElementWidth( winobj ) + 'px';
 	}
 
 	let rpath = winobj.fileInfo.Path ? winobj.fileInfo.Path : ( winobj.fileInfo.Volume );
@@ -929,7 +928,6 @@ DirectoryView.prototype.ShowFileBrowser = function()
 DirectoryView.prototype.InitWindow = function( winobj )
 {
 	if( !this.toolbar && this.navMode == 'toolbar' ) this.initToolbar( winobj );
-
 	winobj.directoryview = this;
 	this.windowObject = winobj;
 	winobj.parentNode.classList.add( 'IconWindow' );
@@ -6659,3 +6657,22 @@ if( !window.isMobile )
 		window.addEventListener ( 'keydown', CheckDoorsKeys );
 	else window.attachEvent ( 'onkeydown', CheckDoorsKeys );
 }
+
+// Special mode for native mode ------------------------------------------------
+// HOGNE:
+if( document.location.href.indexOf( 'interface=native' ) > 0 )
+{
+	console.log( 'fop' );
+	( function()
+	{
+		if( Friend.nativeMouseIconEvents ) return;
+		Friend.nativeMouseIconEvents = true;
+		let sc = document.querySelector( '.Scroller' );
+		if( !sc ) return;
+		sc.addEventListener( 'mousemove', function( e )
+		{
+			console.log( 'move ' + e.clientX + ', ' + e.clientY );
+		} );
+	} )();
+}
+
