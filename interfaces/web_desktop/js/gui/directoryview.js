@@ -344,9 +344,23 @@ DirectoryView.prototype.initToolbar = function( winobj )
 	else
 	{
 		winobj.parentNode.insertBefore( t, winobj.parentNode.firstChild );
-		t.style.top = '0px';
+		t.style.top = Workspace.interfaceMode == 'native' ? '0px' : ( winobj.parentNode.querySelector( '.Title' ).offsetHeight + 'px' );
 		t.style.left = '0px';
-		t.style.right = GetElementWidth( winobj ) + 'px';
+		t.style.width = '100%';
+		let h = getComputedStyle( t ).height;
+		winobj.style.top = getComputedStyle( t ).height;
+		winobj.style.height = 'calc(100% - ' + winobj.style.top + ')';
+		// TODO: This is a hack because computed style and offsetHeight isn't yet there..
+		setTimeout( function()
+		{
+			winobj.style.top = getComputedStyle( t ).height;
+			winobj.style.height = 'calc(100% - ' + winobj.style.top + ')';
+		}, 125 );
+		setTimeout( function()
+		{
+			winobj.style.top = getComputedStyle( t ).height;
+			winobj.style.height = 'calc(100% - ' + winobj.style.top + ')';
+		}, 250 );
 	}
 
 	let rpath = winobj.fileInfo.Path ? winobj.fileInfo.Path : ( winobj.fileInfo.Volume );
@@ -804,11 +818,16 @@ DirectoryView.prototype.initToolbar = function( winobj )
 	}
 
 	// Move content and gauge
-	winobj.style.top = ( GetElementHeight( t ) + parseInt( t.style.top.split( 'px' ).join( '' ) ) ) + 'px';
-	if( winobj.parentNode.volumeGauge )
+	// Move content and gauge
+	if( Workspace.interfaceMode != 'native' )
 	{
-		let g = winobj.parentNode.volumeGauge.parentNode;
-		g.style.top = winobj.style.top;
+		console.log( 'Not native' + Workspace.interfaceMode );
+		winobj.style.top = ( GetElementHeight( t ) + parseInt( t.style.top.split( 'px' ).join( '' ) ) ) + 'px';
+		if( winobj.parentNode.volumeGauge )
+		{
+			let g = winobj.parentNode.volumeGauge.parentNode;
+			g.style.top = winobj.style.top;
+		}
 	}
 }
 
@@ -4615,6 +4634,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 		
 		we.win = win;
 		
+		// Dormant refresh
 		we.refresh = function( callback )
 		{
 			this.directoryview.HideShareDialog();
@@ -5043,6 +5063,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 			
 			let winDoor = win.Door;
 			
+			// Disk refresh
 			win.refresh = function( callback )
 			{
 				this.directoryview.HideShareDialog();
@@ -5072,7 +5093,6 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 				}
 				
 				let getretries = 0;
-				
 				this.refreshTimeout = setTimeout( function()
 				{
 					let wt = self.fileInfo.Path ? self.fileInfo.Path : ( self.fileInfo.Title ? self.fileInfo.Title : self.fileInfo.Volume );
@@ -5186,7 +5206,7 @@ function OpenWindowByFileinfo( oFileInfo, event, iconObject, unique, targetView,
 				}, timer );
 			}
 		}
-		// No door, implement standard refresh
+		// No door, implement standard directory refresh
 		else
 		{
 			win.refresh = function ( callback )
