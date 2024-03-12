@@ -111,6 +111,13 @@ class SqlDatabase
 		$this->_queryCount++;
 		$this->_lastQuery = $query;
 		
+		if( isset( $this->_debug ) && $this->_debug == true )
+		{
+			if( isset( $Logger ) )
+			{
+				$Logger->log( '[dbIO] Query: ' . $query );
+			}
+		}
 		if( $res = mysqli_query( $this->_link, $query ) )
 		{
 			$this->_lastResult = $res;
@@ -180,10 +187,19 @@ class SqlDatabase
 	
 	function FetchObjects( $query )
 	{
+		global $Logger;
+		
 		// Recall cache
 		if( isset( $this->_cacheObjArray[$query] ) )
 			return $this->_cacheObjArray[$query];
 
+		if( isset( $this->_debug ) && $this->_debug == true )
+		{
+			if( isset( $Logger ) )
+			{
+				$Logger->log( '[dbIO] FetchObjects: ' . $query );
+			}
+		}
 		if( $res = $this->Query( $query ) )
 		{
 			$result = false;
@@ -496,7 +512,13 @@ class DbIO extends DbTable
 		}
 		$query = "SELECT * FROM `{$this->_name}` WHERE " . implode( " AND ", $where );
 		$this->_lastQuery = $query;
-		
+		if( isset( $this->_debug ) && $this->_debug == true )
+		{
+			if( isset( $Logger ) )
+			{
+				$Logger->log( '[dbIO] Load: ' . $query );
+			}
+		}
 		if( $row = $this->_database->FetchRow( $query ) )
 		{
 			foreach( $row as $k=>$v )
@@ -594,6 +616,13 @@ class DbIO extends DbTable
 		}
 	
 		// Execute
+		if( isset( $this->_debug ) && $this->_debug == true )
+		{
+			if( isset( $Logger ) )
+			{
+				$Logger->log( '[dbIO] Save: ' . $query );
+			}
+		}
 		if( $result = $this->_database->Query( $query ) )
 		{
 			// Hook
