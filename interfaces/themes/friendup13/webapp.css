@@ -117,4 +117,29 @@ body[sharedapp=sharedapp] .ViewContainer + .ViewContainer .View > .Title
 	opacity: 1;
 }
 
+/*
+
+*/
+
+[webapp] .ViewContainer + .ViewContainer > .View
+{
+	left: 0px !important;
+	top: 0px !important;
+	min-width: 100% !important;
+	min-height: 100% !important;
+	border-radius: 0px !important;
+}
+
+body[sharedapp=sharedapp] .ViewContainer:first-child.View > .Title
+{
+	display: none;
+}
+
+body[sharedapp=sharedapp] .ViewContainer + .ViewContainer .View > .Content, 
+html body:not([mobile])[sharedapp=sharedapp] .ViewContainer + .ViewContainer .View > .Content 
+{
+    left: 40px !important;
+    width: calc(100% - 30px) !important;
+}
+
 
