@@ -921,7 +921,7 @@ function KillApplicationById( appid, level )
 // Activate the application for the user
 function ActivateApplication( app, conf )
 {
-	var type = 'app';
+	let type = 'app';
 
 	if( conf && conf.type == 'disk' )
 	{
@@ -935,13 +935,13 @@ function ActivateApplication( app, conf )
 		];
 	}
 
-	var hideView = false;
+	let hideView = false;
 	if( conf && conf.Trusted && conf.Trusted.toLowerCase() == 'yes' )
 	{
 		hideView = true;
 	}
 
-	var w = new View( {
+	let w = new View( {
 		title: i18n( type == 'app' ? 'activate_application' : 'activate_disk' ),
 		width: 400,
 		height: 500,
@@ -949,7 +949,7 @@ function ActivateApplication( app, conf )
 		hidden: hideView
 	} );
 
-	var f = new File( 'System:templates/activate.html' );
+	let f = new File( 'System:templates/activate.html' );
 	f.replacements = {
 		'app_activation_button' : i18n( 'app_activation_button' ),
 		'app_activation_abort'  : i18n( 'app_activation_abort' ),
@@ -960,18 +960,18 @@ function ActivateApplication( app, conf )
 	f.replacements.application         = type == 'app' ? app : ( app.split( ':' )[0] );
 	f.onLoad = function( d )
 	{
-		var m = new Module( 'system' );
+		let m = new Module( 'system' );
 		m.onExecuted = function( e, da )
 		{
-			var perms = '';
-			var permissions = [];
-			var filesystemoptions = '';
+			let perms = '';
+			let permissions = [];
+			let filesystemoptions = '';
 			
 			if( conf.Permissions )
 			{
-				for( var a = 0; a < conf.Permissions.length; a++ )
+				for( let a = 0; a < conf.Permissions.length; a++ )
 				{
-					var row = Trim( conf.Permissions[a] ).split( ' ' );
+					let row = Trim( conf.Permissions[a] ).split( ' ' );
 					switch( row[0].toLowerCase() )
 					{
 						case 'door':
@@ -1006,32 +1006,32 @@ function ActivateApplication( app, conf )
 			w.setContent( d.split( '{permissions}' ).join ( perms ) );
 			
 			// Check the security domains
-			var domains = [];
+			let domains = [];
 			if( e == 'ok' )
 			{
 				try{
-					var data = JSON.parse( da );
+					let data = JSON.parse( da );
 					domains = data.domains;
 				} catch( e ) { console.log('Security Domains could not be set!'); }
 			}
 			if( ge( 'SecurityDomains' ) )
 			{
 				ge( 'SecurityDomains' ).innerHTML = '';
-				for( var a = 0; a < domains.length; a++ )
+				for( let a = 0; a < domains.length; a++ )
 				{
-					var o = document.createElement( 'option' );
+					let o = document.createElement( 'option' );
 					o.innerHTML = Trim( domains[a] );
 					o.value = Trim( domains[a] );
 					ge( 'SecurityDomains' ).appendChild( o );
 				}
 			}
 
-			var wel = w.getWindowElement();
+			let wel = w.getWindowElement();
 			if( wel )
 			{
-				var eles = wel.getElementsByTagName( 'button' );
-				var abtn = false;
-				for( var a = 0; a < eles.length; a++ )
+				let eles = wel.getElementsByTagName( 'button' );
+				let abtn = false;
+				for( let a = 0; a < eles.length; a++ )
 				{
 					if( eles[a].classList.contains( 'activation' ) )
 					{
@@ -1102,15 +1102,14 @@ function ExecuteApplicationActivation( app, win, permissions, reactivation )
 	var pelement = win.getWindowElement();
 	if( !pelement ) 
 	{
-		//console.log( 'No parent element: ', win, win.windowObject );
 		return;
 	}
-	var eles = pelement.getElementsByTagName( 'input' );
-	var out = [];
-	var hasOptions = 0;
+	let eles = pelement.getElementsByTagName( 'input' );
+	let out = [];
+	let hasOptions = 0;
 	if( eles && eles.length )
 	{
-		for( var a = 0, i = 0; a < eles.length, i < permissions.length; a++ )
+		for( let a = 0, i = 0; a < eles.length, i < permissions.length; a++ )
 		{
 			if( !eles[a] || !eles[a].getAttribute( 'type' ) || eles[a].getAttribute( 'type' ) != 'checkbox' )
 				continue;
@@ -1119,13 +1118,13 @@ function ExecuteApplicationActivation( app, win, permissions, reactivation )
 			{
 				if( eles[a].checked )
 				{
-					var permission = permissions[i];
+					let permission = permissions[i];
 
 					// Get value inputs
-					var p = eles[a].parentNode;
-					var elez = p.getElementsByTagName( '*' );
-					var val = '';
-					for( var c = 0; c < elez.length; c++ )
+					let p = eles[a].parentNode;
+					let elez = p.getElementsByTagName( '*' );
+					let val = '';
+					for( let c = 0; c < elez.length; c++ )
 					{
 						if( elez[c].tagName == 'INPUT' && elez[c].type.toLowerCase() != 'checkbox' )
 						{
@@ -1147,7 +1146,7 @@ function ExecuteApplicationActivation( app, win, permissions, reactivation )
 		}
 	}
 
-	var securityDomain = '';
+	let securityDomain = '';
 	if( ge( 'SecurityDomains' ) )
 	{
 		securityDomain = ge( 'SecurityDomains' ).value;
@@ -1166,7 +1165,7 @@ function ExecuteApplicationActivation( app, win, permissions, reactivation )
 				// Disk activation
 				if( app.indexOf( ':' ) > 0 )
 				{
-					var s = new Library( 'system.library' );
+					let s = new Library( 'system.library' );
 					s.onExecuted = function()
 					{
 						// Refresh mountlist (async)
@@ -1288,8 +1287,7 @@ function ExecuteJSXByPath( path, args, callback, conf, flags )
 	{
 		flags.openSilent = false;
 	}
-	
-	var f = new File( path );
+	let f = new File( path );
 	f.onLoad = function( data )
 	{
 		if( data )
@@ -1297,13 +1295,13 @@ function ExecuteJSXByPath( path, args, callback, conf, flags )
 			// An error?
 			if ( data.indexOf( '404 - File not found!' ) < 0 )
 			{
-				var r = ExecuteJSX( data, app, args, path, function()
+				let r = ExecuteJSX( data, app, args, path, function()
 				{
 					if( callback )
 						callback();
 					// Clean blocker
 					RemoveFromExecutionQueue( app );
-				}, conf ? conf.ConfFilename : false, flags );
+				}, conf && conf.ConfFilename ? conf.ConfFilename : conf, flags );
 				// Uncommented running callback, it is already running in executeJSX!
 				// Perhaps 'r' should tell us if it was run, and then run it if not?
 				//if( callback ) callback( true );
@@ -1338,18 +1336,28 @@ function ExecuteJSX( data, app, args, path, callback, conf, flags )
 		if( d )
 		{
 			// Check if d.Config is empty or not set
-			if( d.dormantDoor && !d.Config && d.dormantGetConfig )
+			if( !conf || ( conf && conf.authId ) )
 			{
-				conf = d.dormantGetConfig();
-				conf = JSON.stringify( conf );
-			}
-			else if( !d.Config || ( d.Config && d.Config == '{}' ) || JSON.stringify( d.Config ) == '{}' )
-			{
-				return ActivateApplication( path, { type: 'disk' } );
+				if( d.dormantDoor && !d.Config && d.dormantGetConfig )
+				{
+					conf = d.dormantGetConfig();
+					conf = JSON.stringify( conf );
+				}
+				else if( !d.Config || ( d.Config && d.Config == '{}' ) || JSON.stringify( d.Config ) == '{}' )
+				{
+					return ActivateApplication( path, { type: 'disk' } );
+				}
+				else
+				{
+					conf = d.Config;
+				}
 			}
 			else
 			{
-				conf = d.Config;
+				if( !conf.authid )
+				{
+					return ActivateApplication( path, { type: 'disk' } );
+				}
 			}
 		}
 
@@ -1389,6 +1397,8 @@ function ExecuteJSX( data, app, args, path, callback, conf, flags )
 				let svalu = sid ? confObject.authid : Workspace.sessionId;
 				let stype = sid ? 'authid' : 'sessionid';
 				if( stype == 'sessionid' ) ifr.sessionId = svalu;
+
+				console.log( 'Is: ' + stype + ' ' + sid );
 
 				// Use path to figure out config
 				if( !d.dormantDoor && conf.indexOf( '{' ) >= 0 )

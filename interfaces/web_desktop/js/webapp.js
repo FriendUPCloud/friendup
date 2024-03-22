@@ -685,7 +685,7 @@ Workspace = {
 			{
 				return loadApplicationBasics( function()
 				{
-					ExecuteApplication( t.conf.app, GetUrlVar( 'data' ), function( result )
+					function onloadedapp( result )
 					{
 						// Prevent loading twice...
 						if( document.body.loaded ) return;
@@ -704,6 +704,39 @@ Workspace = {
 								}
 							}, 500 );
 						}
+					}
+					if( t.conf.app.indexOf( '.jsx' ) > 0 )
+					{
+						function executeJSXBP( app, conf )
+						{
+							if( !Workspace.icons.length )
+							{
+								console.log( 'REtry..' );
+								return setTimeout( function(){ executeJSXBP( app, conf ); }, 50 );
+							}
+							else
+							{
+								for( let a = 0; a < Workspace.icons.length; a++ )
+								{
+									if( app.indexOf( Workspace.icons[ a ].Path ) == 0 )
+									{
+										conf.authid = Workspace.icons[a].AuthID;
+									}
+								}
+								console.log( 'Conf: ', conf );
+								ExecuteJSXByPath( app, GetUrlVar( 'data' ), function( result )
+								{
+									onloadedapp( result );
+								}, conf );
+							}
+						}
+						if( !t.conf.authid )
+							executeJSXBP( t.conf.app, t.conf );	
+						return;
+					}
+					ExecuteApplication( t.conf.app, GetUrlVar( 'data' ), function( result )
+					{
+						onloadedapp( result );
 					} );
 				} );
 			}
@@ -824,7 +857,8 @@ Workspace = {
 						MetaType: 'Directory',
 						ID: r.ID,
 						Mounted: r.Mounted ? true : false,
-						Door: d
+						Door: d,
+						AuthID: r.AuthID
 					};
 
 					// Force mounnt
