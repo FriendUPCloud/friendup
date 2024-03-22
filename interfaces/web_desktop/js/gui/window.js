@@ -4749,6 +4749,16 @@ var View = function( args )
 				msg.themeData = Workspace.themeData;
 			}
 
+			// Register mode
+			if( Workspace.workspaceMode )
+			{
+				msg.workspaceMode = Workspace.workspaceMode;
+			}
+			else
+			{
+				msg.workspaceMode = document.body.getAttribute( 'webapp' ) || false;
+			}
+
 			// Authid is important, should not be left out if it is available
 			if( !msg.authId )
 			{

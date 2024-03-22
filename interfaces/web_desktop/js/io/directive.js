@@ -1610,7 +1610,7 @@ function ExecuteJSX( data, app, args, path, callback, conf, flags )
 						username:         ifr.username,
 						theme:            Workspace.theme,
 						themeData:        Workspace.themeData,
-						workspaceMode:    Workspace.workspacemode,
+						workspaceMode:    Workspace.workspacemode ? Workspace.workspacemode : document.body.getAttribute( 'webapp' ),
 						locale:           Workspace.locale,
 						filePath:         '/webclient/jsx/',
 						appPath:          dpath ? dpath : '',

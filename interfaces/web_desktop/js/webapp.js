@@ -723,7 +723,6 @@ Workspace = {
 										conf.authid = Workspace.icons[a].AuthID;
 									}
 								}
-								console.log( 'Conf: ', conf );
 								ExecuteJSXByPath( app, GetUrlVar( 'data' ), function( result )
 								{
 									onloadedapp( result );

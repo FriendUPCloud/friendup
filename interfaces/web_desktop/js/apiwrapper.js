@@ -1516,8 +1516,8 @@ function apiWrapper( event, force )
 								}
 								
 								// Do the setting!
-								var domain = GetDomainFromConf(app.config, msg.applicationId);
-								scr.setContentIframed(msg.data, domain, msg, cb);
+								var domain = GetDomainFromConf( app.config, msg.applicationId );
+								scr.setContentIframed( msg.data, domain, msg, cb );
 
 								// Remove callback here - it will be handled by setcontentiframed
 								// as it is asyncronous
@@ -2016,6 +2016,7 @@ function apiWrapper( event, force )
 						let nmsg = {
 							applicationId: msg.applicationId,
 							viewId:        msg.id ? msg.id : viewId,
+							workspaceMode: Workspace.workspacemode,
 							type:          'callback',
 							command:       'viewresponse',
 							data:          'ok'
@@ -2031,6 +2032,7 @@ function apiWrapper( event, force )
 						let nmsg = {
 							applicationId: msg.applicationId,
 							viewId:        msg.id ? msg.id : viewId,
+							workspaceMode: Workspace.workspacemode,
 							type:          'callback',
 							command:       'viewresponse',
 							data:          'fail'
@@ -3128,6 +3130,12 @@ function apiWrapper( event, force )
 							return df( msg.data ? msg.data : ( msg.error ? msg.error : null ) );
 						}
 						return false;
+					case 'logout':
+						if( document.body.getAttribute( 'webapp' ) )
+						{
+							Friend.User.Logout();
+						}
+						break;
 					case 'invite':
 						Workspace.inviteFriend();
 						break;

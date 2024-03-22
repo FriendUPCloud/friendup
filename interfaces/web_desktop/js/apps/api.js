@@ -316,6 +316,7 @@ window.Application =
 			case 'callback':
 				if( packet.viewId && Application.windows && Application.windows[packet.viewId] )
 				{
+
 					if( packet.command == 'viewresponse' )
 					{
 						Application.windows[packet.viewId].ready = packet.data == 'ok' ? true : false;
@@ -1358,6 +1359,11 @@ function receiveEvent( event, queued )
 			// Set content
 			document.body.innerHTML = data;
 			
+			if( dataPacket.workspaceMode )
+			{
+				document.body.classList.add( dataPacket.workspaceMode );
+			}
+			
 			if( dataPacket.parentSandboxId )
 			{
 				try
@@ -1372,6 +1378,7 @@ function receiveEvent( event, queued )
 
 				}
 			}
+
 
 			initApplicationFrame( dataPacket, event.origin, function()
 			{
@@ -5968,6 +5975,11 @@ function initApplicationFrame( packet, eventOrigin, initcallback )
 	//if( packet.workspaceMode == 'normal' || packet.workspaceMode == 'gamified' )
 	//	console.log = function(){};
 	Application.workspaceMode = packet.workspaceMode ? packet.workspaceMode : 'developer';
+	
+	if( packet.workspaceMode )
+	{
+		document.body.setAttribute( packet.workspaceMode, packet.workspaceMode );
+	}
 
 	if( packet.userLevel )
 	{
