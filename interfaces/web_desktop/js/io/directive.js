@@ -1398,8 +1398,6 @@ function ExecuteJSX( data, app, args, path, callback, conf, flags )
 				let stype = sid ? 'authid' : 'sessionid';
 				if( stype == 'sessionid' ) ifr.sessionId = svalu;
 
-				console.log( 'Is: ' + stype + ' ' + sid );
-
 				// Use path to figure out config
 				if( !d.dormantDoor && conf.indexOf( '{' ) >= 0 )
 					conf = encodeURIComponent( path.split( ':' )[0] + ':' );
