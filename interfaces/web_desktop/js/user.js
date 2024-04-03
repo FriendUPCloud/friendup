@@ -541,7 +541,15 @@ Friend.User = {
 				return;
 			}
 			Workspace.sessionId = '';
-			document.location.href = window.location.href.split( '?' )[0].split( '#' )[0]; //document.location.reload();
+			let component = '';
+			if( GetUrlVar( 'app' ) )
+			{
+				component = '?app=' + GetUrlVar( 'app' );
+			}
+			let nurl = window.location.href.split( '?' )[0].split( '#' )[0] + component;
+			if( nurl == document.location.href )
+				document.location.reload();
+			else document.location.href = nurl;
 		}
 		if( !cbk )
 		{

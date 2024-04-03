@@ -3,6 +3,16 @@ html body .View:not([transparent]) .View > .Content
 {
 	background-color: #e2deda !important;
 }
+
+body.Login
+{
+	background-image: url('/graphics/release_loginimage.jpg');
+	background-size: auto;
+	background-position: center;
+	background-repeat: repeat;
+    background-attachment: fixed;
+}
+
 #Login
 {
 	position: absolute;
