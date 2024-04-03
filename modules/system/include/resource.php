@@ -10,17 +10,21 @@
 *                                                                              *
 *****************************************************************************©*/
 
+global $Logger;
+
 $f = 'repository/' . $args->file;
 if( file_exists( $f ) )
 {
 	$ext = explode( '.', $args->file );
-	$ext = array_pop( $ext );
+	$ext = strtolower( array_pop( $ext ) );
+	$filesize = filesize( $f );
 	switch( strtolower( $ext ) )
 	{
 		case 'jpg':
 		case 'gif':
 		case 'png':
-			FriendHeader( ( 'Content-type: image/' . $ext ) == 'jpg' ? 'jpeg' : strtolower( $ext ) );
+			FriendHeader( 'Content-type: image/' . ( $ext == 'jpg' ? 'jpeg' : $ext ) );
+			FriendHeader( 'Content-length: ' . $filesize );
 			break;
 		case 'css':
 			FriendHeader( 'Content-Type: text/css' );
