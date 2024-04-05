@@ -317,7 +317,7 @@ function InitGui()
 
 window.allFiles = {};
 
-EditorFile = function( path )
+var EditorFile = function( path )
 {
 	let self = this;
 	
