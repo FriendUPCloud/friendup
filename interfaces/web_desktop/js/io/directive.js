@@ -39,6 +39,7 @@ function RemoveFromExecutionQueue( app )
 // Check if we can quit an app
 function canQuitApp( appName )
 {
+	if( !Workspace.noQuitList ) return true;
     for( let a = 0; a < Workspace.noQuitList.length; a++ )
     {
         if( Workspace.noQuitList[ a ] == appName )
@@ -1310,7 +1311,10 @@ function ExecuteJSXByPath( path, args, callback, conf, flags )
 		}
 		else
 		{
-			console.log( 'Failed to load data: ', data, path );
+			if( document.body.getAttribute( 'webapp' ) )
+			{
+				Friend.User.Logout();
+			}
 		}
 		if( callback ) callback( false );
 		// Clean blocker

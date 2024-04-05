@@ -55,23 +55,6 @@ Application.run = function( msg )
 		}
 	}
 	
-	/*var m = new File( 'Progdir:Templates/main.html' );
-	m.replacements = {
-		launchwith: msg.args ? msg.args : ''
-	};
-	m.i18n();
-	m.onLoad = function( data )
-	{
-		mainWindow.setContent( data, function()
-		{
-			if( msg.args && msg.args.indexOf( ':' ) > 0 )
-			{
-				mainWindow.sendMessage( { command: 'launchwith', file: msg.args } );
-			}
-		} );
-	}
-	m.load();*/
-	
 	this.menuConfig = {
 		collaborating: false
 	};
