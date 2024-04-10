@@ -251,6 +251,11 @@ class File
 		$r = curl_exec( $c );
 		curl_close( $c );
 		
+		$Logger->log( '----------------START--------------------' );
+		$Logger->log( 'Response from file operation on ' . $path );
+		$Logger->log( 'Resp: ' . $r );
+		$Logger->log( '-----------------END---------------------' );
+		
 		if( $r != false )
 		{
 			$this->_content = $r;

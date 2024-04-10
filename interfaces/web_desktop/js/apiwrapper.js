@@ -2222,7 +2222,7 @@ function apiWrapper( event, force )
 				if( msg.data.path && msg.data.path.toLowerCase && msg.data.path.toLowerCase().substr( 0, 8 ) != 'progdir:' && msg.data.path.indexOf( ':' ) > 0 )
 				{
 					// TODO: Clean up "Door Local" which is deprecated
-					if( !checkAppPermission( app.authId, 'Door Local' ) && !checkAppPermission( app.authId, 'Door All' ) )
+					if( !checkAppPermission( app.authId, 'Door Local' ) && !checkAppPermission( app.authId, 'Door All' ) && !checkAppPermission( app.authId, 'Module files' ) )
 					{
 						console.log( 'Permission denied to local filesystems!' );
 						return false;
