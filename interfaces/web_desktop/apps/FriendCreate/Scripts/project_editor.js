@@ -46,6 +46,8 @@ var supportedFiles = [
 
 Application.run = function( msg )
 {
+	if( this.initialized ) return;
+	this.initialized = true;
 	InitializeForm();
 }
 
@@ -56,7 +58,15 @@ function InitializeForm()
 		'webssh': i18n( 'i18n_web_project_ssh' )
 	};
 	
+	// Project didn't change
+	if( Sha256.hash( JSON.stringify( project ) ) == Application.lastProjectState )
+	{
+		return;
+	}
+	
 	InitTabs( 'ProjectTabs' );
+	
+	Application.lastProjectState = Sha256.hash( JSON.stringify( project ) );
 	
 	// Initialize
 	if( project.ProjectType && project.Path && saved )
@@ -84,6 +94,33 @@ function InitializeForm()
 	}
 	
 	ge( 'ProjectTypes' ).innerHTML = topts;
+	
+	if( project.WhiteLabelEnabled && project.WhiteLabelEnabled === true )
+	{
+		document.querySelector( '.WhiteLabelEnabled' ).checked = true;
+	}
+	
+	let whArr = [ 
+		'LoginHeading',
+		'LoginFooter',
+		'LoginLogo',
+		'LoginBackground',
+		'LoginCSS' 
+	];
+	whArr.forEach( label => {
+		if( project[ label ] && project[ label ].length )
+		{
+			if( label == 'LoginLogo' )
+			{
+				ge( 'CustomLogo' ).innerHTML = '<img src="' + getImageUrl( project[ label ] ) + '"/>';
+			}
+			else if( label == 'LoginBackground' )
+			{
+				ge( 'CustomBackground' ).innerHTML = '<img src="' + getImageUrl( project[ label ] ) + '"/>';
+			}
+			document.querySelector( '.' + label ).value = project[ label ];
+		}
+	} );
 	
 	switch( project.ProjectType )
 	{
@@ -245,6 +282,23 @@ function RefreshPermissions()
 	}
 }
 
+function AddImageTo( type )
+{
+	( new Filedialog( {
+		path: project.ProjectPath,
+		type: 'open',
+		multiple: false,
+		triggerFunction: function( file )
+		{
+			if( file && file.length )
+			{
+				document.querySelector( '.' + type ).value = file[0].Path;
+			}
+		},
+		suffix: [ 'jpg', 'jpeg', 'png', 'gif' ]
+	} ) );
+}
+
 function RemoveImages()
 {
 	RemoveFiles( 'images' );
@@ -401,7 +455,13 @@ function UpdateProject()
 		'project_type',
 		'project_version',
 		'project_category',
-		'project_description'
+		'project_description',
+		'whitelabel_login',
+		'whitelabel_footer',
+		'whitelabel_logo',
+		'whitelabel_background',
+		'whitelabel_css',
+		'whitelabel_enabled'
 	];
 	var equiv = [
 		'ProjectName',
@@ -409,11 +469,27 @@ function UpdateProject()
 		'ProjectType',
 		'Version',
 		'Category',
-		'Description'
+		'Description',
+		'LoginHeading',
+		'LoginFooter',
+		'LoginLogo',
+		'LoginBackground',
+		'LoginCSS',
+		'WhiteLabelEnabled'
 	];
 	for( var a = 0; a < values.length; a++ )
-		if( ge( values[ a ] ) )
+	{
+		let inp = ge( values[ a ] );
+		if( inp )
+		{
+			if( inp.type == 'checkbox' )
+			{
+				project[ equiv[a] ] = ( inp.checked ) ? true : false;
+				continue;
+			}
 			project[ equiv[a] ] = ge( values[a] ).value;
+		}
+	}
 
 	if( project.ProjectType == 'webssh' )
 	{

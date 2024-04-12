@@ -199,6 +199,73 @@
 			</div>
 		</div>
 		<div id="pageLogin" class="Page">
+			<div class="HRow Padding">
+				<p>
+					Change the fields below to adjust how the log-in to your 
+					published app will look like.
+				</p>
+			</div>
+			<div class="HRow">
+				<div class="HContent20 FloatLeft Padding BorderRight">
+					<strong>Enable:</strong>
+				</div>
+				<div class="HContent80 FloatLeft Padding BorderRight">
+					<input type="checkbox" class="WhiteLabelEnabled" id="whitelabel_enabled"/>
+				</div>
+			</div>
+			<div class="HRow">
+				<div class="HContent20 FloatLeft Padding BorderRight">
+					<strong>Heading:</strong>
+				</div>
+				<div class="HContent80 FloatLeft Padding BorderRight">
+					<input type="text" id="whitelabel_login" class="LoginHeading" value=""/>
+				</div>
+			</div>
+			<div class="HRow">
+				<div class="HContent20 FloatLeft Padding BorderRight">
+					<strong>Footer:</strong>
+				</div>
+				<div class="HContent80 FloatLeft Padding BorderRight">
+					<input type="text" id="whitelabel_footer" class="LoginFooter" value=""/>
+				</div>
+			</div>
+			<div class="HRow">
+				<div class="HContent20 FloatLeft Padding BorderRight">
+					<strong>Custom Logo:</strong>
+				</div>
+				<div class="HContent80 FloatLeft Padding BorderRight">
+					<div class="HRow">
+					<div id="CustomLogo"></div>
+					<input type="hidden" id="whitelabel_logo" class="LoginLogo" value=""/>
+					<p>
+						<button type="button" class="IconSmall fa-folder" onclick="AddImageTo('LoginLogo')">
+							Select image
+						</button>
+					</p>
+				</div>
+			</div>
+			<div class="HRow">
+				<div class="HContent20 FloatLeft Padding BorderRight">
+					<strong>Custom Background:</strong>
+				</div>
+				<div class="HContent80 FloatLeft Padding BorderRight">
+					<div id="CustomBackground"></div>
+					<input type="hidden" id="whitelabel_background" class="LoginBackground" value=""/>
+					<p>
+						<button type="button" class="IconSmall fa-folder" onclick="AddImageTo('LoginBackground')">
+							Select image
+						</button>
+					</p>
+				</div>
+			</div>
+			<div class="HRow">
+				<div class="HContent20 FloatLeft Padding BorderRight">
+					<strong>Custom CSS:</strong>
+				</div>
+				<div class="HContent80 FloatLeft Padding BorderRight">
+					<textarea id="whitelabel_css" class="LoginCSS"></textarea>
+				</div>
+			</div>
 		</div>
 	</div>
 </div>
@@ -214,9 +281,27 @@
 <style>
 	#All
 	{
-		overflow: auto;
-		height: calc(100% - 50px);
+		overflow: hidden;
+		height: 100%;
 	} 
+	#pageLogin.Page,#pageInfo.Page
+	{
+		height: calc(100% - 89px);
+	}
+	#pageLogin.PageActive,#pageInfo.PageActive
+	{
+		position: absolute;
+		top: 40px;
+		height: calc(100% - 89px);
+		overflow: auto;
+		width: 100%;
+		border-radius: 0;
+	}
+	.LoginCSS
+	{
+		width: 100%;
+		min-height: 400px;
+	}
 	#Bottom
 	{
 		bottom: 0;

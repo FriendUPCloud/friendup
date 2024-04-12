@@ -1208,6 +1208,15 @@ function OpenProjectEditor()
 	} );
 	
 	var f = new File( 'Progdir:Templates/project_editor.html' );
+	f.replacements = {
+		LoginHeading: '',
+		LoginFooter: '',
+		LoginLogo: '',
+		LoginBackground: '',
+		LoginCSS: '',
+		WhiteLabelEnabled: '',
+		loginchecked: ''
+	};
 	f.i18n();
 	f.onLoad = function( data )
 	{
