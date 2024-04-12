@@ -52,8 +52,28 @@ Workspace = {
 			}
 		}
 	},
+	getWhiteLabelPass: function( app, cbk )
+	{
+		this.whiteLabelPass = true;
+		
+		console.log( 'Yodel!' );
+		
+		cbk();
+	},
 	showLoginPrompt: function()
 	{
+		let self = this;
+		
+		const app = GetUrlVar( 'app' );
+		if( app && !this.whiteLabelPass )
+		{
+			return this.getWhiteLabelPass( app, function()
+			{
+				self.showLoginPrompt();
+			} );
+		}
+		
+		
 		ScreenOverlay.init();
 		
 		// No loginprompt when we are inside
@@ -689,7 +709,7 @@ Workspace = {
 			}, 25 );
 			
 			if( t.conf.app )
-			{
+			{				
 				return loadApplicationBasics( function()
 				{
 					function onloadedapp( result )
