@@ -56,9 +56,14 @@ Workspace = {
 	{
 		this.whiteLabelPass = true;
 		
-		console.log( 'Yodel!' );
-		
-		cbk();
+		let xm = new XMLHttpRequest();
+		xm.open( 'GET', document.location.href.split( '/webclient' )[0] + '/wl/?app=' + app, true );
+		xm.onload = function()
+		{
+			console.log( 'Yodel: ' + this.responseText );
+			cbk();
+		}
+		xm.send();
 	},
 	showLoginPrompt: function()
 	{
