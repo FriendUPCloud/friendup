@@ -99,6 +99,7 @@ i18n_host_port_plh                  : 22
 i18n_project_editor                 : Project editor
 
 i18n_project_information            : Project information
+i18n_login_customization            : Customized login info
 i18n_project_name                   : Project name
 i18n_project_author                 : Author
 i18n_project_host                   : Server host

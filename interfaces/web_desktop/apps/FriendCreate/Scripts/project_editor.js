@@ -56,6 +56,8 @@ function InitializeForm()
 		'webssh': i18n( 'i18n_web_project_ssh' )
 	};
 	
+	InitTabs( 'ProjectTabs' );
+	
 	// Initialize
 	if( project.ProjectType && project.Path && saved )
 	{

@@ -78,6 +78,7 @@ i18n_host_port_plh                  : 22
 i18n_project_editor                 : Prosjektredigering
 
 i18n_project_information            : Prosjektinformasjon
+i18n_login_customization            : Tilpasset innlogging
 i18n_project_name                   : Prosjektnavn
 i18n_project_author                 : Forfatter
 i18n_project_host                   : Server vert
