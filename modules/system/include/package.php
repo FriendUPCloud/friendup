@@ -64,6 +64,32 @@ if( isset( $args->args->filename ) )
 					}
 				}
 				
+				// Check whitelabel stuff
+				if( isset( $obj->LoginLogo ) )
+				{
+					$f = new File( $obj->LoginLogo );
+					if( $f->load() )
+					{
+						$ext = explode( '.', $obj->LoginLogo );
+						$ext = end( $ext );
+						$zip->addFromString( '_white-label-logo.' . $ext, $f->GetContent() );
+					}
+				}
+				if( isset( $obj->LoginBackground ) )
+				{
+					$f = new File( $obj->LoginBackground );
+					if( $f->load() )
+					{
+						$ext = explode( '.', $obj->LoginBackground );
+						$ext = end( $ext );
+						$zip->addFromString( '_white-label-background.' . $ext, $f->GetContent() );
+					}
+				}
+				if( isset( $obj->LoginCSS ) )
+				{
+					$zip->addFromString( '_white-label.css', $obj->LoginCSS );
+				}
+				
 				// Generate config
 				$zip->addFromString( 'Config.conf', json_encode( $obj ) );
 				

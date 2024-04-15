@@ -54,13 +54,29 @@ Workspace = {
 	},
 	getWhiteLabelPass: function( app, cbk )
 	{
+		let self = this;
 		this.whiteLabelPass = true;
 		
 		let xm = new XMLHttpRequest();
 		xm.open( 'GET', document.location.href.split( '/webclient' )[0] + '/wl/?app=' + app, true );
 		xm.onload = function()
 		{
-			console.log( 'Yodel: ' + this.responseText );
+			try
+			{
+				self.whiteLabel = JSON.parse( this.responseText );
+				if( self.whiteLabel.Background )
+				{
+					document.body.style.background = 'url(' + self.whiteLabel.Background + ')';
+				}
+				if( self.whiteLabel.CSS )
+				{
+					let st = document.createElement( 'style' );
+					st.setAttribute( 'type', 'text/css' );
+					st.innerHTML = self.whiteLabel.CSS;
+					document.head.appendChild( st );
+				}
+			}
+			catch( e ){};
 			cbk();
 		}
 		xm.send();
@@ -211,6 +227,31 @@ Workspace = {
 			}
 		}
 		lp.setRichContentUrl( '/loginprompt' + allowedHashVars() );
+		lp.iframe.addEventListener( 'load', function()
+		{
+			if( self.whiteLabel.Logo )
+			{
+				let st = document.createElement( 'style' );
+				st.setAttribute( 'type', 'text/css' );
+				st.innerHTML = `
+html body div.Logo 
+{ 
+	background-image: url(${self.whiteLabel.Logo});
+	background-size: contain; 
+	background-position: center;
+	background-color: transparent; 
+	margin: -10px 0px 20px 0px;
+}`;
+				lp.iframe.contentWindow.document.body.appendChild( st );
+			}
+			if( self.whiteLabel.CSS )
+			{
+				let st = document.createElement( 'style' );
+				st.setAttribute( 'type', 'text/css' );
+				st.innerHTML = self.whiteLabel.CSS;
+				lp.iframe.contentWindow.document.body.appendChild( st );
+			}
+		} );
 		Workspace.loginPrompt = lp;
 	},
 	// Just a stub - this isn't used anymore
