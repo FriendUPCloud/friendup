@@ -53,11 +53,6 @@ Application.run = function( msg )
 
 function InitializeForm()
 {
-	var types = {
-		'standard': i18n( 'i18n_standard_friend_project' ),
-		'webssh': i18n( 'i18n_web_project_ssh' )
-	};
-	
 	// Project didn't change
 	if( Sha256.hash( JSON.stringify( project ) ) == Application.lastProjectState )
 	{
@@ -68,6 +63,16 @@ function InitializeForm()
 	
 	Application.lastProjectState = Sha256.hash( JSON.stringify( project ) );
 	
+	RefreshProject();
+}
+
+function RefreshProject()
+{
+	let types = {
+		'standard': i18n( 'i18n_standard_friend_project' ),
+		'webssh': i18n( 'i18n_web_project_ssh' )
+	};
+
 	// Initialize
 	if( project.ProjectType && project.Path && saved )
 	{
@@ -81,9 +86,9 @@ function InitializeForm()
 	}
 	else
 	{
-		var topts = '<select id="project_type" onchange="project.ProjectType = this.value; InitializeForm()">';
-		var s = null;
-		for( var a in types )
+		let topts = '<select id="project_type" onchange="project.ProjectType = this.value; InitializeForm()">';
+		let s = null;
+		for( let a in types )
 		{
 			s = '';
 			if( project.ProjectType && project.ProjectType == a )
@@ -166,8 +171,8 @@ function InitializeForm()
 			ge( 'Privileges' ).style.display = '';
 			break;
 	}
-	
 }
+
 
 function RefreshFiles()
 {
@@ -293,7 +298,9 @@ function AddImageTo( type )
 			if( file && file.length )
 			{
 				document.querySelector( '.' + type ).value = file[0].Path;
+				project[ type ] = file[0].Path;
 			}
+			RefreshProject();
 		},
 		suffix: [ 'jpg', 'jpeg', 'png', 'gif' ]
 	} ) );
@@ -449,7 +456,7 @@ function AddFiles( type )
 
 function UpdateProject()
 {
-	var values = [
+	let values = [
 		'project_projectname',
 		'project_author',
 		'project_type',
@@ -463,7 +470,7 @@ function UpdateProject()
 		'whitelabel_css',
 		'whitelabel_enabled'
 	];
-	var equiv = [
+	let equiv = [
 		'ProjectName',
 		'Author', 
 		'ProjectType',

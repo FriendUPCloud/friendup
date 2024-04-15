@@ -1438,10 +1438,11 @@ function SaveProject( project, saveas, callback )
 		'Description', 'Version', 'Author', 'Category', 'ProjectPath',
 		'ProjectType', 'ProjectHostSSHKey', 'ProjectHostSSHServer', 
 		'ProjectHostSSHUsername', 'ProjectHostSSHPassword', 'ProjectHostSSHPort',
-		'ProjectWebEnabled', 'ProjectWebPath', 'ProjectHostSSHPath'
+		'ProjectWebEnabled', 'ProjectWebPath', 'ProjectHostSSHPath', 'LoginHeading',
+		'LoginFooter', 'LoginLogo', 'LoginBackground', 'LoginCSS', 'WhiteLabelEnabled'
 	];
-	var projectOut = {};
-	for( var a = 0; a < values.length; a++ )
+	let projectOut = {};
+	for( let a = 0; a < values.length; a++ )
 	{
 		projectOut[ values[a] ] = project[ values[a] ];
 	}
@@ -1449,7 +1450,7 @@ function SaveProject( project, saveas, callback )
 
 	if( !saveas && project.Path && project.Path.indexOf( '.apf' ) > 0 )
 	{
-		var f = new File( project.Path );
+		let f = new File( project.Path );
 		StatusMessage( i18n( 'i18n_saving' ) );
 		f.onSave = function( res )
 		{
