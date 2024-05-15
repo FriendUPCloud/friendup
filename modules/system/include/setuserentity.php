@@ -16,7 +16,7 @@ $o = new dbIO( 'FUserGroup' );
 $o->UserID = $User->ID;
 $o->Type = 'entity';
 $o->Load();
-$o->Name = $User->Fullname . ' Entity';
+$o->Name = $User->FullName . ' Entity';
 $o->Description = $args->type;
 $o->Save();
 if( $o->ID > 0 )
