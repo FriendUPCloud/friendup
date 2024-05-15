@@ -90,6 +90,8 @@ Workspace = {
 		{
 			return this.getWhiteLabelPass( app, function()
 			{
+				if( GetUrlVar( 'logintoken' ) )
+					return;
 				self.showLoginPrompt();
 			} );
 		}
