@@ -313,6 +313,9 @@ if( isset( $args->command ) )
 		case 'convos':
 			require( 'modules/system/include/convos.php' );
 			break;
+		case 'setuserentity':
+			require( 'modules/system/include/setuserentity.php' );
+			break;
 		case 'tinyurl':
 			if( isset( $UserSession ) )
 				require( 'modules/system/include/tinyurl.php' );
