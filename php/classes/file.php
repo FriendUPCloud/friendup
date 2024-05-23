@@ -219,13 +219,13 @@ class File
 
 		$c = curl_init();
 		
-		$callback = function writeAndFlush( $curl_handle, $chunk)
+		$callback = function( $curl_handle, $chunk)
 		{ 
 		    echo $chunk;
 		    ob_flush();
 		    flush();
 		    return strlen( $chunk );
-		}
+		};
 		
 		curl_setopt( $c, CURLOPT_SSL_VERIFYPEER, false               );
 		curl_setopt( $c, CURLOPT_SSL_VERIFYHOST, false               );
