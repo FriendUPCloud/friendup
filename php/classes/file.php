@@ -219,7 +219,7 @@ class File
 
 		$c = curl_init();
 		
-		function writeAndFlush( $curl_handle, $chunk)
+		$callback = function writeAndFlush( $curl_handle, $chunk)
 		{ 
 		    echo $chunk;
 		    ob_flush();
@@ -231,7 +231,7 @@ class File
 		curl_setopt( $c, CURLOPT_SSL_VERIFYHOST, false               );
 		curl_setopt( $c, CURLOPT_URL,            $url                );
 		curl_setopt( $c, CURLOPT_RETURNTRANSFER, true                );
-		curl_setopt( $c, CURLOPT_WRITEFUNCTION,  writeAndFlush        );
+		curl_setopt( $c, CURLOPT_WRITEFUNCTION,  $callback           );
 		curl_exec( $c );
 		curl_close( $c );
 	}
