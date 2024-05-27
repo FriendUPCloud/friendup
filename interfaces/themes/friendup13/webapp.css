@@ -140,6 +140,11 @@ body[sharedapp=sharedapp] .ViewContainer + .ViewContainer .View > .Title
 	border-radius: 0px !important;
 }
 
+[webapp] .View
+{
+	background-color: #223344;
+}
+
 body[sharedapp=sharedapp] .ViewContainer:first-child.View > .Title
 {
 	display: none;
