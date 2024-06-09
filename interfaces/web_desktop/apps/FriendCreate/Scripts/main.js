@@ -1962,6 +1962,20 @@ function StatusMessage( str )
 	}, 50 );
 }
 
+function ToggleApplicationCanvas()
+{
+	if( window.canvasShowing )
+	{
+		ge( 'app_canvas' ).classList.remove( 'Showing' );
+		window.canvasShowing = false;
+	}
+	else
+	{
+		ge( 'app_canvas' ).classList.add( 'Showing' );
+		window.canvasShowing = true;
+	}
+}
+
 function Install( filename = false, depth = 0 )
 {
 	if( !filename && !Application.currentProject.PackageFile )
@@ -1986,11 +2000,11 @@ function Install( filename = false, depth = 0 )
 	{
 		if( me == 'ok' )
 		{
-			Alert( 'Package installed.' );
+			Alert( 'Package installed', 'Your package was installed, ready to be verified.'  );
 		}
 		else
 		{
-			Alert( 'Failed to install package.' );
+			Alert( 'Failed to install package', 'The package failed to install. Do you have enough access rights?' );
 		}
 	}
 	m.execute( 'installpackage', { path: f } );
