@@ -50,6 +50,48 @@ html body #Toolbar button.IconButton:not(:hover), html body #Toolbar .Button.Ico
 	border: 0 !important;
 }
 
+#Toolbar .IconSmall.fc-package-build:before
+{
+	content: " ";
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    background-image: url(../Gfx/Icons/package_build_56.png);
+    background-size: contain;
+    background-repeat: no-repeat;
+    opacity: 0.8;
+    position: relative;
+    top: 3px;
+}
+
+#Toolbar .IconSmall.fc-package-install:before
+{
+	content: " ";
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    background-image: url(../Gfx/Icons/package_install_56.png);
+    background-size: contain;
+    background-repeat: no-repeat;
+    opacity: 0.8;
+    position: relative;
+    top: 6px;
+}
+
+#Toolbar .IconSmall.fc-package-install:hover:before,
+#Toolbar .IconSmall.fc-package-build:hover:before
+{
+	mask-image: url(../Gfx/Icons/package_install_56.png);
+	background-image: none;
+	background-color: #39658b;
+	mask-size: 100%;
+	mask-repeat: no-repeat;
+}
+#Toolbar .IconSmall.fc-package-build:hover:before
+{
+	mask-image: url(../Gfx/Icons/package_build_56.png);
+}
+
 #SideBar
 {
 	position: absolute;
