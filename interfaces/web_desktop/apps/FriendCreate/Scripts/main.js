@@ -1962,12 +1962,46 @@ function StatusMessage( str )
 	}, 50 );
 }
 
-function Build()
+function Install( filename = false, depth = 0 )
 {
-	CreatePackage();
+	if( !filename && !Application.currentProject.PackageFile )
+	{
+		Build( function( js )
+		{
+			if( depth > 1 )
+			{
+				return;
+			}
+			Install( js.path, depth + 1 );
+		} );
+		return;
+	}
+	
+	if( filename )
+		Application.currentProject.PackageFile = filename;
+	let f = Application.currentProject.PackageFile;
+	
+	let m = new Module( 'system' );
+	m.onExecuted = function( me, md )
+	{
+		if( me == 'ok' )
+		{
+			Alert( 'Package installed.' );
+		}
+		else
+		{
+			Alert( 'Failed to install package.' );
+		}
+	}
+	m.execute( 'installpackage', { path: f } );
 }
 
-function CreatePackage()
+function Build( cbk = false )
+{
+	CreatePackage( cbk );
+}
+
+function CreatePackage( cbk = false )
 {
 	if( !Application.currentProject || !Application.currentProject.Path )
 	{
@@ -1994,6 +2028,9 @@ function CreatePackage()
 				}
 				else p = p.split( ':' )[0] + ':';
 			}
+			
+			let js = JSON.parse( d );
+			if( cbk ) cbk( { response: 'success', path: js.packagefile } );
 		}
 		else
 		{

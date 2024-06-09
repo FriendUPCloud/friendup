@@ -112,7 +112,7 @@ if( isset( $args->args->filename ) )
 				$r = explode( '<!--separate-->', $res );
 				if( $r[0] == 'ok' )
 				{
-					die( 'ok<!--separate-->{"response":0,"message":"File was transferred correctly.","file":"' . $args->args->filename . '.fpkg"}' );
+					die( 'ok<!--separate-->{"response":0,"message":"File was transferred correctly.","file":"' . $args->args->filename . '.fpkg","packagefile":"' . $filename . '.fpkg"}' );
 				}
 				else
 				{
