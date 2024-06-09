@@ -1962,6 +1962,11 @@ function StatusMessage( str )
 	}, 50 );
 }
 
+function Build()
+{
+	CreatePackage();
+}
+
 function CreatePackage()
 {
 	if( !Application.currentProject || !Application.currentProject.Path )
