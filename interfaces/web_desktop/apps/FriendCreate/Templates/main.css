@@ -118,6 +118,7 @@ html body #Toolbar button.IconButton:not(:hover), html body #Toolbar .Button.Ico
 	left: 0;
 	width: 100%;
 	height: calc(100% - 40px);
+	border-radius: 0 10px 10px 0;
 }
 
 #SideBar #SB_AllFiles
@@ -140,9 +141,29 @@ html body #Toolbar button.IconButton:not(:hover), html body #Toolbar .Button.Ico
 
 #app_canvas
 {
+	left: 281px;
+	width: calc(100% - 281px);
 	z-index: 11;
-	background: #202020;
-	border-radius: 10px 10px 0 0;
+	overflow: hidden;
+	background-color: #2f2f2f;
+	border-radius: 10px 0 0 10px;
+	transition: background-color 0.25s;
+}
+
+#app_canvas.Running
+{
+	background-color: transparent;
+}
+
+#app_canvas iframe
+{
+	position: absolute;
+	border: 0;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	margin: 0;
 }
 
 #app_canvas:not(.Showing)
@@ -164,6 +185,7 @@ html body #Toolbar button.IconButton:not(:hover), html body #Toolbar .Button.Ico
 	left: 0;
 	width: 100%;
 	height: calc(100% - 40px);
+	border-radius: 10px 0 0 10px;
 }
 
 #CodeArea .Page .Minimap

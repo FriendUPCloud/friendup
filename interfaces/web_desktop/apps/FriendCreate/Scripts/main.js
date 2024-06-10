@@ -220,7 +220,7 @@ function RefreshFiletypeSelect()
 		'as': 'ace/mode/actionscript',
 		'txt': 'ace/mode/text',
 		'js': 'ace/mode/javascript',
-		'lang': 'ace/mode/txt',
+		'lang': 'ace/mode/text',
 		'pls': 'ace/mode/json',
 		'json': 'ace/mode/json',
 		'tpl': 'ace/mode/html',
@@ -236,7 +236,7 @@ function RefreshFiletypeSelect()
 		'jsx': 'ace/mode/javascript',
 		'java': 'ace/mode/java',
 		'css': 'ace/mode/css',
-		'run': 'ace/mode/txt',
+		'run': 'ace/mode/text',
 		'apf': 'ace/mode/json',
 		'conf': 'ace/mode/json'
 	};
@@ -246,7 +246,7 @@ function RefreshFiletypeSelect()
 	}
 	else if( Application.currentFile.editor )
 	{
-		Application.currentFile.editor.getSession().setMode( 'ace/mode/txt' );
+		Application.currentFile.editor.getSession().setMode( 'ace/mode/text' );
 		ext = 'txt';
 	}
 	
@@ -2168,12 +2168,29 @@ function RunApp()
 			{
 				if( p.Files[ a ].Path.toLowerCase().indexOf( '.jsx' ) > 0 )
 				{
-					Application.sendMessage( {
-						type: 'system',
-						command: 'executeapplication',
-						executable: p.ProjectPath + p.Files[ a ].Path,
-						args: false
-					} );
+					if( ge( 'app_canvas' ).classList.contains( 'Showing' ) )
+					{
+						let m = new Module( 'system' );
+						m.onExecuted = function( me, md )
+						{
+							if( me == 'ok' )
+							{
+								let js = JSON.parse( md );
+								ge( 'app_canvas' ).innerHTML = '<iframe sandbox="allow-same-origin allow-forms allow-scripts allow-popups allow-popups-to-escape-sandbox allow-downloads allow-modals allow-top-navigation-by-user-activation allow-presentation" src="/webclient/webapp.html?app=' + p.ProjectPath + p.Files[ a ].Path + '&logintoken=' + js.token + '"></iframe>';
+								ge( 'app_canvas' ).classList.add( 'Running' );
+							}
+						}
+						m.execute( 'getlogintoken', { authid: Application.authId } );
+					}
+					else
+					{
+						Application.sendMessage( {
+							type: 'system',
+							command: 'executeapplication',
+							executable: p.ProjectPath + p.Files[ a ].Path,
+							args: false
+						} );
+					}
 					Application.currentProject.Playing = true;
 					CheckPlayStopButtons();
 					break;
