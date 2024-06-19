@@ -523,7 +523,28 @@ class DbIO extends DbTable
 		{
 			foreach( $row as $k=>$v )
 			{
-				$this->$k = stripslashes( $v );
+				// Prevent corruption of \n and \t and \r
+				$tabChange = '--NEW--TAB--'; $tabTMP = '--NEW--TAB-2--';
+				$newLine   = '--NEW--LINE--'; $newLineTMP = '--NEW--LINE-2--';
+				$newCarr   = '--NEW--LINE--'; $newCarrTMP = '--NEW--LINE-2--';
+				
+				$v = str_replace( $newCarr, $newCarrTMP, $v ); // Error check
+				$v = str_replace( '\r', $newCarr, $v );
+				$v = str_replace( $tabChange, $tabTMP, $v ); // Error check
+				$v = str_replace( '\t', $tabChange, $v );
+				$v = str_replace( $newLine, $newLineTMP, $v ); // Error check
+				$v = str_replace( '\n', $newLine, $v );
+				
+				$v = stripslashes( $v );
+				
+				$v = str_replace( $newCarr, '\r', $v );
+				$v = str_replace( $newCarrTMP, $newCarr, $v ); // Error check
+				$v = str_replace( $tabChange, '\t', $v );
+				$v = str_replace( $tabTMP, $tabChange, $v ); // Error check
+				$v = str_replace( $newLine, '\n', $v );
+				$v = str_replace( $newLineTMP, $newLine, $v ); // Error check
+				
+				$this->$k = $v;
 			}
 			if( method_exists( $this, 'OnLoaded' ) ) $this->OnLoaded();
 			return true;
