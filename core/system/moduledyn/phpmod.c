@@ -484,6 +484,12 @@ Http *ProcessStreamedHeaders( char *data, int dataLength )
 }
 Http *GetRequestResponse( Http *request )
 {
+    // Request cannot be NULL
+    if( request == NULL )
+    {
+        return NULL;
+    }
+    
 	struct TagItem tags[] = {
 		{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( "text/plain" ) },
 		{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
