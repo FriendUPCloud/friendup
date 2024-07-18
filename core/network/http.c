@@ -1018,6 +1018,8 @@ char *FindStrInData( char *str, char *data, int length)
 
 int ParseMultipart( Http* http )
 {
+    if( !http ) return -1;
+    
 	http->http_ParsedPostContent = HashmapNew();
 	if( http->http_ParsedPostContent == NULL )
 	{
@@ -2736,7 +2738,7 @@ void HttpWrite( Http* http, Socket *sock )
 		FERROR("[HttpWrite] HTTP WRITE sock is null\n");
 		return;
 	}
-
+	
 	if( http->http_RequestSource == HTTP_SOURCE_FC )
 	{
 		MsgItem tags[] = {

@@ -2155,6 +2155,11 @@ int StreamMod( SystemBase *l, const char *type, const char *path, const char *ar
 {
 	int dataLength = 0;
 
+	if( !request || !httpResponse )
+	{
+	    return -1;
+	}
+	
 	EModule *lmod = l->sl_Modules;
 	EModule *workmod = NULL;
 	

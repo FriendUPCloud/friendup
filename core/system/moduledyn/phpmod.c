@@ -697,10 +697,13 @@ int Stream( struct EModule *mod, const char *path, const char *args, Http *reque
 				if( !response )
 				{
 					response = GetRequestResponse( request );
+				}
+				if( response )
+				{
 					*httpResponse = response;
+				    response->http_Socket->s_Interface->SocketWrite( response->http_Socket, procStr->bs_Buffer, res );
 				}
 				
-				response->http_Socket->s_Interface->SocketWrite( response->http_Socket, procStr->bs_Buffer, res );
 				FFree( procStr->bs_Buffer );
 				procStr->bs_Bufsize = 0;
 				procStr->bs_Buffer = NULL;
