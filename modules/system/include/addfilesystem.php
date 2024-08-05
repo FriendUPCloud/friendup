@@ -21,7 +21,7 @@ if( isset( $args->args->authid ) && !isset( $args->authid ) )
 
 if( !isset( $args->authid ) )
 {
-	if( $level == 'Admin' && $args->args->userid )
+	if( $level == 'Admin' && isset( $args->args->userid ) && $args->args->userid )
 	{
 		$userid = $args->args->userid;
 	}
@@ -109,7 +109,7 @@ if( isset( $obj->Name ) && strlen( $obj->Name ) > 0 )
 	$fs = new DbIO( 'Filesystem' );
 
 	$fs->Name = $obj->Name;
-	$fs->UserID = ( $level == 'Admin' && $obj->UserID ? $obj->UserID : $userid );
+	$fs->UserID = ( $level == 'Admin' && isset( $obj->UserID ) ? $obj->UserID : $userid );
 	$fs->GroupID = $groupID;
 	if( !$fs->Load() )
 	{
