@@ -169,6 +169,7 @@ html body #Toolbar button.IconButton:not(:hover), html body #Toolbar .Button.Ico
 #app_canvas:not(.Showing)
 {
 	opacity: 0;
+	pointer-events: none;
 }
 
 /*#CodeArea.JetBrains .Page .ace_scroller,
